@@ -178,7 +178,7 @@ async function buildWorld9(progress) {
   CAM = new BABYLON.FreeCamera('cam', V3(10, 1.6, 10), SCN); CAM.inputs.clear(); CAM.minZ = 0.05; CAM.maxZ = 85; CAM.fov = 1.0;
   resetW9();
   progress(0.06, 'SURVEYING LEVEL 9…'); await nextFrame();
-  genLayout9(); collectPieces9(); planLights9();
+  genLayout9(); planWindows9(); collectPieces9(); planLights9();   // r6: windows decided before the walls are cut
   const T = {};
   progress(0.14, 'PAVING THE STREETS…'); await nextFrame();
   for (const k of ['asph', 'grass', 'conc']) T[k] = TEX9[k](SCN, 512);
@@ -228,41 +228,9 @@ function buildProps9() {
     addSolid(L.x - 0.13, L.z - 0.13, L.x + 0.13, L.z + 0.13, 'prop');
   }
   // houses: windows (both storeys), porches, walks, mailboxes, cars
-  const TRIM = [0.86, 0.85, 0.8], SHUT = [[0.16, 0.2, 0.16], [0.3, 0.12, 0.1], [0.12, 0.14, 0.2], [0.2, 0.18, 0.16]];
-  const winOut = (h, x, y, d, yo, sh, lit) => {
-    const [mx, mz] = edgeMid(x, y, d), o = WT / 2 + 0.004, r = propRoot(mx + DX[d] * o, mz + DY[d] * o, Math.atan2(DX[d], DY[d]));
-    B.add(r, 'Box', { width: 1.02, height: 1.26, depth: 0.05 }, TRIM, 0, [0, yo + 1.5, 0.02]);
-    B.add(r, 'Box', { width: 0.86, height: 1.1, depth: 0.02 }, lit ? [0.95, 0.62, 0.3] : [0.035, 0.04, 0.05], lit ? 0.5 : 0, [0, yo + 1.5, 0.05]);
-    B.add(r, 'Box', { width: 0.04, height: 1.1, depth: 0.03 }, TRIM, 0, [0, yo + 1.5, 0.06]); B.add(r, 'Box', { width: 0.86, height: 0.04, depth: 0.03 }, TRIM, 0, [0, yo + 1.62, 0.06]);
-    B.add(r, 'Box', { width: 1.12, height: 0.05, depth: 0.12 }, TRIM, 0, [0, yo + 0.87, 0.06]);
-    for (const s of [-1, 1]) B.add(r, 'Box', { width: 0.3, height: 1.24, depth: 0.03 }, sh, 0, [s * 0.68, yo + 1.5, 0.02]);
-    if (!h.enter) for (let i = 0; i < 3; i++) B.add(r, 'Box', { width: 1.18, height: 0.13, depth: 0.03 }, [0.42, 0.33, 0.24].map(v => v * rnd(0.8, 1.1)), 0, [rnd(-0.05, 0.05), yo + 1.1 + i * 0.38, 0.09], [0, 0, rnd(-0.35, 0.35)]);
-  };
-  const winIn = (x, y, d, up) => {   // the inside of a window: dim moonlit glass, curtains (upstairs: drawn curtains or blinds)
-    W9.win.add(eKey(x, y, d));
-    const [mx, mz] = edgeMid(x, y, d), o = WT / 2 + 0.004, q = propRoot(mx - DX[d] * o, mz - DY[d] * o, Math.atan2(-DX[d], -DY[d])), cc = pick(FABRIC);
-    B.add(q, 'Box', { width: 1.0, height: 1.24, depth: 0.04 }, TRIM, 0, [0, 1.5, 0.02]);
-    B.add(q, 'Box', { width: 0.86, height: 1.1, depth: 0.02 }, [0.07, 0.09, 0.13], 0.12, [0, 1.5, 0.04]);
-    B.add(q, 'Box', { width: 1.1, height: 0.05, depth: 0.14 }, TRIM, 0, [0, 0.9, 0.07]);
-    if (up && RNG() < 0.5) { for (let i = 0; i < 11; i++) B.add(q, 'Box', { width: 0.9, height: 0.085, depth: 0.012 }, [0.78, 0.76, 0.7], 0, [0, 1.0 + i * 0.1, 0.07], [0.5, 0, 0]); }
-    else if (up) { for (const s of [-1, 1]) B.add(q, 'Box', { width: 0.62, height: 1.55, depth: 0.04 }, cc, 0, [s * 0.28, 1.45, 0.08], [0, 0, s * 0.02]); }
-    else for (const s of [-1, 1]) B.add(q, 'Box', { width: 0.34, height: 1.5, depth: 0.04 }, cc, 0, [s * 0.52, 1.45, 0.08]);
-  };
+  const TRIM = [0.86, 0.85, 0.8];
+  buildWindows9(B, TRIM);   // r6: real openings on enterable ground floors, portals upstairs (windows9.js)
   for (const h of LV.houses) {
-    const sh = pick(SHUT);
-    for (let b = 0; b < HS; b++) for (let a = 0; a < HS; a++) {
-      const [x, y] = h.cell(a, b);
-      for (let d = 0; d < 4; d++) {
-        const nx = x + DX[d], ny = y + DY[d];
-        if (inGrid(nx, ny) && LV.bld[cIdx(nx, ny)] === h.id) continue;
-        if (edgeVal(x, y, d) === 1 && !LV.ek.has(eKey(x, y, d)) && RNG() < 0.7) { winOut(h, x, y, d, 0, sh, h.lit && RNG() < 0.6); if (h.enter) winIn(x, y, d, false); }
-        if (RNG() < 0.62) {
-          let lit = h.lit && RNG() < 0.45;
-          if (h.enter) { const [ux, uy] = h.cellU(a, b); if (edgeVal(ux, uy, d) === 1 && !LV.ek.has(eKey(ux, uy, d))) winIn(ux, uy, d, true); else continue; }
-          winOut(h, x, y, d, FLH, sh, lit);
-        }
-      }
-    }
     // porch, step, walk, porch light, mailbox
     const f = h.front, [fx, fz] = edgeMid(f.x, f.y, f.d), ox = DX[f.d], oz = DY[f.d], ry = Math.atan2(ox, oz);
     const pr = propRoot(fx + ox * WT / 2, fz + oz * WT / 2, ry), CON = [0.55, 0.54, 0.5];

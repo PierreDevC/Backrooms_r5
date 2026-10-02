@@ -46,7 +46,7 @@ function buildDoors9() {
       open: startOpen ? 1 : 0, target: startOpen ? 1 : 0, latched: false, solid: addSolid(bx[0], bx[1], bx[2], bx[3], 'door'), shake: 0, cull: e.dk === 'front' ? 44 : 26, bangs: 0 };
     LV.solids[dr.solid].off = startOpen; if (!startOpen) markDyn(bx[0], bx[1], bx[2], bx[3], 1);
     hinge.rotation.y = startOpen ? c1 : c0;
-    W9.doors.push(dr); W9.doorAt.set(dr.key, dr);
+    W9.doors.push(dr); W9.doorAt.set(dr.key, dr); addLock9(dr);   // r6: a deadbolt you can see turn
     W.interact.push({ x: mx, z: mz, y: 1.1, r: 1.75, door: dr, label: () => dr.target ? 'CLOSE DOOR' : dr.latched ? 'UNLATCH & OPEN' : 'OPEN DOOR',
       ok: () => true, act: () => useDoor(dr), altLabel: () => dr.target ? null : dr.latched ? 'UNLATCH' : 'LATCH', alt: () => latchDoor(dr) });
   }
@@ -62,24 +62,25 @@ function setDoor(dr, open) {
 }
 function useDoor(dr) {
   if (dr.target) { setDoor(dr, false); makeNoise(0.3); }
-  else { if (dr.latched) SFX9.latch(P9({ x: dr.mx, z: dr.mz }), false); setDoor(dr, true); makeNoise(0.18); }
+  else { if (dr.latched) SFX9.deadbolt(P9({ x: dr.mx, z: dr.mz }), false); setDoor(dr, true); makeNoise(0.18); }
 }
 function latchDoor(dr) {
   if (dr.target) return;
-  dr.latched = !dr.latched; LV.navVer++; SFX9.latch(P9({ x: dr.mx, z: dr.mz }), dr.latched); makeNoise(0.08);
+  dr.latched = !dr.latched; LV.navVer++; SFX9.deadbolt(P9({ x: dr.mx, z: dr.mz }), dr.latched); makeNoise(0.08); W9.doorAnim.add(dr);
   toast(dr.latched ? 'DOOR LATCHED' : 'DOOR UNLATCHED', 1.3);
   if (dr.latched && !G9.latchTip) { G9.latchTip = true; }
 }
 function bangDoor(dr, hard = 1) { dr.shake = 0.45 * hard; dr.bangs++; W9.doorAnim.add(dr); SFX9.bang(P9({ x: dr.mx, z: dr.mz }), hard); FX.glitch = Math.max(FX.glitch, 0.4 * hard); }
 function updateDoors9(dt) {
   for (const dr of W9.doorAnim) {
+    const lm = lockAnim9(dr, dt);   // r6: the thumb-turn and bolt
     const prev = dr.open, sp = dr.target ? 1.9 : 3.4;
     dr.open = dr.target ? Math.min(1, dr.open + dt * sp) : Math.max(0, dr.open - dt * sp);
     let a = lerp(dr.c0, dr.c1, smooth(0, 1, dr.open));
     if (dr.shake > 0) { dr.shake -= dt; a += Math.sin(FX.t * 70) * 0.03 * Math.max(0, dr.shake) * (dr.horiz ? 1 : -1); }
     dr.hinge.rotation.y = a;
     if (!dr.target && prev > 0 && dr.open === 0) SFX9.shut(P9({ x: dr.mx, z: dr.mz }), dr.metal);
-    if (dr.open === dr.target && dr.shake <= 0) { dr.hinge.rotation.y = dr.target ? dr.c1 : dr.c0; W9.doorAnim.delete(dr); }
+    if (dr.open === dr.target && dr.shake <= 0 && !lm) { dr.hinge.rotation.y = dr.target ? dr.c1 : dr.c0; W9.doorAnim.delete(dr); }
   }
 }
 

@@ -250,6 +250,7 @@ function remap9(x, y, z) {
   return [S[0] - (L[0] - c.x), y + S[2] - L[2], S[1] - (L[1] - c.z)];
 }
 function teardown9() {
+  teardownWin9();
   if (G9.night) { try { G9.night.g.disconnect(); } catch (e) {} G9.night = null; }
   if (AI9.wz) { try { AI9.wz.g.disconnect(); if (AI9.wz.src) AI9.wz.src.stop(); } catch (e) {} AI9.wz = null; }
   AU.remap = null;
@@ -331,6 +332,7 @@ function startStairTp9(h, up) {
   if (!G9.stairTip) { G9.stairTip = true; later(1.1, () => toast(up ? 'UPSTAIRS — WALK BACK INTO THE STAIRWELL TO GO DOWN' : 'DOWNSTAIRS', 2.6)); }
 }
 function gameEvents9(dt) {
+  peekTick9(dt); portalTick9(dt);   // r6: after playerCamera, before the frame renders
   updateTerms9(dt); places9Events(dt);
   // stairwell between the outpost and the lab (fade through black)
   if (G9.tp) {

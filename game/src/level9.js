@@ -250,6 +250,7 @@ function collectPieces9() {
     const mk = (x0, z0, x1, z1, y0, y1, k) => pieces.push({ x0, z0, x1, z1, y0, y1, k, horiz, sa, sb, cap: out });
     const l0 = horiz ? ax * CELL : ay * CELL, l1 = l0 + CELL, c = horiz ? ay * CELL : ax * CELL;
     const seg = (a, b, y0, y1, k) => horiz ? mk(a, c - H, b, c + H, y0, y1, k) : mk(c - H, a, c + H, b, y0, y1, k);
+    if (v === 1 && LV.win9 && LV.win9.has(eKey(x, y, d))) { winPieces9(seg, l0, l1, H); return; }   // r6: a window you can see through
     if (v === 1) { seg(l0 - H, l1 + H, 0, CEIL, 'w'); return; }
     const m = (l0 + l1) / 2, a = m - DOORW / 2, b = m + DOORW / 2;
     seg(l0 - H, a, 0, CEIL, 'w'); seg(b, l1 + H, 0, CEIL, 'w'); seg(a, b, DOORH, CEIL, 'l');
