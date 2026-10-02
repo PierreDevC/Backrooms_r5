@@ -19,7 +19,7 @@ python3 -m http.server 8000 --bind 127.0.0.1
 ```
 Visit `http://localhost:8000/The_Backrooms_Found_Footage.html`. Append `?debug&level=18` to test the new level directly. `?level=9` and `?level=5` are also supported. In the title menu, SELECT LEVEL starts Level 0, Level 9, Level 5 or Level 18 directly.
 
-WASD/arrows move · mouse look · Shift sprint · C crouch (toggle) · F flashlight · N night vision · Z or hold right mouse zoom · E/Enter interact · Q almond water · R battery · Esc/P pause · M mute. Level 9: right-click a door (or X) to latch it (the deadbolt turns), Tab map, LOOK OUTSIDE at any window. Touch controls appear on phones.
+WASD/arrows move · mouse look · Shift sprint · C crouch (toggle) · F flashlight · N night vision · Z or hold right mouse zoom · E/Enter interact · Q almond water · R battery · Esc/P pause · M mute. Level 9: right-click a door (or X) to latch it (the deadbolt turns), Tab map, LOOK OUTSIDE at any window, V to look through a door's peephole. Touch controls appear on phones.
 
 On Easy and Normal, dying lets you RETRY FROM CHECKPOINT: you keep everything already done in that level and respawn at the last checkpoint (level start, each tape / download / key / valve / drawing and other milestones). Nightmare restarts the level. Checkpoints last for the current run, not across reloads.
 

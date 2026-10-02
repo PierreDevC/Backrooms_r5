@@ -1,0 +1,17 @@
+error: Failed to load resource: net::ERR_FAILED
+QA load ms 752
+QA peep setup {"prompt":"UNLATCH & OPEN | UNLATCH | PEEPHOLE","focus":true}
+QA PASS a closed door offers the peephole
+QA peep {"on":true,"k":1,"near":0.6,"prompt":"","fov":1.9,"camD":0.16,"pass":true}
+QA PASS V puts the camcorder to the peephole, wide lens
+QA PASS the fisheye pass exists in Level 9
+QA PASS the figure on the porch registers (the lens breathes, the heart goes)
+QA peep off {"on":false,"k":0,"clamped":0.75}
+QA PASS the lens only turns so far
+QA PASS V again steps back
+QA peep move {"on1":false,"open":1,"a2":null}
+QA PASS a step ends it
+QA PASS an open door has no peephole
+QA errs {"n":0,"seen":{},"last":""}
+QA PASS no recovered frame errors
+QA PAGE CLOSE

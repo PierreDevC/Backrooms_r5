@@ -287,7 +287,7 @@ body:not(.lvl9) #btnPBrief{display:none}
 #toast.long{font-size:clamp(18px,2.6vw,30px);max-width:92vw;white-space:normal;text-align:center}
 body.docopen #subs,body.docopen #toast{left:31%;width:min(560px,56vw);white-space:normal}
 @media (max-width:700px){body.docopen #subs,body.docopen #toast{left:50%;top:auto}}
-body.hacking #toast{top:9%}body.hacking #subs{bottom:4%}
+body.hacking #toast,body.peeping #toast{top:9%}body.hacking #subs,body.peeping #subs{bottom:4%}
 
 </style>
 </head>
@@ -403,6 +403,7 @@ body.hacking #toast{top:9%}body.hacking #subs{bottom:4%}
       <div><kbd>Q</kbd> Drink almond water</div><div><kbd>RMB</kbd> hold / <kbd>Z</kbd> Zoom</div>
       <div><kbd>RMB</kbd>/<kbd>X</kbd> Latch door</div><div><kbd>Tab</kbd> Map snapshot (Level 9)</div>
       <div><kbd>J</kbd> Field notes</div><div><kbd>E</kbd> Close a document</div>
+      <div><kbd>V</kbd> Door peephole (Level 9)</div><div><kbd>E</kbd> Look outside (at a window)</div>
         <div><kbd>Esc</kbd> Pause</div><div><kbd>M</kbd> Mute</div>
     </div>
     <h3>FIELD NOTES</h3>
@@ -493,6 +494,7 @@ body.hacking #toast{top:9%}body.hacking #subs{bottom:4%}
     <button data-k="KeyR">BATT</button>
     <button data-k="KeyN">NV</button>
     <button data-k="KeyX" class="l9">LATCH</button>
+    <button data-k="KeyV" class="l9">PEEP</button>
     <button data-k="Tab" class="l9">MAP</button>
     <button data-k="Escape"><i class="pz"></i></button>
   </div>
@@ -4883,7 +4885,7 @@ function buildForgottenSk() {
 
 // ==== world.js ====
 // ---------- scene assembly, props, items, lighting slots, post-processing ----------
-let ENG = null, CAM = null, PIPE = null, VHS = null;
+let ENG = null, CAM = null, PIPE = null, VHS = null, PEEP = null;
 const W = { interact: [], items: [], tapes: [], tvs: [], dead: [], beams: [] };
 const FX = { t: 0, amt: 1, glitch: 0, nv: 0, hurt: 0, fadeB: 1, fadeW: 0, exposure: 1.2, san: 0, lightScale: 1, flicker: 1, fog: [0.1, 0.085, 0.045], fogDen: 0.03, ambBoost: 0, envA: [0.02, 0.018, 0.013, 0], envS: [0, 0, 0, 0] };
 const SLOT = { pos: new Array(24).fill(0), dir: new Array(24).fill(0), col: new Array(24).fill(0), ext: new Array(24).fill(0) };
@@ -5177,6 +5179,8 @@ function setupPost(q) {
   PIPE.imageProcessingEnabled = false; PIPE.fxaaEnabled = false;
   PIPE.samples = q >= 2 ? 4 : 1;
   PIPE.bloomEnabled = true; PIPE.bloomThreshold = 1.1; PIPE.bloomWeight = 0.42; PIPE.bloomKernel = q >= 1 ? 64 : 32; PIPE.bloomScale = 0.5;
+  PEEP = LVL === 9 ? new BABYLON.PostProcess('peep', 'peep', ['pk'], null, 1.0, CAM, BABYLON.Texture.BILINEAR_SAMPLINGMODE, ENG) : null;   // r6: the Level 9 peephole
+  if (PEEP) { PEEP.__k = 0; PEEP.onApply = e => e.setFloat4('pk', PEEP.__k, Math.floor(FX.t * 12), PEEP.width / PEEP.height, 230); }
   VHS = new BABYLON.PostProcess('vhs', 'vhs', ['res', 'p1', 'p2', 'p3'], null, 1.0, CAM, BABYLON.Texture.BILINEAR_SAMPLINGMODE, ENG);
   VHS.onApply = e => { e.setFloat2('res', VHS.width, VHS.height); e.setFloat4('p1', FX.t, FX.amt, FX.glitch, FX.nv); e.setFloat4('p2', FX.hurt, FX.fadeB, FX.fadeW, FX.exposure); e.setFloat4('p3', FX.san, 0, 0, 0); };
 }
@@ -6108,7 +6112,8 @@ function buildDoors9() {
     hinge.rotation.y = startOpen ? c1 : c0;
     W9.doors.push(dr); W9.doorAt.set(dr.key, dr); addLock9(dr);   // r6: a deadbolt you can see turn
     W.interact.push({ x: mx, z: mz, y: 1.1, r: 1.75, door: dr, label: () => dr.target ? 'CLOSE DOOR' : dr.latched ? 'UNLATCH & OPEN' : 'OPEN DOOR',
-      ok: () => true, act: () => useDoor(dr), altLabel: () => dr.target ? null : dr.latched ? 'UNLATCH' : 'LATCH', alt: () => latchDoor(dr) });
+      ok: () => true, act: () => useDoor(dr), altLabel: () => dr.target ? null : dr.latched ? 'UNLATCH' : 'LATCH', alt: () => latchDoor(dr),
+      alt2Label: () => dr.target ? null : 'PEEPHOLE', alt2: () => peepToggle9(dr) });   // r6: look through the door
   }
 }
 function doorClosed(x, y, d) { const dr = W9.doorAt.get(eKey(x, y, d)); return !!dr && dr.target === 0; }
@@ -7033,6 +7038,68 @@ SFX9.deadbolt = function (pos, on) { shot((d, t) => {   // the thumb-turn ratche
   nz(d, tb + 0.02, 0.03, 'bandpass', 5200, 6, 0.22, 0.001);
   return 0.55; }, pos, 1); };
 if (/[?&]debug/.test(location.search)) addEventListener('load', () => Object.assign(window.__BR || (window.__BR = {}), { PORT9, PEEK9, WIN9, peekToggle9, portalTick9, planWindows9 }));
+
+// ----- the peephole: put your eye to the door and see the other side through a fisheye (V, or the PEEP button) -----
+// The camcorder goes to the far face of the leaf, looking away from you, with a wide lens; the 'peep' post pass bends it into a
+// porthole, washes it teal like a cheap night lens and drops the resolution. Whatever is waiting on the porch fills the middle.
+const PEEPH = { dr: null, k: 0, x: 0, z: 0, yaw: 0, y: 1.52, px: 0, pz: 0 }, _pv9 = new BABYLON.Vector3(), _pd9 = new BABYLON.Vector3();
+BABYLON.Effect.ShadersStore.peepFragmentShader = `precision highp float; varying vec2 vUV; uniform sampler2D textureSampler; uniform vec4 pk;
+float h(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
+void main() {
+  float k = min(pk.x, 1.0), bul = pk.x - k; vec3 src = texture2D(textureSampler, vUV).rgb;
+  if (k < 0.001) { gl_FragColor = vec4(src, 1.0); return; }
+  vec2 c = vUV - 0.5; c.x *= pk.z; float r = length(c);
+  vec2 d = c * (1.0 - k * (0.38 + bul - 0.7 * r * r));                       // the middle bulges toward you, the rim pulls away
+  d.x /= pk.z; vec2 suv = d + 0.5;
+  vec2 px = vec2(pk.w * pk.z, pk.w); suv = mix(suv, (floor(suv * px) + 0.5) / px, k);   // a cheap lens, a low line count
+  vec3 col = texture2D(textureSampler, clamp(suv, 0.002, 0.998)).rgb;
+  float l = dot(col, vec3(0.299, 0.587, 0.114));
+  l = clamp(pow(l * 1.5, 0.78), 0.0, 1.0); l = floor(l * 16.0 + h(floor(suv * px) + pk.y) * 0.3) / 16.0;
+  vec3 teal = mix(vec3(0.004, 0.02, 0.024), vec3(0.56, 1.0, 0.9), l) + vec3(0.0, 0.035, 0.032) * (1.0 - l);
+  vec2 q = abs(c) / vec2(0.5 * pk.z, 0.47); float e = pow(pow(q.x, 3.2) + pow(q.y, 3.2), 1.0 / 3.2);   // a rounded porthole
+  float vig = smoothstep(1.03, 0.66, e) * (1.0 - 0.45 * r * r);
+  gl_FragColor = vec4(mix(src, teal * vig, k), 1.0);
+}`;
+function peepUse9(dr) { return LVL === 9 && dr && !dr.target; }
+function peepToggle9(dr) {
+  if (PEEPH.dr) { peepStop9(); return; }
+  if (!peepUse9(dr)) return;
+  const e = dr.e, ax = (e.x + 0.5) * CELL, az = (e.y + 0.5) * CELL, bx = ax + DX[e.d] * CELL, bz = az + DY[e.d] * CELL;
+  const toB = dist2(PL.x, PL.z, ax, az) < dist2(PL.x, PL.z, bx, bz), nx = toB ? DX[e.d] : -DX[e.d], nz = toB ? DY[e.d] : -DY[e.d];   // look to the side you are not on
+  Object.assign(PEEPH, { dr, x: dr.mx + nx * 0.16, z: dr.mz + nz * 0.16, yaw: Math.atan2(nx, nz), px: PL.x, pz: PL.z });
+  PL.yaw = PEEPH.yaw; PL.pitch = 0.04; FX.glitch = Math.max(FX.glitch, 0.9); SFX.click(); later(0.08, () => SFX.click()); makeNoise(0.04);
+  if (!G9.peepTip) { G9.peepTip = true; toast(IS_TOUCH ? 'THE PEEPHOLE · MOVE TO STEP BACK' : 'THE PEEPHOLE · [V], [E] OR MOVE TO STEP BACK', 2.6); }
+}
+function peepStop9() { if (!PEEPH.dr) return; PEEPH.dr = null; FX.glitch = Math.max(FX.glitch, 0.6); SFX.click(); }
+function peepTick9(dt) {   // after playerCamera: the camcorder is on the other side of the door
+  const dr = PEEPH.dr;
+  if (dr && (G.state !== 'play' || dr.target || Math.hypot(PL.x - PEEPH.px, PL.z - PEEPH.pz) > 0.3 || PL.hp <= 0)) peepStop9();
+  PEEPH.k = PEEPH.dr ? Math.min(1, PEEPH.k + dt * 7) : Math.max(0, PEEPH.k - dt * 9);
+  if (PEEP) PEEP.__k = PEEPH.k;
+  document.body.classList.toggle('peeping', PEEPH.k > 0.3);
+  if (!PEEPH.dr) return;
+  const dy = angDiff(PEEPH.yaw, PL.yaw); if (Math.abs(dy) > 0.75) PL.yaw = PEEPH.yaw + Math.sign(dy) * 0.75;   // the lens only sees so far round
+  PL.pitch = clamp(PL.pitch, -0.45, 0.6);
+  CAM.position.set(PEEPH.x, PEEPH.y, PEEPH.z); CAM.rotation.set(PL.pitch, PL.yaw, 0); CAM.fov = 1.9;
+  FX.ambBoost = Math.max(FX.ambBoost, 3.2);   // the cheap lens lifts the dark, like the camcorder's night shot
+  PL.focus = null; $('prompt').classList.remove('show');   // no door prompt over the porthole; E, V or a step still let go
+  // the porch light: whoever stands outside is lit from just above the door, the street behind stays dark
+  const f = CAM.getDirection(BABYLON.Axis.Z); _pv9.set(PEEPH.x, 2.25, PEEPH.z); _pd9.set(f.x, -0.35, f.z).normalize();
+  setSlot(0, _pv9, 3.4, _pd9, Math.cos(0.95), [1, 0.92, 0.78], 9, true, 0.18);
+  // something on the other side: the lens breathes and your heart goes
+  let near = 0;
+  for (const a of [...(AI9.wretches || []), ...(AI9.watch || []), AI9.subject].filter(Boolean)) {
+    if (a.present === false) continue;
+    const dx = a.x - PEEPH.x, dz = a.z - PEEPH.z, d = Math.hypot(dx, dz); if (d > 7 || d < 0.01) continue;
+    if (Math.abs(angDiff(PL.yaw, Math.atan2(dx, dz))) > 1.1) continue;
+    near = Math.max(near, 1 - d / 7);
+  }
+  PEEPH.near = damp(PEEPH.near || 0, near, 3, dt);
+  if (PEEP) PEEP.__k = 1 + PEEPH.near * (0.06 + 0.05 * Math.sin(FX.t * 5.5));   // past 1: the extra bulge
+  PL.fear = Math.max(PL.fear, PEEPH.near * 0.8);
+  if (PEEPH.near > 0.3) FX.glitch = Math.max(FX.glitch, 0.15 * PEEPH.near);
+}
+if (/[?&]debug/.test(location.search)) addEventListener('load', () => Object.assign(window.__BR || (window.__BR = {}), { PEEPH, peepToggle9, peepStop9, peepTick9, PEEPpp: () => PEEP, useDoor }));
 
 // ==== hack9.js ====
 // ---------- r6 · Level 9 terminal mini-game: PACKET STACK ----------
@@ -9162,7 +9229,7 @@ function findInteract() {
   }
   return best;
 }
-function interact() { if (DOC.open) { docClose(); return; } if (LVL === 9 && HACK9.on) { hackStop9('YOU STEP BACK FROM THE TERMINAL'); return; } const it = PL.focus; if (it && it.ok()) it.act(); }   // r6: E first closes an open document
+function interact() { if (DOC.open) { docClose(); return; } if (LVL === 9 && HACK9.on) { hackStop9('YOU STEP BACK FROM THE TERMINAL'); return; } if (LVL === 9 && PEEPH.dr) { peepStop9(); return; } const it = PL.focus; if (it && it.ok()) it.act(); }   // r6: E first closes an open document
 
 function hurt(dmg, src) {
   if (G.state !== 'play') return;
@@ -9191,6 +9258,7 @@ function updatePlayer(dt) {
   if (JUST.has('KeyQ')) drinkWater();
   if (JUST.has('KeyE') || JUST.has('Enter')) interact();
   if ((ALTCLICK || JUST.has('KeyX')) && hasAlt(PL.focus)) PL.focus.alt(); // right-click (or X) latches / unlatches
+  if (JUST.has('KeyV') && LVL === 9) { if (PEEPH.dr) peepStop9(); else if (PL.focus && PL.focus.alt2 && PL.focus.alt2Label && PL.focus.alt2Label()) PL.focus.alt2(); }   // r6: the peephole
   ALTCLICK = false;
   if (JUST.has('Tab') && LVL === 9) toggleMap9();
   if (JUST.has('KeyC')) PL.crouch = !PL.crouch;
@@ -11393,7 +11461,7 @@ function updateHUD(dt) {
   $('signal').classList.toggle('lock', HINT.stage >= 1 && !!HINT.site);
   $('signal').classList.toggle('pulse', HINT.stage >= 2 && Math.floor(FX.t * 4) % 2 === 0);
   const f = PL.focus;
-  if (f) { const al = f.altLabel && f.altLabel(); hset('prompt', (IS_TOUCH ? '' : '[E] ') + f.label() + (al ? (IS_TOUCH ? '   ·   ' : '   [RIGHT-CLICK] ') + al : '')); $('prompt').classList.add('show'); } else $('prompt').classList.remove('show');
+  if (f) { const al = f.altLabel && f.altLabel(), a2 = f.alt2Label && f.alt2Label(); hset('prompt', (IS_TOUCH ? '' : '[E] ') + f.label() + (al ? (IS_TOUCH ? '   ·   ' : '   [RIGHT-CLICK] ') + al : '') + (a2 ? (IS_TOUCH ? '   ·   ' : '   [V] ') + a2 : '')); $('prompt').classList.add('show'); } else $('prompt').classList.remove('show');
   $('hurt').style.opacity = clamp(FX.hurt * 0.9 + (PL.hp < 30 ? 0.25 + 0.1 * Math.sin(FX.t * 4) : 0), 0, 1).toFixed(2);
 }
 
@@ -11697,7 +11765,7 @@ function teardownScene() {
   Object.assign(AI, { all: [], howlers: [], smilers: [], exps: [], crawler: null, mimic: null });
   for (const k of ['interact', 'items', 'tapes', 'tvs', 'dead', 'beams']) W[k] = [];
   W.exit = null; TIMERS.length = 0; SUBS.q.length = 0; SUBS.cur = null; $('subs').innerHTML = ''; $('toast').classList.remove('show');
-  try { VHS && VHS.dispose(CAM); } catch (e) {} try { PIPE && PIPE.dispose(); } catch (e) {}
+  try { VHS && VHS.dispose(CAM); } catch (e) {} try { PEEP && PEEP.dispose(CAM); } catch (e) {} PEEP = null; PEEPH.dr = null; PEEPH.k = 0; try { PIPE && PIPE.dispose(); } catch (e) {}
   SCN.dispose(); MATS.list.length = 0;
   Object.assign(FX, { glitch: 0, hurt: 0, fadeB: 1, fadeW: 0, san: 0, nv: 0, lightScale: 1, ambBoost: 0 });
   SLOT.pos.fill(0); SHD.fill(0); cpReset(); tasksReset(); PL.load = false;
@@ -12200,7 +12268,7 @@ function startStairTp9(h, up) {
   if (!G9.stairTip) { G9.stairTip = true; later(1.1, () => toast(up ? 'UPSTAIRS — WALK BACK INTO THE STAIRWELL TO GO DOWN' : 'DOWNSTAIRS', 2.6)); }
 }
 function gameEvents9(dt) {
-  peekTick9(dt); portalTick9(dt);   // r6: after playerCamera, before the frame renders
+  peekTick9(dt); peepTick9(dt); portalTick9(dt);   // r6: after playerCamera, before the frame renders
   updateTerms9(dt); places9Events(dt);
   // stairwell between the outpost and the lab (fade through black)
   if (G9.tp) {
