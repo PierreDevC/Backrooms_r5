@@ -62,6 +62,7 @@ function startDownload(T) {
   drawTerm(T);
 }
 function updateTerms9(dt) {
+  termZoom9(dt);
   for (const T of W9.terms) {
     if (!T.active) continue;
     const near = dist2(T.x, T.z, PL.x, PL.z) < 3.4;
@@ -72,6 +73,21 @@ function updateTerms9(dt) {
     if (T.away > 0.4 && !T.warned) { T.warned = true; toast('LINK INTERRUPTED — RETURN TO THE TERMINAL', 2.2); SFX.beep(420, 0.12); }
     if (T.prog >= T.need) finishDownload(T);
   }
+}
+// the camcorder pushes in on the screen as the transfer runs: only while you stand at it and look at it; danger or looking away lets go
+function termZoom9(dt) {
+  let want = 0, aim = null;
+  for (const T of W9.terms) {
+    if (!T.active || !T.scr || dist2(T.x, T.z, PL.x, PL.z) > 3.4) continue;
+    const s = T.scr, cp = CAM.position, dx = s.x - cp.x, dy = s.y - cp.y, dz = s.z - cp.z, d = Math.hypot(dx, dy, dz) || 1;
+    const yawTo = Math.atan2(dx, dz), pitchTo = -Math.atan2(dy, Math.hypot(dx, dz));
+    const off = Math.hypot(angDiff(PL.yaw, yawTo), pitchTo - PL.pitch);
+    if (off > 0.55) continue;
+    const H = hearLimit9(); if (H.hunt || H.sus > 0.6 || G.chase > 0.3) continue;   // the modem's own screech stirs a sleeper a little; that alone doesn't break the shot
+    want = (0.2 + 0.8 * clamp(T.prog / T.need, 0, 1)) * clamp(1 - (off - 0.3) / 0.25, 0, 1); aim = { yaw: yawTo, pitch: pitchTo };
+  }
+  PL.tz = want > (PL.tz || 0) ? damp(PL.tz || 0, want, 1.6, dt) : damp(PL.tz || 0, want, 7, dt);
+  if (aim && PL.tz > 0.02) { const k = Math.min(1, dt * 2.2 * PL.tz); PL.yaw += angDiff(PL.yaw, aim.yaw) * k; PL.pitch += (aim.pitch - PL.pitch) * k; }   // a soft frame on the monitor; the mouse still wins
 }
 function finishDownload(T) {
   T.done = true; T.active = false; G9.data++; T.drawK = ''; drawTerm(T);
@@ -254,7 +270,7 @@ async function goLevel9(from) {
   setupPost(+S.qual); applySettings();
   Object.assign(PL, { x: 2 * CELL, z: 6.3 * CELL, yaw: 0, pitch: 0, vx: 0, vz: 0, kx: 0, kz: 0, crouch: false, ck: 0, sta: 1, exh: false,
     hp: Math.max(f.hp, 75), san: Math.max(f.san, 75), batt: Math.max(f.batt, 60), spare: f.spare, water: f.water, flash: false, fk: 0, nv: false, zoomT: false, zk: 0,
-    noise: 0, dist: f.dist, lastHurt: -99, shake: 0, cell: -1, fear: 0, lookAt: null, lookK: 0, focus: null, interf: 0 });
+    noise: 0, dist: f.dist, lastHurt: -99, shake: 0, cell: -1, fear: 0, lookAt: null, lookK: 0, focus: null, interf: 0, tz: 0 });
   updateField();
   Object.assign(G, { time: f.time, lost: f.lost, tapes: f.tapes, cause: '', blackout: 0, exitOn: false, chase: 0, hintT: 0, grace: 0 });
   HINT.stage = 0; HINT.site = null;

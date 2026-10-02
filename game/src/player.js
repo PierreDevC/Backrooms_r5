@@ -85,7 +85,7 @@ function hurt(dmg, src) {
 function updatePlayer(dt) {
   const t = FX.t;
   // look
-  const sens = 0.0021 * S.sens * (1 - PL.zk * 0.6);
+  const sens = 0.0021 * S.sens * (1 - Math.max(PL.zk, LVL === 9 ? PL.tz || 0 : 0) * 0.6);
   if (!PL.lookAt) { PL.yaw += MDX * sens; PL.pitch = clamp(PL.pitch + MDY * sens * (S.inv ? -1 : 1), -1.3, 1.3); }
   else {
     const dx = PL.lookAt.x - PL.x, dz = PL.lookAt.z - PL.z, dy = PL.lookAt.y - CAM.position.y;
@@ -180,7 +180,7 @@ function playerCamera(dt) {
   CAM.position.set(PL.x + Math.cos(PL.yaw) * bobX, eye + bobY, PL.z - Math.sin(PL.yaw) * bobX);
   CAM.rotation.set(PL.pitch + np + bobY * 0.25, PL.yaw + ny, PL.roll);
   PL.fovK = damp(PL.fovK, PL.run ? 1 : 0, 4, dt);
-  const base = S.fov * Math.PI / 180, zf = lerp(1, 2.4, PL.zk);
+  const base = S.fov * Math.PI / 180, zf = lerp(1, 2.4, PL.zk) * lerp(1, 2.6, LVL === 9 ? PL.tz || 0 : 0);   // r6: Level 9 terminals push in
   CAM.fov = 2 * Math.atan(Math.tan(base / 2) / zf) + PL.fovK * 0.05;
   // flashlight / IR lamp in slot 0
   const f = CAM.getDirection(BABYLON.Axis.Z), r = CAM.getDirection(BABYLON.Axis.X), u = CAM.getDirection(BABYLON.Axis.Y);

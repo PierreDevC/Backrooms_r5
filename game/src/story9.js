@@ -102,7 +102,7 @@ function buildTerminal(h, idx) {
   solidLocal(r, -0.66, 0, 0.66, 0.68);
   const dyn = propRoot(px, pz, ry), sc = dynTexPlane('term' + idx, 0.35, 0.26, 256, 192, dyn, [-0.1, 0.955, 0.472], 1.2);
   const pos = localPt(r, -0.1, 0.96, 0.6);
-  const T = { h, i: idx, x: pos.x, z: pos.z, pos, sc, done: false, prog: 0, active: false, away: 0, drawK: '', need: 12, woke: 0 };
+  const T = { h, i: idx, x: pos.x, z: pos.z, pos, scr: localPt(r, -0.1, 0.955, 0.472), sc, done: false, prog: 0, active: false, away: 0, drawK: '', need: 12, woke: 0 };
   W9.terms.push(T); h.term = T;
   W.interact.push({ x: pos.x, z: pos.z, y: 0.96, r: 2.1, label: () => 'DOWNLOAD M.E.G. DATA', ok: () => !T.done && !T.active, act: () => startDownload(T) });
   drawTerm(T);
