@@ -56,17 +56,19 @@ function startDownload(T) {
   if (T.done || T.active) return;
   T.active = true; T.prog = 0; T.away = 0; T.need = [8, 10, 13][G.diff]; T.chirpT = 0.8; T.half = false; T.warned = false;
   SFX9.modem(P9({ x: T.x, z: T.z, y: 0.96 })); makeNoise(0.3); FX.glitch = Math.max(FX.glitch, 0.5);
-  toast('DOWNLOADING — STAY CLOSE TO THE TERMINAL', 2.6);
+  if (HACK9.skip) toast('DOWNLOADING — STAY CLOSE TO THE TERMINAL', 2.6);
+  hackStart9(T);   // r6: the transfer moves as you verify packets
   if (G9.phase === 'arrive') setPhase9('data');
   noiseAt9(T.x, T.z, 0.9, 0.55);   // the modem screech carries: a Wretch sleeping close by stirs (it only wakes if it then hears you)
   drawTerm(T);
 }
 function updateTerms9(dt) {
-  termZoom9(dt);
+  hackTick9(dt); termZoom9(dt);
   for (const T of W9.terms) {
     if (!T.active) continue;
     const near = dist2(T.x, T.z, PL.x, PL.z) < 3.4;
-    if (near) { T.prog += dt; T.away = 0; T.warned = false; } else T.away += dt;
+    if (near) { if (HACK9.skip) T.prog += dt; T.away = 0; T.warned = false; } else T.away += dt;   // r6: progress comes from PACKET STACK (skip = the old timed transfer, tests only)
+    if (HACK9.T === T && !HACK9.skip) drawTerm(T);
     T.chirpT -= dt;
     if (near && T.chirpT <= 0) { T.chirpT = rnd(0.5, 1.3); SFX9.chirp(P9({ x: T.x, z: T.z, y: 0.96 })); makeNoise(0.14); noiseAt9(T.x, T.z, 0.4, 0.1); }
     if (!T.half && T.prog > T.need * 0.5) { T.half = true; SFX9.modem(P9({ x: T.x, z: T.z, y: 0.96 })); noiseAt9(T.x, T.z, 0.9, 0.55); }
@@ -84,9 +86,10 @@ function termZoom9(dt) {
     const off = Math.hypot(angDiff(PL.yaw, yawTo), pitchTo - PL.pitch);
     if (off > 0.55) continue;
     const H = hearLimit9(); if (H.hunt || H.sus > 0.6 || G.chase > 0.3) continue;   // the modem's own screech stirs a sleeper a little; that alone doesn't break the shot
-    want = (0.2 + 0.8 * clamp(T.prog / T.need, 0, 1)) * clamp(1 - (off - 0.3) / 0.25, 0, 1); aim = { yaw: yawTo, pitch: pitchTo };
+    const pr = clamp(T.prog / T.need, 0, 1); want = (HACK9.on && HACK9.T === T ? 1 : 0.2 + 0.8 * pr) * clamp(1 - (off - 0.3) / 0.25, 0, 1); aim = { yaw: yawTo, pitch: pitchTo };
   }
-  PL.tz = want > (PL.tz || 0) ? damp(PL.tz || 0, want, 1.6, dt) : damp(PL.tz || 0, want, 7, dt);
+  PL.tz = want > (PL.tz || 0) ? damp(PL.tz || 0, want, HACK9.on ? 3 : 1.6, dt) : damp(PL.tz || 0, want, 7, dt);
+  document.body.classList.toggle('hacking', HACK9.on && PL.tz > 0.3);
   if (aim && PL.tz > 0.02) { const k = Math.min(1, dt * 2.2 * PL.tz); PL.yaw += angDiff(PL.yaw, aim.yaw) * k; PL.pitch += (aim.pitch - PL.pitch) * k; }   // a soft frame on the monitor; the mouse still wins
 }
 function finishDownload(T) {
@@ -264,7 +267,7 @@ async function goLevel9(from) {
   if (AU.ctx && AU.ctx.state === 'suspended') AU.ctx.resume();
   teardownScene();
   LVL = 9; setDims(L9_N, L9_LMR); document.body.classList.add('lvl9'); AU.remap = remap9;
-  resetG9(); resetP9(); tasksReset('LEVEL 9 · DARKENED SUBURBS');
+  resetG9(); resetP9(); resetHack9(); tasksReset('LEVEL 9 · DARKENED SUBURBS');
   const prog = (p, m) => { $('loadFill').style.width = (p * 100).toFixed(0) + '%'; $('loadMsg').textContent = m; };
   RNG = mulberry32((Math.random() * 4294967296) >>> 0);
   await buildWorld9(prog);

@@ -1,0 +1,16 @@
+error: Failed to load resource: net::ERR_FAILED
+QA load ms 727
+QA windows {"wins":651,"holes":186,"portals":189,"look":375,"portalMesh":true}
+QA PASS real windows downstairs, portals upstairs, LOOK OUTSIDE on each
+QA stand {"g1":{"pl":[16.2,15.8],"portalOn":false,"k":0},"g2":{"pl":[16.2,11.4],"portalOn":false,"k":0},"u1":{"pl":[170.6,48.6],"portalOn":true,"k":1}}
+QA PASS upstairs portal renders while you face it
+QA peek {"pk":{"lab":"LOOK OUTSIDE","lab2":"STOP LOOKING","peek":true,"k":1,"camD":0,"portal":true},"pk2":{"peek":false}}
+QA PASS LOOK OUTSIDE puts the camcorder at the glass (portal live upstairs)
+QA PASS stepping away ends it
+QA collide {"side":-0.36}
+QA PASS the sill still blocks: you stay inside
+QA deadbolt {"latched":true,"lk":1,"rot0":0,"rot1":-1.57,"bolt":0.05}
+QA PASS latching turns the thumb-turn and throws the bolt
+QA errs {"n":0,"seen":{},"last":""}
+QA PASS no recovered frame errors
+QA PAGE CLOSE

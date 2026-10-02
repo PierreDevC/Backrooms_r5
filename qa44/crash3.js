@@ -1,5 +1,6 @@
 // Repro: crouching at the 3rd terminal while a house Wretch chases you (Level 9). Catches exceptions from simStep + updateHUD.
 module.exports = async (page) => {
+  await page.evaluate(() => { const B = window.__BR; if (B.HACK9) B.HACK9.skip = true; });   // r6: the old timed transfer (PACKET STACK is tested in qa_r6/l9_hack.js)
   for (const diff of [0, 1, 2]) for (let rep = 0; rep < 2; rep++) {
     await page.evaluate(d => { const B = window.__BR; B.G.state = 'title'; B.G.diff = d; B.goLevel9(null); }, diff);
     await page.waitForFunction(() => ['intro', 'play'].includes(window.__BR.G.state), null, { timeout: 240000 });

@@ -72,7 +72,7 @@ function findInteract() {
   }
   return best;
 }
-function interact() { if (DOC.open) { docClose(); return; } const it = PL.focus; if (it && it.ok()) it.act(); }   // r6: E first closes an open document
+function interact() { if (DOC.open) { docClose(); return; } if (LVL === 9 && HACK9.on) { hackStop9('YOU STEP BACK FROM THE TERMINAL'); return; } const it = PL.focus; if (it && it.ok()) it.act(); }   // r6: E first closes an open document
 
 function hurt(dmg, src) {
   if (G.state !== 'play') return;
@@ -105,10 +105,12 @@ function updatePlayer(dt) {
   if (JUST.has('Tab') && LVL === 9) toggleMap9();
   if (JUST.has('KeyC')) PL.crouch = !PL.crouch;
   if (JUST.has('KeyZ')) PL.zoomT = !PL.zoomT;
+  if (LVL === 9) hackKeys9(JUST);   // r6: PACKET STACK takes the movement keys while you're at a terminal
   JUST.clear();
   // movement
   let ix = (K.has('KeyD') || K.has('ArrowRight') ? 1 : 0) - (K.has('KeyA') || K.has('ArrowLeft') ? 1 : 0) + TOUCH.mx;
   let iz = (K.has('KeyW') || K.has('ArrowUp') ? 1 : 0) - (K.has('KeyS') || K.has('ArrowDown') ? 1 : 0) + TOUCH.mz;
+  if (LVL === 9 && HACK9.on) { ix = 0; iz = 0; }
   const il = Math.hypot(ix, iz); if (il > 1) { ix /= il; iz /= il; }
   const crouch = PL.crouch; // C toggles crouch (Ctrl removed in r4.4: Ctrl+W closed the browser tab)
   const runKey = K.has('ShiftLeft') || K.has('ShiftRight');
@@ -180,7 +182,7 @@ function playerCamera(dt) {
   CAM.position.set(PL.x + Math.cos(PL.yaw) * bobX, eye + bobY, PL.z - Math.sin(PL.yaw) * bobX);
   CAM.rotation.set(PL.pitch + np + bobY * 0.25, PL.yaw + ny, PL.roll);
   PL.fovK = damp(PL.fovK, PL.run ? 1 : 0, 4, dt);
-  const base = S.fov * Math.PI / 180, zf = lerp(1, 2.4, PL.zk) * lerp(1, 2.6, LVL === 9 ? PL.tz || 0 : 0);   // r6: Level 9 terminals push in
+  const base = S.fov * Math.PI / 180, zf = lerp(1, 2.4, PL.zk) * lerp(1, LVL === 9 && HACK9.on ? 3.6 : 2.6, LVL === 9 ? PL.tz || 0 : 0);   // r6: Level 9 terminals push in
   CAM.fov = 2 * Math.atan(Math.tan(base / 2) / zf) + PL.fovK * 0.05;
   // flashlight / IR lamp in slot 0
   const f = CAM.getDirection(BABYLON.Axis.Z), r = CAM.getDirection(BABYLON.Axis.X), u = CAM.getDirection(BABYLON.Axis.Y);

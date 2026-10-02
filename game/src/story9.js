@@ -105,10 +105,11 @@ function buildTerminal(h, idx) {
   const pos = localPt(r, -0.1, 0.96, 0.6);
   const T = { h, i: idx, x: pos.x, z: pos.z, pos, scr: localPt(r, -0.1, 0.955, 0.472), sc, done: false, prog: 0, active: false, away: 0, drawK: '', need: 12, woke: 0 };
   W9.terms.push(T); h.term = T;
-  W.interact.push({ x: pos.x, z: pos.z, y: 0.96, r: 2.1, label: () => 'DOWNLOAD M.E.G. DATA', ok: () => !T.done && !T.active, act: () => startDownload(T) });
+  W.interact.push({ x: pos.x, z: pos.z, y: 0.96, r: 2.1, label: () => T.active ? 'RESUME THE TRANSFER' : 'DOWNLOAD M.E.G. DATA', ok: () => !T.done && (!T.active || (!HACK9.on && !HACK9.skip)), act: () => T.active ? hackStart9(T) : startDownload(T) });   // r6: PACKET STACK
   drawTerm(T);
 }
 function drawTerm(T) {
+  if (T.active && !T.done && HACK9.T === T && HACK9.g && !HACK9.skip) { drawHack9(T); return; }   // r6: the mini-game owns the screen
   const c = T.sc.ctx, w = 256, h = 192, blink = Math.floor(FX.t * 2) % 2, st = T.done ? 'done' : T.active ? (T.away > 0.25 ? 'lost' : 'dl') : 'idle';
   const pc = Math.floor(clamp(T.prog / T.need, 0, 1) * 100), key = st + pc + blink;
   if (key === T.drawK) return; T.drawK = key;

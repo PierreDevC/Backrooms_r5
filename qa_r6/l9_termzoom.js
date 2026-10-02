@@ -2,6 +2,7 @@
 const path = require('path');
 const STAND = `const sp = (T) => { const dx = T.x - T.scr.x, dz = T.z - T.scr.z, l = Math.hypot(dx, dz) || 1; return { x: T.scr.x + dx / l * 1.1, z: T.scr.z + dz / l * 1.1 }; };`;
 module.exports = async (page) => {
+  await page.evaluate(() => { const B = window.__BR; if (B.HACK9) B.HACK9.skip = true; });   // r6: the old timed transfer (PACKET STACK is tested in qa_r6/l9_hack.js)
   const out = process.env.BR_QA_OUT || __dirname, ok = (c, m) => console.log((c ? 'QA PASS ' : 'QA FAIL ') + m);
   await page.evaluate(() => { const B = window.__BR; B.G.state = 'title'; B.G.diff = 0; B.RUN.f = {}; B.G9.from = null; B.goLevel9(null); });
   await page.waitForFunction(() => ['intro', 'play'].includes(window.__BR.G.state) && window.__BR.W9.terms && window.__BR.W9.terms.length, null, { timeout: 240000 });

@@ -46,7 +46,7 @@ function briefSlides9() {
         <li>${bn(1)}<span>Your <b>objective</b> sits under the compass. The <b>▼ marker</b> points to the next goal.</span></li>
         <li>${bn(2)}<span>Go <b>north-east</b> to the outpost and study the <b>map</b> by its gate (${bk('E', 'USE')}). Reopen it with ${bk('Tab', 'MAP')}.</span></li>
         <li>${bn(3)}<span>Start the terminal in each of the three <b class="red">red houses</b> (${bk('E', 'USE')}) and <b>stay close</b>. At <b>DATA 3/3</b> the gate opens.</span></li>
-      </ol><p class="bNote">Some houses have more to say than others, and there is more than one way out of the lab. ${notesKey0()}</p>` },
+      </ol><p class="bNote">Each terminal runs <b>PACKET STACK</b>: drop the blocks and complete rows to send the data (${IS_TOUCH ? 'stick to move, turn and drop' : `${bk('A', '')}/${bk('D', '')} move, ${bk('W', '')} turn, ${bk('S', '')} drop`}). Some houses have more to say than others, and there is more than one way out of the lab. ${notesKey0()}</p>` },
     { t: 'THE NEIGHBORHOOD WATCH', alt: 'A tall figure in a dark coat walking down the street with a flashlight; its amber compass blip and a house porch are highlighted.',
       body: `<ol class="bList">
         <li>${bn(1)}<span>The <b>Watch</b> patrols the streets. If its <b>flashlight</b> finds you, it gives chase.</span></li>

@@ -6,7 +6,7 @@ A Babylon.js found-footage survival-horror game, delivered as one HTML file.
 r6 adds places, a second route through each level's key step, documents, optional leads and an ending assembled from your choices. Press **J** (or pause → FIELD NOTES) for objectives, leads and every document you've found. Story design: `docs/STORY.md`.
 
 1. Level 0: recover four tapes, learn the exit code, power the exit keypad (three breakers in the substation, or Brandt's battery from the M.E.G. camp) and escape the yellow maze. Reyes is hurt in the flooded office; Okafor left three logbook pages.
-2. Level 9: download data, get into the lab, then get an administrator keycard: cure Dr. Hale, or open the wall safe in his house on Maple Street. The blue house and the block captain's house have their own stories. Wretches inside houses are blind and hunt by sound: watch the NOISE meter and crouch. A short LEVEL 9 BRIEFING with screenshots plays on first arrival (pause → FIELD BRIEFING to see it again).
+2. Level 9: download data by playing PACKET STACK on each terminal (A/D move, W turn, S drop), get into the lab, then get an administrator keycard: cure Dr. Hale, or open the wall safe in his house on Maple Street. The blue house and the block captain's house have their own stories. Wretches inside houses are blind and hunt by sound: watch the NOISE meter and crouch. A short LEVEL 9 BRIEFING with screenshots plays on first arrival (pause → FIELD BRIEFING to see it again).
 3. Level 5: unlock the staff door with three housekeeping keys or the night manager's master key (the guest who never checked out wants a drink), vent three boiler valves and escape the hotel.
 4. **Level 18 — Nostalgic Memories:** follow the Plush Dino through a preschool; recover four childhood drawings, pin them on MY MEMORIES, colour in the door with crayons from the art room, and leave through the door you drew.
 
@@ -19,7 +19,7 @@ python3 -m http.server 8000 --bind 127.0.0.1
 ```
 Visit `http://localhost:8000/The_Backrooms_Found_Footage.html`. Append `?debug&level=18` to test the new level directly. `?level=9` and `?level=5` are also supported. In the title menu, SELECT LEVEL starts Level 0, Level 9, Level 5 or Level 18 directly.
 
-WASD/arrows move · mouse look · Shift sprint · C crouch (toggle) · F flashlight · N night vision · Z or hold right mouse zoom · E/Enter interact · Q almond water · R battery · Esc/P pause · M mute. Level 9: right-click a door (or X) to latch it, Tab map. Touch controls appear on phones.
+WASD/arrows move · mouse look · Shift sprint · C crouch (toggle) · F flashlight · N night vision · Z or hold right mouse zoom · E/Enter interact · Q almond water · R battery · Esc/P pause · M mute. Level 9: right-click a door (or X) to latch it (the deadbolt turns), Tab map, LOOK OUTSIDE at any window. Touch controls appear on phones.
 
 On Easy and Normal, dying lets you RETRY FROM CHECKPOINT: you keep everything already done in that level and respawn at the last checkpoint (level start, each tape / download / key / valve / drawing and other milestones). Nightmare restarts the level. Checkpoints last for the current run, not across reloads.
 

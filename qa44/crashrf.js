@@ -1,6 +1,7 @@
 // r4.4 QA: REAL render-loop frames at the 3rd computer, its Wretch chasing, crouched + moving with real key events; then an injected
 // exception inside the frame must not stop the loop.
 module.exports = async (page) => {
+  await page.evaluate(() => { const B = window.__BR; if (B.HACK9) B.HACK9.skip = true; });   // r6: the old timed transfer (PACKET STACK is tested in qa_r6/l9_hack.js)
   const R = {};
   await page.evaluate(() => { const B = window.__BR; B.S.qual = 0; B.G.diff = 1; B.G9.from = null; B.goLevel9(null); });
   await page.waitForFunction(() => window.__BR.G.state === 'play', null, { timeout: 240000 });

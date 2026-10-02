@@ -278,3 +278,4 @@ body:not(.lvl9) #btnPBrief{display:none}
 #toast.long{font-size:clamp(18px,2.6vw,30px);max-width:92vw;white-space:normal;text-align:center}
 body.docopen #subs,body.docopen #toast{left:31%;width:min(560px,56vw);white-space:normal}
 @media (max-width:700px){body.docopen #subs,body.docopen #toast{left:50%;top:auto}}
+body.hacking #toast{top:9%}body.hacking #subs{bottom:4%}
