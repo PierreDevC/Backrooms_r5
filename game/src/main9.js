@@ -58,6 +58,7 @@ function startDownload(T) {
   SFX9.modem(P9({ x: T.x, z: T.z, y: 0.96 })); makeNoise(0.3); FX.glitch = Math.max(FX.glitch, 0.5);
   if (HACK9.skip) toast('DOWNLOADING — STAY CLOSE TO THE TERMINAL', 2.6);
   hackStart9(T);   // r6: the transfer moves as you verify packets
+  if (G9.data === 2 && !T.beatDone) { T.beatDone = true; watchBeat9(T.h); }   // r6: the last house draws the Watch
   if (G9.phase === 'arrive') setPhase9('data');
   noiseAt9(T.x, T.z, 0.9, 0.55);   // the modem screech carries: a Wretch sleeping close by stirs (it only wakes if it then hears you)
   drawTerm(T);

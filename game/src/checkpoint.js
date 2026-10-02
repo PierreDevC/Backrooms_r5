@@ -69,7 +69,7 @@ function cpRespawn9() {
   for (const w of AI9.wretches) {
     if (!w.present) continue;
     w.place(w.home.x, w.home.z, w.hyaw);
-    Object.assign(w, { st: 'dormant', stT: 0, sus: 0, hear: 0, stirred: false, lk: null, unheardT: 0, cl: null, yOff: 0, wp: null, doorT: 0, bangs: 0, atkCd: 1, fc: -1, dir: -1 });
+    Object.assign(w, { st: 'rest', restT: rnd(4, 8), stT: 0, sus: 0, hear: 0, stirred: false, lk: null, unheardT: 0, cl: null, yOff: 0, wp: null, doorT: 0, bangs: 0, atkCd: 1, fc: -1, dir: -1 });
     w.sync();
   }
   const S = streetCells9();

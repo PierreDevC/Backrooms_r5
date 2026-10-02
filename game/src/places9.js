@@ -287,4 +287,26 @@ function drawStory9(c, X, Y, sc) {   // street names and the story houses on the
   if (R.relief && (P9S.reliefSaid || P9S.seen.relief)) mark(R.relief, 'R', '#ffb060');
   if (R.watch && P9S.seen.watch) mark(R.watch, 'W', '#ff8080');
 }
-if (/[?&]debug/.test(location.search)) addEventListener('load', () => Object.assign(window.__BR || (window.__BR = {}), { P9S, readHale9, useSafe9, takeSpare9, readRota9, playAbara9, safeKnown9, tasks9, arrive9, flags9, rolePlan9, hudItems9, closeMap9, studyMap9, startTp9, LAB_X }));
+// ----- the Watch: a whistle on its rounds; on the third download it may walk a beat round that house -----
+SFX9.whistle = function (pos) { shot((d, t) => {   // a pea whistle: two blasts, the ball rattling in it
+  for (const [t0, len] of [[0, 0.55], [0.75, 0.95]]) {
+    for (let k = 0; k * 0.034 < len; k++) tone(d, t + t0 + k * 0.034, 0.05, 'square', k % 2 ? 3150 : 2860, k % 2 ? 3120 : 2880, 0.05, 0.003);
+    nz(d, t + t0, len, 'bandpass', 3000, 3, 0.08, 0.02);
+  }
+  return 2.2; }, pos, 1); };
+function watchWhistle9(w) {
+  w.whistled = FX.t; SFX9.whistle({ x: w.x, y: 2.2, z: w.z, pl: { x: PL.x, z: PL.z }, ref: 14, roll: 0.55 });
+  if (!G9.whistleTip && physD9(w) < 95) { G9.whistleTip = true; later(1.4, () => toast('A WHISTLE · THE WATCH IS ON ITS ROUNDS', 2.6)); }
+}
+function watchBeat9(h) {   // the third terminal: odds are the Watch comes to walk round this house while you work
+  if (!h || RNG() > [0.55, 0.75, 0.9][G.diff]) return null;
+  let w = AI9.watch.filter(q => q.st !== 'chase' && q.st !== 'notice').sort((a, b) => a.d - b.d)[0] || null;
+  if (!w && AI9.watch.length < 3) w = spawnWatch();
+  if (!w) return null;
+  const cx = (h.hx + HS / 2) * CELL, cz = (h.hz + HS / 2) * CELL, cells = [];
+  for (const c of streetCells9()) if (Math.hypot(cellCenter(c % N) - cx, cellCenter((c / N) | 0) - cz) < 20) cells.push(c);   // the street in front of (and beside) the house
+  w.beat = { x: cx, z: cz, until: FX.t + 80, cells, h }; if (w.st === 'patrol' || w.st === 'leave') { w.st = 'patrol'; w.wp = null; } w.callT = rnd(2, 4);
+  later(5, () => { if (LVL === 9 && G.state === 'play') say('M.E.G. OUTPOST 9', `Nine. The Watch just turned onto ${shortSt9(h.street)}. Be quick in there.`, { radio: true }); });
+  return w;
+}
+if (/[?&]debug/.test(location.search)) addEventListener('load', () => Object.assign(window.__BR || (window.__BR = {}), { P9S, watchBeat9, watchWhistle9, readHale9, useSafe9, takeSpare9, readRota9, playAbara9, safeKnown9, tasks9, arrive9, flags9, rolePlan9, hudItems9, closeMap9, studyMap9, startTp9, LAB_X }));

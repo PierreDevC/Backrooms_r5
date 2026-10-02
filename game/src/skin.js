@@ -84,7 +84,7 @@ function sknScene() {
 const SKP = {
   explorer: { outfit: 'HAZMAT', len: {}, cross: { limb: 1.12, torso: 1.06 }, inf: [0.014, 0.004, 0.022], loco: { idle: 'idle', walk: 'walk', run: 'jog', sprint: 'sprint' }, spec: 0.32, shin: 22, wrinkle: 0.85, wet: 0.06, wrap: 0.45 },
   howler: { outfit: 'CREATURE', len: { leg: 1.36, arm: 1.6, hand: 1.5, spine: 1.14, neck: 2.2, head: 1.18 }, cross: { limb: 0.62, torso: 0.78, neck: 0.6, head: 0.82 }, inf: [0, 0, 0], loco: { idle: 'zidle', walk: 'zwalk', run: 'sprint', sprint: 'sprint' }, spec: 0.9, shin: 42, wrinkle: 0.5, wet: 0.7, wrap: 0.1, mottle: 0.7, eye: [0.95, 0.92, 0.8, 1] },
-  watch: { outfit: 'WATCH', len: { leg: 1.42, arm: 1.75, spine: 1.18, neck: 1.6, hand: 1.3 }, cross: { limb: 0.82, torso: 0.9 }, inf: [0.012, 0, 0], loco: { idle: 'idle', walk: 'fwalk', run: 'jog', sprint: 'sprint' }, spec: 0.22, shin: 14, wrinkle: 0.6, wet: 0.1, wrap: 0.25, mottle: 0.6, eye: [1, 0.95, 0.72, 1] },
+  watch: { outfit: 'WATCH', len: { leg: 1.8, arm: 2.25, spine: 1.42, neck: 2.25, hand: 1.7, head: 0.88 }, cross: { limb: 0.68, torso: 0.84, neck: 0.75 }, inf: [0.012, 0, 0], loco: { idle: 'idle', walk: 'fwalk', run: 'jog', sprint: 'sprint' }, spec: 0.22, shin: 14, wrinkle: 0.6, wet: 0.1, wrap: 0.25, mottle: 0.6, eye: [1, 0.97, 0.78, 2.4] },   // r6: taller (head ≈ 2.7 m), thinner, longer arms, a small head on a long neck
   wretch: { outfit: 'RAGS', len: { arm: 1.12, neck: 1.2 }, cross: { limb: 0.68, torso: 0.8, neck: 0.75 }, inf: [0, 0, 0], loco: { idle: 'zidle', walk: 'zwalk', run: 'jog', sprint: 'sprint' }, spec: 0.5, shin: 26, wrinkle: 0.85, wet: 0.3, wrap: 0.45, mottle: 0.95, eye: [1, 0.9, 0.6, 0.6] },
   subject: { outfit: 'GOWN', len: { arm: 1.08 }, cross: { limb: 0.74, torso: 0.84 }, inf: [0, 0, 0], loco: { idle: 'cidle', walk: 'zwalk', run: 'jog', sprint: 'sprint' }, spec: 0.4, shin: 22, wrinkle: 0.6, wet: 0.25, wrap: 0.45, mottle: 0.7, eye: [1, 0.9, 0.6, 0.3] },
   hale: { outfit: 'LAB', len: {}, cross: {}, inf: [0.008, 0, 0], loco: { idle: 'idle', walk: 'walk', run: 'jog', sprint: 'sprint' }, spec: 0.28, shin: 20, wrinkle: 0.35, wet: 0, wrap: 0.5, mottle: 0.2 },
@@ -365,8 +365,8 @@ function buildWatchSk() {
   const CAP = [0.08, 0.1, 0.18], COAT = [0.12, 0.11, 0.1];
   part('Cylinder', { diameter: 0.205, height: 0.085, tessellation: 16 }, h, m, CAP, 0, sknAt('Head', [0, 1.775, -0.012]));
   part('Box', { width: 0.17, height: 0.012, depth: 0.12 }, h, m, CAP, 0, sknAt('Head', [0, 1.745, 0.115]), [-0.15, 0, 0]);
-  part('Cylinder', { diameterTop: 0.36, diameterBottom: 0.6, height: 0.7, tessellation: 14, cap: BABYLON.Mesh.NO_CAP, sideOrientation: BABYLON.Mesh.DOUBLESIDE }, r.fPelvis, m, COAT, 0, [0, -0.32, -0.01], null, [1, 1, 0.8]);
-  for (let i = 0; i < 9; i++) { const a = i / 9 * TAU; part('Box', { width: 0.07, height: rnd(0.16, 0.34), depth: 0.01 }, r.fPelvis, m, COAT, 0, [Math.sin(a) * 0.28, -0.68, Math.cos(a) * 0.23], [0, a, rnd(-0.1, 0.1)]); }
+  part('Cylinder', { diameterTop: 0.34, diameterBottom: 0.62, height: 1.05, tessellation: 14, cap: BABYLON.Mesh.NO_CAP, sideOrientation: BABYLON.Mesh.DOUBLESIDE }, r.fPelvis, m, COAT, 0, [0, -0.5, -0.01], null, [1, 1, 0.8]);   // r6: the coat reaches the longer shins
+  for (let i = 0; i < 11; i++) { const a = i / 11 * TAU; part('Box', { width: 0.07, height: rnd(0.2, 0.5), depth: 0.01 }, r.fPelvis, m, COAT, 0, [Math.sin(a) * 0.29, -1.05, Math.cos(a) * 0.24], [0, a, rnd(-0.12, 0.12)]); }
   r.sk.fol[1].off.shift = 0.3;
   r.torch = part('Cylinder', { diameter: 0.06, height: 0.26, tessellation: 10 }, r.el[1], m, [0.1, 0.1, 0.1], 0, [0, -0.78, 0.05]);
   part('Cylinder', { diameter: 0.07, height: 0.015, tessellation: 12 }, r.el[1], m, [1, 0.95, 0.8], 1, [0, -0.915, 0.05]);

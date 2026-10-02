@@ -81,6 +81,7 @@ Required: the map → three terminals (any order) → the gate → the lab → *
 | abara2 | S. ABARA · TAPE | tape | Hale isn't Hale anymore. He knows the doors. He knocks first, like he is being polite. | |
 | abara3 | S. ABARA · TAPE | tape | If Nine sends anybody else, don't open the cell. Please. I mean it. | |
 | abaraR | M.E.G. OUTPOST 9 | radio | Nine. That was Abara. I hoped nobody would play that. | 20 s after first play |
+| beat | M.E.G. OUTPOST 9 | radio | Nine. The Watch just turned onto {street}. Be quick in there. | the Watch is sent to walk round the third terminal's house |
 | maple | M.E.G. OUTPOST 9 | radio | Nine. Hale lived at {number} Maple Street. If you go up there, leave his things alone. | ~9 s after reaching the lab |
 | safe1 | M.E.G. OUTPOST 9 | radio | Nine. You opened his safe. That card works the elevator. | spare card taken |
 | safe2 | M.E.G. OUTPOST 9 | radio | He's still down in that cell. Your call. | |
