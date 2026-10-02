@@ -35,5 +35,8 @@ G/PL/LV/AI/FX/W/SCN/CAM/ENG are shared. G18 tracks phase, carry, pinned, found, 
 Room geometry, anchors and memory text are in docs/LEVEL18.md and source. Stalking/hunt thresholds and difficulty tables are in ai18.js. Maintain collision, interaction range and orientation when moving drawings; pictures use local +z planes. Number-frieze texture orientation was visually checked. Supplies are procedural while the objective layout is fixed.
 
 
+## r7 additions
+`state5.js` and `portal5.js` (after places5.js): the State Floor (planState5 in genLayout5 right after planPlaces5, lightState5 from lightPlaces5, furnishState5 / furnishFemaleBoil5 in buildProps5, buildState5 at the end of buildPlaces5, doorLabelSt5 / useDoorSt5 at the top of the places5 door hooks, objState5 / targetState5 for phase `fire`, state5Events) and the portal doors (buildPortals5 at the end of buildStory5, portalTick5 at the end of worldFX5, portalCross5 in gameEvents5). `moths5.js` (after ai5.js): MothF, acid, Mothex (useSpray5 on G in player.js), femaleInit5 from initAI5, femaleTick5 from updateAI5. `memories18.js` (after places18.js): planMem18 / lightMem18 / furnishMem18 / buildMem18 / mem18Events, phase `name` (finishDoor18 → openDoor18 once signed). Level 9 `buildCar` rewritten in place.
+
 ## r6 story layer
 `story.js` (after brief.js): run flags, per-level tasks and FIELD NOTES, document overlay, hold actions, `twin()`. `places0.js` (after world.js), `places9.js` (after story9.js), `places5.js` (after story5.js), `places18.js` (after story18.js): each level's added places, routes, documents and beats, hooked into the existing layout / build / events / objective / target functions (see HANDOFF.md). Design and lines: docs/STORY.md.

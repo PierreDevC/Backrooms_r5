@@ -1,0 +1,21 @@
+error: Failed to load resource: net::ERR_FAILED
+QA load ms 743
+QA l18 name start {"rooms":["music","cubby","party","bus"],"tiles":8,"labels":["THE TOY BOX · IT WON'T OPEN","A CUBBY WITH NO NAME · LOCKED","OPEN THE BIRTHDAY CARD","MAKE A WISH","OPEN THE LUNCHBOX"],"musicSafe":true}
+QA PASS music room (8-key floor piano), cubbies, the birthday room and the bus are built
+QA PASS their interactables: THE TOY BOX · IT WON'T OPEN,A CUBBY WITH NO NAME · LOCKED,OPEN THE BIRTHDAY CARD,MAKE A WISH,OPEN THE LUNCHBOX
+QA PASS the music room is a bright, safe room
+QA l18 name story {"phase":"name","on":false,"exitLabel":"THE DOOR NEEDS YOUR NAME · YOUR CUBBY","obj":"THE DOOR NEEDS YOUR NAME · YOUR CUBBY","letter":"to the grown up who fell inyou forgot us. thats ok. everybody does.your drawings got lost all over. find all 4 and pin them on MY MEMORYS.then you can draw a door. you need crayons for doors. dino helps.put your name on it or it goes to anybodys house. your name is in your cubby. teacher keeps the cubby key in the toy box. play our song and it opens.we wrote the song in your birthday card.dont let the tall one get you in the dark. it looks like somebody you know. it isnt.— the Children","cubby0":true,"obj1":"THE CUBBY KEY · THE MUSIC ROOM","chest0":true,"obj2":"FIND THE SONG · YOUR BIRTHDAY CARD, IN THE DARK","card":true,"cardTxt":"HAPPY BIRTHDAY FROM THE SUNSHINE ROOMyour song, so you dont forget it:RED · RED · BLUE · BLUE · PURPLE · PURPLE · BLUEyou cried when we sang. then you laughed. then cake.love, everybody (and dino)","wish":true,"obj3":"PLAY THE SONG ON THE FLOOR PIANO · MUSIC ROOM","wrong":false,"played":true,"lid":0.99177025295098,"key":true,"unlock":true,"fog":3,"tag":true,"obj4":"WRITE YOUR NAME ON THE DOOR YOU DREW","sign":true,"phase2":"exit","on2":true,"tasks":["dino✓","draw✓","pin✓","name18✓","nametag18✓","ckey18✓","piano18✓","song18✓","sign18✓","home"],"lunch":true,"lunchTxt":"Have a good trip. Stay with your buddy.Don't trade the cookies.I'll be at the gate at three.— Mom","walk":true,"end":"YOU REMEMBERED","endText":"The door opens on a porch on Maple Street. It is morning. Somebody has left the light on anyway. In a hotel nobody visits, something large drinks from a bowl and doesn't look up. The name on the door is in your handwriting. You can read it now. The tape runs out on the step. The little green dinosaur stays behind, waiting for the next one who forgot."}
+QA PASS four pinned and coloured: the door waits for your name
+QA PASS your cubby is locked; the objective points at the music room
+QA PASS the toy box wants the song; the objective points at your birthday
+QA PASS the birthday card carries the song
+QA PASS you can make a wish
+QA PASS a wrong tune does nothing; the song opens the toy box
+QA PASS the cubby key opens your cubby, and something hears the lock
+QA PASS your name tag: now sign the door
+QA PASS signing the door finishes it
+QA PASS the bus lunchbox has a note
+QA PASS the ending mentions your name on the door and the fed moth
+QA errs {"n":0,"seen":{},"last":""}
+QA PASS no recovered frame errors
+QA PAGE CLOSE

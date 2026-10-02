@@ -28,6 +28,7 @@ function obj5() {
     case 'staff': return 'UNLOCK THE STAFF DOOR · BEVERLY ROOM';
     case 'stairs': return 'TAKE THE SERVICE STAIRS DOWN';
     case 'valves': return `VENT THE BOILERS · VALVES ${G5.valves}/3`;
+    case 'fire': return objState5();
     case 'exit': return 'REACH THE EMERGENCY EXIT';
   }
   return '';
@@ -46,6 +47,7 @@ function unlockStaff5(dr) {
   dr.locked = false; SFX5.unlock(P9({ x: dr.mx, z: dr.mz })); makeNoise(0.2);
   later(1.3, () => { setDoor(dr, true); });
   toast('STAFF DOOR UNLOCKED', 2); setPhase5('stairs'); radio5('stairs', 1.6); cpSave('STAFF DOOR');
+  if (LV.st5 && !ST5.reset) later(14, () => { if (LVL === 5 && G.state === 'play' && !ST5.reset) radioSt5('fire0'); });   // r7
 }
 function startValve5(v) {
   if (v.turned || G5.turning) return;
@@ -56,12 +58,17 @@ function finishValve5(v) {
   SFX9.hiss(P9(v.steam), 5); later(0.4, () => SFX5.pipes(P9(v.steam))); FX.glitch = Math.max(FX.glitch, 0.5); PL.shake = Math.max(PL.shake, 0.5);
   W5.steam.push({ x: v.steam.x, z: v.steam.z, t: 0 });
   wakeBoiler5(v, G5.valves >= 2);
-  if (G5.valves >= 3) { setPhase5('exit'); drawExit5(true); radio5('exit', 1.2); later(0.6, () => SFX9.klaxon(P9(W5.exit))); toast('ALL VALVES VENTED · THE EXIT IS OPEN', 3); }
+  if (G5.valves >= 3 && LV.st5 && !ST5.reset) { setPhase5('fire'); radioSt5('fire', 1.2); later(0.6, () => SFX9.rattle(P9(W5.exit))); toast('ALL VALVES VENTED · THE EXIT IS STILL LOCKED', 3); }   // r7: the fire lock
+  else if (G5.valves >= 3) { setPhase5('exit'); drawExit5(true); radio5('exit', 1.2); later(0.6, () => SFX9.klaxon(P9(W5.exit))); toast('ALL VALVES VENTED · THE EXIT IS OPEN', 3); }
   else { setPhase5(); toast(`VALVE ${G5.valves}/3 · PRESSURE DROPPING`, 2.4); if (G5.valves === 1) radio5('valve', 1); }
   cpSave(`VALVE ${G5.valves}/3`);
 }
 function useExit5() {
-  if (G5.phase !== 'exit') { SFX9.rattle(P9(W5.exit)); toast('SEALED · THE BOILER PRESSURE HOLDS IT SHUT', 2.4); makeNoise(0.2); return; }
+  if (G5.phase !== 'exit') {
+    SFX9.rattle(P9(W5.exit)); makeNoise(0.2);
+    if (LV.st5 && !ST5.reset) { ST5.lockSeen = true; toast(G5.valves >= 3 ? 'FIRE LOCK ENGAGED · RESET AT SECURITY' : 'SEALED · BOILER PRESSURE AND A FIRE LOCK', 2.6); fireTasks5(); setPhase5(); return; }
+    toast('SEALED · THE BOILER PRESSURE HOLDS IT SHUT', 2.4); return;
+  }
   win5();
 }
 function ringBell5() {
@@ -95,6 +102,7 @@ function teardown5() {
   for (const k of ['jazz', 'rumble']) { const v = G5[k]; if (!v) continue; try { if (v.src) v.src.stop(); (v.v ? v.v.g : v.g).disconnect(); if (v.bed) v.bed.disconnect(); } catch (e) {} G5[k] = null; }
   if (AI5.fl) { try { AI5.fl.g.disconnect(); } catch (e) {} AI5.fl = null; }
   document.body.classList.remove('lvl5');
+  teardownPortal5();   // r7
 }
 async function goLevel5(from) {
   const f = Object.assign({ hp: 100, san: 100, batt: [100, 90, 75][G.diff], spare: [2, 1, 1][G.diff], water: [3, 1, 1][G.diff], time: 0, dist: 0, lost: 0, tapes: 4 }, from || G5.from || {});
@@ -104,7 +112,7 @@ async function goLevel5(from) {
   if (AU.ctx && AU.ctx.state === 'suspended') AU.ctx.resume();
   teardownScene();
   LVL = 5; setDims(L5_N, L5_LMR); document.body.classList.remove('lvl9'); document.body.classList.add('lvl5'); AU.remap = remap5;
-  resetG5(); resetP5(); tasksReset('LEVEL 5 · THE HOTEL');
+  resetG5(); resetP5(); resetST5(); tasksReset('LEVEL 5 · THE HOTEL');
   const prog = (p, m) => { $('loadFill').style.width = (p * 100).toFixed(0) + '%'; $('loadMsg').textContent = m; };
   RNG = mulberry32((Math.random() * 4294967296) >>> 0);
   await buildWorld5(prog);
@@ -180,28 +188,6 @@ function startTp5(down) {
   for (let i = 0; i < 7; i++) later(i * 0.14, () => SFX.step(1, false));
   makeNoise(0.15);
 }
-function vestAt5(c) {
-  if (c < 0 || LV.zone[c] !== Z5.VEST) return null;
-  for (const w of LV.warps) { if (cIdx(w.a.vx, w.a.vy) === c) return [w.a, w.b]; if (cIdx(w.b.vx, w.b.vy) === c) return [w.b, w.a]; }
-  return null;
-}
-// walk past the middle of a vestibule and you are standing in its twin - same room, other wing
-function checkWarp5() {
-  const pr = vestAt5(cIdx(cellOf(PL.x), cellOf(PL.z)));
-  if (!pr) { G5.vest = null; return; }
-  const [v, t] = pr, s = (PL.x - v.cx) * v.fx + (PL.z - v.cz) * v.fz;
-  if (G5.vest === v && G5.vestS <= 0 && s > 0) {
-    const l = (PL.x - v.cx) * -v.fz + (PL.z - v.cz) * v.fx;
-    PL.x = t.cx + t.fx * s - t.fz * l; PL.z = t.cz + t.fz * s + t.fx * l;
-    const th = Math.atan2(t.fx, t.fz) - Math.atan2(v.fx, v.fz), cs = Math.cos(th), sn = Math.sin(th), vx = PL.vx, vz = PL.vz;
-    PL.yaw += th; PL.vx = vx * cs + vz * sn; PL.vz = -vx * sn + vz * cs;
-    const dA = W9.doorAt.get(eKey(v.vx, v.vy, v.vd)), dB = W9.doorAt.get(eKey(t.vx, t.vy, t.vd));
-    if (dA && dB) snapDoor5(dB, dA.target);
-    PL.cell = -1; updateField(); G5.warps++;
-    G5.vest = t; G5.vestS = s; return;
-  }
-  G5.vest = v; G5.vestS = s;
-}
 // the wallpaper: find the spot on the wall you are looking at
 function stareHit5() {
   const c = CAM.position, f = CAM.getDirection(BABYLON.Axis.Z), h = Math.hypot(f.x, f.z); if (h < 0.25) return null;
@@ -265,7 +251,8 @@ function gameEvents5(dt) {
     PL.x -= LOOP5.back * CELL; PL.cell = -1; updateField(); G5.loops++;
     if (G5.loops === 2 && !G5.loopHint) { G5.loopHint = true; later(0.5, () => toast('THE ROOM NUMBERS ARE REPEATING', 2.6)); radio5('loop', 3); }
   }
-  checkWarp5();
+  portalCross5();   // r7: the inner doors
+  state5Events(dt);
   eyes5(dt);
   // the elevator leaves once you have stepped out
   const E = W5.elev;
@@ -318,10 +305,10 @@ function worldFX5(dt) {
   FX.lightScale = stutter;
   FX.hurt = Math.max(0, FX.hurt - dt * 0.9); FX.glitch = Math.max(0, FX.glitch - dt * 1.3);
   const cc = cIdx(cellOf(cp.x), cellOf(cp.z)), zc = LV.zone[cc], boil = boilZ5(zc), loop = LV.reg[cc] === R5.E, L = clamp(lightAt(cp.x, cp.z) * 1.1, 0, 1);
-  FX.fogDen = loop ? 0.075 : boil ? 0.05 : zc === Z5.BEV ? 0.028 : 0.034;
+  FX.fogDen = loop ? 0.075 : boil ? 0.05 : zc === Z5.BEV || zc === Z5.EXEC || zc === Z5.REST ? 0.026 : 0.034;
   const wk = boil ? [0.07, 0.045, 0.025] : [0.1, 0.075, 0.045];
   FX.fog[0] = lerp(0.02, wk[0], L); FX.fog[1] = lerp(0.014, wk[1], L); FX.fog[2] = lerp(0.01, wk[2], L);
-  G5.expK = damp(G5.expK ?? 1.2, zc === Z5.BEV ? 1.0 : boil ? 1.3 : 1.15, 2, dt);
+  G5.expK = damp(G5.expK ?? 1.2, zc === Z5.BEV || zc === Z5.EXEC ? 1.0 : boil ? 1.3 : 1.15, 2, dt);
   if (G.state === 'play') FX.exposure = 0.85 * S.bright * G5.expK * lerp(1, clamp(0.3 / Math.max(PL.light, 0.01), 0.22, 1), FX.nv);
   if (W5.lensFl) setEmi(W5.lensFl, 4.2 * FX.flicker * FX.lightScale);
   if (W5.fireMat) { const f = 0.75 + 0.25 * noise1(t * 7) + 0.1 * hash1(Math.floor(t * 20)); setEmi(W5.fireMat, 3.2 * f, 1.5 * f, 0.5 * f); }
@@ -364,6 +351,7 @@ function worldFX5(dt) {
     AU.tenF.frequency.setTargetAtTime(280 + G.chase * 1500 + PL.fear * 300, now, 0.5);
   }
   for (const m of LV.chunkMeshes) { const c2 = m.__c || (m.__c = m.getBoundingInfo().boundingBox.centerWorld.clone()); m._sortD = Math.hypot(c2.x - cp.x, c2.z - cp.z); }
+  portalTick5(dt);   // r7: after the camera is final
 }
 
 // ----- HUD helpers -----
@@ -384,13 +372,14 @@ function target5() {
     case 'staff': { const d = W5.svDoor; return d ? { x: d.mx, z: d.mz } : null; }
     case 'stairs': return inBoil ? null : stairs;
     case 'valves': return inBoil ? near(W5.valves.filter(v => !v.turned)) : stairs;
+    case 'fire': return targetState5();
     case 'exit': return inBoil ? W5.exit : stairs;
   }
   return null;
 }
-function hudObj5() { return G5.phase === 'valves' || G5.phase === 'exit' ? `VALVES ${G5.valves}/3` : `KEYS ${G5.keys}/3`; }
-function hudItems5() { const a = []; if (G5.keys) a.push('KEYS ×' + G5.keys); if (G5.phase === 'exit') a.push('EXIT OPEN'); return a.join(' · ') || 'LEVEL 5'; }
+function hudObj5() { return G5.phase === 'fire' ? 'FIRE LOCK' : G5.phase === 'valves' || G5.phase === 'exit' ? `VALVES ${G5.valves}/3` : `KEYS ${G5.keys}/3`; }
+function hudItems5() { const a = []; if (G5.keys) a.push('KEYS ×' + G5.keys); if (ST5.hasSpray) a.push('MOTHEX ×' + ST5.spray); if (ST5.fireKey && !ST5.reset) a.push('FIRE KEY'); if (G5.phase === 'exit') a.push('EXIT OPEN'); return a.join(' · ') || 'LEVEL 5'; }
 
 // ----- start (after every module has initialised) -----
-if (/[?&]debug/.test(location.search)) Object.assign(window.__BR || (window.__BR = {}), { G5, W5, AI5, LV5: () => LV, goLevel5, worldFX5, gameEvents5, target5, win5, takeKey5, unlockStaff5, startValve5, finishValve5, useExit5, closeElev5, checkWarp5, stareHit5, radio5, Moth, spawnMoth5, wakeBoiler5, startTp5, snapDoor5, foes5, readNote5, ringBell5, callElev5, cellCenter, CELL5: () => CELL, Z5, R5, BEV5, LOOP5, setPhase5, updatePlayer, playerCamera });
+if (/[?&]debug/.test(location.search)) Object.assign(window.__BR || (window.__BR = {}), { G5, W5, AI5, LV5: () => LV, goLevel5, worldFX5, gameEvents5, target5, win5, takeKey5, unlockStaff5, startValve5, finishValve5, useExit5, closeElev5, stareHit5, radio5, Moth, spawnMoth5, wakeBoiler5, startTp5, snapDoor5, foes5, readNote5, ringBell5, callElev5, cellCenter, CELL5: () => CELL, Z5, R5, BEV5, LOOP5, setPhase5, updatePlayer, playerCamera });
 

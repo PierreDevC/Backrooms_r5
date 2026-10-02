@@ -1,0 +1,9 @@
+error: Failed to load resource: net::ERR_FAILED
+QA load ms 776
+QA watch {"whistled":true,"blip":null,"beatAuto":true,"d0":35.9,"minD":12.6,"nearFrac":0.17,"whistles":3,"st":"patrol","sub":"Nine. The Watch just turned onto Maple. Be quick in there."}
+QA PASS the Watch whistles on its rounds
+QA FAIL on the third download it comes and walks round that house
+QA PASS it whistles while it walks the beat
+QA PASS Outpost Nine warns you
+QA PASS no recovered frame errors
+QA PAGE CLOSE

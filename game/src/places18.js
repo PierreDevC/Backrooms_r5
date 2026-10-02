@@ -12,6 +12,7 @@ function planPlaces18(room, rect, way) {
   way(14, 20, 3, 'door', { dk: 'art', plate: 'ART ROOM', col: 1, from: [14, 20] });
 }
 function lightPlaces18() {
+  lightMem18();   // r7
   if (!LV.art) return;
   for (const c of LV.art.cells) { const x = c % N, y = (c / N) | 0; if ((x + y) % 2 === 0) { LV.panels.push({ x: cellCenter(x), z: cellCenter(y), y: CEIL, state: 1, rot: 0, w: 0.62, l: 1.22 }); LV.fixtures.push({ x: cellCenter(x), z: cellCenter(y), state: 1, seed: RNG(), I: 0.5, rad: 8, sc: 2.6 }); } }
 }
@@ -21,6 +22,7 @@ function buildPlaces18() {
   const B = W18.B; W18.p18 = {};
   if (LV.art) buildArt18(B);
   buildLostFound18(B);
+  buildMem18();   // r7
 }
 function buildArt18(B) {
   const X0 = ART18.x0 * CELL, Z0 = ART18.y0 * CELL, X1 = (ART18.x1 + 1) * CELL, Z1 = (ART18.y1 + 1) * CELL, cx = (X0 + X1) / 2, cz = (Z0 + Z1) / 2;
@@ -106,13 +108,15 @@ function readLost18() {
   if (f.hale9 === 'left') L.push('A photograph of a man with a girl on his shoulders. The glass is clean.');
   if (f.hale9 === 'saved') L.push('A hospital bracelet. HALE, M. Cut off neatly.');
   if (f.pruitt5) L.push('An empty bottle of rye. Gold label.');
+  if (f.lusk5) L.push('A security officer\'s cap. LUSK on the band, in biro.');
+  if (f.fed5) L.push('A silver bowl. Still wet.');
   L.push('One red mitten.', 'A green crayon, worn down to a stub.');
   if (f.lost0 > 0) L.push(`A M.E.G. patch. Somebody wrote ${f.lost0} on the back and crossed it out.`);
   readDoc('lost18', 'LOST & FOUND', L, { kind: 'board' });
   if (!P18.lost) { P18.lost = true; task('lost', 'THE LOST & FOUND', { opt: true, quiet: true }); taskDone('lost', 'THE LOST & FOUND · YOU KNOW SOME OF THESE', true); }
 }
 function readLetter18() {
-  readDoc('letter18', 'A LETTER ON THE TEACHER\'S DESK', ['to the grown up who fell in', 'you forgot us. thats ok. everybody does.', 'your drawings got lost all over. find all 4 and pin them on MY MEMORYS.', 'then you can draw a door. you need crayons for doors. dino helps.', 'dont let the tall one get you in the dark. it looks like somebody you know. it isnt.', '— the Children'], { kind: 'board' });
+  readDoc('letter18', 'A LETTER ON THE TEACHER\'S DESK', ['to the grown up who fell in', 'you forgot us. thats ok. everybody does.', 'your drawings got lost all over. find all 4 and pin them on MY MEMORYS.', 'then you can draw a door. you need crayons for doors. dino helps.', 'put your name on it or it goes to anybodys house. your name is in your cubby. teacher keeps the cubby key in the toy box. play our song and it opens.', 'we wrote the song in your birthday card.', 'dont let the tall one get you in the dark. it looks like somebody you know. it isnt.', '— the Children'], { kind: 'board' });
   if (!P18.letterTold) { P18.letterTold = true; if (LV.art && !P18.crayons) task('art', 'THE ART ROOM · CRAYONS FOR THE DOOR', { opt: true, delay: 3 }); }
 }
 // pinning the fourth drawing: the door is outlined; with crayons it is coloured in at once, without them it waits
@@ -123,11 +127,17 @@ function doorReady18() {
 }
 function exitLabel18() {
   const X = W18.exitDoor; if (X.on) return 'WALK THROUGH THE DOOR YOU DREW';
+  if (G18.phase === 'name') return M18.name ? (holdBusy(X) ? `WRITING YOUR NAME… ${holdPct(X)}%` : 'WRITE YOUR NAME ON THE DOOR') : 'THE DOOR NEEDS YOUR NAME · YOUR CUBBY';   // r7
   if (G18.phase === 'color') return P18.crayons ? (holdBusy(X) ? `COLORING IT IN… ${holdPct(X)}%` : 'COLOR IN THE DOOR') : 'THE DOOR NEEDS COLOR · FIND CRAYONS';
   return 'A DRAWING OF A DOOR · IT ISN\'T FINISHED';
 }
 function exitUse18() {   // true = handled
-  const X = W18.exitDoor; if (X.on || G18.phase !== 'color') return false;
+  const X = W18.exitDoor; if (X.on) return false;
+  if (G18.phase === 'name') {   // r7: sign it
+    if (!M18.name) { SFX18.paper(); toast('YOUR NAME TAG IS IN YOUR CUBBY', 2.2); return true; }
+    holdStart(X, 2.0, () => signDoor18(), { r: 2.4, cancel: 'YOU STOP WRITING', tick: (dt) => { if (Math.floor(FX.t * 5) !== Math.floor((FX.t - dt) * 5)) SFX18.crayon(); } }); return true;
+  }
+  if (G18.phase !== 'color') return false;
   if (!P18.crayons) { SFX18.paper(); toast('THE ART ROOM HAS CRAYONS', 2.2); return true; }
   holdStart(X, 2.4, () => { taskDone('color', 'THE DOOR IS COLORED IN', true); finishDoor18(); }, { r: 2.4, cancel: 'YOU STOP COLORING', tick: (dt) => { if (Math.floor(FX.t * 4) !== Math.floor((FX.t - dt) * 4)) SFX18.crayon(); } });
   return true;
@@ -136,9 +146,12 @@ function tasks18() {
   task('dino', 'FOLLOW THE PLUSH DINO', { quiet: true }); if (G18.phase !== 'arrive') taskDone('dino', 'THE SUNSHINE ROOM', true);
   if (G18.phase !== 'arrive') { task('draw', `FIND YOUR DRAWINGS · ${G18.found}/4`, { quiet: true, sub: 'THE BALL PIT, THE MEADOW STUMP, ABOVE YOUR BED, THE FRIDGE' }); if (G18.found >= 4) taskDone('draw', 'FOUR DRAWINGS FOUND', true);
     task('pin', `PIN THEM ON MY MEMORIES · ${G18.pinned.length}/4`, { quiet: true }); if (G18.pinned.length >= 4) taskDone('pin', 'MY MEMORIES · 4/4', true); }
-  if (G18.phase === 'exit') { if (taskOf('color')) taskDone('color', 'THE DOOR IS COLORED IN', true); task('home', 'WALK THROUGH THE DOOR YOU DREW', { quiet: true }); }
+  if (G18.phase === 'exit' || G18.phase === 'name') { if (taskOf('color')) taskDone('color', 'THE DOOR IS COLORED IN', true); }
+  if (G18.phase === 'exit') task('home', 'WALK THROUGH THE DOOR YOU DREW', { quiet: true });
+  memTasks18();   // r7
 }
 function places18Events(dt) {
+  mem18Events(dt);   // r7
   if (LV.art && !P18.seenArt) { const a = W18.p18.art; if (a && PL.x > a.x0 && PL.x < a.x1 && PL.z > a.z0 && PL.z < a.z1) { P18.seenArt = true; toast('THE ART ROOM', 2.4); SFX.beep(1100, 0.05); if (!P18.crayons) task('art', 'THE ART ROOM · CRAYONS FOR THE DOOR', { opt: true, quiet: true }); } }
 }
 // radio fragments on arrival: whoever is still listening for you
@@ -155,6 +168,8 @@ function endText18() {
   if (f.lost0 !== undefined) S.push(f.lost0 ? `On the lobby band, ${f.lost0 === 1 ? 'one name never answers' : f.lost0 + ' names never answer'} again.` : 'On the lobby band, four voices are arguing about batteries.');
   if (f.reyes0 === 'helped') S.push('One of them is laughing at a bad joke.');
   if (f.pruitt5 === 'opened') S.push('Room ' + (f.pruittN || '') + ' is still empty. You still went in.');
+  if (f.fed5) S.push('In a hotel nobody visits, something large drinks from a bowl and doesn\'t look up.');
+  if (M18.signed) S.push('The name on the door is in your handwriting. You can read it now.');
   S.push(P18.camera ? 'The camcorder is still running. You let it.' : 'The tape runs out on the step.');
   S.push('The little green dinosaur stays behind, waiting for the next one who forgot.');
   return S.join(' ').replace('Room  is', 'His room is');

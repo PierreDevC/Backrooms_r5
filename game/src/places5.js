@@ -23,6 +23,7 @@ function planPlaces5(room, rect, way) {
   if (g) { g.pruitt = true; LV.pruitt = g; }
 }
 function lightPlaces5() {
+  lightState5();   // r7
   if (!LV.office5) return;
   const x = (OFF5.x0 + 1) * CELL, z = (OFF5.y0 + 1) * CELL;
   LV.fixtures.push({ x, z, state: 1, seed: RNG(), I: 0.3, rad: 6, sc: 1.8 }); LV.bulbs.push({ x, z, y: CEIL, kind: 'pend', state: 1 });
@@ -43,6 +44,7 @@ function buildPlaces5() {
   if (W5.deskR) { const p = localPt(W5.deskR, -0.5, 1.152, 1.55); W.interact.push({ x: p.x, z: p.z, y: 1.16, r: 1.8, label: () => 'READ THE GUEST REGISTER', ok: () => true, act: () => readRegister5() }); }
   if (LV.office5) buildOffice5(B);
   if (LV.pruitt) buildPruitt5(B);
+  buildState5();   // r7: the State Floor's story objects
 }
 function buildOffice5(B) {
   const ws = wallSlots5(LV.office5.cells).filter(s => !s.door), pick5 = (pred) => { const i = ws.findIndex(pred); return i >= 0 ? ws.splice(i, 1)[0] : ws.shift(); };
@@ -95,19 +97,21 @@ function buildPruitt5(B) {
 
 // ----- door hooks (doorLabel5 / useDoor5 call these first) -----
 function doorLabel5p(dr) {
+  const st = doorLabelSt5(dr); if (st) return st;   // r7: portal doors, security
   if (dr.pruitt) {
     if (P5.pr === 'given' && P5.keyOut) return P5.opened ? (dr.target ? 'CLOSE DOOR' : 'OPEN DOOR') : `OPEN ROOM ${pruittNum5()}`;
     return P5.rye && P5.pr === 'asked' ? `LEAVE THE RYE AT ${pruittNum5()}` : `KNOCK ON ${pruittNum5()}`;
   }
-  if (dr.locked && P5.master) return 'UNLOCK THE STAFF DOOR · MASTER KEY';
+  if (dr.locked && dr.dk === 'service' && P5.master) return 'UNLOCK THE STAFF DOOR · MASTER KEY';
   return null;
 }
 function useDoor5p(dr) {   // true = handled
+  if (useDoorSt5(dr)) return true;   // r7
   if (dr.pruitt) {
     if (P5.pr === 'given' && P5.keyOut) { if (!P5.opened) openPruitt5(dr); else useDoor(dr); return true; }
     knockPruitt5(dr); return true;
   }
-  if (dr.locked && P5.master) { unlockStaff5(dr); return true; }
+  if (dr.locked && dr.dk === 'service' && P5.master) { unlockStaff5(dr); return true; }
   return false;
 }
 
@@ -198,10 +202,11 @@ function tasks5() {
   task('staff', 'OPEN THE STAFF DOOR IN THE BEVERLY ROOM', { quiet: true, sub: 'THREE HOUSEKEEPING KEYS: WEST, NORTH AND EAST WING CLOSETS' + alt });
   task('keys', keysTxt, { quiet: true });
   if (G5.keys >= 3) taskDone('keys', 'HOUSEKEEPING KEYS · 3/3', true);
-  const past = ['stairs', 'valves', 'exit'].includes(G5.phase) || W5.svDoor && !W5.svDoor.locked;
+  const past = ['stairs', 'valves', 'fire', 'exit'].includes(G5.phase) || W5.svDoor && !W5.svDoor.locked;
   if (past) { taskDone('staff', 'STAFF DOOR OPEN', true); if (G5.keys < 3) taskDone('keys', 'HOUSEKEEPING KEYS · NOT NEEDED', true); }
-  if (G5.boilSeen || G5.phase === 'valves' || G5.phase === 'exit') { task('boil', `VENT THE BOILERS · VALVES ${G5.valves}/3`, { quiet: true }); if (G5.valves >= 3) taskDone('boil', 'BOILERS VENTED', true); }
+  if (G5.boilSeen || G5.phase === 'valves' || G5.phase === 'fire' || G5.phase === 'exit') { task('boil', `VENT THE BOILERS · VALVES ${G5.valves}/3`, { quiet: true }); if (G5.valves >= 3) taskDone('boil', 'BOILERS VENTED', true); }
   if (G5.phase === 'exit') task('exit5', 'REACH THE EMERGENCY EXIT', { quiet: true });
+  tasksState5();   // r7
 }
 function places5Events(dt) {
   const c = cIdx(cellOf(PL.x), cellOf(PL.z));
@@ -212,5 +217,5 @@ function places5Events(dt) {
     P5.ryeAsked = true; P5.busy = FX.t + 6; later(0.5, () => sayPr5('Is that housekeeping? No. Somebody with a light.'));
   }
 }
-function flags5() { flag('pruittN', pruittNum5()); flag('pruitt5', P5.opened ? 'opened' : P5.master ? 'key' : P5.pr); flag('staff5', P5.master && G5.keys < 3 ? 'master' : 'keys'); flag('register5', P5.register); }
+function flags5() { flag('lusk5', ST5.keys ? 'keys' : ST5.sec ? 'master' : ''); flag('fed5', (ST5.fedE ? 1 : 0) + (ST5.fedB ? 1 : 0)); flag('pruittN', pruittNum5()); flag('pruitt5', P5.opened ? 'opened' : P5.master ? 'key' : P5.pr); flag('staff5', P5.master && G5.keys < 3 ? 'master' : 'keys'); flag('register5', P5.register); }
 if (/[?&]debug/.test(location.search)) addEventListener('load', () => Object.assign(window.__BR || (window.__BR = {}), { P5, knockPruitt5, takeRye5, takeMaster5, openPruitt5, readRegister5, readAudit5, useSwitch5, tasks5, flags5, places5Events }));

@@ -106,6 +106,7 @@ function updatePlayer(dt) {
   if (JUST.has('Tab') && LVL === 9) toggleMap9();
   if (JUST.has('KeyC')) PL.crouch = !PL.crouch;
   if (JUST.has('KeyZ')) PL.zoomT = !PL.zoomT;
+  if (JUST.has('KeyG') && LVL === 5) useSpray5();   // r7: Mothex
   if (LVL === 9) hackKeys9(JUST);   // r6: PACKET STACK takes the movement keys while you're at a terminal
   JUST.clear();
   // movement

@@ -1,4 +1,4 @@
-# Story — r6 (story-r6 branch)
+# Story — r6 + r7 (story-r6 branch)
 
 Written with the `backrooms-dialogue` skill (`.claude/skills/backrooms-dialogue/`, imported from the Notion page "Backrooms Game — Dialogue & Story Writing"). Every line below is **text only** (subtitle + the existing radio/whisper sound). No new voice clips were recorded; see "Voicing" at the end.
 
@@ -149,6 +149,44 @@ Ending: the YOU REMEMBERED card is built from the run: Maple Street in the morni
 
 Documents: A LETTER ON THE TEACHER'S DESK (now in the Children's own spelling, and it mentions crayons), NAP TIME RULES, LOST & FOUND (see `src/places18.js`).
 
+## r7 additions (2026-10-02)
+Written with the `backrooms-dialogue` skill. All new lines are text only.
+
+### Level 5 — the State Floor, the fire lock, the females
+**Brief.** Level 5, after the staff door (or any time: the State Floor is open from the start). Channel: Outpost Nine radio (Hale if cured), documents, toasts. Must-know: the exit also has a fire lock; reset is in security on the State Floor; the officer's keys are at table 9 (or the master key works); the fire key is in the East Room; almond water calms a female, spray doesn't. Change: the hotel has a "best" floor that was kept for somebody, and the moths you've been avoiding have mothers.
+
+Structure: Beverly Room → STATE FLOOR door → vestibule → the inner door opens on the Cross Hall. Required (phase `fire` once the valves are vented, or earlier): get into SECURITY (Officer Lusk's keys from table 9 in the Gold Room, found via the reservation book; or the night manager's master key) → the panel needs the FIRE KEY → the glass case in the East Room (loud; the female on the chandelier) → turn the key in the panel → the exit. Optional: Mothex in the kitchen pantry, the pest-control note, the CCTV wall, the security log, the bowls.
+
+| Key | Speaker | Channel | Line | Trigger and notes |
+|---|---|---|---|---|
+| state | M.E.G. OUTPOST 9 | radio | Nine. Your signal just jumped about a hundred metres. I won't ask. | first step onto the State Floor |
+| fire0 | M.E.G. OUTPOST 9 | radio | One more thing. That exit also locks off the fire panel. Panel's in security, up on the State Floor. East wall of the ballroom. | 14 s after the staff door, if the lock isn't reset |
+| fire | OUTPOST 9 / DR. HALE | radio | Pressure's down. Exit's still red on my board. That's the fire lock. Security office, State Floor. / Hale. The fire panel is in security. The officer ate in the Gold Room. His keys never left his table. | valves done, lock not reset |
+| big | OUTPOST 9 / DR. HALE | radio | That one's twice the size of the others. Leave it alone. / Hale. That is a female. Don't spray her. She likes almond water, if you have any. | first sight of a female |
+| spray | M.E.G. OUTPOST 9 | radio | Bug spray. Sure. Save it for the small ones. | Mothex picked up |
+| reset | M.E.G. OUTPOST 9 | radio | There. Green on my board. Get down to that exit. | fire lock reset |
+| portal | (toast) | HUD | THAT IS NOT WHAT IS BEHIND THIS WALL | first inner door opened |
+| spray toasts | (toast) | HUD | IT DROPS / THE SPRAY DOES NOTHING TO HER / SHE DOES NOT EVEN LOOK UP / THE CAN IS EMPTY | |
+| acid death | (end card) | text | SHE SPAT · The lens fogs green and the picture eats in from the edges. | killed by acid |
+
+Documents (`src/state5.js`): THE GOLD ROOM · RESERVATIONS (table 9 is Officer Lusk's, every night at 3:00; "left his keys on the table again. Leave them."), PEST CONTROL · KITCHEN (Mothex does the small ones; nothing to the females, she spits; almond water in her bowl at close; "Boiler room whenever {guest's room} complains."), SECURITY LOG · NIGHTS (the East Room windows lit with no moon; the bowl; dinner at table 9; the 3:10 bell; "Fire key goes back in the case. Not in my pocket."). CCTV: CAM 2 BEVERLY, CAM 4 EAST ROOM (something large on the chandelier), CAM 7 the guest's room (someone standing by the window), CAM 9 BOILERS.
+
+### Level 18 — your name
+**Brief.** Level 18, after the door is coloured in (or earlier, from the letter). Channel: the Children (whisper), MEMORY captions, documents. Must-know: the door needs your name; the name tag is in your cubby; the key is in the music room's toy box; the song is on your birthday card. Change: you get your own handwriting back.
+
+| Key | Speaker | Channel | Line | Trigger and notes |
+|---|---|---|---|---|
+| name | THE CHILDREN | whisper | Now put your name on it. Or it goes to anybody's house. | door coloured, no name |
+| song | THE CHILDREN | whisper | You remembered our song. | floor piano played right |
+| tag | MEMORY | caption | You can't read it anymore. It's yours, though. You can tell from the R. | name tag taken |
+| party | (whisper) | whisper | …happy birthday to you… | entering the birthday room |
+| wish | (whisper) | whisper | …you wished you could go home… | MAKE A WISH |
+| bus | (whisper) | whisper | …buddy system… hold hands… | entering the bus |
+| letter + | THE CHILDREN | letter | put your name on it or it goes to anybodys house. your name is in your cubby. teacher keeps the cubby key in the toy box. play our song and it opens. / we wrote the song in your birthday card. | added to the letter |
+| end + | (end card) | text | In a hotel nobody visits, something large drinks from a bowl and doesn't look up. / The name on the door is in your handwriting. You can read it now. | fed a female in Level 5 / signed the door |
+
+Documents (`src/memories18.js`): A BIRTHDAY CARD (the song as colours: RED · RED · BLUE · BLUE · PURPLE · PURPLE · BLUE; "you cried when we sang. then you laughed. then cake."), A NOTE IN YOUR LUNCHBOX ("Have a good trip. Stay with your buddy. Don't trade the cookies. I'll be at the gate at three. — Mom"). Lost & found adds Lusk's cap and a wet silver bowl when you did those things in Level 5.
+
 ## New canon (needs approval)
 - The player is the team's **camera operator**; the team calls them "Camera". The roll call on the whiteboard lists CAMERA.
 - Okafor's beacon: **Outpost Nine** was audible under Level 0's hum; Nine's **relief team** (S. Abara, Kowalczyk, Lund, a fourth) went quiet in Level 9's blue house.
@@ -158,6 +196,10 @@ Documents: A LETTER ON THE TEACHER'S DESK (now in the Children's own spelling, a
 - The hotel's **night manager**, his master key, and the guest **E. Pruitt** (arrived 12 Oct 1951, never departed). The register also lists **OKAFOR, D., Room 541, arrived 30 Sep 1996** (the camcorder reads 29 Sep 1996), a M.E.G. party of four, and a nameless guest who "brought own light".
 - A cured Hale **leaves in the elevator car** and reappears on Outpost Nine's band.
 - Level 18: an **art room**, the **crayons** needed to finish the door, a **fifth drawing** of Dad's camcorder, a **lost & found** holding objects from the run.
+- r7: the hotel's **State Floor** (Cross Hall, East Room, Gold Room, kitchen, security), reached only through a portal door in the ballroom; its windows are lit with nothing outside. Vestibule inner doors open onto the far side of the hotel.
+- r7: **Officer Lusk**, hotel security, ate at table 9 at 3:00 every night and left his keys there; the exit is on a **fire lock** reset from his office with a **fire key**.
+- r7: **female deathmoths** are spray-proof and spit acid; **Mothex** kills males; a bowl of almond water calms a female for good (the wiki's lore has females produce acid and both sexes tamed by almond water; spray-proofing and the bowls are ours).
+- r7: Level 18's **cubbies**, **music room** and **floor piano**, the class song (Twinkle Twinkle) on **your birthday card**, the **birthday-party** and **field-trip bus** memory rooms, Mom's lunchbox note; a drawn door needs its maker's **name** or it goes to anybody's house.
 
 ## Open questions
 - Should Room 541 (Okafor's room in the register) become a place in a later pass, or stay a line in a book?

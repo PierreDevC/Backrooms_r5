@@ -66,8 +66,9 @@ function drawBoard18(c, w, h) {
     c.fillStyle = '#fbf8ef'; c.fillRect(x0 + 4, y0 + hh + 10, ww - 8, 30); c.fillStyle = '#2a2a2a'; c.font = 'bold 17px "Comic Sans MS", sans-serif'; c.textAlign = 'center'; c.fillText(DRAW18[id].name, x0 + ww / 2, y0 + hh + 26); c.textAlign = 'left';
   });
 }
-function drawExit18(c, w, h, done) {
-  if (done) { drawDoor18(c, w, h, { glow: true, fill: '#f3c230', line: '#b07a10', word: 'HOME', wordCol: '#e2483c', sun: true, bg: '#fff8e4' }); return; }
+function drawExit18(c, w, h, done, o = {}) {
+  if (done) { drawDoor18(c, w, h, { glow: true, fill: '#f3c230', line: '#b07a10', word: 'HOME', wordCol: '#e2483c', sun: true, bg: '#fff8e4' }); if (M18.signed) crayonLine18(c, [[w * 0.3, h * 0.4], [w * 0.36, h * 0.36], [w * 0.42, h * 0.42], [w * 0.5, h * 0.35], [w * 0.56, h * 0.41], [w * 0.64, h * 0.36], [w * 0.7, h * 0.4]], '#2f7fd0', 5); return; }
+  if (o.colored) { drawDoor18(c, w, h, { fill: '#f3c230', line: '#b07a10', bg: '#fff8e4' }); crayonText18(c, 'NAME:', w * 0.32, h * 0.06 + 8, 22, '#8a8a8a'); crayonLine18(c, [[w * 0.48, h * 0.075], [w * 0.86, h * 0.075]], '#9a9a9a', 3); return; }   // r7: coloured in, no name yet
   paper18(c, w, h, '#f4efe0');
   c.globalAlpha = 0.35; crayonLine18(c, [[w * 0.18, h * 0.96], [w * 0.18, h * 0.12], [w * 0.5, h * 0.12]], '#666666', 4); c.globalAlpha = 1;
   crayonText18(c, 'MY DOOR', w / 2, h * 0.06 + 10, 26, '#8a8a8a');
@@ -153,7 +154,14 @@ function pinDrawings18() {
   toast(`PINNED · ${G18.pinned.length}/4`, 2); cpSave(`PINNED ${G18.pinned.length}/4`);
   if (G18.pinned.length >= 4) doorReady18(); else setPhase18();   // r6: the door may still need its colors
 }
-function finishDoor18() {
+function finishDoor18() {   // r7: a coloured door still needs your name on it
+  if (needName18()) {
+    const X = W18.exitDoor; drawExit18(X.S.ctx, 256, 444, false, { colored: true }); X.S.dt.update(); for (let i = 0; i < 6; i++) later(0.3 + i * 0.2, () => SFX18.crayon());
+    setPhase18('name'); later(1.6, () => say('THE CHILDREN', 'Now put your name on it. Or it goes to anybody\'s house.', { dur: 5, mode: 'whisper' })); cpSave('THE DOOR · NO NAME'); return;
+  }
+  openDoor18();
+}
+function openDoor18() {
   const X = W18.exitDoor; X.on = true;
   for (let i = 0; i < 8; i++) later(0.4 + i * 0.22, () => SFX18.crayon());
   later(2.2, () => { drawExit18(X.S.ctx, 256, 444, true); X.S.dt.update(); FX.fadeW = Math.max(FX.fadeW, 0.4); G18.flash = 0.4; SFX18.chime(); });

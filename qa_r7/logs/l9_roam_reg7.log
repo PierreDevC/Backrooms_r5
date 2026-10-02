@@ -1,0 +1,10 @@
+error: Failed to load resource: net::ERR_FAILED
+QA load ms 776
+QA roam {"states0":["rest"],"states":["rest","prowl","climb","wake","chase","lost"],"path":168.5,"moved":130.4,"doorsOpened":3,"chased":true}
+QA PASS house Wretches start awake (resting or roaming), not asleep
+QA PASS it roams its house and stops to listen
+QA FAIL silent and crouched, it never hears you
+QA touch {"st":"rest"}
+QA FAIL walking into it wakes it
+QA PASS no recovered frame errors
+QA PAGE CLOSE

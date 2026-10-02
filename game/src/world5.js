@@ -2,7 +2,7 @@
 const W5 = {};
 function resetW5() {
   Object.assign(W5, { eyeMat: null, keys: [], valves: [], exit: null, elev: null, svDoor: null, steam: [], nests: [], fires: [], clocks: [], gramo: null,
-    used: new Map(), lampOn: null, lampFl: null, B: null, BOn: null, BFl: null, cones: null, pl: null, pg: null, signs: [], bell: null, callBtn: null, press: null });
+    used: new Map(), fnests: [], winB: null, st: {}, lampOn: null, lampFl: null, B: null, BOn: null, BFl: null, cones: null, pl: null, pg: null, signs: [], bell: null, callBtn: null, press: null });
   if (!W5.eyeP) W5.eyeP = new BABYLON.Vector4(0, 0, 0, 0); else W5.eyeP.set(0, 0, 0, 0);
 }
 // the hotel wallpaper material also carries the eyes (uniform eyeP: xyz = where you are staring, w = how awake they are)
@@ -373,9 +373,10 @@ async function buildWorld5(progress) {
   progress(0.58, 'TURNING DOWN THE BEDS…'); await nextFrame();
   const E = (n, d, t) => envMat9(n, [d], t);
   W5.eyeMat = envMat5('hwall5', ['MAT_HWALL'], T.hwall);
-  const mats = { hwall: W5.eyeMat, deco: E('deco5', 'MAT_DECO', T.deco), bconc: E('bconc5', 'MAT_BCONC', T.bconc), brick: E('brick5', 'MAT_BLOCK', T.brick),
+  const mats = { tilew: null, hwall: W5.eyeMat, deco: E('deco5', 'MAT_DECO', T.deco), bconc: E('bconc5', 'MAT_BCONC', T.bconc), brick: E('brick5', 'MAT_BLOCK', T.brick),
     trim: E('trim5', 'MAT_CASE', T.bconc), carpet: E('carpet5', 'MAT_CARPET', T.carpet), check: E('check5', 'MAT_CHECK', T.check), tile: E('tile5', 'MAT_TILE', T.tile),
     bfloor: E('bfloor5', 'MAT_BFLOOR', T.bfloor), hceil: E('hceil5', 'MAT_HCEIL', T.hceil), bceil: E('bceil5', 'MAT_BCEIL', T.bceil) };
+  mats.tilew = mats.tile;   // r7: the State Floor kitchen's tiled walls
   buildGeometry5(SCN, mats);
   mkPlaques5(T);
   progress(0.7, 'SETTING THE TABLES…'); await nextFrame();
@@ -409,7 +410,7 @@ function buildProps5() {
   for (const e of LV.ek.values()) {
     if (e.kind === 'deco') { if (e.loop) { const k = (e.x - LOOP5.x0) % 5; seeded5(900 + k * 7 + e.d, () => decoDoor5(B, e)); } else decoDoor5(B, e); }
     else if (e.kind === 'brick') brickUp5(B, e);
-    else if (e.kind === 'arch' && e.sign) sign5(e.sign, atWall5(sideOf5(e), 0, 0), [0, 2.98, 0.03], 1.7, 0.32);
+    else if (e.kind === 'arch' && e.sign) sign5(e.sign, atWall5(sideOf5(e), 0, 0), [0, e.big ? 3.62 : 2.98, 0.03], e.big ? 2.2 : 1.7, e.big ? 0.38 : 0.32);
     else if (e.kind === 'door' && e.dk === 'warp' && e.sign) sign5(e.sign, atWall5(sideOf5(e), 0, 0), [0, DOORH + 0.36, 0.03], 1.3, 0.26);
     else if (e.kind === 'door' && e.plaque) plaqueOn(atWall5(sideOf5(e), 0, 0), DOORW / 2 + 0.34, 1.5, e.plaque, 0.28, 0.08);
     else if (e.kind === 'door' && e.num) plaqueOn(atWall5(sideOf5(e), 0, 0), DOORW / 2 + 0.3, 1.5, String(e.num));
@@ -435,11 +436,11 @@ function buildProps5() {
   for (const g of LV.guest) furnishGuest5(B, g);
   furnishBev5(B); furnishLobby5(B); furnishService5(B);
   for (const r of LV.rooms) if (r.t === 'vest') furnishVest5(B, r);
-  furnishBoiler5(B);
+  furnishBoiler5(B); furnishFemaleBoil5(B); furnishState5(B);   // r7
   // moth nests in the dark stretches
   for (const [x, y] of [[5, 23], [11, 5], [31, 7]]) { const px = cellCenter(x), pz = cellCenter(y); nest5(B, px, pz, 8); W5.nests.push({ x: px, z: pz, c: cIdx(x, y), boil: false }); }
   W5.finishProps = () => {
-    const keep = [], out = [...(B.finish('props5', keep) || []), ...(BOn.finish('lensOn5', keep) || []), ...(BFl.finish('lensFl5', keep) || []), ...(FOn.finish('fire5', keep) || [])];
+    const keep = [], out = [...(B.finish('props5', keep) || []), ...(BOn.finish('lensOn5', keep) || []), ...(BFl.finish('lensFl5', keep) || []), ...(FOn.finish('fire5', keep) || []), ...(W5.winB ? W5.winB.finish('win5', keep) || [] : [])];
     out.forEach(m => m._sortD = 300);
     new Set(keep).forEach(r => r && r.dispose && r.dispose());
     W5.pl.dt.update(); W5.pl.dt.hasAlpha = false;

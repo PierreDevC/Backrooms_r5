@@ -1,0 +1,21 @@
+error: Failed to load resource: net::ERR_FAILED
+QA load ms 734
+QA shot guest
+QA guest 503
+QA shot guest_door
+QA shot boiler_lit
+QA moth {"st":"hunt","boil":true,"keys":"rig,rad,x,z,yaw,spd,ph,fc,F,stuckT,unT,ux,uz,dir,st,stT,present,shown,shadowR,alive,noSep,nest,boil,i,male,loyal,cellFn,edgeFn,home,percT"}
+QA shot moth
+QA after moth {"hp":84,"san":79.64450000000038,"st":"play","foes":1}
+QA death {"st":"dead","k":"■ SIGNAL LOST · LEVEL 5","t":"THE MOTHS CAME FOR YOUR LIGHT","b":"◀◀ RESTART LEVEL 5"}
+QA retry {"st":"play","phase":"arrive","keys":0,"meshes":559,"hp":100}
+QA TIMEOUT win end
+QA win {"st":"play","k":"■ SIGNAL LOST · LEVEL 5","t":"THE MOTHS CAME FOR YOUR LIGHT","b":"◀◀ RESTART LEVEL 5","stats":"TIME ON TAPE0:00:07DISTANCE2 MKEYS0/3VALVES0/3LEVEL5 · THE HOTELDIFFICULTYNORMAL"}
+page.evaluate: TypeError: Cannot read properties of null (reading 'classList')
+    at eval (eval at evaluate (:311:30), <anonymous>:1:75)
+    at UtilityScript.evaluate (<anonymous>:313:16)
+    at UtilityScript.<anonymous> (<anonymous>:1:44)
+    at module.exports (/Volumes/crucial/Downloads/Backrooms_r5/qa5/s5_more.js:40:61)
+    at async /Volumes/crucial/Downloads/Backrooms_r5/qa5/run5.js:21:3 {
+  log: []
+}

@@ -26,7 +26,7 @@ module.exports = async (page) => {
   // the Sunshine Room: letter
   Object.assign(b, await page.evaluate(() => { const B = window.__BR; B.setPhase18('memories'); B.readNote18('desk'); return { letter: document.getElementById('docT').textContent, artLead: !!B.taskOf('art') }; }));
   // all four drawings, pinned before the crayons
-  Object.assign(b, await page.evaluate(() => { const B = window.__BR, { W18, G18 } = B; for (const d of W18.drawings) B.takeDrawing18(d); for (let i = 0; i < 80; i++) B.simStep(0.05); B.PL.x = W18.board.x; B.PL.z = W18.board.z; B.pinDrawings18(); for (let i = 0; i < 40; i++) B.simStep(0.05);
+  Object.assign(b, await page.evaluate(() => { const B = window.__BR, { W18, G18 } = B; if (B.M18) B.M18.signed = true; for (const d of W18.drawings) B.takeDrawing18(d); for (let i = 0; i < 80; i++) B.simStep(0.05); B.PL.x = W18.board.x; B.PL.z = W18.board.z; B.pinDrawings18(); for (let i = 0; i < 40; i++) B.simStep(0.05);
     const X = B.W.interact.find(i => /DOOR/.test(i.label()) && Math.hypot(i.x - W18.exitDoor.x, i.z - W18.exitDoor.z) < 0.1); return { phase: G18.phase, on: W18.exitDoor.on, exitLabel: X.label(), obj: document.getElementById('objective').textContent }; }));
   // the art room: the fifth drawing and the crayons
   await page.evaluate(() => { const B = window.__BR, a = B.W18.p18.art, { PL } = B; PL.x = a.x0 + 1.0; PL.z = a.z1 - 1.0; PL.cell = -1; PL.yaw = Math.atan2((a.x0 + a.x1) / 2 - PL.x, a.z0 + 1 - PL.z); PL.pitch = -0.05; for (let i = 0; i < 8; i++) B.simStep(0.05); });

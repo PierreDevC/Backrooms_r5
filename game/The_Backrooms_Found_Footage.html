@@ -3197,8 +3197,8 @@ function planLights9() {
 
 // ==== level5.js ====
 // ---------- Level 5 · The Hotel: layout (hotel wings, Beverly Room, boiler maze), wall pieces, geometry, lights ----------
-const Z5 = { VOID: 0, HALL: 1, ROOM: 2, BEV: 3, SERV: 4, BOIL: 5, BHALL: 6, VEST: 7, CLOS: 8, LOBBY: 9, ELEV: 10, STAIR: 11 };
-const R5 = { S: 0, W: 1, N: 2, E: 3, E2: 4, BEV: 5, SV: 6, BO: 7 };
+const Z5 = { VOID: 0, HALL: 1, ROOM: 2, BEV: 3, SERV: 4, BOIL: 5, BHALL: 6, VEST: 7, CLOS: 8, LOBBY: 9, ELEV: 10, STAIR: 11, EXEC: 12, REST: 13, KITCH: 14 };
+const R5 = { S: 0, W: 1, N: 2, E: 3, E2: 4, BEV: 5, SV: 6, BO: 7, ST: 8 };
 const L5_N = 44, L5_LMR = 704, BEV_H = 7.0, BEV5 = { x0: 14, z0: 14, x1: 19, z1: 19 };
 const LOOP5 = { z: 16, x0: 20, x1: 40, trig: 29, back: 5 };      // the endless east corridor: pass x = 29 and you are quietly moved back 5 cells (everything there repeats every 5 cells)
 const hotelZ5 = z => z === Z5.HALL || z === Z5.ROOM || z === Z5.VEST || z === Z5.LOBBY || z === Z5.ELEV;
@@ -3236,10 +3236,11 @@ function genLayout5() {
   // ...and the part of the east wing you can only reach through the wrong door
   const E2 = room(Z5.HALL, R5.E2, 'hall', { wing: 'E2' }); rect(E2, 28, 7, 34, 7);
   const cE = rect(room(Z5.CLOS, R5.E2, 'closet', { key: 'E' }), 35, 7, 35, 7); way(34, 7, 0, 'door', { dk: 'closet', plaque: 'HOUSEKEEPING', from: [34, 7] });
-  // warp vestibules: identical one-cell rooms with a real door in and a dummy door opposite; walk past the middle and you are in the twin
+  // r7: portal vestibules: identical one-cell rooms with a real door in and an inner door opposite. Open the inner door and it gives onto
+  // the corridor outside the twin's real door (portal5.js); step through and you are there. The inner door swings in toward you.
   const vest = (x, y, d, reg, sign) => {
-    const r = rect(room(Z5.VEST, reg, 'vest'), x, y, x, y);
-    way(x, y, d, 'door', { dk: 'warp', sign, from: [x + DX[d], y + DY[d]] }); way(x, y, (d + 2) % 4, 'deco', { from: [x, y], vest: true });
+    const r = rect(room(Z5.VEST, reg, 'vest'), x, y, x, y), b = (d + 2) % 4;
+    way(x, y, d, 'door', { dk: 'warp', sign, from: [x + DX[d], y + DY[d]] }); way(x, y, b, 'door', { dk: 'portal', from: [x + DX[b], y + DY[b]], vest: true });
     Object.assign(r, { vx: x, vy: y, vd: d, cx: cellCenter(x), cz: cellCenter(y), fx: -DX[d], fz: -DY[d] }); return r;
   };
   LV.warps.push({ a: vest(8, 5, 0, R5.N, 'EAST WING'), b: vest(27, 7, 0, R5.E2, 'NORTH WING'), key: 'A' });
@@ -3315,6 +3316,7 @@ function genLayout5() {
   }
   LV.mazeCells = [...LV.maze];
   planPlaces5(room, rect, way);   // r6: the night manager's office, the guest who never checked out
+  planState5(room, rect, way, vest);   // r7: the State Floor, through the ballroom's portal door
   // ---- resolve every edge ----
   const rule = (a, b) => {
     const za = a < 0 ? 0 : LV.zone[a], zb = b < 0 ? 0 : LV.zone[b];
@@ -3336,6 +3338,7 @@ function side5(x, y) {
   if (!inGrid(x, y)) return null;
   const c = cIdx(x, y), z = LV.zone[c];
   if (z === Z5.VOID) return null;
+  const rr = LV.rooms[LV.room[c]]; if (rr && rr.side) return rr.side;   // r7: State Floor rooms
   if (z === Z5.BEV) return { m: 'deco', c: [1, 1, 1], h: BEV_H, t: TRIM5.gold };
   if (z === Z5.SERV || z === Z5.STAIR || z === Z5.CLOS) return { m: 'bconc', c: [0.8, 0.84, 0.74], h: CEIL, t: TRIM5.serv };
   if (boilZ5(z)) return { m: 'bconc', c: [0.62, 0.6, 0.56], h: CEIL, t: TRIM5.steel };
@@ -3346,7 +3349,7 @@ function side5(x, y) {
 // size of the hole an edge needs (null = solid wall)
 function opening5(e) {
   if (!e) return null;
-  if (e.kind === 'arch') return e.boil ? { w: 1.5, h: 2.35, cw: 0.07 } : { w: 2.0, h: 2.5, cw: 0.12 };
+  if (e.kind === 'arch') return e.boil ? { w: 1.5, h: 2.35, cw: 0.07 } : e.big ? { w: 2.7, h: 3.3, cw: 0.16 } : { w: 2.0, h: 2.5, cw: 0.12 };
   if (e.kind === 'door' || e.kind === 'elev' || e.kind === 'exit') return { w: DOORW, h: DOORH, cw: 0.09 };
   if (e.kind === 'brick') return { w: 1.7, h: 2.75, cw: 0.13 };
   return null;
@@ -3406,7 +3409,7 @@ Geo.prototype.face2 = function (ox, oy, oz, U, V, du, dv, Nn, su, sv, col) {
   }
   if (FLIP_WINDING) this.i.push(b, b + 2, b + 1, b, b + 3, b + 2); else this.i.push(b, b + 1, b + 2, b, b + 2, b + 3);
 };
-const MAT5_S = { hwall: [1 / 3.0, 1 / 2.85], deco: [1 / 7, 1 / 7], bconc: [1 / 2.4, 1 / 2.4], brick: [1 / 1.6, 1 / 1.6], carpet: 1 / 2.25, check: 1 / 2.4, tile: 1 / 1.2, bfloor: 1 / 2.4, hceil: 1 / 1.8, bceil: 1 / 3.5, sconc: 1 / 2.4 };
+const MAT5_S = { hwall: [1 / 3.0, 1 / 2.85], deco: [1 / 7, 1 / 7], bconc: [1 / 2.4, 1 / 2.4], brick: [1 / 1.6, 1 / 1.6], tilew: [1 / 0.3, 1 / 0.3], carpet: 1 / 2.25, check: 1 / 2.4, tile: 1 / 1.2, bfloor: 1 / 2.4, hceil: 1 / 1.8, bceil: 1 / 3.5, sconc: 1 / 2.4 };
 function buildGeometry5(scene, mats) {
   const CH = 8, NC = Math.ceil(N / CH), G = {};
   const geo = (m, ci) => { const k = m + ':' + ci; return G[k] || (G[k] = new Geo(true)); };
@@ -3459,7 +3462,11 @@ function buildGeometry5(scene, mats) {
   for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
     const c = cIdx(x, y), z = LV.zone[c]; if (z === Z5.VOID) continue;
     const x0 = x * CELL, z0 = y * CELL, x1 = x0 + CELL, z1 = z0 + CELL, ci = chunkOf(x0 + 1, z0 + 1), hv = hash1(x * 31.7 + y * 17.3);
-    if (hotelZ5(z) || z === Z5.ROOM) {
+    const rf = LV.room[c] >= 0 && LV.rooms[LV.room[c]].flr;
+    if (rf) {   // r7: State Floor rooms carry their own floor, ceiling and height
+      up(geo(rf.m, ci), x0, z0, x1, z1, 0, MAT5_S[rf.m], C4(rf.col));
+      dn(geo(rf.cm, ci), x0, z0, x1, z1, rf.h, rf.cm === 'bconc' ? MAT5_S.sconc : MAT5_S[rf.cm], C4(rf.ccol));
+    } else if (hotelZ5(z) || z === Z5.ROOM) {
       const r = LV.rooms[LV.room[c]], k = z === Z5.ROOM ? r.tint.map(v => v * 0.92) : z === Z5.ELEV ? [0.62, 0.5, 0.46] : [1, 1, 1];
       up(geo('carpet', ci), x0, z0, x1, z1, 0, MAT5_S.carpet, C4(k));
       dn(geo('hceil', ci), x0, z0, x1, z1, CEIL, MAT5_S.hceil, z === Z5.ROOM ? [0.95, 0.92, 0.86, 1] : W1);
@@ -3560,13 +3567,15 @@ function planLights5() {
   { const x = 28 * CELL, z = 33 * CELL; F(x, z, { I: 0.3, rad: 6, sc: 1.8, state: 2 }); LV.bulbs.push({ x, z, y: CEIL, kind: 'cage', state: 2 }); }
   LV.sky = null;
 }
+// ceiling height of a cell (the State Floor rooms are tall)
+function ceil5(c) { if (c < 0 || c >= N * N) return CEIL; const r = LV.room[c] >= 0 ? LV.rooms[LV.room[c]] : null; return r && r.flr ? r.flr.h : LV.zone[c] === Z5.BEV ? BEV_H : CEIL; }
 
 // ==== level18.js ====
 // ---------- Level 18 · Nostalgic Memories: layout (the preschool, the playland, the slide hall, memory rooms hanging in the void), geometry, lights ----------
-const Z18 = { VOID: 0, HALL: 1, CLASS: 2, NAP: 3, YEL: 4, PLAY: 5, SLIDE: 6, MEAD: 7, BED: 8, KIT: 9, VWALK: 10 };
+const Z18 = { VOID: 0, HALL: 1, CLASS: 2, NAP: 3, YEL: 4, PLAY: 5, SLIDE: 6, MEAD: 7, BED: 8, KIT: 9, VWALK: 10, MUSIC: 11, CUBBY: 12, PARTY: 13, BUS: 14 };
 const R18Z = { PRE: 0, YEL: 1, PLAY: 2, SLIDE: 3, MEAD: 4, BED: 5, KIT: 6, VE: 7, VW: 8 };
 const L18_N = 40, L18_LMR = 640;
-const H18 = { [Z18.PLAY]: 4.2, [Z18.SLIDE]: 4.2, [Z18.MEAD]: 3.4, [Z18.BED]: 2.6, [Z18.KIT]: 2.6, [Z18.VWALK]: 5.0 };
+const H18 = { [Z18.PLAY]: 4.2, [Z18.SLIDE]: 4.2, [Z18.MEAD]: 3.4, [Z18.BED]: 2.6, [Z18.KIT]: 2.6, [Z18.VWALK]: 5.0, [Z18.PARTY]: 2.6, [Z18.BUS]: 2.3 };
 const zoneH18 = z => H18[z] ?? CEIL;
 const cell18 = (x, z) => cIdx(cellOf(x), cellOf(z));
 const zone18 = (x, z) => LV.zone[cell18(x, z)];
@@ -3580,7 +3589,7 @@ const SLIDES18 = [   // slide hall, against the south wall; each goes somewhere 
   { id: 'green', name: 'GREEN', col: [0.22, 0.64, 0.28], x: 31, to: 'hall', icon: 'school' },
 ];
 const DOORC18 = [[0.95, 0.74, 0.12], [0.84, 0.2, 0.15], [0.2, 0.46, 0.84], [0.28, 0.66, 0.32]];
-const PLATES18 = ['BUTTERFLIES', 'LADYBUGS', 'BUMBLEBEES', 'LITTLE STARS', 'RAINBOWS', 'SUNFLOWERS', 'TEDDY BEARS', 'DUCKLINGS', 'OFFICE', 'STORAGE', 'TOILETS', 'CUBBIES', 'ART ROOM', 'MUSIC'];
+const PLATES18 = ['BUTTERFLIES', 'LADYBUGS', 'BUMBLEBEES', 'LITTLE STARS', 'RAINBOWS', 'SUNFLOWERS', 'TEDDY BEARS', 'DUCKLINGS', 'OFFICE', 'STORAGE', 'TOILETS', 'ART ROOM', 'PAINTS', 'GYM'];   // r7: MUSIC and CUBBIES are real rooms now
 
 function genLayout18() {
   const n = N;
@@ -3616,6 +3625,7 @@ function genLayout18() {
   LV.voids = [VE, VW];
   for (const r of LV.voids) for (const c of r.cells) LV.dark[c] = 1;
   planPlaces18(room, rect, way);   // r6: the art room
+  planMem18(room, rect, way);   // r7: music room, cubbies, your birthday, the field-trip bus
   // fake doors along the preschool corridor and the yellow corridor (nothing behind them but the dark)
   const free = (x, y) => inGrid(x, y) && LV.zone[cIdx(x, y)] === Z18.VOID;
   let pi = 0;
@@ -3664,6 +3674,10 @@ function side18(x, y) {
     case Z18.MEAD: return { m: 'meadow', c: [1, 1, 1], h, t: TRIM18.green, tp: 2 };
     case Z18.BED: return { m: 'bedw', c: [1, 1, 1], h, t: TRIM18.white, tp: 2 };
     case Z18.KIT: return { m: 'kitw', c: [1, 1, 1], h, t: TRIM18.kit, tp: 2 };
+    case Z18.MUSIC: return { m: 'clsw', c: [0.9, 0.98, 1.1], h, t: TRIM18.white, tp: 1 };
+    case Z18.CUBBY: return { m: 'clsw', c: [1.06, 1.0, 0.88], h, t: TRIM18.white, tp: 1 };
+    case Z18.PARTY: return { m: 'bedw', c: [1.12, 0.88, 0.98], h, t: TRIM18.white, tp: 2 };
+    case Z18.BUS: return { m: 'skyw', c: [0.78, 0.88, 0.8], h, t: TRIM18.green, tp: 2 };
     default: return { m: 'voidw', c: [1, 1, 1], h, t: TRIM18.black, tp: 0 };
   }
 }
@@ -3678,8 +3692,8 @@ function opening18(e) {
 // ---------- geometry ----------
 const MAT18_S = { skyw: [1 / 2.85, 1 / 2.85], clsw: [1 / 2.85, 1 / 2.85], yelw: [1 / 2.4, 1 / 2.85], mural: [1 / 9, 1 / 4.2], teal: [1 / 2.85, 1 / 2.85], meadow: [1 / 7.2, 1 / 3.4],
   bedw: [1 / 2.6, 1 / 2.6], kitw: [1 / 2.6, 1 / 2.6], voidw: [1 / 4, 1 / 5], ktile: 1 / 1.2, kcarpet: 1 / 2.4, turf: 1 / 2, gcarpet: 1 / 2.4, wood: 1 / 2.4, lino: 1 / 1.2, voidf: 1 / 4, dceil: 1 / 1.2, skyc: 1 / 3.6, starc: 1 / 2.6 };
-const FLOOR18 = { [Z18.HALL]: 'ktile', [Z18.CLASS]: 'ktile', [Z18.NAP]: 'gcarpet', [Z18.YEL]: 'ktile', [Z18.PLAY]: 'kcarpet', [Z18.SLIDE]: 'gcarpet', [Z18.MEAD]: 'turf', [Z18.BED]: 'wood', [Z18.KIT]: 'lino', [Z18.VWALK]: 'voidf' };
-const CEIL18 = { [Z18.HALL]: 'dceil', [Z18.CLASS]: 'dceil', [Z18.NAP]: 'dceil', [Z18.YEL]: 'dceil', [Z18.PLAY]: 'dceil', [Z18.SLIDE]: 'dceil', [Z18.MEAD]: 'skyc', [Z18.BED]: 'starc', [Z18.KIT]: 'dceil' };
+const FLOOR18 = { [Z18.HALL]: 'ktile', [Z18.CLASS]: 'ktile', [Z18.NAP]: 'gcarpet', [Z18.YEL]: 'ktile', [Z18.PLAY]: 'kcarpet', [Z18.SLIDE]: 'gcarpet', [Z18.MEAD]: 'turf', [Z18.BED]: 'wood', [Z18.KIT]: 'lino', [Z18.VWALK]: 'voidf', [Z18.MUSIC]: 'kcarpet', [Z18.CUBBY]: 'ktile', [Z18.PARTY]: 'wood', [Z18.BUS]: 'lino' };
+const CEIL18 = { [Z18.HALL]: 'dceil', [Z18.CLASS]: 'dceil', [Z18.NAP]: 'dceil', [Z18.YEL]: 'dceil', [Z18.PLAY]: 'dceil', [Z18.SLIDE]: 'dceil', [Z18.MEAD]: 'skyc', [Z18.BED]: 'starc', [Z18.KIT]: 'dceil', [Z18.MUSIC]: 'dceil', [Z18.CUBBY]: 'dceil', [Z18.PARTY]: 'dceil', [Z18.BUS]: 'dceil' };
 function buildGeometry18(scene, mats) {
   const CH = 8, NC = Math.ceil(N / CH), G = {};
   const geo = (m, ci) => { const k = m + ':' + ci; return G[k] || (G[k] = new Geo(true)); };
@@ -5916,11 +5930,12 @@ async function buildWorld9(progress) {
 
 // ----- outdoor & household props -----
 function buildProps9() {
+  W9.cars = [];
   const mat = actMat('props9', { spec: 0.2, shin: 16, wrinkle: 0.2, emis: 1, wrap: 0.35, mottle: 0.35 }), B = new PropBatch(mat); B.fast = true;
   W9.propMat = mat;
   const scrMat = actMat('screen', { frag: 'scr' }); scrMat.setVector4('aTint', new BABYLON.Vector4(1, 1, 1, 1)); W.scrMat = W9.scrMat = scrMat;
   const lensOn = actMat('lensOn', { emis: 1 }), lensFl = actMat('lensFl', { emis: 1 }); setEmi(lensOn, 4.2); W9.lensFl = lensFl;
-  const BOn = new PropBatch(lensOn), BFl = new PropBatch(lensFl); BOn.fast = BFl.fast = true; const cones = new PropBatch(coneMat('cones', [1, 0.62, 0.3, 0.075]));
+  const BOn = new PropBatch(lensOn), BFl = new PropBatch(lensFl); BOn.fast = BFl.fast = true; W9.BFl = BFl; const cones = new PropBatch(coneMat('cones', [1, 0.62, 0.3, 0.075]));
   // street lamps
   for (const L of LV.lamps) {
     const r = propRoot(L.x, L.z, Math.atan2(L.hx - L.x, L.hz - L.z)), a = Math.hypot(L.hx - L.x, L.hz - L.z), PC = [0.22, 0.24, 0.23];
@@ -5956,7 +5971,7 @@ function buildProps9() {
     addSolid(mb.x - 0.12, mb.z - 0.12, mb.x + 0.12, mb.z + 0.12, 'prop');
     if (h.id % 3 === 1) { const gp = localPt(pr, -1.55, 0, 1.9), gr = propRoot(gp.x, gp.z, ry + 0.4 + (h.id % 5) * 0.25); if (B.mdl('gnome', gr, null, null, 1)) addSolid(gp.x - 0.13, gp.z - 0.13, gp.x + 0.13, gp.z + 0.13, 'prop'); }   // r5: a garden gnome watching the street
     // car on the driveway, a basketball hoop over some drives
-    if (RNG() < 0.55) { const cz = (h.face === 3 ? h.hz + 1.0 : h.hz + 3.0) * CELL; buildCar(B, cellCenter(h.dcol), cz, RNG() < 0.5 ? 0 : Math.PI); }
+    if (RNG() < 0.55) { const cz = (h.face === 3 ? h.hz + 1.05 : h.hz + 2.95) * CELL, inn = h.face === 3 ? 0 : Math.PI; buildCar(B, cellCenter(h.dcol), cz, RNG() < 0.7 ? inn : inn + Math.PI, { leaves: RNG() < 0.5, flat: RNG() < 0.15 }); }   // r7: on the concrete, nose in (mostly)
     if (RNG() < 0.25) { const hz0 = h.face === 3 ? (h.hz + 2.9) * CELL : (h.hz + 1.1) * CELL, hx0 = cellCenter(h.dcol) + (h.dcol < h.hx ? -1.45 : 1.45), hr = propRoot(hx0, hz0, h.face === 3 ? Math.PI : 0);
       B.add(hr, 'Cylinder', { diameter: 0.1, height: 3.05, tessellation: 8 }, COL9.metal, 0, [0, 1.52, 0]); B.add(hr, 'Box', { width: 1.1, height: 0.75, depth: 0.04 }, [0.85, 0.85, 0.82], 0, [0, 3.2, 0.15]);
       B.add(hr, 'Torus', { diameter: 0.45, thickness: 0.02, tessellation: 12 }, [0.8, 0.3, 0.1], 0, [0, 2.95, 0.45]); addSolid(hx0 - 0.08, hz0 - 0.08, hx0 + 0.08, hz0 + 0.08, 'prop'); }
@@ -5997,14 +6012,23 @@ function buildProps9() {
   const streetCells = [];
   for (let y = 1; y < L9_NB - 1; y++) for (let x = 1; x < L9_NB - 1; x++) { if (LV.zone[cIdx(x, y)] !== ZN.STREET || (L9_ST.has(x) && L9_ST.has(y))) continue; streetCells.push([x, y]); }
   const alongX = (x, y) => L9_ST.has(y) && !L9_ST.has(x);      // street runs along x
+  // r7: parked against the curb on the road side, right-hand side to the kerb, never across a driveway or at a corner.
+  // A street cell's sidewalk strip is 1.35 m on its outer side, so the kerb sits 0.45 m out from the cell centre.
+  const isX = (x, y) => L9_ST.has(x) && L9_ST.has(y), parked = [];
   for (const [x, y] of streetCells) {
-    if (RNG() > 0.08 || (x <= 2 && y < 10)) continue;
-    const ax = alongX(x, y), first = L9_ST.has(ax ? y - 1 : x - 1) ? false : true;   // first cell of the pair -> park on its outer side
-    const off = first ? -1.25 : 1.25;
-    buildCar(B, ax ? cellCenter(x) : cellCenter(x) + off, ax ? cellCenter(y) + off : cellCenter(y), ax ? Math.PI / 2 + (RNG() < 0.5 ? 0 : Math.PI) : (RNG() < 0.5 ? 0 : Math.PI));
+    if (RNG() > 0.1 || (x <= 2 && y < 10)) continue;
+    const ax = alongX(x, y), first = !L9_ST.has(ax ? y - 1 : x - 1), out = first ? -1 : 1;   // the side the kerb is on
+    const ox = ax ? x : x + out, oy = ax ? y + out : y, oz = inGrid(ox, oy) ? LV.zone[cIdx(ox, oy)] : ZN.VOID;
+    if (oz === ZN.DRIVE || oz === ZN.VOID) continue;   // a curb cut, or the edge of the world
+    if (ax ? (isX(x - 1, y) || isX(x + 1, y)) : (isX(x, y - 1) || isX(x, y + 1))) continue;   // keep the corners clear
+    if (parked.some(([px, py]) => Math.abs(px - x) + Math.abs(py - y) < 2)) continue;
+    const off = -out * 0.62, cx = ax ? cellCenter(x) + rnd(-0.4, 0.4) : cellCenter(x) + off, cz = ax ? cellCenter(y) + off : cellCenter(y) + rnd(-0.4, 0.4);
+    const ry = ax ? (out < 0 ? Math.PI / 2 : -Math.PI / 2) : (out < 0 ? Math.PI : 0);
+    buildCar(B, cx, cz, ry, { leaves: RNG() < 0.6, flat: RNG() < 0.12, hazard: RNG() < 0.07 }); parked.push([x, y]);
   }
   const vanC = shuffle(streetCells.filter(([x, y]) => Math.hypot(x - 2, y - 6) > 18 && Math.hypot(x - BX - 4.5, y - BX - 4.5) > 12 && !alongX(x, y)))[0] || [36, 30];
-  { const [x, y] = vanC, vx = cellCenter(x) + 0.9, vz = cellCenter(y), ry = 0.35 + RNG() * 0.3, r = propRoot(vx, vz, ry), WH = [0.8, 0.8, 0.76];
+  { const [x, y] = vanC, vx = cellCenter(x) + (L9_ST.has(x - 1) ? -0.9 : 0.9), vz = cellCenter(y),   // r7: nose-down in the road, off the kerb
+     ry = 0.35 + RNG() * 0.3, r = propRoot(vx, vz, ry), WH = [0.8, 0.8, 0.76];
     B.add(r, 'Box', { width: 2.1, height: 1.9, depth: 5.2 }, WH, 0, [0, 1.3, 0]); B.add(r, 'Box', { width: 2.12, height: 0.25, depth: 5.22 }, COL9.meg, 0, [0, 1.2, 0]);
     B.add(r, 'Box', { width: 2.0, height: 0.7, depth: 0.05 }, [0.04, 0.05, 0.06], 0, [0, 1.85, 2.61], [0.25, 0, 0]);
     for (const sx of [-1, 1]) for (const sz of [-1, 1]) B.add(r, 'Cylinder', { diameter: 0.72, height: 0.26, tessellation: 12 }, COL9.dark, 0, [sx * 0.95, 0.36, sz * 1.8], [0, 0, Math.PI / 2]);
@@ -6042,16 +6066,80 @@ function buildProps9() {
     new Set(keep).forEach(r => r && r.dispose && r.dispose());
   };
 }
-function buildCar(B, x, z, ry) {
-  const r = propRoot(x, z, ry), c = pick([[0.36, 0.1, 0.09], [0.18, 0.24, 0.34], [0.58, 0.58, 0.56], [0.14, 0.14, 0.15], [0.4, 0.36, 0.25], [0.22, 0.3, 0.22]]), GL = [0.04, 0.05, 0.06];
-  B.add(r, 'Box', { width: 1.74, height: 0.62, depth: 4.4 }, c, 0, [0, 0.62, 0]);
-  B.add(r, 'Box', { width: 1.56, height: 0.56, depth: 2.2 }, c, 0, [0, 1.2, -0.25]);
-  B.add(r, 'Box', { width: 1.58, height: 0.42, depth: 2.0 }, GL, 0, [0, 1.2, -0.25]);
-  B.add(r, 'Box', { width: 1.5, height: 0.44, depth: 0.05 }, GL, 0, [0, 1.18, 0.88], [-0.45, 0, 0]);
-  for (const sx of [-1, 1]) for (const sz of [-1, 1]) B.add(r, 'Cylinder', { diameter: 0.64, height: 0.22, tessellation: 12 }, COL9.dark, 0, [sx * 0.8, 0.32, sz * 1.4], [0, 0, Math.PI / 2]);
-  for (const s of [-1, 1]) { B.add(r, 'Box', { width: 0.3, height: 0.12, depth: 0.03 }, [0.8, 0.78, 0.7], 0, [s * 0.6, 0.72, 2.2]); B.add(r, 'Box', { width: 0.28, height: 0.1, depth: 0.03 }, [0.45, 0.04, 0.03], 0, [s * 0.62, 0.78, -2.2]); }
-  B.add(r, 'Box', { width: 1.78, height: 0.14, depth: 0.12 }, COL9.metal, 0, [0, 0.42, 2.22]); B.add(r, 'Box', { width: 1.78, height: 0.14, depth: 0.12 }, COL9.metal, 0, [0, 0.42, -2.22]);
-  solidLocal(r, -0.9, -2.25, 0.9, 2.25);
+// r7: a 1990s American car, built from parts: separate lower body panels around real wheel openings, a glasshouse with pillars,
+// bumpers, lamps, plates and mirrors. Kinds: sedan, wagon, hatch, pickup. Local +z is the nose; the car sits on its tyres at y = 0.
+const CAR9 = { col: [[0.34, 0.07, 0.08], [0.12, 0.16, 0.3], [0.62, 0.62, 0.6], [0.1, 0.1, 0.11], [0.62, 0.55, 0.4], [0.14, 0.26, 0.18], [0.82, 0.82, 0.78], [0.12, 0.34, 0.36], [0.5, 0.2, 0.08]] };
+function buildCar(B, x, z, ry, o = {}) {
+  const kind = o.kind || pick(['sedan', 'sedan', 'sedan', 'wagon', 'hatch', 'pickup']);
+  const L = kind === 'hatch' ? 4.25 : kind === 'pickup' ? 5.1 : 4.9, W = kind === 'pickup' ? 1.86 : 1.8, wb = kind === 'hatch' ? 2.55 : kind === 'pickup' ? 3.1 : 2.85;
+  const r = propRoot(x, z, ry), c = o.col || pick(CAR9.col), c2 = c.map(v => v * 0.8), GL = [0.06, 0.08, 0.1], DK = [0.035, 0.035, 0.04], CH = [0.6, 0.6, 0.62], TY = [0.05, 0.05, 0.05];
+  if (o.tilt) { r.rotation.z = o.tilt; r.computeWorldMatrix(true); }
+  const y0 = 0.3, y1 = 0.82, fz = wb / 2, rz = -wb / 2, WR = 0.36, hl = L / 2;   // body bottom/top, axle z, wheel radius
+  const seg = (za, zb, ya, yb, col = c, w = W) => { if (zb - za > 0.01) B.add(r, 'Box', { width: w, height: yb - ya, depth: zb - za }, col, 0, [0, (ya + yb) / 2, (za + zb) / 2]); };
+  // lower body, cut around the wheels; fender lips over the openings; black wheel wells inside
+  seg(fz + WR + 0.06, hl - 0.1, y0, y1); seg(rz + WR + 0.06, fz - WR - 0.06, y0, y1); seg(-hl + 0.1, rz - WR - 0.06, y0, y1);
+  for (const az of [fz, rz]) { seg(az - WR - 0.06, az + WR + 0.06, 0.7, y1); seg(az - WR - 0.04, az + WR + 0.04, y0, 0.7, DK, W - 0.42); }
+  B.add(r, 'Box', { width: W + 0.012, height: 0.05, depth: L - 0.5 }, DK, 0, [0, 0.6, 0]);   // rubbing strip
+  B.add(r, 'Box', { width: W - 0.06, height: 0.06, depth: L - 0.4 }, DK, 0, [0, y0 - 0.02, 0]);   // sill / underside
+  // bumpers, grille, lamps, plates
+  for (const s of [-1, 1]) {
+    B.add(r, 'Box', { width: W + 0.04, height: 0.17, depth: 0.16 }, kind === 'pickup' ? CH : [0.2, 0.2, 0.21], 0, [0, 0.42, s * (hl - 0.02)]);
+    B.add(r, 'Box', { width: W - 0.1, height: 0.2, depth: 0.12 }, c, 0, [0, 0.64, s * (hl - 0.07)]);
+    B.add(r, 'Box', { width: 0.32, height: 0.15, depth: 0.012 }, [0.88, 0.86, 0.7], 0, [0, 0.43, s * (hl + 0.065)]);
+  }
+  B.add(r, 'Box', { width: W * 0.5, height: 0.14, depth: 0.03 }, DK, 0, [0, 0.66, hl - 0.005]); for (let i = 0; i < 4; i++) B.add(r, 'Box', { width: W * 0.5, height: 0.01, depth: 0.035 }, CH, 0, [0, 0.6 + i * 0.04, hl - 0.004]);
+  const hz = !!o.hazard, LB = hz ? W9.BFl : B;
+  for (const s of [-1, 1]) {
+    B.add(r, 'Box', { width: 0.36, height: 0.13, depth: 0.03 }, [0.82, 0.84, 0.8], 0.04, [s * (W / 2 - 0.28), 0.67, hl - 0.005]);   // headlights
+    LB.add(r, 'Box', { width: 0.1, height: 0.12, depth: 0.03 }, [1, 0.55, 0.1], hz ? 1 : 0, [s * (W / 2 - 0.05), 0.67, hl - 0.03]);   // corner lights (blinking when the hazards are on)
+    LB.add(r, 'Box', { width: 0.34, height: 0.14, depth: 0.03 }, [0.55, 0.04, 0.03], hz ? 0.9 : 0, [s * (W / 2 - 0.25), 0.68, -hl + 0.005]);   // tail lights
+    B.add(r, 'Box', { width: 0.12, height: 0.14, depth: 0.031 }, [0.85, 0.82, 0.78], 0, [s * (W / 2 - 0.5), 0.68, -hl + 0.006]);
+  }
+  // wheels: tyre, steel rim, hubcap
+  for (const sx of [-1, 1]) for (const az of [fz, rz]) {
+    const wx = sx * (W / 2 - 0.13), flat = o.flat && sx > 0 && az === rz;
+    B.add(r, 'Cylinder', { diameter: WR * 2, height: 0.22, tessellation: 16 }, TY, 0, [wx, flat ? WR - 0.08 : WR, az], [0, 0, Math.PI / 2], flat ? [1, 1, 1.15] : null);
+    B.add(r, 'Cylinder', { diameter: WR * 1.15, height: 0.225, tessellation: 14 }, [0.42, 0.42, 0.43], 0, [wx + sx * 0.002, flat ? WR - 0.08 : WR, az], [0, 0, Math.PI / 2]);
+    B.add(r, 'Cylinder', { diameter: WR * 0.55, height: 0.232, tessellation: 10 }, CH, 0, [wx + sx * 0.004, flat ? WR - 0.08 : WR, az], [0, 0, Math.PI / 2]);
+  }
+  // hood, deck, glasshouse
+  const hood0 = kind === 'hatch' ? 0.7 : 0.85, roofY = kind === 'pickup' ? 1.55 : 1.4, cabF = kind === 'pickup' ? 0.75 : 0.55, roofF = cabF - 0.55;
+  B.add(r, 'Box', { width: W - 0.04, height: 0.05, depth: hl - hood0 - 0.08 }, c, 0, [0, y1 + 0.02, (hl + hood0) / 2 - 0.04], [0.04, 0, 0]);
+  B.add(r, 'Box', { width: 0.02, height: 0.012, depth: hl - hood0 - 0.2 }, c2, 0, [0, y1 + 0.05, (hl + hood0) / 2]);
+  const cabR = kind === 'wagon' ? -hl + 0.15 : kind === 'hatch' ? -hl + 0.35 : kind === 'pickup' ? -0.75 : -1.05, roofR = kind === 'wagon' ? -hl + 0.22 : kind === 'hatch' ? -hl + 0.95 : kind === 'pickup' ? -0.7 : -0.55;
+  // the glasshouse: trapezoid panels (ribbons) that lean in toward the roof, tube pillars along their edges
+  const bw = W / 2 - 0.12, tw = W / 2 - 0.27, yb = y1 + 0.02, V = (x, y, z) => new BABYLON.Vector3(x, y, z), DS = BABYLON.Mesh.DOUBLESIDE;
+  const rib = (p1, p2, col, e = 0) => B.add(r, 'Ribbon', { pathArray: [p1.map(q => V(...q)), p2.map(q => V(...q))], sideOrientation: DS }, col, e);
+  const Wp = (x, y, z) => { const q = localPt(r, x, y, z); return [q.x, q.y, q.z]; }, tube = (a, b, rr, col) => B.pipe(Wp(...a), Wp(...b), rr, col, 0, 6);
+  rib([[-bw, yb, cabF], [-tw, roofY, roofF]], [[bw, yb, cabF], [tw, roofY, roofF]], GL, 0.03);   // windscreen
+  rib([[-tw, roofY, roofF], [-tw, roofY, roofR]], [[tw, roofY, roofF], [tw, roofY, roofR]], c);   // roof
+  rib([[-tw, roofY, roofR], [-bw, yb, cabR]], [[tw, roofY, roofR], [bw, yb, cabR]], GL, 0.03);   // rear window / tailgate glass
+  for (const s of [-1, 1]) {
+    rib([[s * bw, yb + 0.01, cabF - 0.03], [s * bw, yb + 0.01, cabR + 0.03]], [[s * tw, roofY - 0.01, roofF - 0.01], [s * tw, roofY - 0.01, roofR + 0.01]], GL, 0.03);   // side glass
+    tube([s * bw, yb, cabF], [s * tw, roofY, roofF], 0.04, c); tube([s * bw, yb, cabR], [s * tw, roofY, roofR], kind === 'wagon' ? 0.045 : 0.07, c);   // A, C/D pillars
+    tube([s * tw, roofY, roofF], [s * tw, roofY, roofR], 0.03, kind === 'wagon' ? CH : c2);   // drip rail / roof rack
+    tube([s * bw, yb, cabF], [s * bw, yb, cabR], 0.025, DK);   // window seal
+    const mz = kind === 'pickup' ? (roofF + roofR) / 2 : (roofF + roofR) / 2 + 0.08;
+    if (kind !== 'pickup') tube([s * (bw - 0.01), yb, mz], [s * (tw + 0.005), roofY - 0.02, mz], 0.04, DK);   // B pillar
+    B.add(r, 'Box', { width: 0.12, height: 0.09, depth: 0.05 }, DK, 0, [s * (W / 2 + 0.03), y1 + 0.16, cabF - 0.1]);   // mirror
+    for (const dz of kind === 'pickup' ? [cabF - 1.0] : [cabF - 1.05, mz - 0.62]) B.add(r, 'Box', { width: 0.004, height: y1 - y0 - 0.06, depth: 0.012 }, DK, 0, [s * (W / 2 + 0.003), (y0 + y1) / 2, dz]);   // door seams
+    for (const dz of kind === 'pickup' ? [cabF - 0.95] : [cabF - 0.95, mz - 0.55]) B.add(r, 'Box', { width: 0.02, height: 0.025, depth: 0.12 }, CH, 0, [s * (W / 2 + 0.01), y1 - 0.08, dz - 0.15]);   // handles
+  }
+  for (const zz of kind === 'pickup' ? [cabF - 0.75] : [cabF - 0.75, cabR + 0.55]) { B.add(r, 'Box', { width: W - 0.4, height: 0.42, depth: 0.5 }, [0.16, 0.13, 0.12], 0, [0, y1 + 0.05, zz]); B.add(r, 'Box', { width: W - 0.4, height: 0.5, depth: 0.12 }, [0.18, 0.15, 0.13], 0, [0, y1 + 0.3, zz - 0.25], [-0.15, 0, 0]); }   // seats
+  B.add(r, 'Box', { width: W - 0.3, height: 0.1, depth: 0.42 }, [0.06, 0.06, 0.06], 0, [0, y1 + 0.06, cabF - 0.2]);   // dash
+  if (kind === 'pickup') {   // the bed: open box behind the cab
+    const b0 = -hl + 0.12, b1 = cabR - 0.08;
+    B.add(r, 'Box', { width: W - 0.08, height: 0.06, depth: b1 - b0 }, DK, 0, [0, y1 - 0.05, (b0 + b1) / 2]);
+    for (const s of [-1, 1]) B.add(r, 'Box', { width: 0.06, height: 0.42, depth: b1 - b0 }, c, 0, [s * (W / 2 - 0.03), y1 + 0.18, (b0 + b1) / 2]);
+    B.add(r, 'Box', { width: W - 0.04, height: 0.42, depth: 0.06 }, c, 0, [0, y1 + 0.18, b0]); B.add(r, 'Box', { width: W - 0.04, height: 0.42, depth: 0.06 }, c, 0, [0, y1 + 0.18, b1]);
+    if (RNG() < 0.5) B.add(r, 'Box', { width: 0.6, height: 0.3, depth: 0.5 }, [0.5, 0.36, 0.2], 0, [0.3, y1 + 0.15, b0 + 0.6], [0, 0.3, 0]);
+  } else if (kind === 'sedan') B.add(r, 'Box', { width: W - 0.04, height: 0.05, depth: hl + cabR - 0.08 }, c, 0, [0, y1 + 0.02, (-hl + cabR) / 2 + 0.02]);   // boot lid
+  B.add(r, 'Cylinder', { diameter: 0.008, height: 0.8, tessellation: 4 }, DK, 0, [W / 2 - 0.15, y1 + 0.4, -hl + 0.5]);   // antenna
+  for (const s of [-1, 1]) B.add(r, 'Box', { width: 0.36, height: 0.012, depth: 0.03 }, DK, 0, [s * 0.32, y1 + 0.06, hood0 - 0.02], [0, s * 0.12, 0]);   // wipers
+  if (o.leaves) for (let i = 0; i < 9; i++) B.add(r, 'Box', { width: rnd(0.05, 0.1), height: 0.006, depth: rnd(0.04, 0.08) }, [0.38, 0.24, 0.1].map(v => v * rnd(0.7, 1.2)), 0, [rnd(-0.7, 0.7), y1 + 0.07, rnd(hood0, hl - 0.2)], [0, rnd(0, TAU), 0]);
+  solidLocal(r, -W / 2 - 0.06, -hl - 0.06, W / 2 + 0.06, hl + 0.06);
+  (W9.cars || (W9.cars = [])).push({ x, z, ry, W, L, kind });
+  return r;
 }
 function buildTree(B, x, z, dead) {
   const r = propRoot(x, z, rnd(0, TAU)), TR = [0.2, 0.15, 0.11], h = rnd(2.2, 3.4);
@@ -7238,7 +7326,7 @@ if (/[?&]debug/.test(location.search)) addEventListener('load', () => Object.ass
 const W5 = {};
 function resetW5() {
   Object.assign(W5, { eyeMat: null, keys: [], valves: [], exit: null, elev: null, svDoor: null, steam: [], nests: [], fires: [], clocks: [], gramo: null,
-    used: new Map(), lampOn: null, lampFl: null, B: null, BOn: null, BFl: null, cones: null, pl: null, pg: null, signs: [], bell: null, callBtn: null, press: null });
+    used: new Map(), fnests: [], winB: null, st: {}, lampOn: null, lampFl: null, B: null, BOn: null, BFl: null, cones: null, pl: null, pg: null, signs: [], bell: null, callBtn: null, press: null });
   if (!W5.eyeP) W5.eyeP = new BABYLON.Vector4(0, 0, 0, 0); else W5.eyeP.set(0, 0, 0, 0);
 }
 // the hotel wallpaper material also carries the eyes (uniform eyeP: xyz = where you are staring, w = how awake they are)
@@ -7609,9 +7697,10 @@ async function buildWorld5(progress) {
   progress(0.58, 'TURNING DOWN THE BEDS…'); await nextFrame();
   const E = (n, d, t) => envMat9(n, [d], t);
   W5.eyeMat = envMat5('hwall5', ['MAT_HWALL'], T.hwall);
-  const mats = { hwall: W5.eyeMat, deco: E('deco5', 'MAT_DECO', T.deco), bconc: E('bconc5', 'MAT_BCONC', T.bconc), brick: E('brick5', 'MAT_BLOCK', T.brick),
+  const mats = { tilew: null, hwall: W5.eyeMat, deco: E('deco5', 'MAT_DECO', T.deco), bconc: E('bconc5', 'MAT_BCONC', T.bconc), brick: E('brick5', 'MAT_BLOCK', T.brick),
     trim: E('trim5', 'MAT_CASE', T.bconc), carpet: E('carpet5', 'MAT_CARPET', T.carpet), check: E('check5', 'MAT_CHECK', T.check), tile: E('tile5', 'MAT_TILE', T.tile),
     bfloor: E('bfloor5', 'MAT_BFLOOR', T.bfloor), hceil: E('hceil5', 'MAT_HCEIL', T.hceil), bceil: E('bceil5', 'MAT_BCEIL', T.bceil) };
+  mats.tilew = mats.tile;   // r7: the State Floor kitchen's tiled walls
   buildGeometry5(SCN, mats);
   mkPlaques5(T);
   progress(0.7, 'SETTING THE TABLES…'); await nextFrame();
@@ -7645,7 +7734,7 @@ function buildProps5() {
   for (const e of LV.ek.values()) {
     if (e.kind === 'deco') { if (e.loop) { const k = (e.x - LOOP5.x0) % 5; seeded5(900 + k * 7 + e.d, () => decoDoor5(B, e)); } else decoDoor5(B, e); }
     else if (e.kind === 'brick') brickUp5(B, e);
-    else if (e.kind === 'arch' && e.sign) sign5(e.sign, atWall5(sideOf5(e), 0, 0), [0, 2.98, 0.03], 1.7, 0.32);
+    else if (e.kind === 'arch' && e.sign) sign5(e.sign, atWall5(sideOf5(e), 0, 0), [0, e.big ? 3.62 : 2.98, 0.03], e.big ? 2.2 : 1.7, e.big ? 0.38 : 0.32);
     else if (e.kind === 'door' && e.dk === 'warp' && e.sign) sign5(e.sign, atWall5(sideOf5(e), 0, 0), [0, DOORH + 0.36, 0.03], 1.3, 0.26);
     else if (e.kind === 'door' && e.plaque) plaqueOn(atWall5(sideOf5(e), 0, 0), DOORW / 2 + 0.34, 1.5, e.plaque, 0.28, 0.08);
     else if (e.kind === 'door' && e.num) plaqueOn(atWall5(sideOf5(e), 0, 0), DOORW / 2 + 0.3, 1.5, String(e.num));
@@ -7671,11 +7760,11 @@ function buildProps5() {
   for (const g of LV.guest) furnishGuest5(B, g);
   furnishBev5(B); furnishLobby5(B); furnishService5(B);
   for (const r of LV.rooms) if (r.t === 'vest') furnishVest5(B, r);
-  furnishBoiler5(B);
+  furnishBoiler5(B); furnishFemaleBoil5(B); furnishState5(B);   // r7
   // moth nests in the dark stretches
   for (const [x, y] of [[5, 23], [11, 5], [31, 7]]) { const px = cellCenter(x), pz = cellCenter(y); nest5(B, px, pz, 8); W5.nests.push({ x: px, z: pz, c: cIdx(x, y), boil: false }); }
   W5.finishProps = () => {
-    const keep = [], out = [...(B.finish('props5', keep) || []), ...(BOn.finish('lensOn5', keep) || []), ...(BFl.finish('lensFl5', keep) || []), ...(FOn.finish('fire5', keep) || [])];
+    const keep = [], out = [...(B.finish('props5', keep) || []), ...(BOn.finish('lensOn5', keep) || []), ...(BFl.finish('lensFl5', keep) || []), ...(FOn.finish('fire5', keep) || []), ...(W5.winB ? W5.winB.finish('win5', keep) || [] : [])];
     out.forEach(m => m._sortD = 300);
     new Set(keep).forEach(r => r && r.dispose && r.dispose());
     W5.pl.dt.update(); W5.pl.dt.hasAlpha = false;
@@ -7851,7 +7940,7 @@ function furnishBoiler5(B) {
 
 // ==== story5.js ====
 // ---------- Level 5 · doors, keys, valves, the elevator, the emergency exit, pickups ----------
-const DOORC5 = { room: [0.42, 0.19, 0.09], warp: [0.42, 0.19, 0.09], closet: [0.58, 0.56, 0.5], service: [0.4, 0.42, 0.4] };
+const DOORC5 = { room: [0.42, 0.19, 0.09], warp: [0.42, 0.19, 0.09], portal: [0.42, 0.19, 0.09], closet: [0.58, 0.56, 0.5], service: [0.4, 0.42, 0.4], kitchen: [0.6, 0.6, 0.58], swing: [0.5, 0.3, 0.16], security: [0.24, 0.28, 0.26] };
 function buildDoors5() {
   W9.doorAnim = new Set();
   for (const e of LV.ek.values()) {
@@ -7859,14 +7948,14 @@ function buildDoors5() {
     const horiz = e.d === 1 || e.d === 3, [mx, mz] = edgeMid(e.x, e.y, e.d), nx = e.x + DX[e.d], ny = e.y + DY[e.d];
     const fr = e.from || [e.x, e.y], to = fr[0] === e.x && fr[1] === e.y ? [nx, ny] : [e.x, e.y];   // doors swing away from the side you meet them
     const s = horiz ? (to[1] === Math.max(e.y, ny) ? 1 : -1) : (to[0] === Math.max(e.x, nx) ? 1 : -1);
-    const metal = e.dk === 'service', col = DOORC5[e.dk] || DOORC5.room;
+    const metal = e.dk === 'service' || e.dk === 'kitchen' || e.dk === 'security', col = DOORC5[e.dk] || DOORC5.room;
     const hinge = tnode(null, horiz ? mx - DOORW / 2 + 0.03 : mx, 0, horiz ? mz : mz - DOORW / 2 + 0.03);
     const mesh = doorLeaf(col, metal); mesh.parent = hinge;
     const c0 = horiz ? 0 : -Math.PI / 2, c1 = c0 + (horiz ? -s : s) * 1.62;
     const bx = horiz ? [mx - DOORW / 2, mz - WT / 2, mx + DOORW / 2, mz + WT / 2] : [mx - WT / 2, mz - DOORW / 2, mx + WT / 2, mz + DOORW / 2];
     const startOpen = e.dk === 'room' ? RNG() < 0.35 : false;
     const dr = { e, key: eKey(e.x, e.y, e.d), horiz, s, hinge, mesh, c0, c1, bx, mx, mz, house: -1, dk: e.dk, metal, open: startOpen ? 1 : 0, target: startOpen ? 1 : 0,
-      latched: false, locked: e.dk === 'service', solid: addSolid(bx[0], bx[1], bx[2], bx[3], 'door'), shake: 0, cull: 26, bangs: 0 };
+      latched: false, locked: e.dk === 'service' || e.dk === 'security', solid: addSolid(bx[0], bx[1], bx[2], bx[3], 'door'), shake: 0, cull: 26, bangs: 0 };
     LV.solids[dr.solid].off = startOpen; if (!startOpen) markDyn(bx[0], bx[1], bx[2], bx[3], 1);
     hinge.rotation.y = startOpen ? c1 : c0;
     W9.doors.push(dr); W9.doorAt.set(dr.key, dr);
@@ -7986,6 +8075,7 @@ function buildStory5() {
   const sv = LV.svStair; addSolid(sv.x * CELL, sv.y * CELL + 1.35, (sv.x + 1) * CELL, (sv.y + 1) * CELL, 'stair');
   const ar = LV.arrive5; addSolid(ar.x * CELL, ar.y * CELL, (ar.x + 1) * CELL, ar.y * CELL + 1.7, 'stair');
   buildPlaces5();   // r6
+  buildPortals5();   // r7: the inner doors of the vestibules
 }
 function drawExit5(on) {
   const S = W5.exit.sign, c = S.ctx, w = 256, h = 86;
@@ -8041,6 +8131,7 @@ function planPlaces5(room, rect, way) {
   if (g) { g.pruitt = true; LV.pruitt = g; }
 }
 function lightPlaces5() {
+  lightState5();   // r7
   if (!LV.office5) return;
   const x = (OFF5.x0 + 1) * CELL, z = (OFF5.y0 + 1) * CELL;
   LV.fixtures.push({ x, z, state: 1, seed: RNG(), I: 0.3, rad: 6, sc: 1.8 }); LV.bulbs.push({ x, z, y: CEIL, kind: 'pend', state: 1 });
@@ -8061,6 +8152,7 @@ function buildPlaces5() {
   if (W5.deskR) { const p = localPt(W5.deskR, -0.5, 1.152, 1.55); W.interact.push({ x: p.x, z: p.z, y: 1.16, r: 1.8, label: () => 'READ THE GUEST REGISTER', ok: () => true, act: () => readRegister5() }); }
   if (LV.office5) buildOffice5(B);
   if (LV.pruitt) buildPruitt5(B);
+  buildState5();   // r7: the State Floor's story objects
 }
 function buildOffice5(B) {
   const ws = wallSlots5(LV.office5.cells).filter(s => !s.door), pick5 = (pred) => { const i = ws.findIndex(pred); return i >= 0 ? ws.splice(i, 1)[0] : ws.shift(); };
@@ -8113,19 +8205,21 @@ function buildPruitt5(B) {
 
 // ----- door hooks (doorLabel5 / useDoor5 call these first) -----
 function doorLabel5p(dr) {
+  const st = doorLabelSt5(dr); if (st) return st;   // r7: portal doors, security
   if (dr.pruitt) {
     if (P5.pr === 'given' && P5.keyOut) return P5.opened ? (dr.target ? 'CLOSE DOOR' : 'OPEN DOOR') : `OPEN ROOM ${pruittNum5()}`;
     return P5.rye && P5.pr === 'asked' ? `LEAVE THE RYE AT ${pruittNum5()}` : `KNOCK ON ${pruittNum5()}`;
   }
-  if (dr.locked && P5.master) return 'UNLOCK THE STAFF DOOR · MASTER KEY';
+  if (dr.locked && dr.dk === 'service' && P5.master) return 'UNLOCK THE STAFF DOOR · MASTER KEY';
   return null;
 }
 function useDoor5p(dr) {   // true = handled
+  if (useDoorSt5(dr)) return true;   // r7
   if (dr.pruitt) {
     if (P5.pr === 'given' && P5.keyOut) { if (!P5.opened) openPruitt5(dr); else useDoor(dr); return true; }
     knockPruitt5(dr); return true;
   }
-  if (dr.locked && P5.master) { unlockStaff5(dr); return true; }
+  if (dr.locked && dr.dk === 'service' && P5.master) { unlockStaff5(dr); return true; }
   return false;
 }
 
@@ -8216,10 +8310,11 @@ function tasks5() {
   task('staff', 'OPEN THE STAFF DOOR IN THE BEVERLY ROOM', { quiet: true, sub: 'THREE HOUSEKEEPING KEYS: WEST, NORTH AND EAST WING CLOSETS' + alt });
   task('keys', keysTxt, { quiet: true });
   if (G5.keys >= 3) taskDone('keys', 'HOUSEKEEPING KEYS · 3/3', true);
-  const past = ['stairs', 'valves', 'exit'].includes(G5.phase) || W5.svDoor && !W5.svDoor.locked;
+  const past = ['stairs', 'valves', 'fire', 'exit'].includes(G5.phase) || W5.svDoor && !W5.svDoor.locked;
   if (past) { taskDone('staff', 'STAFF DOOR OPEN', true); if (G5.keys < 3) taskDone('keys', 'HOUSEKEEPING KEYS · NOT NEEDED', true); }
-  if (G5.boilSeen || G5.phase === 'valves' || G5.phase === 'exit') { task('boil', `VENT THE BOILERS · VALVES ${G5.valves}/3`, { quiet: true }); if (G5.valves >= 3) taskDone('boil', 'BOILERS VENTED', true); }
+  if (G5.boilSeen || G5.phase === 'valves' || G5.phase === 'fire' || G5.phase === 'exit') { task('boil', `VENT THE BOILERS · VALVES ${G5.valves}/3`, { quiet: true }); if (G5.valves >= 3) taskDone('boil', 'BOILERS VENTED', true); }
   if (G5.phase === 'exit') task('exit5', 'REACH THE EMERGENCY EXIT', { quiet: true });
+  tasksState5();   // r7
 }
 function places5Events(dt) {
   const c = cIdx(cellOf(PL.x), cellOf(PL.z));
@@ -8230,8 +8325,612 @@ function places5Events(dt) {
     P5.ryeAsked = true; P5.busy = FX.t + 6; later(0.5, () => sayPr5('Is that housekeeping? No. Somebody with a light.'));
   }
 }
-function flags5() { flag('pruittN', pruittNum5()); flag('pruitt5', P5.opened ? 'opened' : P5.master ? 'key' : P5.pr); flag('staff5', P5.master && G5.keys < 3 ? 'master' : 'keys'); flag('register5', P5.register); }
+function flags5() { flag('lusk5', ST5.keys ? 'keys' : ST5.sec ? 'master' : ''); flag('fed5', (ST5.fedE ? 1 : 0) + (ST5.fedB ? 1 : 0)); flag('pruittN', pruittNum5()); flag('pruitt5', P5.opened ? 'opened' : P5.master ? 'key' : P5.pr); flag('staff5', P5.master && G5.keys < 3 ? 'master' : 'keys'); flag('register5', P5.register); }
 if (/[?&]debug/.test(location.search)) addEventListener('load', () => Object.assign(window.__BR || (window.__BR = {}), { P5, knockPruitt5, takeRye5, takeMaster5, openPruitt5, readRegister5, readAudit5, useSwitch5, tasks5, flags5, places5Events }));
+
+// ==== state5.js ====
+// ---------- r7 · Level 5: the State Floor ----------
+// A wing kept for the hotel's important guests, reached only through the ballroom's portal door (STATE FLOOR). The Cross Hall
+// (marble, columns, a red runner, chandeliers), the East Room (tall lit windows onto nothing, gold drapes, the big chandelier
+// a female deathmoth hangs from), the Gold Room restaurant, its kitchen, and the security office with the fire panel.
+// The emergency exit in the boiler room is on a fire lock as well as the boiler pressure: the panel in security resets it.
+const ST5 = {};
+function resetST5() {
+  for (const k of Object.keys(ST5)) delete ST5[k];
+  Object.assign(ST5, { seen: false, book: false, keys: false, sec: false, spray: 0, hasSpray: false, pest: false, fireKey: false, glass: false, reset: false,
+    cctv: false, log: false, panelSeen: false, fedE: false, fedB: false, heard: false, bigSeen: false, lockSeen: false, roomT: {}, busy: 0 });
+}
+resetST5();
+const ST5L = { xh: { x0: 23, y0: 21, x1: 36, y1: 22 }, er: { x0: 29, y0: 18, x1: 35, y1: 20 }, gr: { x0: 24, y0: 23, x1: 28, y1: 26 }, kt: { x0: 29, y0: 23, x1: 31, y1: 25 }, sc: { x0: 33, y0: 23, x1: 35, y1: 24 } };
+const ST5H = { xh: 4.4, er: 5.6, gr: 4.0 };
+
+// ----- layout (genLayout5, before the edges are resolved) -----
+function planState5(room, rect, way, vest) {
+  LV.st5 = null;
+  let free = true;
+  for (const r of Object.values(ST5L)) for (let y = r.y0; y <= r.y1; y++) for (let x = r.x0; x <= r.x1; x++) if (LV.zone[cIdx(x, y)] !== Z5.VOID) free = false;
+  for (const [x, y] of [[20, 19], [21, 19], [22, 21], [21, 21]]) if (LV.zone[cIdx(x, y)] !== Z5.VOID) free = false;
+  if (!free) return;
+  const S = (m, c, h, t) => ({ m, c, h, t }), F = (m, col, cm, h, ccol) => ({ m, col, cm, h, ccol }), R = (k, zone, t, o) => { const q = ST5L[k]; return rect(room(zone, R5.ST, t, o), q.x0, q.y0, q.x1, q.y1); };
+  const xh = R('xh', Z5.EXEC, 'xhall', { side: S('deco', [1.32, 1.26, 1.1], ST5H.xh, TRIM5.gold), flr: F('check', [1.08, 1.02, 0.92], 'bceil', ST5H.xh, [1.15, 1.1, 1.0]) });
+  const er = R('er', Z5.EXEC, 'eroom', { side: S('deco', [1.4, 1.34, 1.2], ST5H.er, TRIM5.gold), flr: F('check', [0.86, 0.66, 0.46], 'bceil', ST5H.er, [1.2, 1.15, 1.05]) });
+  const gr = R('gr', Z5.REST, 'gold', { side: S('deco', [1.3, 1.0, 0.56], ST5H.gr, TRIM5.gold), flr: F('carpet', [0.8, 0.24, 0.2], 'bceil', ST5H.gr, [1.1, 0.95, 0.7]) });
+  const kt = R('kt', Z5.KITCH, 'kitchen', { side: S('tilew', [0.96, 0.98, 0.95], CEIL, TRIM5.steel), flr: F('tile', [0.78, 0.8, 0.78], 'bconc', CEIL, [0.8, 0.8, 0.76]) });
+  const sc = R('sc', Z5.EXEC, 'sec', { side: S('bconc', [0.8, 0.84, 0.76], CEIL, TRIM5.serv), flr: F('tile', [0.5, 0.54, 0.52], 'bconc', CEIL, [0.7, 0.7, 0.66]) });
+  const a = vest(20, 19, 2, R5.BEV, 'STATE FLOOR'), b = vest(22, 21, 0, R5.ST, 'BALLROOM');
+  LV.warps.push({ a, b, key: 'C' });
+  way(30, 21, 3, 'arch', { big: true, sign: 'EAST ROOM', from: [30, 21] }); way(34, 21, 3, 'arch', { big: true, from: [34, 21] });
+  way(26, 22, 1, 'arch', { big: true, sign: 'THE GOLD ROOM', from: [26, 22] });
+  way(30, 22, 1, 'door', { dk: 'kitchen', plaque: 'KITCHEN', from: [30, 22] });
+  way(28, 24, 0, 'door', { dk: 'swing', from: [28, 24] });
+  way(34, 22, 1, 'door', { dk: 'security', plaque: 'SECURITY', from: [34, 22] });
+  LV.st5 = { xh, er, gr, kt, sc, va: a, vb: b };
+}
+function inSt5(c) { return c >= 0 && LV.reg[c] === R5.ST; }
+function stRoom5(c) { const r = c >= 0 && LV.room[c] >= 0 ? LV.rooms[LV.room[c]] : null; return r && r.reg === R5.ST ? r.t : null; }
+const box5 = k => { const q = ST5L[k]; return { X0: q.x0 * CELL, Z0: q.y0 * CELL, X1: (q.x1 + 1) * CELL, Z1: (q.y1 + 1) * CELL }; };
+
+// ----- lights (planLights5 → lightPlaces5) -----
+function lightState5() {
+  if (!LV.st5) return;
+  const F = (x, z, o) => { const f = Object.assign({ x, z, state: 1, seed: RNG() }, o); LV.fixtures.push(f); return f; };
+  const S = LV.st5, zc = 22 * CELL;
+  S.chXH = [25, 28.5, 32, 35.2].map(k => { const x = k * CELL; F(x, zc, { I: 0.55, rad: 11, sc: 3.4, y: ST5H.xh - 1.0 }); return { x, z: zc }; });
+  const E = box5('er'); S.chER = { x: (E.X0 + E.X1) / 2, z: (E.Z0 + E.Z1) / 2 };
+  F(S.chER.x, S.chER.z, { I: 1.05, rad: 16, sc: 6, y: 3.6 });
+  for (let x = 29; x <= 35; x++) F(cellCenter(x), E.Z0 + 0.9, { I: 0.3, rad: 5.5, sc: 2.0, state: x === 33 ? 2 : 1 });
+  for (let y = 18; y <= 20; y++) F(E.X1 - 0.9, cellCenter(y), { I: 0.28, rad: 5.5, sc: 2.0 });
+  const Gd = box5('gr'); S.chGR = [0.36, 0.7].map(k => { const x = lerp(Gd.X0, Gd.X1, k), z = (Gd.Z0 + Gd.Z1) / 2 - 0.4; return F(x, z, { I: 0.72, rad: 11, sc: 3.6, y: 3.1 }); });
+  for (const [kx, kz] of [[0.08, 0.15], [0.92, 0.15], [0.08, 0.85], [0.92, 0.85]]) F(lerp(Gd.X0, Gd.X1, kx), lerp(Gd.Z0, Gd.Z1, kz), { I: 0.24, rad: 6, sc: 2 });
+  for (const [x, y, st] of [[29, 23, 1], [31, 24, 2], [29, 25, 1]]) { F(cellCenter(x), cellCenter(y), { state: st, I: 0.6, rad: 7.5, sc: 2.2 }); LV.bulbs.push({ x: cellCenter(x), z: cellCenter(y), y: CEIL, kind: 'bare', state: st }); }
+  { const x = 34.5 * CELL, z = 24 * CELL; F(x, z, { I: 0.55, rad: 8, sc: 2.2 }); F(x, 25 * CELL - 0.9, { I: 0.25, rad: 4, sc: 1.4 }); LV.bulbs.push({ x, z, y: CEIL, kind: 'pend', state: 1 }); }
+  F(36.7 * CELL, zc, { I: 0.2, rad: 5, sc: 1.4, state: 2 });   // the landing at the top of the closed stair
+}
+
+// ----- the State Floor's furniture -----
+const MARB5 = [0.92, 0.9, 0.85];
+function column5(B, x, z, h) {
+  const r = propRoot(x, z, 0), M = MARB5, G = COL5.gold, sh = h - 0.9;
+  B.add(r, 'Box', { width: 0.72, height: 0.22, depth: 0.72 }, M.map(v => v * 0.92), 0, [0, 0.11, 0]);
+  B.add(r, 'Cylinder', { diameter: 0.62, height: 0.12, tessellation: 18 }, M, 0, [0, 0.28, 0]);
+  B.add(r, 'Cylinder', { diameterTop: 0.44, diameterBottom: 0.5, height: sh, tessellation: 20 }, M, 0, [0, 0.34 + sh / 2, 0]);
+  for (let i = 0; i < 12; i++) { const a = i / 12 * TAU; B.add(r, 'Box', { width: 0.035, height: sh - 0.2, depth: 0.025 }, M.map(v => v * 0.82), 0, [Math.sin(a) * 0.238, 0.34 + sh / 2, Math.cos(a) * 0.238], [0, a, 0]); }
+  B.add(r, 'Cylinder', { diameterTop: 0.7, diameterBottom: 0.46, height: 0.24, tessellation: 18 }, G, 0, [0, 0.34 + sh + 0.12, 0]);
+  B.add(r, 'Box', { width: 0.78, height: 0.14, depth: 0.78 }, M, 0, [0, h - 0.24, 0]);
+  addSolid(x - 0.34, z - 0.34, x + 0.34, z + 0.34, 'prop');
+}
+// a tall window that glows onto nothing (arched top, mullions, sill); drapes optional. Local +z into the room, wall at z = 0
+function window5(B, r, w, sill, head, o = {}) {
+  const WB = W5.winB, PANE = [0.9, 0.93, 1], FR = o.frame || [0.92, 0.9, 0.84], h = head - sill, top = head + w / 2;
+  WB.add(r, 'Box', { width: w, height: h, depth: 0.02 }, PANE, 0.55, [0, sill + h / 2, 0.012]);
+  WB.add(r, 'Cylinder', { diameter: w, height: 0.02, tessellation: 22, arc: 0.5 }, PANE, 0.55, [0, head, 0.012], [Math.PI / 2, 0, Math.PI / 2]);
+  for (const s of [-1, 1]) B.add(r, 'Box', { width: 0.1, height: h, depth: 0.12 }, FR, 0, [s * (w / 2 + 0.05), sill + h / 2, 0.06]);
+  for (let i = 0; i <= 12; i++) { const a = -Math.PI / 2 + i / 12 * Math.PI, x = Math.sin(a) * (w / 2 + 0.05), y = head + Math.cos(a) * (w / 2 + 0.05); B.add(r, 'Box', { width: 0.1, height: 0.12, depth: 0.12 }, FR, 0, [x, y, 0.06], [0, 0, -a]); }
+  for (const f of [-1 / 3, 0, 1 / 3]) B.add(r, 'Box', { width: 0.035, height: h + w / 2 * Math.cos(Math.asin(Math.abs(f) * 2)) - 0.04, depth: 0.05 }, FR, 0, [f * w, sill + (h + w / 2 * Math.cos(Math.asin(Math.abs(f) * 2))) / 2, 0.04]);
+  for (let y = sill + 0.55; y < head; y += 0.55) B.add(r, 'Box', { width: w, height: 0.035, depth: 0.05 }, FR, 0, [0, y, 0.04]);
+  B.add(r, 'Box', { width: w + 0.34, height: 0.07, depth: 0.26 }, FR, 0, [0, sill - 0.03, 0.12]);
+  if (o.drape) {
+    const D = o.drape, dh = top + 0.35;
+    for (const s of [-1, 1]) {
+      const cx = s * (w / 2 + 0.32);
+      B.add(r, 'Box', { width: 0.56, height: dh, depth: 0.08 }, D, 0, [cx, dh / 2, 0.16]);
+      for (let k = 0; k < 4; k++) B.add(r, 'Box', { width: 0.09, height: dh - 0.04, depth: 0.05 }, D.map(v => v * (k % 2 ? 0.7 : 1.15)), 0, [cx - 0.21 + k * 0.14, dh / 2, 0.22]);
+      B.add(r, 'Box', { width: 0.6, height: 0.08, depth: 0.12 }, COL5.gold, 0, [cx, 1.1, 0.24]);   // tie-back
+    }
+    B.add(r, 'Box', { width: w + 1.3, height: 0.42, depth: 0.16 }, D.map(v => v * 0.9), 0, [0, dh - 0.12, 0.2]);
+    B.add(r, 'Box', { width: w + 1.36, height: 0.05, depth: 0.2 }, COL5.gold, 0, [0, dh - 0.34, 0.22]);
+  }
+}
+function bigPainting5(B, r, w, h, y, seed) {
+  B.add(r, 'Box', { width: w + 0.24, height: h + 0.24, depth: 0.07 }, COL5.gold, 0, [0, y, 0.035]);
+  B.add(r, 'Box', { width: w + 0.08, height: h + 0.08, depth: 0.075 }, COL5.gold.map(v => v * 0.7), 0, [0, y, 0.04]);
+  B.add(r, 'Box', { width: w, height: h, depth: 0.012 }, [0.1, 0.08, 0.06], 0, [0, y, 0.08]);
+  B.add(r, 'Box', { width: w * 0.42, height: h * 0.55, depth: 0.014 }, [0.05, 0.045, 0.04], 0, [(seed - 0.5) * w * 0.2, y - h * 0.15, 0.085]);   // a sitter, dark coat
+  B.add(r, 'Box', { width: w * 0.18, height: w * 0.2, depth: 0.016 }, [0.5, 0.4, 0.32], 0, [(seed - 0.5) * w * 0.2, y + h * 0.2, 0.086]);
+  B.add(r, 'Box', { width: 0.3, height: 0.05, depth: 0.03 }, COL5.brass, 0, [0, y - h / 2 - 0.2, 0.06]);
+}
+function bust5(B, x, z, ry) {
+  const r = propRoot(x, z, ry), M = MARB5;
+  B.add(r, 'Box', { width: 0.42, height: 1.1, depth: 0.42 }, M.map(v => v * 0.9), 0, [0, 0.55, 0]); B.add(r, 'Box', { width: 0.5, height: 0.06, depth: 0.5 }, M, 0, [0, 1.13, 0]);
+  B.add(r, 'Box', { width: 0.42, height: 0.24, depth: 0.22 }, M, 0, [0, 1.28, 0]); B.add(r, 'Cylinder', { diameter: 0.1, height: 0.12, tessellation: 8 }, M, 0, [0, 1.44, 0]);
+  B.add(r, 'Sphere', { diameter: 0.24, segments: 10 }, M, 0, [0, 1.6, 0.01], null, [0.88, 1.1, 0.96]);
+  addSolid(x - 0.26, z - 0.26, x + 0.26, z + 0.26, 'prop');
+}
+function booth5(B, r) {   // a high-backed booth: two benches facing across a small table, against the wall
+  const RD = [0.42, 0.06, 0.07];
+  for (const s of [-1, 1]) {
+    B.add(r, 'Box', { width: 0.55, height: 0.45, depth: 1.3 }, RD, 0, [s * 0.75, 0.23, 0.7]); B.add(r, 'Box', { width: 0.18, height: 1.3, depth: 1.3 }, RD.map(v => v * 0.85), 0, [s * 1.05, 0.65, 0.7]);
+    B.add(r, 'Box', { width: 0.2, height: 0.06, depth: 1.34 }, COL5.mahog2, 0, [s * 1.05, 1.32, 0.7]);
+  }
+  B.add(r, 'Box', { width: 0.8, height: 0.05, depth: 1.1 }, [0.9, 0.88, 0.82], 0, [0, 0.76, 0.7]); B.add(r, 'Box', { width: 0.12, height: 0.74, depth: 0.12 }, COL5.mahog, 0, [0, 0.37, 0.7]);
+  W5.BOn.add(r, 'Cylinder', { diameterTop: 0.12, diameterBottom: 0.18, height: 0.14, tessellation: 10 }, [1, 0.8, 0.5], 0.35, [0, 1.6, 0.12]);
+  solidLocal(r, -1.2, 0, 1.2, 1.4);
+}
+function stove5(B, r) {
+  const ST = [0.62, 0.63, 0.62];
+  B.add(r, 'Box', { width: 1.4, height: 0.9, depth: 0.8 }, ST, 0, [0, 0.45, 0.4]); B.add(r, 'Box', { width: 1.44, height: 0.04, depth: 0.84 }, [0.2, 0.2, 0.2], 0, [0, 0.92, 0.42]);
+  for (const [x, z] of [[-0.35, 0.25], [0.35, 0.25], [-0.35, 0.6], [0.35, 0.6]]) B.add(r, 'Cylinder', { diameter: 0.26, height: 0.03, tessellation: 12 }, [0.08, 0.08, 0.08], 0, [x, 0.95, z]);
+  B.add(r, 'Box', { width: 1.1, height: 0.5, depth: 0.02 }, [0.3, 0.3, 0.3], 0, [0, 0.42, 0.81]); B.add(r, 'Box', { width: 0.8, height: 0.04, depth: 0.05 }, [0.75, 0.75, 0.74], 0, [0, 0.72, 0.84]);
+  B.add(r, 'Box', { width: 1.6, height: 0.5, depth: 0.9 }, ST.map(v => v * 0.9), 0, [0, 2.15, 0.45]); B.add(r, 'Box', { width: 0.4, height: 0.6, depth: 0.4 }, ST.map(v => v * 0.8), 0, [0, 2.6, 0.3]);
+  B.add(r, 'Cylinder', { diameter: 0.34, height: 0.24, tessellation: 12 }, [0.4, 0.4, 0.42], 0, [-0.35, 1.08, 0.25]);   // a stock pot
+  solidLocal(r, -0.7, 0, 0.7, 0.82);
+}
+function counter5(B, r, len) {
+  const ST = [0.66, 0.67, 0.66];
+  B.add(r, 'Box', { width: len, height: 0.88, depth: 0.65 }, ST.map(v => v * 0.85), 0, [0, 0.44, 0.33]); B.add(r, 'Box', { width: len + 0.04, height: 0.04, depth: 0.7 }, ST, 0, [0, 0.9, 0.35]);
+  for (let i = 0; i < len * 3; i++) if (RNG() < 0.5) B.add(r, 'Cylinder', { diameter: 0.24, height: rnd(0.05, 0.3), tessellation: 12 }, [0.92, 0.92, 0.9], 0, [-len / 2 + 0.2 + i / 3, 1.0, 0.35]);
+  solidLocal(r, -len / 2, 0, len / 2, 0.7);
+}
+function furnishState5(B) {
+  const S = LV.st5; if (!S) return;
+  const winM = actMat('win5', { emis: 1 }); setEmi(winM, 2.0, 2.05, 2.2); W5.winB = new PropBatch(winM); W5.winB.fast = true;
+  const X = box5('xh'), zc = 22 * CELL, H = ST5H.xh, GOLDD = [0.66, 0.44, 0.12];
+  // ---- the Cross Hall ----
+  { const L = 36 * CELL - X.X0 - 0.4, r = propRoot((X.X0 + 36 * CELL) / 2, zc, 0);   // the red runner, gold-edged
+    B.add(r, 'Box', { width: L, height: 0.012, depth: 1.9 }, [0.52, 0.05, 0.06], 0, [0, 0.006, 0]);
+    for (const s of [-1, 1]) B.add(r, 'Box', { width: L, height: 0.015, depth: 0.07 }, COL5.gold, 0, [0, 0.008, s * 0.92]);
+    for (let i = 0; i < 12; i++) B.add(r, 'Box', { width: 0.5, height: 0.014, depth: 0.5 }, [0.7, 0.55, 0.2], 0, [-L / 2 + 1.5 + i * (L - 3) / 11, 0.007, 0], [0, Math.PI / 4, 0]); }
+  for (let k = 24; k <= 35; k++) for (const z of [X.Z0 + WT / 2 + 0.5, X.Z1 - WT / 2 - 0.5]) column5(B, k * CELL, z, H);
+  for (const [z, s] of [[X.Z0 + WT / 2, 1], [X.Z1 - WT / 2, -1]]) {   // entablature along both long walls
+    const r = propRoot((X.X0 + 36 * CELL) / 2, z, 0), L = 36 * CELL - X.X0;
+    B.add(r, 'Box', { width: L, height: 0.24, depth: 0.88 }, MARB5, 0, [0, H - 0.12, s * 0.44]); B.add(r, 'Box', { width: L, height: 0.05, depth: 0.9 }, COL5.gold, 0, [0, H - 0.27, s * 0.45]);
+  }
+  for (let x = 23; x <= 28; x++) window5(B, atWall5({ x, y: 21, d: 3 }, 0, 0), 1.5, 0.7, 3.0, { drape: [0.5, 0.08, 0.08] });   // lit windows onto nothing
+  for (const x of [23, 25, 27, 29, 31, 33, 35]) { if (x === 26 || x === 30 || x === 34) continue; const s = { x, y: 22, d: 1 }; bigPainting5(B, atWall5(s, 0, 0), 1.1, 1.4, 2.3, hash1(x * 3.7)); }
+  for (const [x, z, ry] of [[24.5, X.Z0 + 1.15, 0], [27.5, X.Z0 + 1.15, 0], [32.5, X.Z1 - 1.15, Math.PI], [28.5, X.Z1 - 1.15, Math.PI]]) bust5(B, x * CELL, z, ry);
+  for (const x of [25.5, 31.5, 33.5]) placeF5(B, { x: Math.floor(x), y: x === 25.5 ? 22 : 21, d: x === 25.5 ? 1 : 3 }, 0, 'bench', { hw: 0.76 });
+  sign5('THE STATE FLOOR', atWall5({ x: 23, y: 21, d: 2 }, -1.3, 0), [0, 3.4, 0.03], 2.6, 0.4, { bold: true, emis: 0.4 });
+  for (const xc of S.chXH) chandelier5(propRoot(xc.x, xc.z, 0), 0.95, H, false);
+  // the grand stair at the east end: roped off, double doors at the top
+  { const x0 = 36 * CELL + 0.1, x1 = X.X1 - WT / 2, n = 8, dd = 0.36, rh = 0.22, zw0 = X.Z0 + 0.7, zw1 = X.Z1 - 0.7, w = zw1 - zw0;
+    for (let i = 0; i < n; i++) { const r = propRoot(x0 + (i + 0.5) * dd, zc, 0); B.add(r, 'Box', { width: dd, height: (i + 1) * rh, depth: w }, MARB5, 0, [0, (i + 1) * rh / 2, 0]); B.add(r, 'Box', { width: dd + 0.01, height: 0.012, depth: 1.6 }, [0.52, 0.05, 0.06], 0, [0, (i + 1) * rh + 0.006, 0]); }
+    const top = n * rh, lr = propRoot((x0 + n * dd + x1) / 2, zc, 0); B.add(lr, 'Box', { width: x1 - x0 - n * dd, height: top, depth: w }, MARB5, 0, [0, top / 2, 0]);
+    for (const s of [-1, 1]) {   // balustrades
+      const zz = zc + s * (w / 2 + 0.06), L = n * dd, ang = Math.atan2(top, L), r = propRoot(x0 + L / 2, zz, 0);
+      B.add(r, 'Box', { width: Math.hypot(L, top) + 0.1, height: 0.08, depth: 0.12 }, COL5.mahog2, 0, [0, top / 2 + 0.95, 0], [0, 0, ang]);
+      for (let i = 0; i < n; i++) B.add(propRoot(x0 + (i + 0.5) * dd, zz, 0), 'Box', { width: 0.05, height: 0.95, depth: 0.05 }, MARB5, 0, [0, (i + 1) * rh + 0.47, 0]);
+    }
+    const dr = atWall5({ x: 36, y: 21, d: 0 }, -CELL / 2, 0);   // double doors, centred on the hall
+    for (const s of [-1, 1]) { B.add(dr, 'Box', { width: 0.95, height: 2.7, depth: 0.06 }, [0.18, 0.1, 0.06], 0, [s * 0.5, top + 1.35, 0.04]); B.add(dr, 'Box', { width: 0.04, height: 0.4, depth: 0.05 }, COL5.gold, 0, [s * 0.1, top + 1.3, 0.09]); }
+    B.add(dr, 'Box', { width: 2.4, height: 0.24, depth: 0.1 }, COL5.gold, 0, [0, top + 2.82, 0.05]);
+    plaqueOn(dr, 0, top + 3.15, 'RESIDENCE', 0.5, 0.1, 0.1);
+    for (const s of [-1, 1]) { const p = propRoot(x0 - 0.45, zc + s * 1.3, 0); B.add(p, 'Cylinder', { diameter: 0.08, height: 0.95, tessellation: 8 }, COL5.brass, 0, [0, 0.47, 0]); B.add(p, 'Cylinder', { diameter: 0.3, height: 0.04, tessellation: 12 }, COL5.brass, 0, [0, 0.02, 0]); B.add(p, 'Sphere', { diameter: 0.12, segments: 6 }, COL5.brass, 0, [0, 0.98, 0]); }
+    for (let i = 0; i < 6; i++) { const t = (i + 0.5) / 6, zz = zc - 1.3 + t * 2.6, y = 0.9 - Math.sin(t * Math.PI) * 0.18; B.add(propRoot(x0 - 0.45, zz, 0), 'Box', { width: 0.05, height: 0.05, depth: 2.6 / 6 + 0.02 }, [0.6, 0.06, 0.08], 0, [0, y, 0], [(t - 0.5) * 0.5, 0, 0]); }
+    const sg = propRoot(x0 - 0.45, zc, -Math.PI / 2); plaqueOn(sg, 0, 1.18, 'UPPER GALLERY CLOSED', 0.6, 0.1, 0.05);
+    addSolid(x0 - 0.55, X.Z0, X.X1, X.Z1, 'prop');
+  }
+  // ---- the East Room ----
+  const E = box5('er');
+  for (let x = 29; x <= 35; x++) window5(B, atWall5({ x, y: 18, d: 3 }, 0, 0), 1.7, 0.45, 3.9, { drape: GOLDD });
+  for (let y = 18; y <= 20; y++) window5(B, atWall5({ x: 35, y, d: 0 }, 0, 0), 1.7, 0.45, 3.9, { drape: GOLDD });
+  chandelier5(propRoot(S.chER.x, S.chER.z, 0), 1.9, ST5H.er, true);
+  piano5(B, propRoot(E.X0 + 2.2, E.Z0 + 2.4, Math.PI * 0.75)); addSolid(E.X0 + 1.1, E.Z0 + 1.2, E.X0 + 3.4, E.Z0 + 3.6, 'prop');
+  for (const x of [29, 32, 35]) bigPainting5(B, atWall5({ x, y: 20, d: 1 }, 0, 0), 1.3, 1.7, 2.6, hash1(x * 1.9));
+  for (let i = 0; i < 9; i++) {   // gold ballroom chairs along the walls, one knocked over
+    const q = propRoot(E.X0 + 4.2 + i * 2.3, E.Z1 - 0.7, Math.PI + rnd(-0.1, 0.1)), tip = i === 5, C = COL5.gold.map(v => v * 0.85);
+    if (tip) { B.add(q, 'Box', { width: 0.42, height: 0.42, depth: 0.05 }, [0.6, 0.1, 0.1], 0, [0, 0.1, 0.2], [Math.PI / 2 - 0.1, 0, 0]); continue; }
+    B.add(q, 'Box', { width: 0.42, height: 0.06, depth: 0.42 }, [0.6, 0.1, 0.1], 0, [0, 0.46, 0]); B.add(q, 'Box', { width: 0.42, height: 0.5, depth: 0.04 }, C, 0, [0, 0.74, -0.2]);
+    for (const [lx, lz] of [[-0.18, -0.18], [0.18, -0.18], [-0.18, 0.18], [0.18, 0.18]]) B.add(q, 'Box', { width: 0.025, height: 0.44, depth: 0.025 }, C, 0, [lx, 0.22, lz]);
+  }
+  { const r = propRoot(E.X1 - 2.6, E.Z1 - 2.2, 0.3);   // a sofa under a dust sheet
+    B.add(r, 'Box', { width: 2.0, height: 0.5, depth: 0.9 }, [0.88, 0.87, 0.82], 0, [0, 0.3, 0]); B.add(r, 'Box', { width: 2.0, height: 0.6, depth: 0.3 }, [0.86, 0.85, 0.8], 0, [0, 0.7, -0.35], [-0.15, 0, 0]);
+    B.add(r, 'Box', { width: 2.2, height: 0.04, depth: 1.1 }, [0.9, 0.89, 0.84], 0, [0, 0.03, 0.05], [0.02, 0, 0]); solidLocal(r, -1.0, -0.5, 1.0, 0.5); }
+  // ---- the Gold Room ----
+  const Gd = box5('gr');
+  for (const [x, z] of [[91.0, 88.0], [95.4, 88.6], [99.8, 88.0], [91.0, 92.8], [95.4, 93.4], [99.8, 92.6]]) roundTable5(B, x, z, RNG() < 0.5);
+  S.t9 = { x: 102.3, z: 95.5 }; roundTable5(B, S.t9.x, S.t9.z, false);
+  for (const y of [23, 24, 25, 26]) booth5(B, atWall5({ x: 24, y, d: 2 }, 0, 0));
+  for (const y of [23, 25, 26]) { const r = atWall5({ x: 28, y, d: 0 }, 0, 0); B.add(r, 'Box', { width: 1.1, height: 2.0, depth: 0.06 }, COL5.gold, 0, [0, 1.75, 0.03]); B.add(r, 'Box', { width: 0.94, height: 1.84, depth: 0.065 }, [0.5, 0.54, 0.56], 0.04, [0, 1.75, 0.035]); }
+  for (const c of S.chGR) chandelier5(propRoot(c.x, c.z, 0), 1.0, ST5H.gr, false);
+  placeF5(B, { x: 24, y: 23, d: 3 }, 1.2, 'palm', { hw: 0.3 }); placeF5(B, { x: 28, y: 26, d: 1 }, -1.2, 'palm', { hw: 0.3 }); placeF5(B, { x: 28, y: 26, d: 0 }, 0.9, 'cart', { hw: 0.48 });
+  { const r = propRoot(98.2, Gd.Z0 + 1.2, Math.PI);   // the maître d's stand, just inside the arch
+    B.add(r, 'Box', { width: 0.7, height: 1.05, depth: 0.5 }, COL5.mahog, 0, [0, 0.52, 0]); B.add(r, 'Box', { width: 0.76, height: 0.05, depth: 0.56 }, COL5.gold, 0, [0, 1.07, 0], [-0.25, 0, 0]);
+    B.add(r, 'Box', { width: 0.44, height: 0.04, depth: 0.32 }, [0.24, 0.06, 0.05], 0, [0, 1.12, 0.03], [-0.25, 0, 0]); B.add(r, 'Box', { width: 0.42, height: 0.01, depth: 0.3 }, [0.92, 0.9, 0.82], 0, [0, 1.145, 0.03], [-0.25, 0, 0]);
+    solidLocal(r, -0.38, -0.3, 0.38, 0.3); S.stand = { x: r.position.x, z: r.position.z }; plaqueOn(r, 0, 0.75, 'PLEASE WAIT TO BE SEATED', 0.5, 0.08, 0.27); }
+  // ---- the kitchen ----
+  const K = box5('kt');
+  { const r = propRoot((K.X0 + K.X1) / 2, (K.Z0 + K.Z1) / 2 + 0.4, 0), ST = [0.66, 0.67, 0.66];
+    B.add(r, 'Box', { width: 3.4, height: 0.88, depth: 1.1 }, ST.map(v => v * 0.85), 0, [0, 0.44, 0]); B.add(r, 'Box', { width: 3.44, height: 0.04, depth: 1.14 }, ST, 0, [0, 0.9, 0]);
+    for (let i = 0; i < 6; i++) B.add(r, 'Cylinder', { diameter: rnd(0.2, 0.32), height: rnd(0.1, 0.24), tessellation: 12 }, [0.5, 0.5, 0.52], 0, [-1.4 + i * 0.56, 1.0, rnd(-0.3, 0.3)]);
+    B.add(r, 'Box', { width: 3.0, height: 0.04, depth: 0.04 }, COL5.iron, 0, [0, 2.15, 0]); for (const s of [-1, 1]) B.add(r, 'Box', { width: 0.03, height: CEIL - 2.15, depth: 0.03 }, COL5.iron, 0, [s * 1.4, (CEIL + 2.15) / 2, 0]);
+    for (let i = 0; i < 7; i++) { const x = -1.3 + i * 0.43; B.add(r, 'Box', { width: 0.01, height: 0.2, depth: 0.01 }, COL5.iron, 0, [x, 2.05, 0]); B.add(r, 'Cylinder', { diameter: rnd(0.18, 0.3), height: 0.14, tessellation: 12 }, pick([[0.6, 0.36, 0.2], [0.42, 0.42, 0.44]]), 0, [x, 1.86, 0]); }
+    solidLocal(r, -1.75, -0.6, 1.75, 0.6); }
+  stove5(B, atWall5({ x: 29, y: 25, d: 1 }, 0, 0)); stove5(B, atWall5({ x: 30, y: 25, d: 1 }, 0, 0));
+  { const r = atWall5({ x: 31, y: 25, d: 1 }, 0, 0); counter5(B, r, 2.4); B.add(r, 'Box', { width: 0.8, height: 0.1, depth: 0.5 }, [0.3, 0.32, 0.33], 0, [0.4, 0.88, 0.35]); B.add(r, 'Cylinder', { diameter: 0.03, height: 0.4, tessellation: 6 }, [0.7, 0.7, 0.72], 0, [0.4, 1.15, 0.1]); }
+  counter5(B, atWall5({ x: 29, y: 23, d: 3 }, 0, 0), 2.6); counter5(B, atWall5({ x: 31, y: 23, d: 3 }, 0, 0), 2.6);
+  placeF5(B, { x: 31, y: 23, d: 0 }, 0, 'shelf', { hw: 0.7 }); placeF5(B, { x: 31, y: 25, d: 0 }, 0, 'shelf', { hw: 0.7 });
+  S.pantry = atWall5({ x: 31, y: 24, d: 0 }, 0, 0); placeF5(B, { x: 31, y: 24, d: 0 }, 0, 'shelf', { hw: 0.7 });
+  counter5(B, atWall5({ x: 29, y: 23, d: 2 }, 0, 0), 2.6);
+  // ---- the security office ----
+  const C = box5('sc');
+  { const r = atWall5({ x: 34, y: 24, d: 1 }, 0, 0); S.desk = r;
+    B.add(r, 'Box', { width: 3.0, height: 0.06, depth: 0.8 }, [0.3, 0.32, 0.3], 0, [0, 0.76, 0.45]); for (const s of [-1, 1]) B.add(r, 'Box', { width: 0.06, height: 0.74, depth: 0.76 }, [0.24, 0.26, 0.24], 0, [s * 1.45, 0.37, 0.45]);
+    for (let i = 0; i < 4; i++) { const x = -1.08 + i * 0.72, y = i % 2 ? 1.34 : 1.02; B.add(r, 'Box', { width: 0.6, height: 0.48, depth: 0.5 }, [0.2, 0.2, 0.19], 0, [x, y + 0.04, 0.32]); }
+    solidLocal(r, -1.5, 0, 1.5, 0.86);
+    const ch = propRoot(r.position.x + 0.6, r.position.z - 1.4, 2.6); FURN5.armchair(B, ch, { col: [0.16, 0.2, 0.2] }); solidLocal(ch, -0.4, 0, 0.4, 0.83); }
+  placeF5(B, { x: 33, y: 23, d: 2 }, 0.6, 'lockers', { hw: 0.6 });
+  { const r = atWall5({ x: 33, y: 24, d: 2 }, 0, 0); B.add(r, 'Cylinder', { diameter: 0.04, height: 1.8, tessellation: 6 }, COL5.brass, 0, [0.6, 0.9, 0.3]); B.add(r, 'Box', { width: 0.5, height: 1.0, depth: 0.25 }, [0.12, 0.14, 0.2], 0, [0.6, 1.25, 0.32]); B.add(r, 'Cylinder', { diameter: 0.3, height: 0.08, tessellation: 12 }, [0.1, 0.12, 0.16], 0, [0.6, 1.86, 0.3]); }
+  S.panelR = atWall5({ x: 35, y: 23, d: 0 }, -CELL / 2 + 0.1, 0);
+  // ---- moth nests: the Gold Room's males circle its chandeliers; a female hangs from the East Room chandelier ----
+  W5.nests.push({ x: S.chGR[0].x, z: S.chGR[0].z, c: cell5(S.chGR[0].x, S.chGR[0].z), boil: false, loyal: S.chGR });
+  W5.fnests = W5.fnests || [];
+  W5.fnests.push({ x: S.chER.x + 1.4, z: S.chER.z + 0.3, y: 3.55, c: cell5(S.chER.x, S.chER.z), leash: 8.5, where: 'EAST ROOM', bowl: { x: S.chER.x + 0.6, z: S.chER.z + 2.6 } });
+}
+// the female in the far boiler hall (valve 3): she hangs above the valve; her bowl is by the hall's way in
+function furnishFemaleBoil5(B) {
+  const h = LV.bhalls[2]; if (!h || !h.boiler) return;
+  const cs = h.cells.map(c => ({ c, x: cellCenter(c % N), z: cellCenter((c / N) | 0) }));
+  const corner = cs.filter((q, i) => i !== 4).sort((a, b) => dist2(b.x, b.z, h.boiler.x, h.boiler.z) - dist2(a.x, a.z, h.boiler.x, h.boiler.z));
+  const roost = corner[0], bowlC = corner[corner.length - 1];
+  nest5(B, roost.x, roost.z, 10);
+  W5.fnests = W5.fnests || [];
+  W5.fnests.push({ x: roost.x, z: roost.z, y: CEIL - 0.6, c: roost.c, leash: 5.5, where: 'BOILER', bowl: { x: bowlC.x + rnd(-0.4, 0.4), z: bowlC.z + rnd(-0.4, 0.4) }, boil: true });
+}
+function bowl5(B, n) {
+  const r = propRoot(n.bowl.x, n.bowl.z, 0);
+  if (!n.boil) { B.add(r, 'Cylinder', { diameter: 0.6, height: 0.04, tessellation: 18 }, COL5.mahog2, 0, [0, 0.7, 0]); B.add(r, 'Cylinder', { diameter: 0.08, height: 0.68, tessellation: 8 }, COL5.gold, 0, [0, 0.34, 0]); B.add(r, 'Cylinder', { diameter: 0.4, height: 0.03, tessellation: 14 }, COL5.gold, 0, [0, 0.015, 0]); addSolid(n.bowl.x - 0.32, n.bowl.z - 0.32, n.bowl.x + 0.32, n.bowl.z + 0.32, 'prop'); }
+  const y = n.boil ? 0 : 0.72;
+  B.add(r, 'Cylinder', { diameterTop: 0.42, diameterBottom: 0.22, height: 0.1, tessellation: 18 }, [0.78, 0.78, 0.8], 0.05, [0, y + 0.05, 0]);
+  const wm = mkMerged(W.itemMat, P => { P('Cylinder', { diameter: 0.36, height: 0.012, tessellation: 18 }, [0.9, 0.86, 0.66], 0.3, [0, 0, 0]); }, 'bowlW5');
+  wm.position.set(n.bowl.x, y + 0.085, n.bowl.z); wm.setEnabled(false); n.bowl.y = y; n.bowl.water = wm;
+}
+
+// ----- story objects (end of buildPlaces5: doors exist) -----
+function buildState5() {
+  const S = LV.st5, B = W5.B; if (!S) return;
+  W5.st = { secDoor: W9.doors.find(d => d.dk === 'security') || null };
+  for (const n of W5.fnests || []) bowl5(B, n);
+  // the reservation book on the maître d's stand
+  W.interact.push({ x: S.stand.x, z: S.stand.z, y: 1.12, r: 1.8, label: () => 'READ THE RESERVATIONS', ok: () => true, act: () => readBook5() });
+  // table 9: the night officer's cap, his plate, his keys
+  { const t = S.t9, r = propRoot(t.x, t.z, 0.6);
+    B.add(r, 'Cylinder', { diameter: 0.26, height: 0.02, tessellation: 16 }, [0.92, 0.92, 0.9], 0, [0.15, 0.78, 0.1]);
+    B.add(r, 'Cylinder', { diameter: 0.24, height: 0.1, tessellation: 14 }, [0.1, 0.12, 0.2], 0, [-0.25, 0.83, -0.1]); B.add(r, 'Cylinder', { diameter: 0.3, height: 0.012, tessellation: 14 }, [0.06, 0.06, 0.08], 0.1, [-0.25, 0.785, -0.04], [0.15, 0, 0]);
+    B.add(r, 'Box', { width: 0.06, height: 0.04, depth: 0.02 }, COL5.gold, 0, [-0.25, 0.86, 0.02]);
+    const cr = propRoot(t.x, t.z + 0.05, -0.4); plaqueOn(cr, 0, 0.86, '9', 0.08, 0.06, 0.0);
+    const km = mkMerged(W.itemMat, P => { P('Torus', { diameter: 0.06, thickness: 0.008, tessellation: 12 }, [0.75, 0.75, 0.78], 0.5, [0, 0, 0]); for (const a of [-0.5, 0.2, 0.9]) P('Box', { width: 0.07, height: 0.005, depth: 0.018 }, [0.8, 0.7, 0.4], 0.5, [Math.cos(a) * 0.05, 0.002, Math.sin(a) * 0.05], [0, -a, 0]); }, 'offKeys5');
+    const kp = localPt(r, 0.12, 0.79, -0.22); km.position.copyFrom(kp); W5.st.keys = km;
+    W.interact.push({ x: kp.x, z: kp.z, y: 0.8, r: 1.7, label: () => 'TAKE THE OFFICER\'S KEYS · TABLE 9', ok: () => !ST5.keys, act: () => takeOffKeys5() }); }
+  // the kitchen: Mothex on the pantry shelf, a note by the door, a guaranteed almond water
+  { const r = S.pantry, p = localPt(r, -0.3, 0.75, 0.25);
+    const can = mkMerged(W.itemMat, P => { P('Cylinder', { diameter: 0.085, height: 0.22, tessellation: 12 }, [0.12, 0.42, 0.22], 0.15, [0, 0.11, 0]); P('Cylinder', { diameter: 0.087, height: 0.09, tessellation: 12 }, [0.92, 0.8, 0.2], 0.3, [0, 0.12, 0]);
+      P('Cylinder', { diameter: 0.02, height: 0.16, tessellation: 6 }, [0.6, 0.6, 0.62], 0.2, [0, 0.29, 0]); P('Cylinder', { diameter: 0.06, height: 0.24, tessellation: 10 }, [0.7, 0.7, 0.72], 0.2, [0, 0.36, 0.1], [Math.PI / 2, 0, 0]); P('Box', { width: 0.07, height: 0.03, depth: 0.05 }, [0.15, 0.12, 0.1], 0, [0, 0.36, -0.03]); }, 'spray5');
+    can.position.copyFrom(p); can.rotation.y = r.rotation.y + 0.7; W5.st.can = can;
+    W.interact.push({ x: p.x, z: p.z, y: 0.85, r: 1.8, label: () => 'TAKE THE MOTHEX', ok: () => !ST5.hasSpray, act: () => takeSpray5() });
+    const wp = localPt(r, 0.35, 0.75, 0.25), root = tnode(null, wp.x, 0.75, wp.z); itemModel('water', root, W.itemMat);
+    const it = { type: 'water', x: wp.x, z: wp.z, root, taken: false }; W.items.push(it);
+    W.interact.push({ x: wp.x, z: wp.z, y: 0.8, r: 1.8, it, label: () => 'TAKE ALMOND WATER', ok: () => !it.taken, act: () => takeItem(it) });
+    const nr = atWall5({ x: 30, y: 23, d: 3 }, -1.0, 0); B.add(nr, 'Box', { width: 0.22, height: 0.3, depth: 0.004 }, [0.93, 0.9, 0.8], 0.08, [0, 1.5, 0.01]); const np = localPt(nr, 0, 1.5, 0.3);
+    W.interact.push({ x: np.x, z: np.z, y: 1.5, r: 1.7, label: () => 'READ THE NOTE · PEST CONTROL', ok: () => true, act: () => readPest5() }); }
+  // security: the monitors, the log, the fire panel
+  { const r = S.desk, sp = localPt(r, 0, 1.2, 0.6);
+    const scr = dynTexPlane('cctv5', 2.6, 0.84, 512, 166, twin(r), [0, 1.2, 0.58], 1.1); W5.st.cctv = scr; drawCctv5(0);
+    W.interact.push({ x: sp.x, z: sp.z, y: 1.2, r: 2.0, label: () => 'WATCH THE MONITORS', ok: () => true, act: () => watchCctv5() });
+    const lp = localPt(r, -0.9, 0.8, 0.5); B.add(propRoot(lp.x, lp.z, r.rotation.y + 0.3), 'Box', { width: 0.3, height: 0.03, depth: 0.22 }, [0.12, 0.16, 0.26], 0, [0, 0.8, 0]);
+    W.interact.push({ x: lp.x, z: lp.z, y: 0.8, r: 1.7, label: () => 'READ THE SECURITY LOG', ok: () => true, act: () => readLog5() }); }
+  { const r = S.panelR, lm = actMat('panel5', { emis: 1 }); setEmi(lm, 2.4, 0.15, 0.08); W5.st.panelM = lm;
+    W5.B.add(r, 'Box', { width: 0.62, height: 0.86, depth: 0.16 }, [0.62, 0.08, 0.06], 0, [0, 1.45, 0.08]); W5.B.add(r, 'Box', { width: 0.5, height: 0.2, depth: 0.02 }, [0.9, 0.88, 0.8], 0, [0, 1.74, 0.17]);
+    W5.B.add(r, 'Cylinder', { diameter: 0.1, height: 0.04, tessellation: 12 }, COL5.brass, 0, [0, 1.38, 0.17], [Math.PI / 2, 0, 0]);
+    const lamp = mkMerged(lm, P => { P('Sphere', { diameter: 0.07, segments: 8 }, [1, 1, 1], 1, [0, 0, 0]); }, 'panelLamp5'); lamp.position.copyFrom(localPt(r, 0.18, 1.58, 0.17));
+    const kk = mkMerged(W.itemMat, P => { P('Box', { width: 0.02, height: 0.07, depth: 0.012 }, [0.85, 0.66, 0.2], 0.4, [0, 0, 0]); P('Box', { width: 0.06, height: 0.04, depth: 0.012 }, [0.6, 0.08, 0.06], 0.2, [0, 0.05, 0]); }, 'fkInPanel5');
+    kk.position.copyFrom(localPt(r, 0, 1.38, 0.2)); kk.rotation.y = r.rotation.y; kk.setEnabled(false); W5.st.keyIn = kk;
+    sign5('FIRE LOCK · RESET', twin(r), [0, 2.05, 0.03], 0.9, 0.18, { bg: '#2a0606', fg: '#ff8a70' });
+    const p = localPt(r, 0, 1.4, 0.7);
+    W.interact.push({ x: p.x, z: p.z, y: 1.4, r: 1.8, label: () => ST5.reset ? 'FIRE LOCK · RESET' : holdBusy(W5.st.panelIt) ? `TURNING THE KEY… ${holdPct(W5.st.panelIt)}%` : ST5.fireKey ? 'TURN THE FIRE KEY' : 'FIRE LOCK PANEL · NO KEY', ok: () => !ST5.reset, act: () => usePanel5() });
+    W5.st.panelIt = W.interact[W.interact.length - 1]; }
+  // the East Room: the fire key behind glass on the west wall
+  { const r = atWall5({ x: 29, y: 19, d: 2 }, 0, 0);
+    W5.B.add(r, 'Box', { width: 0.5, height: 0.62, depth: 0.12 }, [0.66, 0.08, 0.06], 0, [0, 1.45, 0.06]); W5.B.add(r, 'Box', { width: 0.4, height: 0.12, depth: 0.02 }, [0.95, 0.92, 0.85], 0, [0, 1.84, 0.13]);
+    const gl = mkMerged(W9.propMat, P => { P('Box', { width: 0.38, height: 0.42, depth: 0.012 }, [0.7, 0.8, 0.85], 0.25, [0, 0, 0]); }, 'fkGlass5'); gl.position.copyFrom(localPt(r, 0, 1.42, 0.125)); gl.rotation.y = r.rotation.y; W5.st.glass = gl;
+    const fk = mkMerged(W.itemMat, P => { P('Box', { width: 0.025, height: 0.1, depth: 0.012 }, [0.85, 0.66, 0.2], 0.4, [0, -0.04, 0]); P('Torus', { diameter: 0.05, thickness: 0.01, tessellation: 12 }, [0.85, 0.66, 0.2], 0.4, [0, 0.03, 0], [Math.PI / 2, 0, 0]); P('Box', { width: 0.06, height: 0.04, depth: 0.01 }, [0.6, 0.08, 0.06], 0.2, [0, 0.08, 0]); }, 'fireKey5');
+    fk.position.copyFrom(localPt(r, 0, 1.42, 0.09)); fk.rotation.y = r.rotation.y; W5.st.fk = fk;
+    plaqueOn(r, 0, 1.84, 'FIRE KEY', 0.3, 0.08, 0.14);
+    const p = localPt(r, 0, 1.4, 0.6); W5.st.case = { x: p.x, z: p.z };
+    W.interact.push({ x: p.x, z: p.z, y: 1.42, r: 1.8, label: () => ST5.glass ? 'TAKE THE FIRE KEY' : 'BREAK THE GLASS · FIRE KEY', ok: () => !ST5.fireKey, act: () => takeFireKey5() }); }
+  for (const n of W5.fnests || []) W.interact.push({ x: n.bowl.x, z: n.bowl.z, y: n.bowl.y + 0.1, r: 1.7, label: () => PL.water > 0 ? 'LEAVE ALMOND WATER IN THE BOWL' : 'AN EMPTY BOWL · YOU HAVE NO ALMOND WATER', ok: () => !n.fed, act: () => fillBowl5(n) });
+  // the fire lock on the emergency exit: a red box beside the door
+  { const X5 = W5.exit; if (X5) { const r = atWall5({ x: 28, y: 32, d: 0 }, 0.95, 0), lm = actMat('xlock5', { emis: 1 }); setEmi(lm, 2.2, 0.12, 0.06); W5.st.xlockM = lm;
+    W5.B.add(r, 'Box', { width: 0.3, height: 0.42, depth: 0.12 }, [0.62, 0.08, 0.06], 0, [0, 1.45, 0.06]); W5.B.add(r, 'Box', { width: 0.24, height: 0.08, depth: 0.02 }, [0.95, 0.92, 0.85], 0, [0, 1.6, 0.125]);
+    const lamp = mkMerged(lm, P => { P('Sphere', { diameter: 0.06, segments: 8 }, [1, 1, 1], 1, [0, 0, 0]); }, 'xlockLamp5'); lamp.position.copyFrom(localPt(r, 0, 1.42, 0.13));
+    plaqueOn(r, 0, 1.6, 'FIRE LOCK', 0.2, 0.06, 0.14); } }
+}
+
+// ----- actions -----
+const L5_TXT_ST = {
+  state: 'Nine. Your signal just jumped about a hundred metres. I won\'t ask.',
+  fire0: 'One more thing. That exit also locks off the fire panel. Panel\'s in security, up on the State Floor. East wall of the ballroom.',
+  fire: 'Pressure\'s down. Exit\'s still red on my board. That\'s the fire lock. Security office, State Floor.',
+  big: 'That one\'s twice the size of the others. Leave it alone.',
+  spray: 'Bug spray. Sure. Save it for the small ones.',
+  reset: 'There. Green on my board. Get down to that exit.',
+};
+const L5_HALE_ST = { fire: 'Hale. The fire panel is in security. The officer ate in the Gold Room. His keys never left his table.', big: 'Hale. That is a female. Don\'t spray her. She likes almond water, if you have any.' };
+function radioSt5(key, delay = 0) { const h = flag('hale9') === 'saved' && L5_HALE_ST[key]; say(h ? 'DR. HALE' : 'M.E.G. OUTPOST 9', h || L5_TXT_ST[key], { radio: true, delay }); }
+function readBook5() {
+  ST5.book = true; SFX.click();
+  readDoc('book5', 'THE GOLD ROOM · RESERVATIONS', [
+    'Table 2 · party of six · 8:00 · (crossed out, then written in again)',
+    'Table 5 · the band · after the last set · on the house',
+    'Table 9 · Officer Lusk, security · 3:00 · every night · do not seat anyone else there',
+    'Table 9 · Lusk · left his keys on the table again. Leave them. He gets cross if they move.',
+    'Table 9 · Lusk · (the rest of the column is the same line, down to the bottom of the page)'], { kind: 'note' });
+  if (!ST5.keys) task('offkey5', 'THE OFFICER\'S KEYS · TABLE 9, THE GOLD ROOM', { opt: !ST5.lockSeen && G5.phase !== 'fire' });
+  setPhase5();
+}
+function takeOffKeys5() {
+  ST5.keys = true; W5.st.keys.setEnabled(false); SFX5.jingle(P9({ x: PL.x, y: 0.8, z: PL.z })); SFX.pickup(); makeNoise(0.15);
+  toast('OFFICER LUSK\'S KEYS · SECURITY', 2.6); taskDone('offkey5', 'THE OFFICER\'S KEYS · TAKEN', true); cpSave('THE OFFICER\'S KEYS'); setPhase5();
+}
+function takeSpray5() {
+  ST5.hasSpray = true; ST5.spray = [8, 6, 5][G.diff]; W5.st.can.setEnabled(false); SFX.pickup(); toast(IS_TOUCH ? 'MOTHEX · THE SPRAY BUTTON PUMPS IT' : 'MOTHEX · [G] TO SPRAY · KILLS THE SMALL ONES', 3.6);
+  task('spray5', 'MOTHEX · ' + ST5.spray + ' PUMPS LEFT', { opt: true, quiet: true }); taskDone('spray5', null, true); radioSt5('spray', 1.4);
+  if (!ST5.pest) later(4, () => toast('THERE IS A NOTE BY THE KITCHEN DOOR', 2.2));
+}
+function readPest5() {
+  ST5.pest = true; SFX.click();
+  readDoc('pest5', 'PEST CONTROL · KITCHEN', [
+    'Mothex for the small ones. Two pumps and they drop.',
+    'It does NOTHING to the big ones. Those are the females. Spray one and she spits, and it burns through your apron.',
+    'Almond water in her bowl at close. She comes down to drink and leaves you be all night.',
+    'Gold Room on Fridays. Boiler room whenever ' + (pruittNum5() || 'the old man upstairs') + ' complains.',
+    '— Kitchen'], { kind: 'note' });
+  if ((W5.fnests || []).some(n => !n.fed)) task('bowl5', 'THE BIG ONES · ALMOND WATER IN THEIR BOWLS CALMS THEM', { opt: true });
+}
+function readLog5() {
+  ST5.log = true; SFX.click();
+  readDoc('log5', 'SECURITY LOG · NIGHTS', [
+    '02:40 Rounds. East Room windows lit again. No moon out there. No street. Just lit.',
+    '02:55 She\'s on the big chandelier. Filled her bowl. She came down for it. Quiet after.',
+    '03:00 Dinner. Table 9.',
+    '03:10 Bell at the front desk. Nobody at the desk.',
+    'Fire key goes back in the case. Not in my pocket. NOT IN MY POCKET.',
+    '(the next page is creased flat, as if someone leaned on it a long time)'], { kind: 'log' });
+}
+function drawCctv5(k) {
+  const S = W5.st.cctv; if (!S) return; const c = S.ctx, w = 512, h = 166, cw = w / 4, n = pruittNum5();
+  const L = ['CAM 2 · BEVERLY', 'CAM 4 · EAST ROOM', `CAM 7 · ${n || 'ROOM'}`, 'CAM 9 · BOILERS'];
+  for (let i = 0; i < 4; i++) {
+    const x = i * cw; c.fillStyle = '#0b100c'; c.fillRect(x + 2, 2, cw - 4, h - 4);
+    for (let j = 0; j < 260; j++) { const v = 30 + Math.random() * 60; c.fillStyle = `rgb(${v * 0.8},${v},${v * 0.85})`; c.fillRect(x + 2 + Math.random() * (cw - 6), 2 + Math.random() * (h - 6), 2, 1); }
+    c.fillStyle = '#3a4a3c';
+    if (i === 0) { for (let t = 0; t < 4; t++) { c.beginPath(); c.ellipse(x + 24 + t * 26, 110 - (t % 2) * 18, 11, 4, 0, 0, TAU); c.fill(); } c.fillRect(x + 80, 40, 40, 14); }
+    if (i === 1) { for (let t = 0; t < 4; t++) c.fillRect(x + 12 + t * 30, 26, 16, 70); c.fillStyle = '#8fa894'; for (let t = 0; t < 4; t++) c.fillRect(x + 14 + t * 30, 28, 12, 66); c.fillStyle = '#1a201b'; c.beginPath(); c.ellipse(x + 64, 44, k ? 26 : 22, 9, 0, 0, TAU); c.fill(); }
+    if (i === 2) { c.fillRect(x + 50, 70, 30, 46); c.fillRect(x + 46, 60, 38, 12); if (k > 1) { c.fillStyle = '#1a201b'; c.fillRect(x + 92, 52, 10, 64); c.beginPath(); c.arc(x + 97, 46, 7, 0, TAU); c.fill(); } }
+    if (i === 3) { c.beginPath(); c.arc(x + 64, 92, 32, 0, TAU); c.fill(); c.fillRect(x + 56, 20, 16, 40); }
+    c.fillStyle = '#cfe8d0'; c.font = 'bold 12px monospace'; c.fillText(L[i], x + 8, 18); c.fillText('03:1' + ((i + k) % 10), x + 8, h - 10);
+    c.strokeStyle = '#000'; c.lineWidth = 4; c.strokeRect(x + 1, 1, cw - 2, h - 2);
+  }
+  S.dt.update();
+}
+function watchCctv5() {
+  SFX5.click(P9({ x: PL.x, y: 1, z: PL.z })); FX.glitch = Math.max(FX.glitch, 0.4);
+  if (!ST5.cctv) {
+    ST5.cctv = true; drawCctv5(1);
+    later(0.8, () => toast('CAM 4 · SOMETHING LARGE ON THE EAST ROOM CHANDELIER', 3));
+    later(4.5, () => { drawCctv5(2); SFX.whisper(); toast(`CAM 7 · ROOM ${pruittNum5()} · SOMEONE STANDING BY THE WINDOW`, 2.6); });
+    later(7.5, () => drawCctv5(1));
+    if (!ST5.fireKey) later(1.2, () => fireTasks5());
+  } else { drawCctv5((FX.t | 0) % 2); toast('STATIC, MOSTLY', 1.6); }
+}
+function takeFireKey5() {
+  if (!ST5.glass) {
+    ST5.glass = true; W5.st.glass.setEnabled(false); SFX5.glass(P9(W5.st.case)); makeNoise(0.85); PL.shake = Math.max(PL.shake, 0.3);
+    for (const m of AI5.moths) if (m.fem && !m.fed && dist2(m.x, m.z, PL.x, PL.z) < 16) m.provoke('glass');
+  }
+  ST5.fireKey = true; W5.st.fk.setEnabled(false); SFX.pickup(); toast('THE FIRE KEY', 2.4); cpSave('THE FIRE KEY');
+  taskDone('firekey5', 'THE FIRE KEY · TAKEN', true); setPhase5();
+}
+function usePanel5() {
+  ST5.panelSeen = true; fireTasks5();
+  if (!ST5.fireKey) { SFX5.click(P9({ x: PL.x, y: 1.4, z: PL.z })); toast('FIRE LOCK PANEL · IT NEEDS THE FIRE KEY', 2.4); setPhase5(); return; }
+  const it = W5.st.panelIt;
+  if (holdBusy(it)) return;
+  W5.st.keyIn.setEnabled(true); SFX5.click(P9({ x: PL.x, y: 1.4, z: PL.z }));
+  holdStart(it, 1.6, () => resetFire5(), { cancel: 'YOU LET GO OF THE KEY' });
+}
+function resetFire5() {
+  ST5.reset = true; W5.st.keyIn.rotation.z = -Math.PI / 2; setEmi(W5.st.panelM, 0.15, 2.4, 0.4); if (W5.st.xlockM) setEmi(W5.st.xlockM, 0.15, 2.2, 0.4);
+  SFX9.klaxon(P9({ x: PL.x, y: 2, z: PL.z })); makeNoise(0.5); FX.glitch = Math.max(FX.glitch, 0.6);
+  toast('FIRE LOCK RESET', 2.6); taskDone('fire5', 'FIRE LOCK RESET', true); cpSave('FIRE LOCK RESET');
+  if (G5.valves >= 3) { setPhase5('exit'); drawExit5(true); } else setPhase5();
+  radioSt5('reset', 1.4);
+}
+function fillBowl5(n) {
+  if (PL.water <= 0) { SFX.click(); toast('NO ALMOND WATER', 1.8); return; }
+  PL.water--; n.fed = true; n.bowl.water.setEnabled(true); SFX.drink(); makeNoise(0.08);
+  if (n.boil) ST5.fedB = true; else ST5.fedE = true;
+  const m = AI5.moths.find(q => q.fem && q.nest === n); if (m) m.feed();
+  toast('YOU POUR THE ALMOND WATER INTO THE BOWL', 2.4);
+  if ((W5.fnests || []).every(q => q.fed)) taskDone('bowl5', 'THE BIG ONES ARE FED', true);
+}
+// ----- objectives -----
+function fireTasks5() {
+  if (ST5.reset) return;
+  task('fire5', 'RESET THE FIRE LOCK · SECURITY OFFICE, STATE FLOOR', { sub: 'THE EMERGENCY EXIT LOCKS OFF THE FIRE PANEL AS WELL AS THE BOILERS' });
+  if (ST5.sec || ST5.panelSeen || ST5.cctv) task('firekey5', 'THE FIRE KEY · GLASS CASE IN THE EAST ROOM', {});
+}
+function tasksState5() {
+  if (!LV.st5) return;
+  if (G5.phase === 'fire' || ST5.lockSeen || ST5.panelSeen) fireTasks5();
+  if (ST5.reset) taskDone('fire5', 'FIRE LOCK RESET', true);
+  if (ST5.hasSpray) { const t = taskOf('spray5'); if (t) t.text = ST5.spray ? `MOTHEX · ${ST5.spray} PUMP${ST5.spray === 1 ? '' : 'S'} LEFT` : 'MOTHEX · EMPTY'; }
+}
+function objState5() {
+  if (ST5.reset) return 'REACH THE EMERGENCY EXIT';
+  if (!ST5.seen) return 'RESET THE FIRE LOCK · STATE FLOOR, OFF THE BALLROOM';
+  if (!ST5.sec) return ST5.keys || P5.master ? 'UNLOCK THE SECURITY OFFICE' : ST5.book ? 'FIND THE OFFICER\'S KEYS · TABLE 9, THE GOLD ROOM' : 'GET INTO THE SECURITY OFFICE';
+  if (!ST5.fireKey) return 'TAKE THE FIRE KEY · THE EAST ROOM';
+  return 'TURN THE FIRE KEY · SECURITY OFFICE';
+}
+function targetState5() {
+  const S = LV.st5; if (!S) return null;
+  const pc = cIdx(cellOf(PL.x), cellOf(PL.z));
+  if (boilZ5(LV.zone[pc])) return { x: cellCenter(LV.arrive5.x), z: LV.arrive5.y * CELL + 0.4 };
+  if (!inSt5(pc) && LV.zone[pc] !== Z5.VEST) { const a = S.va; return { x: a.cx + DX[a.vd] * CELL * 0.5, z: a.cz + DY[a.vd] * CELL * 0.5 }; }
+  if (LV.zone[pc] === Z5.VEST) return null;
+  if (!ST5.sec) { const d = W5.st.secDoor; return ST5.keys || P5.master ? (d ? { x: d.mx, z: d.mz } : null) : ST5.book ? { x: S.t9.x, z: S.t9.z } : S.stand; }
+  if (!ST5.fireKey) return W5.st.case;
+  const r = S.panelR; return { x: r.position.x, z: r.position.z };
+}
+// ----- door hooks -----
+function doorLabelSt5(dr) {
+  if (dr.dk === 'portal') return dr.target ? 'CLOSE THE INNER DOOR' : 'OPEN THE INNER DOOR';
+  if (dr.dk === 'security' && dr.locked) return ST5.keys ? 'UNLOCK · THE OFFICER\'S KEYS' : P5.master ? 'UNLOCK SECURITY · MASTER KEY' : 'LOCKED · SECURITY';
+  return null;
+}
+function useDoorSt5(dr) {
+  if (dr.dk === 'portal') { portalOpen5(dr); return true; }
+  if (dr.dk === 'security' && dr.locked) {
+    if (ST5.keys || P5.master) { dr.locked = false; ST5.sec = true; SFX5.unlock(P9({ x: dr.mx, z: dr.mz })); makeNoise(0.15); later(1.2, () => setDoor(dr, true)); toast('SECURITY · UNLOCKED', 2); cpSave('SECURITY OFFICE'); fireTasks5(); setPhase5(); }
+    else { SFX9.rattle(P9({ x: dr.mx, z: dr.mz })); makeNoise(0.12); toast('LOCKED · SECURITY · STAFF KEY', 2.2); ST5.lockSeen = true; if (!ST5.book) task('offkey5', 'A KEY FOR THE SECURITY OFFICE', { opt: G5.phase !== 'fire' }); fireTasks5(); setPhase5(); }
+    return true;
+  }
+  return false;
+}
+// ----- per frame -----
+function state5Events(dt) {
+  if (!LV.st5) return;
+  const pc = cIdx(cellOf(PL.x), cellOf(PL.z)), t = stRoom5(pc);
+  if (t && !ST5.seen) { ST5.seen = true; toast('THE STATE FLOOR', 3); SFX.beep(1100, 0.05); later(2.5, () => radioSt5('state')); cpSave('THE STATE FLOOR'); setPhase5(); }
+  if (t && !ST5.roomT[t]) { ST5.roomT[t] = true; const nm = { eroom: 'THE EAST ROOM', gold: 'THE GOLD ROOM', kitchen: 'KITCHEN', sec: 'SECURITY OFFICE' }[t]; if (nm && t !== 'xhall') toast(nm, 2.2); }
+  if (!ST5.bigSeen) for (const m of AI5.moths) if (m.fem && m.shown && m.d < 14 && los(PL.x, PL.z, m.x, m.z)) { ST5.bigSeen = true; later(1.2, () => radioSt5('big')); break; }
+  if (W5.st.cctv && ST5.sec && (ST5.cctvT = (ST5.cctvT || 0) - dt) <= 0) { ST5.cctvT = 0.5; if (dist2(PL.x, PL.z, W5.st.cctv.mesh.getAbsolutePosition().x, W5.st.cctv.mesh.getAbsolutePosition().z) < 9) drawCctv5((FX.t * 2 | 0) % 2); }
+}
+// ----- sounds -----
+Object.assign(SFX5, {
+  glass(pos) { shot((d, t) => { for (let i = 0; i < 14; i++) { const s = t + Math.random() * 0.35, f = 3000 + Math.random() * 5000; nz(d, s, 0.04 + Math.random() * 0.08, 'bandpass', f, 8, 0.4, 0.001); tone(d, s, 0.15, 'sine', f * 0.7, f * 0.66, 0.05, 0.001); } nz(d, t, 0.12, 'highpass', 2000, 1, 0.9, 0.001); return 0.9; }, pos, 1.3); },
+  spray(pos) { shot((d, t) => { nz(d, t, 0.42, 'highpass', 3200, 0.7, 0.5, 0.02); nz(d, t, 0.3, 'bandpass', 6000, 1.5, 0.3, 0.02); tone(d, t, 0.06, 'square', 220, 160, 0.05, 0.001); return 0.5; }, pos, 0.9); },
+  spit(pos) { shot((d, t) => { nz(d, t, 0.18, 'bandpass', 900, 2, 0.8, 0.005); tone(d, t, 0.25, 'sawtooth', 380, 120, 0.12, 0.005); nz(d, t + 0.05, 0.2, 'lowpass', 600, 1, 0.5, 0.01); return 0.4; }, pos, 1.1); },
+  splat(pos) { shot((d, t) => { nz(d, t, 0.12, 'lowpass', 700, 1, 0.9, 0.002); nz(d, t + 0.08, 0.9, 'highpass', 4000, 0.8, 0.18, 0.1); return 1; }, pos, 1); },
+});
+if (/[?&]debug/.test(location.search)) addEventListener('load', () => Object.assign(window.__BR || (window.__BR = {}), { ST5, readBook5, takeOffKeys5, takeSpray5, readPest5, readLog5, watchCctv5, takeFireKey5, usePanel5, resetFire5, fillBowl5, objState5, targetState5, state5Events }));
+
+// ==== portal5.js ====
+// ---------- r7 · Level 5 portal doors ----------
+// Every vestibule pair (N↔E2, W↔S, ballroom↔State Floor) is a throat: the inner door of one vestibule opens onto the corridor outside the
+// twin's real door. While an inner door stands open, a second camera renders the twin's side from the matching place (same eye, carried
+// through the transform), clipped at the twin's doorway with an oblique near plane, and the doorway shows that picture screen-space.
+// Walk through and you are standing in the twin's doorway, facing out into its corridor: nothing pops.
+const PORT5 = { list: [], rtt: null, cam: null, w: 0, h: 0, on: false, act: null, P: null };
+BABYLON.Effect.ShadersStore.portal5VertexShader = `precision highp float; attribute vec3 position; uniform mat4 world; uniform mat4 viewProjection; void main() { gl_Position = viewProjection * world * vec4(position, 1.0); }`;
+BABYLON.Effect.ShadersStore.portal5FragmentShader = `precision highp float; uniform sampler2D rtt; uniform vec4 pp;
+void main() { vec2 uv = gl_FragCoord.xy / pp.xy; vec3 dark = vec3(0.018, 0.012, 0.008); gl_FragColor = vec4(mix(dark, texture2D(rtt, uv).rgb, pp.z), 1.0); }`;
+// v: a vestibule, t: its twin. Points near v's inner door map to the matching points outside t's real door.
+function portalXf5(v, t) {
+  const th = Math.atan2(-t.fx, -t.fz) - Math.atan2(v.fx, v.fz), cs = Math.cos(th), sn = Math.sin(th);
+  const ax = v.cx + v.fx * CELL / 2, az = v.cz + v.fz * CELL / 2, bx = t.cx - t.fx * CELL / 2, bz = t.cz - t.fz * CELL / 2;
+  return { th, cs, sn, ax, az, bx, bz, map(x, z) { const dx = x - ax, dz = z - az; return [bx + dx * cs + dz * sn, bz - dx * sn + dz * cs]; }, rot(x, z) { return [x * cs + z * sn, -x * sn + z * cs]; } };
+}
+function buildPortals5() {
+  Object.assign(PORT5, { list: [], rtt: null, cam: null, w: 0, h: 0, on: false, act: null, P: null });
+  for (const w of LV.warps) for (const [v, t] of [[w.a, w.b], [w.b, w.a]]) {
+    const dr = W9.doorAt.get(eKey(v.vx, v.vy, (v.vd + 2) % 4)), real = W9.doorAt.get(eKey(t.vx, t.vy, t.vd)); if (!dr || !real) continue;
+    const X = portalXf5(v, t), mat = new BABYLON.ShaderMaterial('portal5', SCN, { vertex: 'portal5', fragment: 'portal5' }, { attributes: ['position'], uniforms: ['world', 'viewProjection', 'pp'], samplers: ['rtt'] });
+    mat.backFaceCulling = false; mat.setVector4('pp', new BABYLON.Vector4(1, 1, 0, 0));
+    // the stencil: a shallow box behind the doorway plane (so it still covers the hole while the lens is crossing it)
+    const D = 0.55, m = BABYLON.MeshBuilder.CreateBox('port5', { width: DOORW - 0.012, height: DOORH - 0.012, depth: D }, SCN);
+    m.position.set(X.ax + v.fx * D / 2, DOORH / 2, X.az + v.fz * D / 2); m.rotation.y = Math.atan2(v.fx, v.fz); m.material = mat; m.isPickable = false; m.__noPortal = true; m._sortD = 200; m.setEnabled(false);
+    // nothing walks into the void behind the frame if a crossing is ever missed
+    const bx = X.ax + v.fx * 0.75, bz = X.az + v.fz * 0.75, hw = DOORW / 2 + 0.2, hd = 0.12;
+    addSolid(bx - (v.fx ? hd : hw), bz - (v.fz ? hd : hw), bx + (v.fx ? hd : hw), bz + (v.fz ? hd : hw), 'wall');
+    const P = { v, t, dr, real, X, mat, mesh: m, k: 0 }; dr.portal = P; PORT5.list.push(P);
+  }
+  const cam = new BABYLON.FreeCamera('portalCam5', V3(0, 0, 0), SCN); cam.inputs.clear(); cam.minZ = 0.05; PORT5.cam = cam;
+}
+function portalRtt5() {
+  const w = Math.max(64, ENG.getRenderWidth() >> 1), h = Math.max(64, ENG.getRenderHeight() >> 1);
+  if (PORT5.rtt && PORT5.w === w && PORT5.h === h) return PORT5.rtt;
+  if (PORT5.rtt) { const i = SCN.customRenderTargets.indexOf(PORT5.rtt); if (i >= 0) SCN.customRenderTargets.splice(i, 1); PORT5.rtt.dispose(); PORT5.on = false; }
+  const type = ENG.getCaps().textureHalfFloatRender ? BABYLON.Constants.TEXTURETYPE_HALF_FLOAT : BABYLON.Constants.TEXTURETYPE_UNSIGNED_INT;
+  const rtt = new BABYLON.RenderTargetTexture('portal5rtt', { width: w, height: h }, SCN, false, true, type);
+  rtt.activeCamera = PORT5.cam; rtt.clearColor = SCN.clearColor;
+  rtt.renderListPredicate = m => !m.__noPortal && m.isEnabled() && m.isVisible;
+  const sv = new Float32Array(8);
+  rtt.onBeforeRenderObservable.add(() => {   // the twin side sees the camera, and the flashlight, where the transform puts them
+    const p = PORT5.cam.globalPosition; for (const m of MATS.list) m.setVector3('camPos', p);
+    const P = PORT5.P; if (!P) return;
+    for (let i = 0; i < 4; i++) { sv[i] = SLOT.pos[i]; sv[4 + i] = SLOT.dir[i]; }
+    const [x, z] = P.X.map(SLOT.pos[0], SLOT.pos[2]), [dx, dz] = P.X.rot(SLOT.dir[0], SLOT.dir[2]);
+    SLOT.pos[0] = x; SLOT.pos[2] = z; SLOT.dir[0] = dx; SLOT.dir[2] = dz;
+  });
+  rtt.onAfterRenderObservable.add(() => {
+    const p = CAM.globalPosition; for (const m of MATS.list) m.setVector3('camPos', p);
+    if (PORT5.P) for (let i = 0; i < 4; i++) { SLOT.pos[i] = sv[i]; SLOT.dir[i] = sv[4 + i]; }
+  });
+  for (const P of PORT5.list) P.mat.setTexture('rtt', rtt);
+  Object.assign(PORT5, { rtt, w, h });
+  return rtt;
+}
+// oblique near plane (Lengyel): replace the projection's z row so the near plane is the twin's doorway
+const _pV = new BABYLON.Matrix(), _pVi = new BABYLON.Matrix(), _pP = new BABYLON.Matrix(), _pPi = new BABYLON.Matrix();
+function obliqueProj5(cam, P) {
+  const X = P.X, nx = -P.t.fx, nz = -P.t.fz, Cw = [nx, 0, nz, -(nx * X.bx + nz * X.bz)];
+  cam.getViewMatrix(true).invertToRef(_pVi); const vi = _pVi.m, C = [0, 1, 2, 3].map(i => vi[i * 4] * Cw[0] + vi[i * 4 + 1] * Cw[1] + vi[i * 4 + 2] * Cw[2] + vi[i * 4 + 3] * Cw[3]);
+  _pP.copyFrom(CAM.getProjectionMatrix(true)); const m = _pP.m;
+  if (C[3] > -0.06) return _pP;   // the lens is at (or past) the doorway: plain projection
+  _pP.invertToRef(_pPi); const pi = _pPi.m, qc = [Math.sign(C[0]) || 1, Math.sign(C[1]) || 1, 1, 1];
+  const q = [0, 1, 2, 3].map(i => qc[0] * pi[i] + qc[1] * pi[4 + i] + qc[2] * pi[8 + i] + qc[3] * pi[12 + i]);
+  const R4 = [m[3], m[7], m[11], m[15]], cq = C[0] * q[0] + C[1] * q[1] + C[2] * q[2] + C[3] * q[3], r4q = R4[0] * q[0] + R4[1] * q[1] + R4[2] * q[2] + R4[3] * q[3];
+  if (Math.abs(cq) < 1e-6) return _pP;
+  const lam = 2 * r4q / cq;
+  m[2] = lam * C[0] - R4[0]; m[6] = lam * C[1] - R4[1]; m[10] = lam * C[2] - R4[2]; m[14] = lam * C[3] - R4[3];
+  _pP.markAsUpdated(); return _pP;
+}
+// which portal (if any) the camera is looking through this frame
+function portalPick5() {
+  const cp = CAM.position, f = CAM.getDirection(BABYLON.Axis.Z); let best = null, bs = 1e9;
+  for (const P of PORT5.list) {
+    if (P.dr.open < 0.02) continue;
+    const dx = P.X.ax - cp.x, dz = P.X.az - cp.z, d = Math.hypot(dx, dz);
+    if (d > 18) continue;
+    const side = (cp.x - P.X.ax) * P.v.fx + (cp.z - P.X.az) * P.v.fz; if (side > 0.02) continue;   // only from the vestibule side
+    if (d > 1.2 && (dx * f.x + dz * f.z) / d < -0.2) continue;
+    if (d > 2.5 && !los(cp.x, cp.z, P.X.ax - P.v.fx * 0.3, P.X.az - P.v.fz * 0.3)) continue;
+    if (d < bs) { bs = d; best = P; }
+  }
+  return best;
+}
+function portalTick5(dt) {
+  if (!PORT5.cam || G.state === 'loading') return;
+  const P = portalPick5();
+  for (const Q of PORT5.list) { const on = Q.dr.open > 0.02; if (Q.mesh.isEnabled() !== on) Q.mesh.setEnabled(on); }
+  if (P) {
+    const rtt = portalRtt5(), C = PORT5.cam, cp = CAM.globalPosition, [x, z] = P.X.map(cp.x, cp.z);
+    C.position.set(x, cp.y, z); C.rotation.set(CAM.rotation.x, CAM.rotation.y + P.X.th, CAM.rotation.z); C.fov = CAM.fov; C.minZ = CAM.minZ; C.maxZ = CAM.maxZ; C.computeWorldMatrix(true);
+    C.freezeProjectionMatrix(obliqueProj5(C, P));
+    if (PORT5.P !== P) for (const Q of PORT5.list) Q.k = 0;
+    PORT5.P = P;
+    if (!PORT5.on) { SCN.customRenderTargets.push(rtt); PORT5.on = true; }
+  } else if (PORT5.on) { const i = SCN.customRenderTargets.indexOf(PORT5.rtt); if (i >= 0) SCN.customRenderTargets.splice(i, 1); PORT5.on = false; PORT5.P = null; }
+  const W = ENG.getRenderWidth(), H = ENG.getRenderHeight();
+  for (const Q of PORT5.list) { Q.k = Q === PORT5.P && PORT5.on ? Math.min(1, Q.k + dt * 8) : 0; if (Q.mesh.isEnabled()) Q.mat.setVector4('pp', new BABYLON.Vector4(W, H, Q.k, 0)); }
+  // inner doors swing shut behind you once you are well away
+  for (const Q of PORT5.list) if (Q.dr.target && dist2(PL.x, PL.z, Q.X.ax, Q.X.az) > 11 && G.state === 'play') setDoor(Q.dr, false);
+}
+function portalOpen5(dr) {
+  const P = dr.portal; if (!P) { useDoor(dr); return; }
+  if (!dr.target) { snapDoor5(P.real, true); if (!G5.portalTip) { G5.portalTip = true; later(0.9, () => toast(IS_TOUCH ? 'THAT IS NOT THE ROOM BEHIND THE WALL' : 'THAT IS NOT WHAT IS BEHIND THIS WALL', 2.6)); } }
+  useDoor(dr);
+}
+// crossing: the player's centre passes the inner door's plane, inside the frame → carried to the twin's doorway
+function portalCross5() {
+  const c = cIdx(cellOf(PL.x), cellOf(PL.z));
+  let v = null; if (c >= 0 && LV.zone[c] === Z5.VEST) for (const P of PORT5.list) if (cIdx(P.v.vx, P.v.vy) === c) { v = P; break; }
+  if (v) G5.vest = v; else if (G5.vest && c !== cIdx(G5.vest.v.vx + G5.vest.v.fx, G5.vest.v.vy + G5.vest.v.fz)) G5.vest = null;
+  const P = G5.vest; if (!P || P.dr.target !== 1) return;
+  const s = (PL.x - P.X.ax) * P.v.fx + (PL.z - P.X.az) * P.v.fz, l = (PL.x - P.X.ax) * -P.v.fz + (PL.z - P.X.az) * P.v.fx;
+  if (s <= 0 || Math.abs(l) > DOORW / 2) return;
+  const X = P.X, [x, z] = X.map(PL.x, PL.z); PL.x = x; PL.z = z; PL.yaw += X.th;
+  [PL.vx, PL.vz] = X.rot(PL.vx, PL.vz); [PL.kx, PL.kz] = X.rot(PL.kx || 0, PL.kz || 0);
+  const [cx, cz] = X.map(CAM.position.x, CAM.position.z); CAM.position.x = cx; CAM.position.z = cz; CAM.rotation.y += X.th; CAM.computeWorldMatrix(true);
+  if (P.real.target !== 1) snapDoor5(P.real, true);
+  PL.cell = -1; updateField(); G5.warps++; G5.vest = null;
+}
+function teardownPortal5() {
+  if (PORT5.rtt) { const i = SCN && SCN.customRenderTargets ? SCN.customRenderTargets.indexOf(PORT5.rtt) : -1; if (i >= 0) SCN.customRenderTargets.splice(i, 1); try { PORT5.rtt.dispose(); } catch (e) {} }
+  Object.assign(PORT5, { list: [], rtt: null, cam: null, on: false, act: null, P: null });
+}
+if (/[?&]debug/.test(location.search)) addEventListener('load', () => Object.assign(window.__BR || (window.__BR = {}), { PORT5, portalTick5, portalCross5, portalOpen5, portalXf5, obliqueProj5 }));
 
 // ==== world18.js ====
 // ---------- Level 18 · world assembly: materials, name cards & kids' art, the preschool's furnishings, the slides, the ball pit ----------
@@ -8729,7 +9428,7 @@ function buildProps18() {
   for (const b of LV.bulbs) bulb18(b);
   for (const e of LV.ek.values()) if (e.kind === 'deco') decoDoor18(B, e);
   furnishHall18(B); furnishClass18(B); furnishNap18(B); furnishYel18(B); furnishPlay18(B); furnishSlides18(B);
-  furnishMead18(B); furnishBed18(B); furnishKit18(B); furnishVoid18(B);
+  furnishMead18(B); furnishBed18(B); furnishKit18(B); furnishVoid18(B); furnishMem18(B);   // r7
   W18.finishProps = () => {
     const keep = [], out = [...(B.finish('props18', keep) || []), ...(BOn.finish('lensOn18', keep) || []), ...(BFl.finish('lensFl18', keep) || [])];
     out.forEach(m => m._sortD = 300);
@@ -8744,7 +9443,7 @@ function buildProps18() {
 // which cells are bright enough that the Forgotten won't step into them
 function brightCells18() {
   const b = new Uint8Array(N * N);
-  for (let c = 0; c < N * N; c++) { const z = LV.zone[c]; if (!z) continue; const x = cellCenter(c % N), y = cellCenter((c / N) | 0); b[c] = (z === Z18.CLASS || z === Z18.NAP || baseLight(x, y, 1) * 0.667 > 0.5) ? 1 : 0; }
+  for (let c = 0; c < N * N; c++) { const z = LV.zone[c]; if (!z) continue; const x = cellCenter(c % N), y = cellCenter((c / N) | 0); b[c] = (z === Z18.CLASS || z === Z18.NAP || z === Z18.MUSIC || baseLight(x, y, 1) * 0.667 > 0.5) ? 1 : 0; }
   W18.bright = b;
 }
 function buildItems18(diff) {
@@ -8874,8 +9573,9 @@ function drawBoard18(c, w, h) {
     c.fillStyle = '#fbf8ef'; c.fillRect(x0 + 4, y0 + hh + 10, ww - 8, 30); c.fillStyle = '#2a2a2a'; c.font = 'bold 17px "Comic Sans MS", sans-serif'; c.textAlign = 'center'; c.fillText(DRAW18[id].name, x0 + ww / 2, y0 + hh + 26); c.textAlign = 'left';
   });
 }
-function drawExit18(c, w, h, done) {
-  if (done) { drawDoor18(c, w, h, { glow: true, fill: '#f3c230', line: '#b07a10', word: 'HOME', wordCol: '#e2483c', sun: true, bg: '#fff8e4' }); return; }
+function drawExit18(c, w, h, done, o = {}) {
+  if (done) { drawDoor18(c, w, h, { glow: true, fill: '#f3c230', line: '#b07a10', word: 'HOME', wordCol: '#e2483c', sun: true, bg: '#fff8e4' }); if (M18.signed) crayonLine18(c, [[w * 0.3, h * 0.4], [w * 0.36, h * 0.36], [w * 0.42, h * 0.42], [w * 0.5, h * 0.35], [w * 0.56, h * 0.41], [w * 0.64, h * 0.36], [w * 0.7, h * 0.4]], '#2f7fd0', 5); return; }
+  if (o.colored) { drawDoor18(c, w, h, { fill: '#f3c230', line: '#b07a10', bg: '#fff8e4' }); crayonText18(c, 'NAME:', w * 0.32, h * 0.06 + 8, 22, '#8a8a8a'); crayonLine18(c, [[w * 0.48, h * 0.075], [w * 0.86, h * 0.075]], '#9a9a9a', 3); return; }   // r7: coloured in, no name yet
   paper18(c, w, h, '#f4efe0');
   c.globalAlpha = 0.35; crayonLine18(c, [[w * 0.18, h * 0.96], [w * 0.18, h * 0.12], [w * 0.5, h * 0.12]], '#666666', 4); c.globalAlpha = 1;
   crayonText18(c, 'MY DOOR', w / 2, h * 0.06 + 10, 26, '#8a8a8a');
@@ -8961,7 +9661,14 @@ function pinDrawings18() {
   toast(`PINNED · ${G18.pinned.length}/4`, 2); cpSave(`PINNED ${G18.pinned.length}/4`);
   if (G18.pinned.length >= 4) doorReady18(); else setPhase18();   // r6: the door may still need its colors
 }
-function finishDoor18() {
+function finishDoor18() {   // r7: a coloured door still needs your name on it
+  if (needName18()) {
+    const X = W18.exitDoor; drawExit18(X.S.ctx, 256, 444, false, { colored: true }); X.S.dt.update(); for (let i = 0; i < 6; i++) later(0.3 + i * 0.2, () => SFX18.crayon());
+    setPhase18('name'); later(1.6, () => say('THE CHILDREN', 'Now put your name on it. Or it goes to anybody\'s house.', { dur: 5, mode: 'whisper' })); cpSave('THE DOOR · NO NAME'); return;
+  }
+  openDoor18();
+}
+function openDoor18() {
   const X = W18.exitDoor; X.on = true;
   for (let i = 0; i < 8; i++) later(0.4 + i * 0.22, () => SFX18.crayon());
   later(2.2, () => { drawExit18(X.S.ctx, 256, 444, true); X.S.dt.update(); FX.fadeW = Math.max(FX.fadeW, 0.4); G18.flash = 0.4; SFX18.chime(); });
@@ -9031,6 +9738,7 @@ function planPlaces18(room, rect, way) {
   way(14, 20, 3, 'door', { dk: 'art', plate: 'ART ROOM', col: 1, from: [14, 20] });
 }
 function lightPlaces18() {
+  lightMem18();   // r7
   if (!LV.art) return;
   for (const c of LV.art.cells) { const x = c % N, y = (c / N) | 0; if ((x + y) % 2 === 0) { LV.panels.push({ x: cellCenter(x), z: cellCenter(y), y: CEIL, state: 1, rot: 0, w: 0.62, l: 1.22 }); LV.fixtures.push({ x: cellCenter(x), z: cellCenter(y), state: 1, seed: RNG(), I: 0.5, rad: 8, sc: 2.6 }); } }
 }
@@ -9040,6 +9748,7 @@ function buildPlaces18() {
   const B = W18.B; W18.p18 = {};
   if (LV.art) buildArt18(B);
   buildLostFound18(B);
+  buildMem18();   // r7
 }
 function buildArt18(B) {
   const X0 = ART18.x0 * CELL, Z0 = ART18.y0 * CELL, X1 = (ART18.x1 + 1) * CELL, Z1 = (ART18.y1 + 1) * CELL, cx = (X0 + X1) / 2, cz = (Z0 + Z1) / 2;
@@ -9125,13 +9834,15 @@ function readLost18() {
   if (f.hale9 === 'left') L.push('A photograph of a man with a girl on his shoulders. The glass is clean.');
   if (f.hale9 === 'saved') L.push('A hospital bracelet. HALE, M. Cut off neatly.');
   if (f.pruitt5) L.push('An empty bottle of rye. Gold label.');
+  if (f.lusk5) L.push('A security officer\'s cap. LUSK on the band, in biro.');
+  if (f.fed5) L.push('A silver bowl. Still wet.');
   L.push('One red mitten.', 'A green crayon, worn down to a stub.');
   if (f.lost0 > 0) L.push(`A M.E.G. patch. Somebody wrote ${f.lost0} on the back and crossed it out.`);
   readDoc('lost18', 'LOST & FOUND', L, { kind: 'board' });
   if (!P18.lost) { P18.lost = true; task('lost', 'THE LOST & FOUND', { opt: true, quiet: true }); taskDone('lost', 'THE LOST & FOUND · YOU KNOW SOME OF THESE', true); }
 }
 function readLetter18() {
-  readDoc('letter18', 'A LETTER ON THE TEACHER\'S DESK', ['to the grown up who fell in', 'you forgot us. thats ok. everybody does.', 'your drawings got lost all over. find all 4 and pin them on MY MEMORYS.', 'then you can draw a door. you need crayons for doors. dino helps.', 'dont let the tall one get you in the dark. it looks like somebody you know. it isnt.', '— the Children'], { kind: 'board' });
+  readDoc('letter18', 'A LETTER ON THE TEACHER\'S DESK', ['to the grown up who fell in', 'you forgot us. thats ok. everybody does.', 'your drawings got lost all over. find all 4 and pin them on MY MEMORYS.', 'then you can draw a door. you need crayons for doors. dino helps.', 'put your name on it or it goes to anybodys house. your name is in your cubby. teacher keeps the cubby key in the toy box. play our song and it opens.', 'we wrote the song in your birthday card.', 'dont let the tall one get you in the dark. it looks like somebody you know. it isnt.', '— the Children'], { kind: 'board' });
   if (!P18.letterTold) { P18.letterTold = true; if (LV.art && !P18.crayons) task('art', 'THE ART ROOM · CRAYONS FOR THE DOOR', { opt: true, delay: 3 }); }
 }
 // pinning the fourth drawing: the door is outlined; with crayons it is coloured in at once, without them it waits
@@ -9142,11 +9853,17 @@ function doorReady18() {
 }
 function exitLabel18() {
   const X = W18.exitDoor; if (X.on) return 'WALK THROUGH THE DOOR YOU DREW';
+  if (G18.phase === 'name') return M18.name ? (holdBusy(X) ? `WRITING YOUR NAME… ${holdPct(X)}%` : 'WRITE YOUR NAME ON THE DOOR') : 'THE DOOR NEEDS YOUR NAME · YOUR CUBBY';   // r7
   if (G18.phase === 'color') return P18.crayons ? (holdBusy(X) ? `COLORING IT IN… ${holdPct(X)}%` : 'COLOR IN THE DOOR') : 'THE DOOR NEEDS COLOR · FIND CRAYONS';
   return 'A DRAWING OF A DOOR · IT ISN\'T FINISHED';
 }
 function exitUse18() {   // true = handled
-  const X = W18.exitDoor; if (X.on || G18.phase !== 'color') return false;
+  const X = W18.exitDoor; if (X.on) return false;
+  if (G18.phase === 'name') {   // r7: sign it
+    if (!M18.name) { SFX18.paper(); toast('YOUR NAME TAG IS IN YOUR CUBBY', 2.2); return true; }
+    holdStart(X, 2.0, () => signDoor18(), { r: 2.4, cancel: 'YOU STOP WRITING', tick: (dt) => { if (Math.floor(FX.t * 5) !== Math.floor((FX.t - dt) * 5)) SFX18.crayon(); } }); return true;
+  }
+  if (G18.phase !== 'color') return false;
   if (!P18.crayons) { SFX18.paper(); toast('THE ART ROOM HAS CRAYONS', 2.2); return true; }
   holdStart(X, 2.4, () => { taskDone('color', 'THE DOOR IS COLORED IN', true); finishDoor18(); }, { r: 2.4, cancel: 'YOU STOP COLORING', tick: (dt) => { if (Math.floor(FX.t * 4) !== Math.floor((FX.t - dt) * 4)) SFX18.crayon(); } });
   return true;
@@ -9155,9 +9872,12 @@ function tasks18() {
   task('dino', 'FOLLOW THE PLUSH DINO', { quiet: true }); if (G18.phase !== 'arrive') taskDone('dino', 'THE SUNSHINE ROOM', true);
   if (G18.phase !== 'arrive') { task('draw', `FIND YOUR DRAWINGS · ${G18.found}/4`, { quiet: true, sub: 'THE BALL PIT, THE MEADOW STUMP, ABOVE YOUR BED, THE FRIDGE' }); if (G18.found >= 4) taskDone('draw', 'FOUR DRAWINGS FOUND', true);
     task('pin', `PIN THEM ON MY MEMORIES · ${G18.pinned.length}/4`, { quiet: true }); if (G18.pinned.length >= 4) taskDone('pin', 'MY MEMORIES · 4/4', true); }
-  if (G18.phase === 'exit') { if (taskOf('color')) taskDone('color', 'THE DOOR IS COLORED IN', true); task('home', 'WALK THROUGH THE DOOR YOU DREW', { quiet: true }); }
+  if (G18.phase === 'exit' || G18.phase === 'name') { if (taskOf('color')) taskDone('color', 'THE DOOR IS COLORED IN', true); }
+  if (G18.phase === 'exit') task('home', 'WALK THROUGH THE DOOR YOU DREW', { quiet: true });
+  memTasks18();   // r7
 }
 function places18Events(dt) {
+  mem18Events(dt);   // r7
   if (LV.art && !P18.seenArt) { const a = W18.p18.art; if (a && PL.x > a.x0 && PL.x < a.x1 && PL.z > a.z0 && PL.z < a.z1) { P18.seenArt = true; toast('THE ART ROOM', 2.4); SFX.beep(1100, 0.05); if (!P18.crayons) task('art', 'THE ART ROOM · CRAYONS FOR THE DOOR', { opt: true, quiet: true }); } }
 }
 // radio fragments on arrival: whoever is still listening for you
@@ -9174,12 +9894,274 @@ function endText18() {
   if (f.lost0 !== undefined) S.push(f.lost0 ? `On the lobby band, ${f.lost0 === 1 ? 'one name never answers' : f.lost0 + ' names never answer'} again.` : 'On the lobby band, four voices are arguing about batteries.');
   if (f.reyes0 === 'helped') S.push('One of them is laughing at a bad joke.');
   if (f.pruitt5 === 'opened') S.push('Room ' + (f.pruittN || '') + ' is still empty. You still went in.');
+  if (f.fed5) S.push('In a hotel nobody visits, something large drinks from a bowl and doesn\'t look up.');
+  if (M18.signed) S.push('The name on the door is in your handwriting. You can read it now.');
   S.push(P18.camera ? 'The camcorder is still running. You let it.' : 'The tape runs out on the step.');
   S.push('The little green dinosaur stays behind, waiting for the next one who forgot.');
   return S.join(' ').replace('Room  is', 'His room is');
 }
 function flags18() { flag('camera18', P18.camera); flag('crayons18', P18.crayons); }
 if (/[?&]debug/.test(location.search)) addEventListener('load', () => Object.assign(window.__BR || (window.__BR = {}), { P18, takeCrayons18, takeCamera18, readLost18, readLetter18, doorReady18, exitUse18, endText18, tasks18 }));
+
+// ==== memories18.js ====
+// ---------- r7 · Level 18: more of the preschool, more of the dark ----------
+// A door you draw goes to anybody's house unless your name is on it. Your name tag is in your cubby (CUBBIES, off the corridor), the
+// cubby key is in the music room's toy chest, and the chest opens when someone plays the class song on the floor piano. Nobody wrote
+// the song down except on your birthday card, and your birthday is one of the rooms hanging in the dark off the east walk.
+// Optional: the field-trip bus, also hanging in the dark, with a lunchbox nobody opened.
+const M18 = {};
+function resetM18() {
+  for (const k of Object.keys(M18)) delete M18[k];
+  Object.assign(M18, { song: false, played: false, key: false, cubby: false, name: false, signed: false, seen: {}, seq: [], tile: -1, wish: false, lunch: false, chestK: 0, hopT: 0 });
+}
+resetM18();
+const MEM18 = { music: { x0: 16, y0: 17, x1: 18, y1: 19 }, cubby: { x0: 7, y0: 21, x1: 11, y1: 22 }, party: { x0: 37, y0: 12, x1: 38, y1: 14 }, bus: { x0: 37, y0: 20, x1: 37, y1: 24 } };
+const PIANO18 = [['RED', '#e2483c', [0.86, 0.2, 0.15]], ['ORANGE', '#f08a24', [0.94, 0.52, 0.14]], ['YELLOW', '#e0b000', [0.95, 0.78, 0.12]], ['GREEN', '#3aa04a', [0.26, 0.64, 0.3]],
+  ['BLUE', '#2f7fd0', [0.18, 0.44, 0.86]], ['PURPLE', '#8a5cc8', [0.54, 0.36, 0.78]], ['PINK', '#e05a9a', [0.93, 0.48, 0.66]], ['WHITE', '#f4f4f0', [0.94, 0.94, 0.9]]];
+const PNOTE18 = [261.6, 293.7, 329.6, 349.2, 392.0, 440.0, 493.9, 523.3];
+const SONG18 = [0, 0, 4, 4, 5, 5, 4];   // twinkle, twinkle, little star (C C G G A A G)
+const box18 = k => { const q = MEM18[k]; return { X0: q.x0 * CELL, Z0: q.y0 * CELL, X1: (q.x1 + 1) * CELL, Z1: (q.y1 + 1) * CELL }; };
+
+// ----- layout (genLayout18, after the art room, before the fake doors) -----
+function planMem18(room, rect, way) {
+  LV.music = LV.cubby = LV.party = LV.bus = null;
+  const free = q => { for (let y = q.y0; y <= q.y1; y++) for (let x = q.x0; x <= q.x1; x++) if (LV.zone[cIdx(x, y)] !== Z18.VOID) return false; return true; };
+  const R = (k, z, t) => rect(room(z, R18Z.PRE, t), MEM18[k].x0, MEM18[k].y0, MEM18[k].x1, MEM18[k].y1);
+  if (free(MEM18.music)) { LV.music = R('music', Z18.MUSIC, 'music'); way(17, 20, 3, 'door', { dk: 'music', plate: 'MUSIC', col: 2, from: [17, 20] }); }
+  if (free(MEM18.cubby)) { LV.cubby = R('cubby', Z18.CUBBY, 'cubby'); way(9, 20, 1, 'door', { dk: 'cubby', plate: 'CUBBIES', col: 3, from: [9, 20] }); }
+  if (free(MEM18.party) && LV.zone[cIdx(36, 13)] === Z18.VWALK) { LV.party = rect(room(Z18.PARTY, R18Z.VE, 'party'), 37, 12, 38, 14); way(36, 13, 0, 'door', { dk: 'party', col: 1, from: [36, 13] }); }
+  if (free(MEM18.bus) && LV.zone[cIdx(36, 22)] === Z18.VWALK) { LV.bus = rect(room(Z18.BUS, R18Z.VE, 'bus'), 37, 20, 37, 24); way(36, 22, 0, 'hole', { from: [36, 22] }); }
+}
+function lightMem18() {
+  const F = (x, z, o) => { const f = Object.assign({ x, z, state: 1, seed: RNG() }, o); LV.fixtures.push(f); return f; };
+  const panel = (x, z, st, o = {}) => { LV.panels.push({ x, z, y: CEIL, state: st, rot: o.rot || 0, w: 0.62, l: 1.22 }); if (st) F(x, z, { state: st, I: o.I ?? 0.5, rad: o.rad ?? 8, sc: o.sc ?? 2.4 }); };
+  if (LV.music) for (const c of LV.music.cells) { const x = c % N, y = (c / N) | 0; if ((x + y) % 2 === 1) panel(cellCenter(x), cellCenter(y), 1, { I: 0.55, rad: 9, sc: 2.8 }); }
+  if (LV.cubby) { panel(cellCenter(8), cellCenter(21) + 0.4, 2, { I: 0.42, rad: 8 }); panel(cellCenter(10), cellCenter(22) - 0.4, 1, { I: 0.3, rad: 7 }); }
+  if (LV.party) { const B = box18('party'); M18.cake = { x: (B.X0 + B.X1) / 2, z: (B.Z0 + B.Z1) / 2 }; F(M18.cake.x, M18.cake.z, { I: 0.34, rad: 6.5, sc: 1.8, y: 1.0 }); LV.bulbs.push({ x: M18.cake.x + 0.9, z: M18.cake.z - 1.6, y: 2.6, kind: 'shade', state: 2 }); F(M18.cake.x + 0.9, M18.cake.z - 1.6, { state: 2, I: 0.2, rad: 5, sc: 1.4 }); }
+  if (LV.bus) for (const y of [21, 23]) { const x = cellCenter(37), z = cellCenter(y); F(x, z, { I: 0.24, rad: 5.5, sc: 1.6, state: y === 23 ? 2 : 1 }); LV.bulbs.push({ x, z, y: 2.3, kind: 'bare', state: y === 23 ? 2 : 1, cord: 0.15 }); }
+}
+
+// ----- furniture -----
+function furnishMem18(B) {
+  if (LV.music) furnishMusic18(B);
+  if (LV.cubby) furnishCubby18(B);
+  if (LV.party) furnishParty18(B);
+  if (LV.bus) furnishBus18(B);
+}
+function furnishMusic18(B) {
+  const R = box18('music'), cx = (R.X0 + R.X1) / 2;
+  // the floor piano: eight big coloured keys along the north wall (each lights up when you step on it)
+  M18.tiles = [];
+  const tw = 0.62, z0 = R.Z0 + 0.45, z1 = z0 + 1.35;
+  for (let i = 0; i < 8; i++) {
+    const x0 = cx - 4 * tw + i * tw, m = actMat('ptile18_' + i, { emis: 1 }); setEmi(m, 0.05);
+    const mesh = mkMerged(m, P => { P('Box', { width: tw - 0.04, height: 0.022, depth: z1 - z0 }, PIANO18[i][2], 1, [0, 0, 0]); P('Box', { width: tw - 0.26, height: 0.024, depth: 0.22 }, [0.08, 0.08, 0.09], 0, [0, 0.001, -(z1 - z0) / 2 + 0.2]); }, 'ptile18');
+    mesh.position.set(x0 + tw / 2, 0.011, (z0 + z1) / 2);
+    M18.tiles.push({ i, x0: x0 + 0.02, x1: x0 + tw - 0.02, z0, z1, m, lit: 0 });
+  }
+  B.add(propRoot(cx, (z0 + z1) / 2, 0), 'Box', { width: 8 * tw + 0.12, height: 0.01, depth: z1 - z0 + 0.12 }, [0.12, 0.12, 0.14], 0, [0, 0.004, 0]);
+  { const r = atWall5({ x: 17, y: 17, d: 3 }, 0, 0), k = twin(r);   // the poster over the piano
+    M18.poster = paperPlane18('song18', 1.6, 0.9, 384, 216, k, [0, 1.75, 0.012], 0.55, (c, w, h) => { paper18(c, w, h, '#fbf8ef'); crayonText18(c, 'PLAY OUR SONG!', w / 2, 36, 34, '#e2483c', -0.03);
+      for (let i = 0; i < 8; i++) crayonCircle18(c, 30 + i * 46, 120, 16, PIANO18[i][1], 4, PIANO18[i][1]); crayonText18(c, 'and the toy box opens', w / 2, 190, 22, '#2f7fd0', 0.02); }); }
+  // the toy chest (locked) against the east wall: its lid lifts when the song is played
+  { const r = atWall5({ x: 18, y: 18, d: 0 }, 0, 0), RD = [0.72, 0.2, 0.16];
+    B.add(r, 'Box', { width: 1.1, height: 0.55, depth: 0.6 }, RD, 0, [0, 0.29, 0.32]); for (const s of [-1, 1]) B.add(r, 'Box', { width: 0.06, height: 0.5, depth: 0.62 }, COL18.yel, 0, [s * 0.45, 0.29, 0.32]);
+    const pv = tnode(twin(r), 0, 0.57, 0.02), lid = mkMerged(W18.propMat, P => { P('Box', { width: 1.14, height: 0.08, depth: 0.64 }, [0.78, 0.24, 0.18], 0, [0, 0.04, 0.32]); P('Box', { width: 0.16, height: 0.1, depth: 0.04 }, COL18.yel, 0, [0, 0.0, 0.64]); }, 'chestLid18');
+    lid.parent = pv; M18.lid = pv; solidLocal(r, -0.58, 0, 0.58, 0.66);
+    const p = localPt(r, 0, 0.6, 0.95); M18.chest = { x: p.x, z: p.z, r }; }
+  // instruments, chairs in a half circle, a rug
+  { const r = propRoot(cx - 1.4, R.Z1 - 1.6, 0.4); B.add(r, 'Cylinder', { diameter: 0.5, height: 0.36, tessellation: 18 }, COL18.blue, 0, [0, 0.18, 0]); B.add(r, 'Cylinder', { diameter: 0.52, height: 0.02, tessellation: 18 }, [0.95, 0.94, 0.9], 0, [0, 0.37, 0]); addSolid(r.position.x - 0.28, r.position.z - 0.28, r.position.x + 0.28, r.position.z + 0.28, 'prop'); }
+  { const r = propRoot(cx + 1.3, R.Z1 - 1.4, -0.3); kidTable18(B, r.position.x, r.position.z, -0.3, 2, COL18.green);
+    for (let i = 0; i < 8; i++) B.add(r, 'Box', { width: 0.06, height: 0.02, depth: 0.32 - i * 0.025 }, PIANO18[i][2], 0, [-0.26 + i * 0.075, 0.56, 0]); }
+  rug18(B, cx, R.Z1 - 2.6, 1.0);
+  for (let i = 0; i < 5; i++) { const a = -0.9 + i * 0.45, q = propRoot(cx + Math.sin(a) * 1.6, R.Z1 - 2.6 + Math.cos(a) * 1.6 - 1.6, a + Math.PI); kidChair18(B, q, KIDC18[i]); }
+  placeF18(B, { x: 16, y: 18, d: 2, c: cIdx(16, 18) }, 0, 'shelf', { hw: 0.7 });
+  for (const [x, y, d] of [[16, 19, 1], [18, 19, 1]]) artOn18(atWall5({ x, y, d }, 0, 0), 0, 1.5, 0.4, (x * 3) % 16);
+}
+function cubbyUnit18(B, r, names, mine) {   // a tall cubby unit: three rows of three, each slot labelled
+  const W = 1.5, H = 1.55, D = 0.42, c = COL18.wood2;
+  B.add(r, 'Box', { width: W, height: H, depth: 0.02 }, c.map(v => v * 0.8), 0, [0, H / 2, 0.01]);
+  for (let j = 0; j <= 3; j++) B.add(r, 'Box', { width: W, height: 0.03, depth: D }, c, 0, [0, 0.04 + j * (H - 0.06) / 3, D / 2]);
+  for (let i = 0; i <= 3; i++) B.add(r, 'Box', { width: 0.03, height: H, depth: D }, c, 0, [-W / 2 + i * W / 3, H / 2, D / 2]);
+  const k = twin(r); let my = null;
+  for (let j = 0; j < 3; j++) for (let i = 0; i < 3; i++) {
+    const x = -W / 2 + (i + 0.5) * W / 3, y = 0.06 + j * (H - 0.06) / 3, nm = names.shift() || '';
+    plateOn18(k, x, y + 0.44, nm || '?', 0.34, 0.085, D + 0.005);
+    if (mine && i === 1 && j === 1) { my = { x, y }; continue; }
+    const q = RNG(), col = pick(KIDC18);
+    if (q < 0.4) { B.add(r, 'Box', { width: 0.3, height: 0.34, depth: 0.18 }, col, 0, [x, y + 0.18, 0.18]); B.add(r, 'Box', { width: 0.2, height: 0.12, depth: 0.04 }, col.map(v => v * 0.7), 0, [x, y + 0.12, 0.28]); }
+    else if (q < 0.65) { B.add(r, 'Box', { width: 0.26, height: 0.18, depth: 0.12 }, col, 0, [x, y + 0.09, 0.2]); B.add(r, 'Box', { width: 0.12, height: 0.03, depth: 0.03 }, COL18.steel, 0, [x, y + 0.2, 0.2]); }
+    else if (q < 0.8) for (const s of [-0.06, 0.06]) B.add(r, 'Box', { width: 0.09, height: 0.14, depth: 0.2 }, col, 0, [x + s, y + 0.07, 0.24]);
+  }
+  solidLocal(r, -W / 2, 0, W / 2, D + 0.04);
+  return my;
+}
+function furnishCubby18(B) {
+  const R = box18('cubby');
+  const N1 = ['MAX', 'LILY', 'SAM', 'EMMA', 'NOAH', 'ZOE', 'BEN', 'AVA', 'JOSH', 'KAYLA', 'TOMMY', 'MIA', 'LEO', 'RUBY', 'OWEN', 'NORA', 'ELI', 'IVY', 'JACK', 'ROSE', 'ALEX', 'GRACE', 'FINN', 'JUNE', 'COLE', 'HAZEL', 'REID'];
+  const names = shuffle(N1.slice());
+  for (const [x, along] of [[8, 0], [10, 0]]) cubbyUnit18(B, atWall5({ x, y: 22, d: 1 }, along, 0), names, false);
+  const r = atWall5({ x: 9, y: 22, d: 1 }, 0, 0), my = cubbyUnit18(B, r, names.slice(0, 4).concat(['', ...names.slice(4)]), true);
+  M18.myCubby = { r: twin(r), x: my.x, y: my.y };
+  // your cubby: a little padlock on a hasp over an empty slot (nothing is in it yet: it opens with the key)
+  { const k = M18.myCubby.r, door = mkMerged(W18.propMat, P => { P('Box', { width: 0.44, height: 0.44, depth: 0.025 }, COL18.wood, 0, [0.22, 0.22, 0]); P('Box', { width: 0.1, height: 0.12, depth: 0.02 }, [0.85, 0.7, 0.2], 0, [0.4, 0.22, 0.02]); P('Torus', { diameter: 0.06, thickness: 0.012, tessellation: 10 }, COL18.steel, 0, [0.4, 0.3, 0.03]); }, 'myCubbyDoor18');
+    const pv = tnode(k, my.x - 0.22, my.y, 0.43); door.parent = pv; M18.cubbyDoor = pv;
+    const bag = mkMerged(W18.propMat, P => { P('Box', { width: 0.3, height: 0.34, depth: 0.2 }, COL18.blue, 0, [0, 0.17, 0]); P('Box', { width: 0.22, height: 0.12, depth: 0.04 }, COL18.yel, 0, [0, 0.12, 0.11]); P('Box', { width: 0.16, height: 0.1, depth: 0.004 }, [0.95, 0.95, 0.92], 0.1, [0, 0.25, 0.102]); }, 'myBag18');
+    bag.parent = k; bag.position.set(my.x, my.y + 0.02, 0.2); M18.bag = bag; }
+  for (const x of [7, 11]) placeF18(B, { x, y: 21, d: x === 7 ? 2 : 0, c: cIdx(x, 21) }, 0, 'hooks', { hw: 0.7 });
+  placeF18(B, { x: 7, y: 22, d: 2, c: cIdx(7, 22) }, 0, 'bench', { hw: 0.7 });
+  for (let i = 0; i < 6; i++) { const r = propRoot(R.X0 + 1.2 + i * 0.45, R.Z0 + 0.7 + rnd(-0.1, 0.1), rnd(-0.3, 0.3)), c = pick(KIDC18); for (const s of [-0.07, 0.07]) B.add(r, 'Box', { width: 0.09, height: 0.16, depth: 0.22 }, c, 0, [s, 0.08, 0]); }
+  for (const [x, y, d] of [[8, 21, 3], [11, 22, 0]]) artOn18(atWall5({ x, y, d }, 0, 0), 0, 1.6, 0.36, (x + y) % 16);
+}
+function furnishParty18(B) {
+  const R = box18('party'), c = M18.cake;
+  { const r = propRoot(c.x, c.z, 0); B.add(r, 'Box', { width: 1.6, height: 0.04, depth: 1.0 }, [0.95, 0.92, 0.95], 0, [0, 0.62, 0]); B.add(r, 'Box', { width: 1.64, height: 0.3, depth: 1.04 }, [0.98, 0.8, 0.88], 0, [0, 0.5, 0]);
+    for (const sx of [-0.74, 0.74]) for (const sz of [-0.44, 0.44]) B.add(r, 'Box', { width: 0.04, height: 0.6, depth: 0.04 }, COL18.white, 0, [sx, 0.3, sz]);
+    B.add(r, 'Cylinder', { diameter: 0.44, height: 0.2, tessellation: 20 }, [0.98, 0.94, 0.88], 0, [0, 0.74, 0]); B.add(r, 'Cylinder', { diameter: 0.46, height: 0.04, tessellation: 20 }, COL18.pink, 0, [0, 0.83, 0]);
+    for (let i = 0; i < 5; i++) { const a = i / 5 * TAU, x = Math.sin(a) * 0.13, z = Math.cos(a) * 0.13; B.add(r, 'Cylinder', { diameter: 0.014, height: 0.1, tessellation: 5 }, KIDC18[i], 0, [x, 0.9, z]); }
+    const fl = mkMerged(W18.lensFl || W18.propMat, P => { for (let i = 0; i < 5; i++) { const a = i / 5 * TAU; P('Sphere', { diameter: 0.025, segments: 4 }, [1, 0.8, 0.4], 1, [Math.sin(a) * 0.13, 0.965, Math.cos(a) * 0.13], null, [1, 1.6, 1]); } }, 'flames18');
+    fl.parent = twin(r); M18.flames = fl;
+    for (let i = 0; i < 6; i++) { const a = i / 6 * TAU + 0.3, x = Math.sin(a) * 0.62, z = Math.cos(a) * 0.38; B.add(r, 'Cylinder', { diameter: 0.18, height: 0.01, tessellation: 12 }, pick(KIDC18), 0, [x, 0.645, z]); B.add(r, 'Cylinder', { diameterTop: 0, diameterBottom: 0.12, height: 0.16, tessellation: 10 }, pick(KIDC18), 0, [x * 0.8, 0.72, z * 0.8]); }
+    addSolid(c.x - 0.86, c.z - 0.56, c.x + 0.86, c.z + 0.56, 'prop');
+    for (const [sx, sz, a] of [[-0.5, -0.8, 0], [0.4, -0.8, 0], [-0.5, 0.8, Math.PI], [0.45, 0.8, Math.PI], [-1.1, 0, Math.PI / 2]]) kidChair18(B, propRoot(c.x + sx, c.z + sz, a + rnd(-0.2, 0.2)), pick(KIDC18)); }
+  for (let i = 0; i < 4; i++) { const r = propRoot(R.X1 - 0.6, R.Z0 + 0.8 + i * 0.55, rnd(0, 1)), s = rnd(0.25, 0.42), col = pick(KIDC18); B.add(r, 'Box', { width: s, height: s * 0.8, depth: s }, col, 0, [0, s * 0.4, 0]); B.add(r, 'Box', { width: s + 0.01, height: 0.04, depth: 0.05 }, COL18.white, 0, [0, s * 0.8 + 0.01, 0]); B.add(r, 'Box', { width: 0.05, height: 0.04, depth: s + 0.01 }, COL18.white, 0, [0, s * 0.8 + 0.01, 0]); }
+  for (let i = 0; i < 9; i++) balloon3d18(W18.ballG, R.X0 + rnd(0.5, R.X1 - R.X0 - 0.5), R.Z0 + rnd(0.5, R.Z1 - R.Z0 - 0.5), 2.35, pick(KIDC18));
+  { const r = atWall5({ x: 38, y: 13, d: 0 }, 0, 0), k = twin(r); paperPlane18('bday18', 2.0, 0.5, 512, 128, k, [0, 2.0, 0.012], 0.6, (cx, w, h) => { paper18(cx, w, h, '#fff6fb'); const T = 'HAPPY BIRTHDAY!'; for (let i = 0; i < T.length; i++) crayonText18(cx, T[i], 26 + i * 33, 74, 44, PIANO18[i % 7][1], (i % 2 ? 0.08 : -0.08)); }); }
+  for (let i = 0; i < 7; i++) { const x = R.X0 + 0.3 + i * (R.X1 - R.X0 - 0.6) / 6; B.add(null, 'Box', { width: 0.04, height: 0.004, depth: R.Z1 - R.Z0 - 0.3 }, pick(KIDC18), 0, [x, 2.5 - (i % 2) * 0.12, (R.Z0 + R.Z1) / 2], [0.08 * (i % 3 - 1), 0, 0]); }
+  artOn18(atWall5({ x: 37, y: 12, d: 3 }, 0, 0), 0, 1.5, 0.42, 3); artOn18(atWall5({ x: 38, y: 14, d: 1 }, 0, 0), 0, 1.5, 0.42, 11);
+}
+function furnishBus18(B) {
+  const R = box18('bus'), GS = [0.2, 0.42, 0.3], X0 = R.X0 + WT / 2, X1 = R.X1 - WT / 2;
+  for (let z = R.Z0 + 1.9; z < R.Z1 - 0.4; z += 0.86) for (const side of [-1, 1]) {
+    if (side < 0 && z > 79.2 && z < 82.8) continue;   // the doorway
+    const x = side < 0 ? X0 + 0.48 : X1 - 0.48, r = propRoot(x, z, Math.PI);
+    B.add(r, 'Box', { width: 0.9, height: 0.14, depth: 0.42 }, GS, 0, [0, 0.46, 0]); B.add(r, 'Box', { width: 0.9, height: 0.66, depth: 0.1 }, GS.map(v => v * 0.9), 0, [0, 0.8, -0.24], [-0.1, 0, 0]);
+    B.add(r, 'Box', { width: 0.92, height: 0.05, depth: 0.12 }, COL18.steel, 0, [0, 1.14, -0.24]); B.add(r, 'Box', { width: 0.05, height: 0.4, depth: 0.05 }, COL18.steel, 0, [side * -0.42, 0.2, 0]);
+    solidLocal(r, -0.46, -0.3, 0.46, 0.22);
+  }
+  { const r = propRoot(X0 + 0.55, R.Z0 + 0.9, Math.PI); B.add(r, 'Box', { width: 0.5, height: 0.12, depth: 0.5 }, COL18.black, 0, [0, 0.5, 0]); B.add(r, 'Box', { width: 0.5, height: 0.6, depth: 0.1 }, COL18.black, 0, [0, 0.82, -0.25]);
+    B.add(r, 'Torus', { diameter: 0.46, thickness: 0.035, tessellation: 18 }, COL18.black, 0, [0, 1.0, 0.45], [1.0, 0, 0]); solidLocal(r, -0.3, -0.3, 0.3, 0.6); }
+  B.add(propRoot((X0 + X1) / 2, R.Z0 + 0.3, 0), 'Box', { width: X1 - X0, height: 0.9, depth: 0.5 }, [0.16, 0.16, 0.17], 0, [0, 0.45, 0]);
+  const sky = (c, w, h) => { const g = c.createLinearGradient(0, 0, 0, h); g.addColorStop(0, '#7fbde9'); g.addColorStop(0.7, '#d9eef8'); g.addColorStop(1, '#9ccf7a'); c.fillStyle = g; c.fillRect(0, 0, w, h); };
+  { const r = atWall5({ x: 37, y: 20, d: 3 }, 0, 0), S = paperPlane18('busfront18', X1 - X0 - 0.2, 0.8, 256, 80, twin(r), [0, 1.55, 0.012], 1.8, sky); W18.winMats.push(S.mat); }
+  for (let y = 20; y <= 24; y++) for (const d of [0, 2]) { if (d === 2 && y === 22) continue; const r = atWall5({ x: 37, y, d }, 0, 0), S = paperPlane18('buswin18_' + y + d, 2.6, 0.62, 256, 62, twin(r), [0, 1.45, 0.012], 1.5, sky); W18.winMats.push(S.mat); B.add(r, 'Box', { width: 0.06, height: 0.7, depth: 0.03 }, COL18.steel, 0, [0, 1.45, 0.02]); }
+  { const r = atWall5({ x: 37, y: 20, d: 3 }, 0, 0), k = twin(r); plateOn18(k, 0, 2.08, 'FIELD TRIP!', 0.7, 0.16, 0.02); }
+  const L = { x: X1 - 0.48, z: R.Z1 - 1.35 }; B.add(propRoot(L.x, L.z, 0.3), 'Box', { width: 0.3, height: 0.2, depth: 0.12 }, COL18.red, 0, [0, 0.63, 0]); B.add(propRoot(L.x, L.z, 0.3), 'Box', { width: 0.14, height: 0.04, depth: 0.04 }, COL18.yel, 0, [0, 0.75, 0]);
+  M18.lunchAt = { x: L.x, z: L.z };
+}
+
+// ----- story objects (end of buildPlaces18) -----
+function buildMem18() {
+  if (LV.music) {
+    W.interact.push({ get x() { return PL.x + Math.sin(PL.yaw) * 0.35; }, get z() { return PL.z + Math.cos(PL.yaw) * 0.35; }, y: 0.25, r: 1.0, label: () => M18.tile >= 0 ? `HOP · ${PIANO18[M18.tile][0]}` : '', ok: () => M18.tile >= 0 && G.state === 'play', act: () => pianoNote18(M18.tile) });
+    const C = M18.chest; W.interact.push({ x: C.x, z: C.z, y: 0.6, r: 1.8, label: () => M18.played ? 'TAKE THE CUBBY KEY' : 'THE TOY BOX · IT WON\'T OPEN', ok: () => G.state === 'play' && !M18.key, act: () => chest18() });
+  }
+  if (LV.cubby) { const k = M18.myCubby, p = localPt(k.r, k.x, k.y + 0.22, 0.8); M18.cubbyAt = { x: p.x, z: p.z };
+    W.interact.push({ x: p.x, z: p.z, y: k.y + 0.25, r: 1.8, label: () => M18.cubby ? 'TAKE YOUR NAME TAG' : M18.key ? 'UNLOCK YOUR CUBBY' : 'A CUBBY WITH NO NAME · LOCKED', ok: () => G.state === 'play' && !M18.name, act: () => cubby18() }); }
+  if (LV.party) { const c = M18.cake;
+    W.interact.push({ x: c.x - 0.55, z: c.z + 0.2, y: 0.66, r: 1.8, label: () => 'OPEN THE BIRTHDAY CARD', ok: () => G.state === 'play', act: () => card18() });
+    W.interact.push({ x: c.x, z: c.z, y: 0.95, r: 1.9, label: () => 'MAKE A WISH', ok: () => G.state === 'play' && !M18.wish, act: () => wish18() });
+    { const r = propRoot(c.x - 0.55, c.z + 0.2, 0.3), cardM = mkMerged(W18.propMat, P => { P('Box', { width: 0.2, height: 0.006, depth: 0.15 }, [0.95, 0.6, 0.75], 0.05, [0.05, 0, 0]); P('Box', { width: 0.2, height: 0.006, depth: 0.15 }, [0.98, 0.96, 0.9], 0.05, [-0.06, 0.03, 0], [0, 0, -0.5]); }, 'card18'); cardM.parent = r; cardM.position.y = 0.645; } }
+  if (LV.bus) { const L = M18.lunchAt; W.interact.push({ x: L.x, z: L.z, y: 0.7, r: 1.8, label: () => M18.lunch ? 'THE LUNCHBOX · EMPTY NOW' : 'OPEN THE LUNCHBOX', ok: () => G.state === 'play', act: () => lunch18() }); }
+}
+// ----- the floor piano -----
+function pianoNote18(i, auto) {
+  const T = M18.tiles[i]; T.lit = 1; SFX18.note(i); makeNoise(0.06);
+  if (M18.played) return;
+  M18.seq.push(i); if (M18.seq.length > SONG18.length) M18.seq.shift();
+  if (M18.seq.length === SONG18.length && M18.seq.every((v, k) => v === SONG18[k])) songDone18();
+  else if (!auto && M18.seq.length === SONG18.length && !M18.song && !M18.hintT) { M18.hintT = 1; later(1, () => toast('IT DOESN\'T SOUND LIKE ANYTHING YET', 2)); }
+}
+function songDone18() {
+  M18.played = true; M18.seq.length = 0; SFX18.chime(); later(0.5, () => SFX18.chime()); FX.fadeW = Math.max(FX.fadeW, 0.3); G18.flash = 0.3; PL.san = Math.min(100, PL.san + 8);
+  toast('THE TOY BOX CLICKS OPEN', 2.6); later(1.0, () => say('THE CHILDREN', 'You remembered our song.', { dur: 4, mode: 'whisper' }));
+  taskDone('piano18', 'OUR SONG · PLAYED', true); setPhase18(); cpSave('OUR SONG');
+}
+function chest18() {
+  if (!M18.played) { SFX18.paper(); toast(M18.song ? 'IT WANTS THE SONG FROM YOUR CARD · ON THE FLOOR PIANO' : 'PLAY OUR SONG, SAYS THE POSTER', 2.4); M18.seen.chest = true; memTasks18(); setPhase18(); return; }
+  M18.key = true; SFX.pickup(); toast('THE CUBBY KEY · A RIBBON ON IT', 2.4); taskDone('ckey18', 'THE CUBBY KEY', true); setPhase18(); cpSave('THE CUBBY KEY');
+}
+function card18() {
+  SFX18.paper(); for (let k = 0; k < SONG18.length; k++) later(0.45 + k * 0.38, () => SFX18.note(SONG18[k], 0.5));
+  const first = !M18.song; M18.song = true;
+  readDoc('card18', 'A BIRTHDAY CARD', ['HAPPY BIRTHDAY FROM THE SUNSHINE ROOM', 'your song, so you dont forget it:', SONG18.map(i => PIANO18[i][0]).join(' · '), 'you cried when we sang. then you laughed. then cake.', 'love, everybody (and dino)'], { kind: 'board' });
+  if (first) { taskDone('song18', 'THE SONG · FROM YOUR BIRTHDAY CARD', true); memTasks18(); setPhase18(); cpSave('YOUR BIRTHDAY'); }
+}
+function wish18() {
+  M18.wish = true; if (M18.flames) M18.flames.setEnabled(false); SFX18.whoosh(); PL.san = Math.min(100, PL.san + 12); FX.glitch = Math.max(FX.glitch, 0.3);
+  later(1.0, () => say('', '…you wished you could go home…', { mode: 'whisper' })); toast('YOU BLOW OUT THE CANDLES', 2);
+}
+function lunch18() {
+  if (!M18.lunch) { M18.lunch = true; PL.san = Math.min(100, PL.san + 15); PL.water++; SFX.pickup(); toast('A JUICE BOX OF ALMOND WATER · AND A NOTE', 2.6); task('bus18', 'THE FIELD TRIP', { opt: true, quiet: true }); taskDone('bus18', 'THE FIELD TRIP · YOUR LUNCHBOX', true); }
+  SFX18.paper();
+  readDoc('lunch18', 'A NOTE IN YOUR LUNCHBOX', ['Have a good trip. Stay with your buddy.', 'Don\'t trade the cookies.', 'I\'ll be at the gate at three.', '— Mom'], { kind: 'note' });
+}
+function cubby18() {
+  if (!M18.key) { SFX18.paper(); toast('A SMALL PADLOCK · THE TEACHER HAS THE KEY', 2.2); M18.seen.cubby = true; memTasks18(); setPhase18(); return; }
+  if (!M18.cubby) {
+    M18.cubby = true; SFX18.creak(P9({ x: M18.cubbyAt.x, z: M18.cubbyAt.z })); M18.cubbyOpenT = 0.001; taskDone('cubby18', 'YOUR CUBBY · OPEN', true);
+    later(1.4, () => { FX.glitch = Math.max(FX.glitch, 0.9); PL.fear = Math.max(PL.fear, 0.8); spawnForgotten18({}); });   // something heard the lock
+    return;
+  }
+  M18.name = true; if (M18.bag) M18.bag.setEnabled(false); SFX18.paper(); SFX.pickup(); FX.fadeW = Math.max(FX.fadeW, 0.4); G18.flash = 0.4;
+  toast('HELLO MY NAME IS · YOUR HANDWRITING', 2.8); later(0.7, () => say('MEMORY', 'You can\'t read it anymore. It\'s yours, though. You can tell from the R.', { dur: 6 }));
+  taskDone('nametag18', 'YOUR NAME TAG', true); cpSave('YOUR NAME TAG');
+  if (G18.phase === 'name') setPhase18(); else setPhase18();
+}
+// the door: once coloured it also needs your name
+function needName18() { return !!LV.cubby && !M18.signed; }
+function signDoor18() {
+  M18.signed = true; const X = W18.exitDoor; drawExit18(X.S.ctx, 256, 444, false, true); X.S.dt.update();
+  taskDone('sign18', 'YOUR NAME IS ON THE DOOR', true); openDoor18();
+}
+// ----- objectives -----
+function memTasks18() {
+  if (!LV.cubby) return;
+  const started = G18.phase === 'name' || P18.letterTold || M18.seen.cubby || M18.seen.chest || M18.song;
+  if (!started) return;
+  task('name18', 'YOUR NAME FOR THE DOOR', { quiet: G18.phase !== 'name', sub: 'A DOOR WITH NO NAME ON IT GOES TO ANYBODY\'S HOUSE' });
+  task('nametag18', 'YOUR NAME TAG · YOUR CUBBY (CUBBIES)', { quiet: true });
+  if (M18.seen.cubby || M18.seen.chest || M18.song || M18.key) task('ckey18', 'THE CUBBY KEY · THE TOY BOX, MUSIC ROOM', { quiet: true });
+  if (M18.seen.chest || M18.song) { task('piano18', 'PLAY OUR SONG ON THE FLOOR PIANO', { quiet: true }); task('song18', 'THE SONG · YOUR BIRTHDAY, OFF THE DARK EAST OF THE PLAYLAND', { quiet: true }); }
+  if (M18.song) taskDone('song18', 'THE SONG · FROM YOUR BIRTHDAY CARD', true);
+  if (M18.played) taskDone('piano18', 'OUR SONG · PLAYED', true);
+  if (M18.key) taskDone('ckey18', 'THE CUBBY KEY', true);
+  if (M18.name) { taskDone('nametag18', 'YOUR NAME TAG', true); taskDone('name18', 'YOUR NAME FOR THE DOOR', true); }
+  if (G18.phase === 'name' && M18.name) task('sign18', 'WRITE YOUR NAME ON THE DOOR', { quiet: true });
+}
+function objName18() {
+  if (M18.name) return 'WRITE YOUR NAME ON THE DOOR YOU DREW';
+  if (M18.key) return M18.cubby ? 'TAKE YOUR NAME TAG' : 'OPEN YOUR CUBBY · CUBBIES';
+  if (M18.played) return 'TAKE THE CUBBY KEY · THE TOY BOX';
+  if (M18.song) return 'PLAY THE SONG ON THE FLOOR PIANO · MUSIC ROOM';
+  if (M18.seen.chest) return 'FIND THE SONG · YOUR BIRTHDAY CARD, IN THE DARK';
+  if (M18.seen.cubby) return 'THE CUBBY KEY · THE MUSIC ROOM';
+  return 'THE DOOR NEEDS YOUR NAME · YOUR CUBBY';
+}
+function targetMem18() {
+  const tl = M18.tiles; if (M18.name) return W18.exitDoor;
+  if (M18.key) return M18.cubbyAt;
+  if (M18.played) return M18.chest;
+  if (M18.song) return tl ? { x: (tl[0].x0 + tl[7].x1) / 2, z: tl[0].z1 } : M18.chest;
+  if (M18.seen.chest && M18.cake) return M18.cake;
+  if (M18.seen.cubby) return M18.chest;
+  return M18.cubbyAt;
+}
+// ----- per frame -----
+function mem18Events(dt) {
+  const pc = cell18(PL.x, PL.z), z = LV.zone[pc], nm = { [Z18.MUSIC]: 'MUSIC ROOM', [Z18.CUBBY]: 'CUBBIES', [Z18.PARTY]: 'YOUR BIRTHDAY', [Z18.BUS]: 'THE FIELD TRIP' }[z];
+  if (nm && !M18.seen[z]) { M18.seen[z] = true; toast(nm, 2.4); SFX.beep(1100, 0.05); if (z === Z18.PARTY) later(1.2, () => say('', '…happy birthday to you…', { mode: 'whisper' })); if (z === Z18.BUS) later(1.0, () => say('', '…buddy system… hold hands…', { mode: 'whisper' })); }
+  if (M18.tiles) {   // the floor piano: stepping onto a key plays it
+    let cur = -1; for (const T of M18.tiles) if (PL.x > T.x0 && PL.x < T.x1 && PL.z > T.z0 && PL.z < T.z1) { cur = T.i; break; }
+    if (cur !== M18.tile) { M18.tile = cur; if (cur >= 0 && G.state === 'play') pianoNote18(cur); }
+    for (const T of M18.tiles) { T.lit = Math.max(0, T.lit - dt * 1.6); const k = M18.played ? 0.35 + 0.25 * Math.sin(FX.t * 3 + T.i) : 0.05; setEmi(T.m, k + T.lit * 2.2); }
+  }
+  if (M18.lid) { M18.chestK = damp(M18.chestK, M18.played ? 1 : 0, 3, dt); M18.lid.rotation.x = -1.2 * M18.chestK; }
+  if (M18.cubbyDoor && M18.cubbyOpenT) { M18.cubbyOpenT = Math.min(1, M18.cubbyOpenT + dt * 1.5); M18.cubbyDoor.rotation.y = -1.9 * smooth(0, 1, M18.cubbyOpenT); }
+}
+// ----- sounds -----
+SFX18.note = (i, v = 1) => shot((d, t) => { const f = PNOTE18[i]; tone(d, t, 0.9, 'triangle', f, f, 0.16 * v, 0.004); tone(d, t, 0.5, 'sine', f * 2, f * 2, 0.05 * v, 0.004); nz(d, t, 0.04, 'lowpass', 400, 1, 0.12 * v, 0.002); return 1; }, null, 0.9);
+if (/[?&]debug/.test(location.search)) addEventListener('load', () => Object.assign(window.__BR || (window.__BR = {}), { M18, pianoNote18, chest18, card18, cubby18, wish18, lunch18, signDoor18, objName18, targetMem18, memTasks18 }));
 
 // ==== player.js ====
 // ---------- player: input, movement, handheld camcorder, survival ----------
@@ -9290,6 +10272,7 @@ function updatePlayer(dt) {
   if (JUST.has('Tab') && LVL === 9) toggleMap9();
   if (JUST.has('KeyC')) PL.crouch = !PL.crouch;
   if (JUST.has('KeyZ')) PL.zoomT = !PL.zoomT;
+  if (JUST.has('KeyG') && LVL === 5) useSpray5();   // r7: Mothex
   if (LVL === 9) hackKeys9(JUST);   // r6: PACKET STACK takes the movement keys while you're at a terminal
   JUST.clear();
   // movement
@@ -10703,10 +11686,10 @@ function updateAI9(dt) {
 // ==== ai5.js ====
 // ---------- Level 5 · AI: the moths — huge, dusty, and drawn to your light ----------
 const AI5 = { moths: [], fl: null };
-function buildMoth() {
-  const mat = actMat('moth', { spec: 0.12, shin: 8, wrinkle: 0.7, emis: 1, wrap: 0.6, mottle: 0.9 });
-  const root = tnode(null), r = { root, mat, kind: 'moth', hipH: 1.1 }, tn = rnd(0.85, 1.12);
-  const BR = [0.4, 0.33, 0.25].map(v => v * tn), DK = [0.12, 0.1, 0.08], FUR = [0.55, 0.48, 0.38].map(v => v * tn);
+function buildMoth(o = {}) {   // r7: o.fem = a female (drawn 2x bigger by her agent): darker, banded, red-eyed
+  const mat = actMat(o.fem ? 'mothF' : 'moth', { spec: 0.12, shin: 8, wrinkle: 0.7, emis: 1, wrap: 0.6, mottle: 0.9 });
+  const root = tnode(null), r = { root, mat, kind: 'moth', hipH: 1.1 }, tn = o.fem ? 0.85 : rnd(0.85, 1.12);
+  const BR = (o.fem ? [0.36, 0.3, 0.3] : [0.4, 0.33, 0.25]).map(v => v * tn), DK = [0.12, 0.1, 0.08], FUR = (o.fem ? [0.5, 0.44, 0.4] : [0.55, 0.48, 0.38]).map(v => v * tn);
   const fur = (x, y, z) => 0.78 + 0.36 * hash1(Math.floor(x * 60) * 7.1 + Math.floor(y * 60) * 3.3 + Math.floor(z * 60) * 1.7);
   r.body = tnode(root, 0, 0, 0);
   part('Sphere', { diameter: 0.36, segments: 10 }, r.body, mat, FUR, 0, [0, 0, 0.06], null, [0.95, 0.85, 1.15], fur);                       // thorax
@@ -10714,7 +11697,7 @@ function buildMoth() {
   r.head = tnode(r.body, 0, 0.02, 0.26);
   part('Sphere', { diameter: 0.2, segments: 10 }, r.head, mat, FUR, 0, [0, 0, 0], null, [1.1, 0.9, 0.8], fur);
   for (const s of [-1, 1]) {
-    part('Sphere', { diameter: 0.1, segments: 8 }, r.head, mat, [1, 0.42, 0.08], 1, [s * 0.075, 0.02, 0.05]);                              // ember eyes
+    part('Sphere', { diameter: 0.1, segments: 8 }, r.head, mat, o.fem ? [1, 0.1, 0.04] : [1, 0.42, 0.08], 1, [s * 0.075, 0.02, 0.05]);      // ember eyes
     const an = tnode(r.head, s * 0.04, 0.07, 0.06); an.rotation.set(-1.0, s * 0.5, 0);
     part('Box', { width: 0.012, height: 0.36, depth: 0.012 }, an, mat, DK, 0, [0, 0.18, 0]);
     for (let k = 0; k < 8; k++) part('Box', { width: 0.13 - k * 0.013, height: 0.007, depth: 0.004 }, an, mat, FUR, 0, [0, 0.05 + k * 0.04, 0]);   // feathered antennae
@@ -10749,7 +11732,7 @@ function collideW(p, r) {
 class Moth extends Agent {
   constructor(nest, i) {
     super(buildMoth(), 0.42); mergeRig(this.rig); this.noSep = true;   // flies: no ground personal space
-    this.nest = nest; this.boil = nest.boil; this.i = i;
+    this.nest = nest; this.boil = nest.boil; this.i = i; this.male = true; this.loyal = !!nest.loyal;   // r7: Mothex kills these; loyal ones keep to the Gold Room's chandeliers
     this.cellFn = this.boil ? (c => !boilZ5(LV.zone[c])) : (c => { const z = LV.zone[c]; return !z || boilZ5(z) || z === Z5.VEST || z === Z5.ELEV || z === Z5.STAIR || z === Z5.SERV || LV.reg[c] === R5.E; });
     this.edgeFn = (x, y, d) => !doorClosed(x, y, d);
     const a = rnd(0, TAU); this.home = { x: nest.x + Math.sin(a) * 0.55, z: nest.z + Math.cos(a) * 0.55 };
@@ -10798,10 +11781,21 @@ class Moth extends Agent {
     for (const f of LV.fixtures) { if (!f.state) continue; const d = dist2(f.x, f.z, this.x, this.z); if (d < bd && this.mine(cIdx(cellOf(f.x), cellOf(f.z))) && los(this.x, this.z, f.x, f.z)) { bd = d; b = f; } }
     return b;
   }
-  ceil() { return LV.zone[this.cell()] === Z5.BEV ? BEV_H : CEIL; }
+  ceil() { return ceil5(this.cell()); }
+  die() {   // r7: Mothex
+    if (!this.alive) return;
+    this.alive = false; this.st = 'dead'; this.stT = 0; this.vy = 0; this.shadowR = 0; SFX5.burst(this.pos(this.y)); later(0.3, () => SFX5.chitter(this.pos(0.3)));
+  }
+  deadTick(dt) {
+    this.vy -= 9 * dt; this.y = Math.max(0.1, this.y + this.vy * dt); this.roll = damp(this.roll, 2.9, 3, dt); this.pitch = damp(this.pitch, 0, 3, dt);
+    const tw = this.stT < 3 ? (1 - this.stT / 3) * Math.sin(FX.t * 40) * 0.4 : 0;
+    for (const W of this.rig.wings) W.n.rotation.set(0, W.s * 0.4, W.s * (0.05 + tw));
+    this.sync();
+  }
   update(dt) {
     const d = this.d, t = FX.t, play = G.state === 'play';
     this.stT += dt; this.atkCd -= dt; this.percT -= dt; this.chitCd -= dt;
+    if (this.st === 'dead') { if (this.y > 0.11 || this.stT < 3.2) this.deadTick(dt); return; }
     if (this.st === 'roost' && d > 34) { if (this.shown) this.cull(); return; }
     let spd = 0, alt = 2.0, flap = 9;
     if (this.percT <= 0) {
@@ -10814,7 +11808,7 @@ class Moth extends Agent {
     const top = this.ceil() - 0.35;
     switch (this.st) {
       case 'roost': {   // folded under the ceiling at the nest, twitching now and then
-        this.x = damp(this.x, this.home.x, 2, dt); this.z = damp(this.z, this.home.z, 2, dt); alt = CEIL - 0.42; flap = 0; spd = 0;
+        this.x = damp(this.x, this.home.x, 2, dt); this.z = damp(this.z, this.home.z, 2, dt); alt = this.ceil() - 0.42; flap = 0; spd = 0;
         this.flapA = hash1(Math.floor(t * 2 + this.i * 7)) < 0.06 ? 0.3 : 0;
         break;
       }
@@ -10851,7 +11845,7 @@ class Moth extends Agent {
         const L = this.lamp, R = 0.95 + 0.25 * Math.sin(t * 0.7 + this.i); this.orbA += dt * 1.9;
         const ly = L.y ?? (LV.zone[cIdx(cellOf(L.x), cellOf(L.z))] === Z5.BEV ? 5.4 : CEIL - 0.45);
         this.navTo(L.x + Math.sin(this.orbA) * R, L.z + Math.cos(this.orbA) * R, 2.2, dt); spd = 2.2; alt = Math.min(ly - 0.1, top); flap = 11;
-        if (this.stT > rnd(14, 20)) { this.st = 'drift'; this.stT = 0; this.wp = null; }
+        if (!this.loyal && this.stT > rnd(14, 20)) { this.st = 'drift'; this.stT = 0; this.wp = null; }
         break;
       }
       case 'drift': {
@@ -10864,7 +11858,7 @@ class Moth extends Agent {
         break;
       }
       case 'return': {
-        const r = this.navTo(this.home.x, this.home.z, 1.6, dt); spd = 1.6; alt = r < 1.5 ? CEIL - 0.42 : 2.1; flap = r < 1.5 ? 5 : 8;
+        const r = this.navTo(this.home.x, this.home.z, 1.6, dt); spd = 1.6; alt = r < 1.5 ? this.ceil() - 0.42 : 2.1; flap = r < 1.5 ? 5 : 8;
         if (r < 0.35) { this.st = 'roost'; this.stT = 0; }
         break;
       }
@@ -10888,19 +11882,26 @@ function spawnMoth5(n) { const m = new Moth(n, AI5.moths.length); AI.all.push(m)
 function initAI5() {
   Object.assign(AI, { all: [], howlers: [], smilers: [], exps: [], crawler: null, mimic: null, flick: 0 });
   AI5.moths = [];
-  for (const n of W5.nests.filter(n => !n.boil)) { spawnMoth5(n); if (G.diff === 2 && RNG() < 0.6) spawnMoth5(n); }
+  for (const n of W5.nests.filter(n => !n.boil)) {
+    if (n.loyal) {   // r7: the Gold Room: males already circling the lit chandeliers
+      for (let i = 0; i < [2, 3, 3][G.diff]; i++) { const L = n.loyal[i % n.loyal.length], m = spawnMoth5(n); m.home = { x: L.x, z: L.z }; m.lamp = L; m.loyalLamp = L; m.st = 'circle'; m.place(L.x + rnd(-1, 1), L.z + rnd(-1, 1), rnd(0, TAU)); m.y = 2.8; }
+      continue;
+    }
+    spawnMoth5(n); if (G.diff === 2 && RNG() < 0.6) spawnMoth5(n);
+  }
   const bn = W5.nests.filter(n => n.boil); if (bn.length) for (let i = 0; i < [2, 3, 3][G.diff]; i++) spawnMoth5(bn[i % bn.length]);
+  femaleInit5();   // r7
 }
 // steam from a valve rouses the moths down in the boiler room
 function wakeBoiler5(v, all) {
-  const bm = AI5.moths.filter(m => m.boil && m.st === 'roost').sort((a, b) => dist2(a.x, a.z, v.x, v.z) - dist2(b.x, b.z, v.x, v.z));
+  const bm = AI5.moths.filter(m => m.boil && !m.fem && m.st === 'roost').sort((a, b) => dist2(a.x, a.z, v.x, v.z) - dist2(b.x, b.z, v.x, v.z));
   for (const m of all ? bm : bm.slice(0, 1)) { m.wake('steam'); m.lk = { x: v.x, z: v.z }; }
 }
 function foes5() {
   const out = [], pb = boilZ5(LV.zone[cIdx(cellOf(PL.x), cellOf(PL.z))]);
   for (const m of AI5.moths) {
-    if (m.st === 'roost' || m.boil !== pb) continue;
-    const d = m.d, ch = m.st === 'hunt' || m.st === 'wake' || m.st === 'retreat', maxD = ch ? 24 : 16; if (d > maxD) continue;
+    if (m.st === 'roost' || m.st === 'calm' || !m.alive || m.boil !== pb) continue;
+    const d = m.d, ch = m.st === 'hunt' || m.st === 'wake' || m.st === 'retreat' || m.st === 'angry', maxD = ch ? 24 : 16; if (d > maxD) continue;
     out.push({ ang: Math.atan2(m.x - PL.x, m.z - PL.z), d, k: clamp(1 - d / maxD, 0.2, 1), ch, kind: 'w', fl: 0 });
   }
   return out.sort((a, b) => a.d - b.d).slice(0, 3);
@@ -10908,12 +11909,13 @@ function foes5() {
 function updateAI5(dt) {
   PL.fear = 0; PL.interf = 0; AI.flick = 0; G.chase = 0;
   for (const a of AI.all) a.update(dt);
+  femaleTick5(dt);   // r7: acid, puddles, spray mist
   // the nearest flying moth: a soft, fast flutter you can track through walls
   let bm = null, bd = 18;
-  for (const m of AI5.moths) { if (m.st === 'roost') continue; const d = m.d; if (d < bd) { bd = d; bm = m; } }
+  for (const m of AI5.moths) { if (m.st === 'roost' || m.st === 'calm' || !m.alive) continue; const d = m.d; if (d < bd) { bd = d; bm = m; } }
   if (AU.ctx && !AI5.fl) AI5.fl = mkFlutter5();
   if (AI5.fl) {
-    if (bm) { AI5.fl.set(bm.x, bm.y, bm.z, PL.x, PL.z); AI5.fl.lfo.frequency.value = bm.st === 'hunt' ? 14 : 9; }
+    if (bm) { AI5.fl.set(bm.x, bm.y, bm.z, PL.x, PL.z); AI5.fl.lfo.frequency.value = bm.fem ? 6 : bm.st === 'hunt' ? 14 : 9; }
     setGain(AI5.fl, bm && G.state === 'play' ? (bm.st === 'hunt' ? 0.75 : 0.4) * clamp(1.2 - bd / 18, 0, 1) : 0, 0.2);
   }
   AI.visT -= dt;
@@ -10923,6 +11925,162 @@ function updateAI5(dt) {
   cs.sort((a, b) => a[0] - b[0]);
   for (let i = 0; i < 8; i++) { const a = cs[i] && cs[i][1]; if (a) setShadowCaster(i, a.x, a.z, a.shadowR, 0.45); else setShadowCaster(i, 0, 0, 0, 0); }
 }
+
+// ==== moths5.js ====
+// ---------- r7 · Level 5: female deathmoths, their acid, and Mothex ----------
+// Lore (Backrooms wiki, Deathmoths): males are the smaller ones and scare easily; females are huge, hostile and produce acid;
+// both can be tamed with almond water. Here: Mothex kills the males (the moths you have met all level) and does nothing to a female
+// except make her angry. A female hangs at her nest; noise, a light held on her or a sprayed can wakes her and she spits acid from
+// the air, never straying far from her nest. Pour almond water into her bowl and she comes down to drink and is calm for good.
+const FEM5 = { acid: [], pud: [], mist: [], am: null, mm: null };
+class MothF extends Agent {
+  constructor(n) {
+    super(buildMoth({ fem: true }), 0.75); mergeRig(this.rig); this.noSep = true; this.rig.root.scaling.setAll(2.05);
+    Object.assign(this, { nest: n, fem: true, fed: !!n.fed, st: 'roost', stT: 0, y: n.y, stir: 0, spitCd: 2.5, wph: rnd(0, TAU), roll: 0, pitch: 0, orbA: rnd(0, TAU), angryT: 0, calmT: 0, shadowR: 0.9, i: 99, boil: !!n.boil, chitCd: 0, lastSeen: 0 });
+    this.place(n.x, n.z, rnd(0, TAU));
+  }
+  sync() { const r = this.rig.root; r.position.set(this.x, this.y, this.z); r.rotation.set(this.pitch, this.yaw, this.roll); }
+  provoke(why) {
+    if (this.fed) { if (why === 'spray') toast('SHE DOES NOT EVEN LOOK UP', 1.8); return; }
+    if (why === 'spray' && !ST5.sprayTip) { ST5.sprayTip = true; later(0.4, () => toast('THE SPRAY DOES NOTHING TO HER', 2.4)); }
+    if (this.st === 'angry') { this.angryT = 0; return; }
+    this.st = 'angry'; this.stT = 0; this.angryT = 0; this.spitCd = 1.1; this.stir = 1;
+    SFX5.screech(this.pos(this.y)); SFX5.burst(this.pos(this.y)); FX.glitch = Math.max(FX.glitch, 0.5);
+  }
+  feed() { this.fed = true; this.nest.fed = true; this.st = 'drink'; this.stT = 0; this.stir = 0; }
+  reset() { this.st = this.fed ? 'calm' : 'roost'; this.stT = 0; this.stir = 0; this.angryT = 0; this.place(this.nest.x, this.nest.z, this.yaw); this.y = this.nest.y; }
+  hover(tx, tz, spd, dt) {
+    const dx = tx - this.x, dz = tz - this.z, d = Math.hypot(dx, dz); if (d < 0.02) return d;
+    this.face(Math.atan2(dx, dz), 3, dt); const k = Math.min(d, spd * dt), p = { x: this.x + dx / d * k, z: this.z + dz / d * k }; collideW(p, 0.5); this.x = p.x; this.z = p.z; return d;
+  }
+  update(dt) {
+    const t = FX.t, n = this.nest, d = this.d, play = G.state === 'play'; this.stT += dt; this.spitCd -= dt; this.chitCd -= dt;
+    if (this.st === 'roost' && d > 30) { if (this.shown) this.cull(); return; }
+    let alt = n.y, flap = 0, fold = true;
+    const top = ceil5(this.cell()) - 0.6;
+    switch (this.st) {
+      case 'roost': {   // hanging at the nest; she notices noise, a light held on her, or you walking right under her
+        this.x = damp(this.x, n.x, 2, dt); this.z = damp(this.z, n.z, 2, dt);
+        if (play && !this.fed) {
+          const near = d < 11 && los(this.x, this.z, PL.x, PL.z);
+          let s = -0.25;
+          if (near && PL.noise > 0.12) s += PL.noise * 2.6;
+          if (near && PL.fk > 0.5 && inBeam(this.x, this.y, this.z, 11, 0.94)) s += [0.55, 0.8, 1.1][G.diff];
+          if (d < 2.6) s += 0.7;
+          this.stir = clamp(this.stir + s * dt, 0, 1.2);
+          if (this.stir > 0.5 && this.chitCd <= 0 && d < 16) { this.chitCd = 4; SFX5.chitter(this.pos(this.y)); }
+          if (this.stir >= 1) this.provoke('stir');
+        }
+        break;
+      }
+      case 'angry': {   // off the nest, circling within reach of it, spitting at you whenever she can see you
+        fold = false; flap = 11; G.chase = Math.max(G.chase, 0.7); PL.fear = Math.max(PL.fear, 0.8);
+        const sees = play && d < 17 && los(this.x, this.z, PL.x, PL.z);
+        this.angryT = sees ? 0 : this.angryT + dt; if (sees) this.lastSeen = t;
+        this.orbA += dt * 0.7;
+        const R = Math.min(n.leash, 3.4), tx = n.x + Math.sin(this.orbA) * R * 0.7, tz = n.z + Math.cos(this.orbA) * R * 0.7;
+        let gx = tx, gz = tz;
+        if (sees) { const a = Math.atan2(PL.x - n.x, PL.z - n.z), r2 = Math.min(n.leash, Math.max(0, d - 4.5)); gx = n.x + Math.sin(a) * r2 * 0.6 + Math.sin(this.orbA * 2) * 1.2; gz = n.z + Math.cos(a) * r2 * 0.6 + Math.cos(this.orbA * 2) * 1.2; }
+        this.hover(gx, gz, 2.4, dt); if (sees) this.face(Math.atan2(PL.x - this.x, PL.z - this.z), 4, dt);
+        alt = clamp(2.6 + 0.3 * Math.sin(t * 1.3), 1.8, top);
+        if (sees && this.spitCd <= 0 && play) { this.spitCd = [2.7, 2.2, 1.7][G.diff] + rnd(0, 0.6); spit5(this); }
+        if (this.angryT > 7 || this.stT > 26) { this.st = 'settle'; this.stT = 0; }
+        break;
+      }
+      case 'settle': {
+        fold = false; flap = 7; const r = this.hover(n.x, n.z, 1.6, dt); alt = n.y;
+        if (r < 0.4 && Math.abs(this.y - n.y) < 0.3) { this.st = this.fed ? 'calm' : 'roost'; this.stT = 0; this.stir = 0.2; }
+        break;
+      }
+      case 'drink': {   // down to the bowl, wings slow
+        fold = false; flap = 5; const b = n.bowl, r = this.hover(b.x + 0.5, b.z + 0.2, 1.8, dt);
+        alt = r < 0.6 ? b.y + 0.55 : 2.2; if (r < 0.6) this.face(Math.atan2(b.x - this.x, b.z - this.z), 2, dt);
+        if (this.stT > 9) { this.st = 'settle'; this.stT = 0; }
+        break;
+      }
+      case 'calm': { this.x = damp(this.x, n.x, 2, dt); this.z = damp(this.z, n.z, 2, dt); break; }
+    }
+    this.y = damp(this.y, clamp(alt, 0.6, top + 0.4) + (fold ? 0 : Math.sin(t * 1.9) * 0.1), 2.2, dt);
+    this.pitch = damp(this.pitch, fold ? -0.3 : 0.08, 3, dt); this.roll = damp(this.roll, 0, 3, dt);
+    this.wph += dt * flap * TAU * 0.5;
+    const A = fold ? (hash1(Math.floor(t * 1.5 + 3)) < 0.05 ? 0.25 : 0) : 0.7, sweep = fold ? 1.2 : 0.25;
+    for (const W of this.rig.wings) { const lift = fold ? -0.3 + A * Math.sin(t * 24) : 0.12 + A * Math.sin(this.wph + (W.fore ? 0 : 0.5)); W.n.rotation.set(0, W.s * (W.fore ? sweep : sweep + 0.35), W.s * lift); }
+    this.sync();
+  }
+}
+// ----- acid -----
+function acidMat5() { if (!FEM5.am) { FEM5.am = actMat('acid5', { emis: 1 }); setEmi(FEM5.am, 0.5, 1.6, 0.2); } return FEM5.am; }
+function spit5(m) {
+  const sx = m.x + Math.sin(m.yaw) * 0.7, sz = m.z + Math.cos(m.yaw) * 0.7, sy = m.y - 0.2, D = Math.hypot(PL.x - sx, PL.z - sz), T = clamp(D / 10, 0.35, 1.3), g = 7;
+  const tx = PL.x + (PL.vx || 0) * T * 0.7, tz = PL.z + (PL.vz || 0) * T * 0.7, ty = 1.15;
+  const mesh = mkMerged(acidMat5(), P => { P('Sphere', { diameter: 0.2, segments: 6 }, [0.5, 1, 0.3], 1, [0, 0, 0]); P('Sphere', { diameter: 0.13, segments: 5 }, [0.6, 1, 0.4], 1, [0, 0, -0.14]); }, 'acid5');
+  mesh.position.set(sx, sy, sz);
+  FEM5.acid.push({ x: sx, y: sy, z: sz, vx: (tx - sx) / T, vz: (tz - sz) / T, vy: (ty - sy + 0.5 * g * T * T) / T, g, t: 0, mesh });
+  SFX5.spit(m.pos(m.y));
+}
+function puddle5(x, z) {
+  const mesh = mkMerged(acidMat5(), P => { P('Cylinder', { diameter: 0.9, height: 0.01, tessellation: 14 }, [0.3, 0.7, 0.2], 0.6, [0, 0, 0]); for (let i = 0; i < 4; i++) P('Cylinder', { diameter: rnd(0.15, 0.3), height: 0.012, tessellation: 8 }, [0.35, 0.8, 0.25], 0.7, [rnd(-0.5, 0.5), 0, rnd(-0.5, 0.5)]); }, 'puddle5');
+  mesh.position.set(x, 0.012, z); FEM5.pud.push({ x, z, t: 0, mesh, hitT: 0 });
+  SFX5.splat({ x, y: 0.1, z, pl: { x: PL.x, z: PL.z } });
+}
+function acidTick5(dt) {
+  for (let i = FEM5.acid.length - 1; i >= 0; i--) {
+    const a = FEM5.acid[i], ox = a.x, oz = a.z; a.t += dt; a.vy -= a.g * dt; a.x += a.vx * dt; a.y += a.vy * dt; a.z += a.vz * dt; a.mesh.position.set(a.x, a.y, a.z);
+    const hitP = G.state === 'play' && Math.hypot(a.x - PL.x, a.z - PL.z) < 0.55 && a.y > 0.2 && a.y < 1.95;
+    const wall = !los(ox, oz, a.x, a.z) || a.y < 0.05 || a.t > 3;
+    if (hitP) { hurt(16, 'acid'); PL.san = Math.max(0, PL.san - 6); FX.glitch = Math.max(FX.glitch, 1.2); SFX5.splat({ x: PL.x, y: 1.2, z: PL.z, pl: { x: PL.x, z: PL.z } }); }
+    if (hitP || wall) { if (!hitP) puddle5(clamp(a.x, ox - 1, ox + 1), clamp(a.z, oz - 1, oz + 1)); a.mesh.dispose(); FEM5.acid.splice(i, 1); }
+  }
+  for (let i = FEM5.pud.length - 1; i >= 0; i--) {
+    const p = FEM5.pud[i]; p.t += dt; const k = 1 - smooth(5, 7, p.t); p.mesh.scaling.set(k, 1, k);
+    if (G.state === 'play' && k > 0.3 && Math.hypot(p.x - PL.x, p.z - PL.z) < 0.5 * k) { p.hitT -= dt; if (p.hitT <= 0) { p.hitT = 0.5; hurt(2.5, 'acid'); } }
+    if (p.t > 7) { p.mesh.dispose(); FEM5.pud.splice(i, 1); }
+  }
+}
+// ----- Mothex -----
+function useSpray5() {
+  if (LVL !== 5 || G.state !== 'play' || !ST5.hasSpray) return;
+  if (FEM5.cd > FX.t) return;
+  if (ST5.spray <= 0) { SFX.click(); toast('THE CAN IS EMPTY', 1.4); return; }
+  ST5.spray--; FEM5.cd = FX.t + 0.75; makeNoise(0.12); tasksState5();
+  const f = CAM.getDirection(BABYLON.Axis.Z), cp = CAM.position;
+  SFX5.spray({ x: cp.x + f.x, y: cp.y, z: cp.z + f.z, pl: { x: PL.x, z: PL.z } });
+  mist5(cp, f);
+  let hit = 0;
+  for (const m of AI5.moths) {
+    if (!m.alive) continue;
+    const dx = m.x - cp.x, dy = m.y - cp.y, dz = m.z - cp.z, d = Math.hypot(dx, dy, dz), R = m.fem ? 5.5 : 4.4;
+    if (d > R || (dx * f.x + dy * f.y + dz * f.z) / (d || 1) < (d < 1.4 ? 0.3 : 0.8) || !los(cp.x, cp.z, m.x, m.z)) continue;
+    if (m.fem) m.provoke('spray'); else { m.die(); hit++; }
+  }
+  if (hit && !ST5.killTip) { ST5.killTip = true; later(0.6, () => toast('IT DROPS', 1.6)); }
+  if (!ST5.spray) later(0.8, () => toast('MOTHEX · EMPTY', 1.8));
+}
+function mistMat5() { if (!FEM5.mm) { const m = new BABYLON.StandardMaterial('mist5', SCN); m.disableLighting = true; m.emissiveColor = new BABYLON.Color3(0.55, 0.6, 0.55); m.alpha = 0.2; m.backFaceCulling = false; FEM5.mm = m; MATS.std = (MATS.std || []).concat([m]); } return FEM5.mm; }
+function mist5(cp, f) {
+  for (let i = 0; i < 9; i++) {
+    const m = BABYLON.MeshBuilder.CreateSphere('mist5', { diameter: 0.3, segments: 4 }, SCN); m.material = mistMat5(); m.isPickable = false; m._sortD = 100; m.__noPortal = true;
+    const a = rnd(-0.18, 0.18), b = rnd(-0.12, 0.12), sp = rnd(3, 5.5);
+    const v = { x: f.x + a * f.z, y: f.y + b, z: f.z - a * f.x };
+    m.position.set(cp.x + f.x * 0.45, cp.y - 0.12, cp.z + f.z * 0.45);
+    FEM5.mist.push({ m, vx: v.x * sp, vy: v.y * sp, vz: v.z * sp, t: 0, life: rnd(0.6, 1.0) });
+  }
+}
+function mistTick5(dt) {
+  for (let i = FEM5.mist.length - 1; i >= 0; i--) {
+    const q = FEM5.mist[i]; q.t += dt; const k = q.t / q.life, drag = Math.exp(-dt * 3);
+    q.vx *= drag; q.vy = q.vy * drag - dt * 0.3; q.vz *= drag; q.m.position.x += q.vx * dt; q.m.position.y += q.vy * dt; q.m.position.z += q.vz * dt;
+    q.m.scaling.setAll(1 + k * 4); q.m.visibility = Math.max(0, 1 - k);
+    if (k >= 1) { q.m.dispose(); FEM5.mist.splice(i, 1); }
+  }
+}
+function femaleInit5() {
+  DEATH_TXT.acid = ['SHE SPAT', 'The lens fogs green and the picture eats in from the edges.'];
+  FEM5.acid.length = 0; FEM5.pud.length = 0; FEM5.mist.length = 0; FEM5.am = null; FEM5.mm = null; FEM5.cd = 0;
+  for (const n of W5.fnests || []) { const m = new MothF(n); AI.all.push(m); AI5.moths.push(m); if (n.fed) m.st = 'calm'; }
+}
+function femaleTick5(dt) { acidTick5(dt); mistTick5(dt); }
+if (/[?&]debug/.test(location.search)) addEventListener('load', () => Object.assign(window.__BR || (window.__BR = {}), { FEM5, MothF, useSpray5, spit5, femaleTick5 }));
 
 // ==== ai18.js ====
 // Level 18 · the friendly Plush Dino and the faceless Forgotten.
@@ -11366,9 +12524,13 @@ function cpRespawn9() {
 function cpRespawn5() {
   Object.assign(G5, { tp: null, turning: null, stareP: null, stareT: 0, eyeF: null, eyeW: 0, eyeT: 0, ambush: 0, ambushT: rnd(16, 28), vest: null, vestS: 0 });
   for (const m of AI5.moths) {
+    if (!m.alive) continue;   // r7: sprayed moths stay dead
+    if (m.fem) { m.reset(); continue; }
     Object.assign(m, { st: 'roost', stT: 0, lk: null, wp: null, lamp: null, away: null, atkCd: 2, seen: false, lit: false, y: CEIL - 0.42, unT5: 0, driftT: 0, fc: -1, dir: -1 });
     m.place(m.home.x, m.home.z, m.yaw);
+    if (m.loyal && m.loyalLamp) { m.st = 'circle'; m.lamp = m.loyalLamp; m.y = 2.8; }
   }
+  for (const a of FEM5.acid) a.mesh.dispose(); FEM5.acid.length = 0;
 }
 function cpRespawn18() {
   G18.slide = null; G18.digging = false; PL.spdK = 1;
@@ -12533,6 +13695,7 @@ function obj5() {
     case 'staff': return 'UNLOCK THE STAFF DOOR · BEVERLY ROOM';
     case 'stairs': return 'TAKE THE SERVICE STAIRS DOWN';
     case 'valves': return `VENT THE BOILERS · VALVES ${G5.valves}/3`;
+    case 'fire': return objState5();
     case 'exit': return 'REACH THE EMERGENCY EXIT';
   }
   return '';
@@ -12551,6 +13714,7 @@ function unlockStaff5(dr) {
   dr.locked = false; SFX5.unlock(P9({ x: dr.mx, z: dr.mz })); makeNoise(0.2);
   later(1.3, () => { setDoor(dr, true); });
   toast('STAFF DOOR UNLOCKED', 2); setPhase5('stairs'); radio5('stairs', 1.6); cpSave('STAFF DOOR');
+  if (LV.st5 && !ST5.reset) later(14, () => { if (LVL === 5 && G.state === 'play' && !ST5.reset) radioSt5('fire0'); });   // r7
 }
 function startValve5(v) {
   if (v.turned || G5.turning) return;
@@ -12561,12 +13725,17 @@ function finishValve5(v) {
   SFX9.hiss(P9(v.steam), 5); later(0.4, () => SFX5.pipes(P9(v.steam))); FX.glitch = Math.max(FX.glitch, 0.5); PL.shake = Math.max(PL.shake, 0.5);
   W5.steam.push({ x: v.steam.x, z: v.steam.z, t: 0 });
   wakeBoiler5(v, G5.valves >= 2);
-  if (G5.valves >= 3) { setPhase5('exit'); drawExit5(true); radio5('exit', 1.2); later(0.6, () => SFX9.klaxon(P9(W5.exit))); toast('ALL VALVES VENTED · THE EXIT IS OPEN', 3); }
+  if (G5.valves >= 3 && LV.st5 && !ST5.reset) { setPhase5('fire'); radioSt5('fire', 1.2); later(0.6, () => SFX9.rattle(P9(W5.exit))); toast('ALL VALVES VENTED · THE EXIT IS STILL LOCKED', 3); }   // r7: the fire lock
+  else if (G5.valves >= 3) { setPhase5('exit'); drawExit5(true); radio5('exit', 1.2); later(0.6, () => SFX9.klaxon(P9(W5.exit))); toast('ALL VALVES VENTED · THE EXIT IS OPEN', 3); }
   else { setPhase5(); toast(`VALVE ${G5.valves}/3 · PRESSURE DROPPING`, 2.4); if (G5.valves === 1) radio5('valve', 1); }
   cpSave(`VALVE ${G5.valves}/3`);
 }
 function useExit5() {
-  if (G5.phase !== 'exit') { SFX9.rattle(P9(W5.exit)); toast('SEALED · THE BOILER PRESSURE HOLDS IT SHUT', 2.4); makeNoise(0.2); return; }
+  if (G5.phase !== 'exit') {
+    SFX9.rattle(P9(W5.exit)); makeNoise(0.2);
+    if (LV.st5 && !ST5.reset) { ST5.lockSeen = true; toast(G5.valves >= 3 ? 'FIRE LOCK ENGAGED · RESET AT SECURITY' : 'SEALED · BOILER PRESSURE AND A FIRE LOCK', 2.6); fireTasks5(); setPhase5(); return; }
+    toast('SEALED · THE BOILER PRESSURE HOLDS IT SHUT', 2.4); return;
+  }
   win5();
 }
 function ringBell5() {
@@ -12600,6 +13769,7 @@ function teardown5() {
   for (const k of ['jazz', 'rumble']) { const v = G5[k]; if (!v) continue; try { if (v.src) v.src.stop(); (v.v ? v.v.g : v.g).disconnect(); if (v.bed) v.bed.disconnect(); } catch (e) {} G5[k] = null; }
   if (AI5.fl) { try { AI5.fl.g.disconnect(); } catch (e) {} AI5.fl = null; }
   document.body.classList.remove('lvl5');
+  teardownPortal5();   // r7
 }
 async function goLevel5(from) {
   const f = Object.assign({ hp: 100, san: 100, batt: [100, 90, 75][G.diff], spare: [2, 1, 1][G.diff], water: [3, 1, 1][G.diff], time: 0, dist: 0, lost: 0, tapes: 4 }, from || G5.from || {});
@@ -12609,7 +13779,7 @@ async function goLevel5(from) {
   if (AU.ctx && AU.ctx.state === 'suspended') AU.ctx.resume();
   teardownScene();
   LVL = 5; setDims(L5_N, L5_LMR); document.body.classList.remove('lvl9'); document.body.classList.add('lvl5'); AU.remap = remap5;
-  resetG5(); resetP5(); tasksReset('LEVEL 5 · THE HOTEL');
+  resetG5(); resetP5(); resetST5(); tasksReset('LEVEL 5 · THE HOTEL');
   const prog = (p, m) => { $('loadFill').style.width = (p * 100).toFixed(0) + '%'; $('loadMsg').textContent = m; };
   RNG = mulberry32((Math.random() * 4294967296) >>> 0);
   await buildWorld5(prog);
@@ -12685,28 +13855,6 @@ function startTp5(down) {
   for (let i = 0; i < 7; i++) later(i * 0.14, () => SFX.step(1, false));
   makeNoise(0.15);
 }
-function vestAt5(c) {
-  if (c < 0 || LV.zone[c] !== Z5.VEST) return null;
-  for (const w of LV.warps) { if (cIdx(w.a.vx, w.a.vy) === c) return [w.a, w.b]; if (cIdx(w.b.vx, w.b.vy) === c) return [w.b, w.a]; }
-  return null;
-}
-// walk past the middle of a vestibule and you are standing in its twin - same room, other wing
-function checkWarp5() {
-  const pr = vestAt5(cIdx(cellOf(PL.x), cellOf(PL.z)));
-  if (!pr) { G5.vest = null; return; }
-  const [v, t] = pr, s = (PL.x - v.cx) * v.fx + (PL.z - v.cz) * v.fz;
-  if (G5.vest === v && G5.vestS <= 0 && s > 0) {
-    const l = (PL.x - v.cx) * -v.fz + (PL.z - v.cz) * v.fx;
-    PL.x = t.cx + t.fx * s - t.fz * l; PL.z = t.cz + t.fz * s + t.fx * l;
-    const th = Math.atan2(t.fx, t.fz) - Math.atan2(v.fx, v.fz), cs = Math.cos(th), sn = Math.sin(th), vx = PL.vx, vz = PL.vz;
-    PL.yaw += th; PL.vx = vx * cs + vz * sn; PL.vz = -vx * sn + vz * cs;
-    const dA = W9.doorAt.get(eKey(v.vx, v.vy, v.vd)), dB = W9.doorAt.get(eKey(t.vx, t.vy, t.vd));
-    if (dA && dB) snapDoor5(dB, dA.target);
-    PL.cell = -1; updateField(); G5.warps++;
-    G5.vest = t; G5.vestS = s; return;
-  }
-  G5.vest = v; G5.vestS = s;
-}
 // the wallpaper: find the spot on the wall you are looking at
 function stareHit5() {
   const c = CAM.position, f = CAM.getDirection(BABYLON.Axis.Z), h = Math.hypot(f.x, f.z); if (h < 0.25) return null;
@@ -12770,7 +13918,8 @@ function gameEvents5(dt) {
     PL.x -= LOOP5.back * CELL; PL.cell = -1; updateField(); G5.loops++;
     if (G5.loops === 2 && !G5.loopHint) { G5.loopHint = true; later(0.5, () => toast('THE ROOM NUMBERS ARE REPEATING', 2.6)); radio5('loop', 3); }
   }
-  checkWarp5();
+  portalCross5();   // r7: the inner doors
+  state5Events(dt);
   eyes5(dt);
   // the elevator leaves once you have stepped out
   const E = W5.elev;
@@ -12823,10 +13972,10 @@ function worldFX5(dt) {
   FX.lightScale = stutter;
   FX.hurt = Math.max(0, FX.hurt - dt * 0.9); FX.glitch = Math.max(0, FX.glitch - dt * 1.3);
   const cc = cIdx(cellOf(cp.x), cellOf(cp.z)), zc = LV.zone[cc], boil = boilZ5(zc), loop = LV.reg[cc] === R5.E, L = clamp(lightAt(cp.x, cp.z) * 1.1, 0, 1);
-  FX.fogDen = loop ? 0.075 : boil ? 0.05 : zc === Z5.BEV ? 0.028 : 0.034;
+  FX.fogDen = loop ? 0.075 : boil ? 0.05 : zc === Z5.BEV || zc === Z5.EXEC || zc === Z5.REST ? 0.026 : 0.034;
   const wk = boil ? [0.07, 0.045, 0.025] : [0.1, 0.075, 0.045];
   FX.fog[0] = lerp(0.02, wk[0], L); FX.fog[1] = lerp(0.014, wk[1], L); FX.fog[2] = lerp(0.01, wk[2], L);
-  G5.expK = damp(G5.expK ?? 1.2, zc === Z5.BEV ? 1.0 : boil ? 1.3 : 1.15, 2, dt);
+  G5.expK = damp(G5.expK ?? 1.2, zc === Z5.BEV || zc === Z5.EXEC ? 1.0 : boil ? 1.3 : 1.15, 2, dt);
   if (G.state === 'play') FX.exposure = 0.85 * S.bright * G5.expK * lerp(1, clamp(0.3 / Math.max(PL.light, 0.01), 0.22, 1), FX.nv);
   if (W5.lensFl) setEmi(W5.lensFl, 4.2 * FX.flicker * FX.lightScale);
   if (W5.fireMat) { const f = 0.75 + 0.25 * noise1(t * 7) + 0.1 * hash1(Math.floor(t * 20)); setEmi(W5.fireMat, 3.2 * f, 1.5 * f, 0.5 * f); }
@@ -12869,6 +14018,7 @@ function worldFX5(dt) {
     AU.tenF.frequency.setTargetAtTime(280 + G.chase * 1500 + PL.fear * 300, now, 0.5);
   }
   for (const m of LV.chunkMeshes) { const c2 = m.__c || (m.__c = m.getBoundingInfo().boundingBox.centerWorld.clone()); m._sortD = Math.hypot(c2.x - cp.x, c2.z - cp.z); }
+  portalTick5(dt);   // r7: after the camera is final
 }
 
 // ----- HUD helpers -----
@@ -12889,15 +14039,16 @@ function target5() {
     case 'staff': { const d = W5.svDoor; return d ? { x: d.mx, z: d.mz } : null; }
     case 'stairs': return inBoil ? null : stairs;
     case 'valves': return inBoil ? near(W5.valves.filter(v => !v.turned)) : stairs;
+    case 'fire': return targetState5();
     case 'exit': return inBoil ? W5.exit : stairs;
   }
   return null;
 }
-function hudObj5() { return G5.phase === 'valves' || G5.phase === 'exit' ? `VALVES ${G5.valves}/3` : `KEYS ${G5.keys}/3`; }
-function hudItems5() { const a = []; if (G5.keys) a.push('KEYS ×' + G5.keys); if (G5.phase === 'exit') a.push('EXIT OPEN'); return a.join(' · ') || 'LEVEL 5'; }
+function hudObj5() { return G5.phase === 'fire' ? 'FIRE LOCK' : G5.phase === 'valves' || G5.phase === 'exit' ? `VALVES ${G5.valves}/3` : `KEYS ${G5.keys}/3`; }
+function hudItems5() { const a = []; if (G5.keys) a.push('KEYS ×' + G5.keys); if (ST5.hasSpray) a.push('MOTHEX ×' + ST5.spray); if (ST5.fireKey && !ST5.reset) a.push('FIRE KEY'); if (G5.phase === 'exit') a.push('EXIT OPEN'); return a.join(' · ') || 'LEVEL 5'; }
 
 // ----- start (after every module has initialised) -----
-if (/[?&]debug/.test(location.search)) Object.assign(window.__BR || (window.__BR = {}), { G5, W5, AI5, LV5: () => LV, goLevel5, worldFX5, gameEvents5, target5, win5, takeKey5, unlockStaff5, startValve5, finishValve5, useExit5, closeElev5, checkWarp5, stareHit5, radio5, Moth, spawnMoth5, wakeBoiler5, startTp5, snapDoor5, foes5, readNote5, ringBell5, callElev5, cellCenter, CELL5: () => CELL, Z5, R5, BEV5, LOOP5, setPhase5, updatePlayer, playerCamera });
+if (/[?&]debug/.test(location.search)) Object.assign(window.__BR || (window.__BR = {}), { G5, W5, AI5, LV5: () => LV, goLevel5, worldFX5, gameEvents5, target5, win5, takeKey5, unlockStaff5, startValve5, finishValve5, useExit5, closeElev5, stareHit5, radio5, Moth, spawnMoth5, wakeBoiler5, startTp5, snapDoor5, foes5, readNote5, ringBell5, callElev5, cellCenter, CELL5: () => CELL, Z5, R5, BEV5, LOOP5, setPhase5, updatePlayer, playerCamera });
 
 
 // ==== main18.js ====
@@ -12906,7 +14057,7 @@ const G18 = {from:null};
 function resetG18(){const from=G18.from;for(const k of Object.keys(G18))delete G18[k];Object.assign(G18,{from,phase:'arrive',carry:[],pinned:[],found:0,noteRead:false,napRead:false,musicT:0,flash:0,digging:false,slide:null,slides:{},paintTip:false,boxTip:false,slideTip:false,hugged:false,doorT:0,whisperT:20,gigT:25,rustleT:0,endWon:false,lull:null,drone:null});}
 resetG18();
 DEATH_TXT.forgotten=['FORGOTTEN','It wore the shape of someone you used to know.'];
-function obj18(){return G18.phase==='arrive'?'FOLLOW THE PLUSH DINO':G18.phase==='exit'?'WALK THROUGH THE DOOR YOU DREW':G18.phase==='color'?(P18.crayons?'COLOR IN THE DOOR YOU DREW':'THE DOOR NEEDS COLOR · CRAYONS IN THE ART ROOM'):`FIND YOUR DRAWINGS · ${G18.found}/4 · PINNED ${G18.pinned.length}/4`;}
+function obj18(){return G18.phase==='arrive'?'FOLLOW THE PLUSH DINO':G18.phase==='exit'?'WALK THROUGH THE DOOR YOU DREW':G18.phase==='name'?objName18():G18.phase==='color'?(P18.crayons?'COLOR IN THE DOOR YOU DREW':'THE DOOR NEEDS COLOR · CRAYONS IN THE ART ROOM'):`FIND YOUR DRAWINGS · ${G18.found}/4 · PINNED ${G18.pinned.length}/4`;}
 function setPhase18(p){const old=G18.phase;if(p)G18.phase=p;objective(obj18());tasks18();if(old==='arrive'&&G18.phase==='memories'){cpSave('SUNSHINE ROOM');spawnForgotten18();if(G.diff===2)spawnForgotten18();later(2,()=>toast('BRIGHT ROOMS ARE SAFE · KEEP YOUR LIGHT READY',4));}}
 function carryFrom5(){return carryFrom9();}
 function teardown18(){for(const k of ['lull','drone']){const v=G18[k];if(v){try{v.src&&v.src.stop();(v.v?v.v.g:v.g).disconnect();v.bed&&v.bed.disconnect();}catch(e){}G18[k]=null;}}PL.spdK=1;document.body.classList.remove('lvl18');}
@@ -12918,7 +14069,7 @@ async function goLevel18(from) {
   if (AU.ctx && AU.ctx.state === 'suspended') AU.ctx.resume();
   teardownScene();
   LVL = 18; setDims(L18_N, L18_LMR); document.body.classList.remove('lvl9', 'lvl5'); document.body.classList.add('lvl18'); AU.remap = null;
-  resetG18(); resetP18(); tasksReset('LEVEL 18 · NOSTALGIC MEMORIES');
+  resetG18(); resetP18(); resetM18(); tasksReset('LEVEL 18 · NOSTALGIC MEMORIES');
   const prog = (p, m) => { $('loadFill').style.width = (p * 100).toFixed(0) + '%'; $('loadMsg').textContent = m; };
   RNG = mulberry32((Math.random() * 4294967296) >>> 0);
   await buildWorld18(prog);
@@ -12972,8 +14123,8 @@ function worldFX18(dt){
 function win18(){if(G.state!=='play'||!W18.exitDoor.on)return;G.state='won';DEATH.t=0;DEATH.shown=false;clearSlot(0);$('prompt').classList.remove('show');G18.wc={x:CAM.position.x,z:CAM.position.z,yaw:CAM.rotation.y,pitch:CAM.rotation.x};for(const f of AI18.fog)f.goAway(99);SFX18.chime();}
 function wonCam18(dt){DEATH.t+=dt;const t=DEATH.t,X=W18.exitDoor,w=G18.wc,k=smooth(0,2.8,t);updateAI18(dt);CAM.position.set(lerp(w.x,X.fx-0.3,k),1.6,lerp(w.z,X.fz,k));CAM.rotation.set(lerp(w.pitch,0,k),w.yaw+angDiff(w.yaw,-Math.PI/2)*k,0);FX.fadeW=smooth(1.6,4,t);if(t>5&&!DEATH.shown){DEATH.shown=true;showEnd18(true);}}
 function showEnd18(won){if(document.pointerLockElement)document.exitPointerLock();$('osd').classList.add('hide');$('touch').classList.add('hide');G18.endWon=won;if(won)flags18();const [title,text]=won?['YOU REMEMBERED',endText18()]:(DEATH_TXT[G.cause]||DEATH_TXT.forgotten);$('endKicker').textContent=won?'WOKEN UP · END OF RECORDING':'■ SIGNAL LOST · LEVEL 18';$('endTitle').textContent=title;$('endText').textContent=text;const st=[['TIME ON TAPE',fmtTC(G.time)],['DISTANCE',Math.round(PL.dist)+' M'],['DRAWINGS',G18.pinned.length+'/4'],['LEVEL','18 · NOSTALGIC MEMORIES'],['DIFFICULTY',DIFFS[G.diff]]];$('endStats').innerHTML=st.map(([a,b])=>`<div><span>${a}</span><b>${b}</b></div>`).join('');$('btnAgain').textContent=won?'▶ PLAY AGAIN (LEVEL 0)':'▶ RETRY LEVEL 18';show('end');}
-function target18(){let to=null;const pc=cell18(PL.x,PL.z),z=LV.zone[pc];if(G18.phase==='arrive')to=AI18.dino;else if(G18.phase==='exit')to=W18.exitDoor;else if(G18.phase==='color')to=P18.crayons||!W18.p18||!W18.p18.tub?W18.exitDoor:W18.p18.tub;else if(!G18.noteRead)to=W18.deskNote;else if(G18.carry.length&&(z===Z18.CLASS||G18.found===4))to=W18.board;else{const left=W18.drawings.filter(d=>!d.taken);to=left.sort((a,b)=>dist2(a.x,a.z,PL.x,PL.z)-dist2(b.x,b.z,PL.x,PL.z))[0]||W18.board;}if(!to)return null;const gc=cell18(to.x,to.z);if(gc===pc||los(PL.x,PL.z,to.x,to.z))return to;if(G18.targetCell!==gc||G18.targetVer!==LV.navVer){G18.targetCell=gc;G18.targetVer=LV.navVer;G18.targetField=bfs(gc%N,(gc/N)|0,c=>!LV.zone[c]);}const F=G18.targetField;let c=pc;if(F[c]<0)return to;for(let i=0;i<3;i++){let best=c;const x=c%N,y=(c/N)|0;for(let d=0;d<4;d++){const nx=x+DX[d],ny=y+DY[d],n=cIdx(nx,ny);if(inGrid(nx,ny)&&passable(x,y,d)&&F[n]>=0&&F[n]<F[best])best=n;}if(best===c)break;c=best;}return {x:cellCenter(c%N),z:cellCenter((c/N)|0)};}
-function hudObj18(){return `DRAWINGS ${G18.found}/4`;}
+function target18(){let to=null;const pc=cell18(PL.x,PL.z),z=LV.zone[pc];if(G18.phase==='arrive')to=AI18.dino;else if(G18.phase==='exit')to=W18.exitDoor;else if(G18.phase==='name')to=targetMem18();else if(G18.phase==='color')to=P18.crayons||!W18.p18||!W18.p18.tub?W18.exitDoor:W18.p18.tub;else if(!G18.noteRead)to=W18.deskNote;else if(G18.carry.length&&(z===Z18.CLASS||G18.found===4))to=W18.board;else{const left=W18.drawings.filter(d=>!d.taken);to=left.sort((a,b)=>dist2(a.x,a.z,PL.x,PL.z)-dist2(b.x,b.z,PL.x,PL.z))[0]||W18.board;}if(!to)return null;const gc=cell18(to.x,to.z);if(gc===pc||los(PL.x,PL.z,to.x,to.z))return to;if(G18.targetCell!==gc||G18.targetVer!==LV.navVer){G18.targetCell=gc;G18.targetVer=LV.navVer;G18.targetField=bfs(gc%N,(gc/N)|0,c=>!LV.zone[c]);}const F=G18.targetField;let c=pc;if(F[c]<0)return to;for(let i=0;i<3;i++){let best=c;const x=c%N,y=(c/N)|0;for(let d=0;d<4;d++){const nx=x+DX[d],ny=y+DY[d],n=cIdx(nx,ny);if(inGrid(nx,ny)&&passable(x,y,d)&&F[n]>=0&&F[n]<F[best])best=n;}if(best===c)break;c=best;}return {x:cellCenter(c%N),z:cellCenter((c/N)|0)};}
+function hudObj18(){return G18.phase==='name'?'YOUR NAME':`DRAWINGS ${G18.found}/4`;}
 function hudItems18(){return `CARRYING ${G18.carry.length} · PINNED ${G18.pinned.length}/4`+(P18.crayons?' · CRAYONS':'');}
 if (/[?&]debug/.test(location.search)) Object.assign(window.__BR || (window.__BR={}),{SKN,SKP,sknOn,sknTick,rigPlay,rigWant,rigStop,rigBase,MdlBatch,mdlOk,mdlDims,MDL_K,MDL,buildExplorerSk,buildHowlerSk,buildWatchSk,buildWretchSk,buildHaleSk,buildForgottenSk,poseDeadSk,mergeRig,G18,W18,AI18,findInteract,interact,collide,updateField,updateHUD,LV18:()=>LV,goLevel18,beginPlay18,worldFX18,gameEvents18,target18,win18,takeDrawing18,digPit18,pinDrawings18,setPhase18,spawnForgotten18,startSlide18,slideCam18,readNote18,windBox18,foes18,Z18,PIT18,SLIDE_TO18,carryFrom5,updateAI18,INTRO,DEATH});
 boot();

@@ -1,5 +1,5 @@
 // ---------- Level 5 · doors, keys, valves, the elevator, the emergency exit, pickups ----------
-const DOORC5 = { room: [0.42, 0.19, 0.09], warp: [0.42, 0.19, 0.09], closet: [0.58, 0.56, 0.5], service: [0.4, 0.42, 0.4] };
+const DOORC5 = { room: [0.42, 0.19, 0.09], warp: [0.42, 0.19, 0.09], portal: [0.42, 0.19, 0.09], closet: [0.58, 0.56, 0.5], service: [0.4, 0.42, 0.4], kitchen: [0.6, 0.6, 0.58], swing: [0.5, 0.3, 0.16], security: [0.24, 0.28, 0.26] };
 function buildDoors5() {
   W9.doorAnim = new Set();
   for (const e of LV.ek.values()) {
@@ -7,14 +7,14 @@ function buildDoors5() {
     const horiz = e.d === 1 || e.d === 3, [mx, mz] = edgeMid(e.x, e.y, e.d), nx = e.x + DX[e.d], ny = e.y + DY[e.d];
     const fr = e.from || [e.x, e.y], to = fr[0] === e.x && fr[1] === e.y ? [nx, ny] : [e.x, e.y];   // doors swing away from the side you meet them
     const s = horiz ? (to[1] === Math.max(e.y, ny) ? 1 : -1) : (to[0] === Math.max(e.x, nx) ? 1 : -1);
-    const metal = e.dk === 'service', col = DOORC5[e.dk] || DOORC5.room;
+    const metal = e.dk === 'service' || e.dk === 'kitchen' || e.dk === 'security', col = DOORC5[e.dk] || DOORC5.room;
     const hinge = tnode(null, horiz ? mx - DOORW / 2 + 0.03 : mx, 0, horiz ? mz : mz - DOORW / 2 + 0.03);
     const mesh = doorLeaf(col, metal); mesh.parent = hinge;
     const c0 = horiz ? 0 : -Math.PI / 2, c1 = c0 + (horiz ? -s : s) * 1.62;
     const bx = horiz ? [mx - DOORW / 2, mz - WT / 2, mx + DOORW / 2, mz + WT / 2] : [mx - WT / 2, mz - DOORW / 2, mx + WT / 2, mz + DOORW / 2];
     const startOpen = e.dk === 'room' ? RNG() < 0.35 : false;
     const dr = { e, key: eKey(e.x, e.y, e.d), horiz, s, hinge, mesh, c0, c1, bx, mx, mz, house: -1, dk: e.dk, metal, open: startOpen ? 1 : 0, target: startOpen ? 1 : 0,
-      latched: false, locked: e.dk === 'service', solid: addSolid(bx[0], bx[1], bx[2], bx[3], 'door'), shake: 0, cull: 26, bangs: 0 };
+      latched: false, locked: e.dk === 'service' || e.dk === 'security', solid: addSolid(bx[0], bx[1], bx[2], bx[3], 'door'), shake: 0, cull: 26, bangs: 0 };
     LV.solids[dr.solid].off = startOpen; if (!startOpen) markDyn(bx[0], bx[1], bx[2], bx[3], 1);
     hinge.rotation.y = startOpen ? c1 : c0;
     W9.doors.push(dr); W9.doorAt.set(dr.key, dr);
@@ -134,6 +134,7 @@ function buildStory5() {
   const sv = LV.svStair; addSolid(sv.x * CELL, sv.y * CELL + 1.35, (sv.x + 1) * CELL, (sv.y + 1) * CELL, 'stair');
   const ar = LV.arrive5; addSolid(ar.x * CELL, ar.y * CELL, (ar.x + 1) * CELL, ar.y * CELL + 1.7, 'stair');
   buildPlaces5();   // r6
+  buildPortals5();   // r7: the inner doors of the vestibules
 }
 function drawExit5(on) {
   const S = W5.exit.sign, c = S.ctx, w = 256, h = 86;

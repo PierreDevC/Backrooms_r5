@@ -87,9 +87,13 @@ function cpRespawn9() {
 function cpRespawn5() {
   Object.assign(G5, { tp: null, turning: null, stareP: null, stareT: 0, eyeF: null, eyeW: 0, eyeT: 0, ambush: 0, ambushT: rnd(16, 28), vest: null, vestS: 0 });
   for (const m of AI5.moths) {
+    if (!m.alive) continue;   // r7: sprayed moths stay dead
+    if (m.fem) { m.reset(); continue; }
     Object.assign(m, { st: 'roost', stT: 0, lk: null, wp: null, lamp: null, away: null, atkCd: 2, seen: false, lit: false, y: CEIL - 0.42, unT5: 0, driftT: 0, fc: -1, dir: -1 });
     m.place(m.home.x, m.home.z, m.yaw);
+    if (m.loyal && m.loyalLamp) { m.st = 'circle'; m.lamp = m.loyalLamp; m.y = 2.8; }
   }
+  for (const a of FEM5.acid) a.mesh.dispose(); FEM5.acid.length = 0;
 }
 function cpRespawn18() {
   G18.slide = null; G18.digging = false; PL.spdK = 1;

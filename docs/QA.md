@@ -1,4 +1,32 @@
-# QA — r6 · 2026-10-01 (branch story-r6)
+# QA — r7 · 2026-10-02 (branch story-r6)
+
+## Environment and scope
+Same as r6: headless Chromium for Testing (Playwright, SwiftShader) on macOS arm64, 960×540, debug state calls and simStep; the single net::ERR_FAILED per log is the blocked font. These checks prove logic and wiring, not feel, pacing or frame rate. No human, real-GPU, audio or touch test of the r7 content.
+
+## New r7 checks (qa_r7/*.js, logs in qa_r7/logs)
+| Test | What it checks | Result |
+|---|---|---|
+| l5_state | State Floor built; 3 vestibule pairs, 6 portal doors, every inner door backs onto void; two females and the Gold Room males; 16 State Floor interactables. **Portals:** for all six inner doors the portal camera is on while the door is open, and walking forward carries you out of the twin's real door, in the right cell, facing its corridor. **Fire lock:** valves vented → phase `fire`, exit stays red, using it says FIRE LOCK. Security locked; the reservation book points at table 9; Gold Room males circle; Mothex kills a male in one pump (it falls to the floor, one pump used); the officer's keys open security; the panel needs the fire key; Mothex on a female angers her instead; she spits acid; breaking the glass gives the fire key; almond water in her bowl calms her for good (spray then does nothing, no more acid); turning the key resets the lock and opens the exit; the exit wins. | 19/19 PASS |
+| l18_name | Music room (8-key floor piano), cubbies, the birthday room and the bus are built and usable; the music room is bright and safe. Four pinned with crayons → phase `name`, door label and objective ask for your name; the cubby is padlocked → objective: music room; the toy box wants the song → objective: your birthday; the card gives RED · RED · BLUE · BLUE · PURPLE · PURPLE · BLUE; MAKE A WISH; a wrong tune does nothing, the song opens the toy box; the key opens your cubby and a Forgotten spawns; the name tag; holding at the door signs it and finishes it; the lunchbox note; the ending card mentions your handwriting and the fed moth. | 15/15 PASS |
+| l9_cars | 56–64 cars per layout (about 60% kerbside, 40% driveways; sedans, wagons, hatchbacks, pickups); every corner and the centre of every car footprint lies on asphalt outside the 1.35 m sidewalk strips, or on a driveway: 0 cars touching kerb, sidewalk, grass or a house (checked on several random layouts). Screenshots: docs/screenshots/r7_L9_car_*.jpg. | 4/4 PASS |
+
+## Earlier suites rerun on the r7 build (logs `*_reg7`)
+| Suite | Result |
+|---|---|
+| l5_story, l18_story, l0_story, l9_story, l9_windows, l9_hack, l9_termzoom, l9_peep | all PASS (13, 11, 23, 16, 7, 9, 6, 11). l5_story now resets the fire lock before the valves (the new chain is l5_state); l18_story pre-signs the door (the new chain is l18_name) |
+| s18_smoke, s18_more, s18_final (10/10), levels (17/17), levels_mobile, brief9 (25/25), cp9, cpl, crash3, hearing, wretch_speed, s9_to5, water | no QA FAIL, no PAGEERROR. cpl: Level 5 checkpoint retry puts the Gold Room males back on their chandeliers (circle), Level 18 retry unchanged. water: Level 5 now has one more bottle on every difficulty (13 / 9 / 6, the kitchen's) |
+| crashrf | only the injected fault ("[recovered world] … 'ctx'"), as in r6 |
+| l9_roam | failed 2 of 3 runs on random layouts: the roaming Wretch walked into the crouched player during the "silent" minute (a legitimate touch wake), and the touch step then started from a chase. The test now counts only what happens before such a touch and resets the Wretch at home before the touch step: 3/3 PASS (`l9_roam_reg7b`) |
+| l9_watch | 1 of 3 runs: "on the third download it comes and walks round that house" (17% of the beat near the house, the threshold is higher); 2 of 3 PASS (`l9_watch_reg7b`). Random-layout sensitivity of an r6 test, unchanged code |
+| qa5/s5_smoke, qa5/s5_more | sandbox screenshot paths made portable. The hotel steps pass (keys, staff door, stairs, valves → exit with the fire lock reset, moth attack, death screen, retry); their final steps still expect the pre-r4 Level 5 end screen (Level 5 hands over to Level 18 since r4) and are kept for reference only |
+
+## Visual checks
+Screenshots inspected: Cross Hall both ways (columns, runner, chandeliers, lit windows, the East Room through the arch), the East Room (windows, drapes, the female under the chandelier), the Gold Room (after brightening: two chandeliers I 0.72 plus four corner fills; the males circling), kitchen (wall tile scaled down 4×), security (CCTV wall, panel), the ballroom vestibule with the inner door open on the Cross Hall, the view just after walking through, Level 9 cars kerbside and in a driveway (the first car model's side glass read as a grey box under the flashlight; rebuilt as trapezoid panels with tumblehome and tube pillars), Level 18 music room, cubbies, birthday room and bus. docs/screenshots/r7_*.jpg.
+
+## Not tested / next gate
+A human pass on a real GPU: portal cost (a second half-resolution scene render while an inner door is open and in view), how readable the fire-lock chain is without the compass, whether the females are fair (acid damage 11 / 16 / 21 by difficulty, puddles 2.5/0.5 s), the floor piano's feel (stepping on/off keys), and the car shapes in motion.
+
+# QA — r6 · 2026-10-01 (branch story-r6, kept for reference)
 
 ## Environment and scope
 Headless Chromium for Testing (Playwright, SwiftShader) on macOS arm64, 960×540 unless noted; Babylon.js served from qa/babylon.js; optional Google Fonts blocked (the single net::ERR_FAILED line is intentional). Debug state calls and simStep, as before: these checks prove the logic and the wiring, not difficulty, pacing or feel. No human, real-GPU, audio or touch test of the r6 content.

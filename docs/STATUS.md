@@ -1,4 +1,6 @@
-# Status — r6
+# Status — r7
+
+r7 (branch story-r6): Level 5 State Floor (Cross Hall, East Room, Gold Room, kitchen, security) behind a new ballroom portal door; every vestibule inner door is now a live portal you walk through; the exit has a fire lock reset from security (officer's keys or the master key, the fire key from the East Room); female deathmoths (acid, calmed by almond water) and Mothex (kills males only). Level 9: new car models (four kinds) and kerbside / driveway placement that never touches the kerb, sidewalk or grass. Level 18: the coloured door needs your name (cubbies, music room floor piano, the birthday-party room in the dark), optional field-trip bus. Checked headless with qa_r7/*.js and the earlier suites (docs/QA.md); no human playthrough yet.
 
 r6 (branch story-r6): story pass. New places in every level (L0 camp / substation / flooded office; L9 Hale house, blue house, Watch house, street names; L5 night manager's office, the guest's room, the rye; L18 art room, lost & found), a second route through each level's key step (L0 breakers or battery, L9 cure Hale or his safe, L5 keys or the master key; L18 adds the crayons step), optional leads, documents, FIELD NOTES (J), run flags and an ending assembled from them. All new dialogue written with the backrooms-dialogue skill, text only. Checked headless with qa_r6/*.js and the earlier suites (docs/QA.md); no human playthrough of the new content yet.
 

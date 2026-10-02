@@ -40,6 +40,7 @@ module.exports = async (page) => {
   const c = await page.evaluate(() => {
     const B = window.__BR, { G, PL, W5, G5 } = B, o = {};
     B.startTp5(true); for (let i = 0; i < 40; i++) B.simStep(0.05); o.boil = G5.boilSeen;
+    B.ST5.reset = true;   // r7: the State Floor's fire lock is covered by qa_r7/l5_state.js
     for (const v of W5.valves) B.finishValve5(v); for (let i = 0; i < 40; i++) B.simStep(0.05); o.phase = G5.phase; o.tasks = B.TASKS.list.filter(t => !t.opt).map(t => t.id + (t.done ? '✓' : ''));
     PL.x = W5.exit.x; PL.z = W5.exit.z; B.useExit5(); o.state = G.state; return o;
   });

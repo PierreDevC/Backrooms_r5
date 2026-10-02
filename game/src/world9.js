@@ -210,11 +210,12 @@ async function buildWorld9(progress) {
 
 // ----- outdoor & household props -----
 function buildProps9() {
+  W9.cars = [];
   const mat = actMat('props9', { spec: 0.2, shin: 16, wrinkle: 0.2, emis: 1, wrap: 0.35, mottle: 0.35 }), B = new PropBatch(mat); B.fast = true;
   W9.propMat = mat;
   const scrMat = actMat('screen', { frag: 'scr' }); scrMat.setVector4('aTint', new BABYLON.Vector4(1, 1, 1, 1)); W.scrMat = W9.scrMat = scrMat;
   const lensOn = actMat('lensOn', { emis: 1 }), lensFl = actMat('lensFl', { emis: 1 }); setEmi(lensOn, 4.2); W9.lensFl = lensFl;
-  const BOn = new PropBatch(lensOn), BFl = new PropBatch(lensFl); BOn.fast = BFl.fast = true; const cones = new PropBatch(coneMat('cones', [1, 0.62, 0.3, 0.075]));
+  const BOn = new PropBatch(lensOn), BFl = new PropBatch(lensFl); BOn.fast = BFl.fast = true; W9.BFl = BFl; const cones = new PropBatch(coneMat('cones', [1, 0.62, 0.3, 0.075]));
   // street lamps
   for (const L of LV.lamps) {
     const r = propRoot(L.x, L.z, Math.atan2(L.hx - L.x, L.hz - L.z)), a = Math.hypot(L.hx - L.x, L.hz - L.z), PC = [0.22, 0.24, 0.23];
@@ -250,7 +251,7 @@ function buildProps9() {
     addSolid(mb.x - 0.12, mb.z - 0.12, mb.x + 0.12, mb.z + 0.12, 'prop');
     if (h.id % 3 === 1) { const gp = localPt(pr, -1.55, 0, 1.9), gr = propRoot(gp.x, gp.z, ry + 0.4 + (h.id % 5) * 0.25); if (B.mdl('gnome', gr, null, null, 1)) addSolid(gp.x - 0.13, gp.z - 0.13, gp.x + 0.13, gp.z + 0.13, 'prop'); }   // r5: a garden gnome watching the street
     // car on the driveway, a basketball hoop over some drives
-    if (RNG() < 0.55) { const cz = (h.face === 3 ? h.hz + 1.0 : h.hz + 3.0) * CELL; buildCar(B, cellCenter(h.dcol), cz, RNG() < 0.5 ? 0 : Math.PI); }
+    if (RNG() < 0.55) { const cz = (h.face === 3 ? h.hz + 1.05 : h.hz + 2.95) * CELL, inn = h.face === 3 ? 0 : Math.PI; buildCar(B, cellCenter(h.dcol), cz, RNG() < 0.7 ? inn : inn + Math.PI, { leaves: RNG() < 0.5, flat: RNG() < 0.15 }); }   // r7: on the concrete, nose in (mostly)
     if (RNG() < 0.25) { const hz0 = h.face === 3 ? (h.hz + 2.9) * CELL : (h.hz + 1.1) * CELL, hx0 = cellCenter(h.dcol) + (h.dcol < h.hx ? -1.45 : 1.45), hr = propRoot(hx0, hz0, h.face === 3 ? Math.PI : 0);
       B.add(hr, 'Cylinder', { diameter: 0.1, height: 3.05, tessellation: 8 }, COL9.metal, 0, [0, 1.52, 0]); B.add(hr, 'Box', { width: 1.1, height: 0.75, depth: 0.04 }, [0.85, 0.85, 0.82], 0, [0, 3.2, 0.15]);
       B.add(hr, 'Torus', { diameter: 0.45, thickness: 0.02, tessellation: 12 }, [0.8, 0.3, 0.1], 0, [0, 2.95, 0.45]); addSolid(hx0 - 0.08, hz0 - 0.08, hx0 + 0.08, hz0 + 0.08, 'prop'); }
@@ -291,14 +292,23 @@ function buildProps9() {
   const streetCells = [];
   for (let y = 1; y < L9_NB - 1; y++) for (let x = 1; x < L9_NB - 1; x++) { if (LV.zone[cIdx(x, y)] !== ZN.STREET || (L9_ST.has(x) && L9_ST.has(y))) continue; streetCells.push([x, y]); }
   const alongX = (x, y) => L9_ST.has(y) && !L9_ST.has(x);      // street runs along x
+  // r7: parked against the curb on the road side, right-hand side to the kerb, never across a driveway or at a corner.
+  // A street cell's sidewalk strip is 1.35 m on its outer side, so the kerb sits 0.45 m out from the cell centre.
+  const isX = (x, y) => L9_ST.has(x) && L9_ST.has(y), parked = [];
   for (const [x, y] of streetCells) {
-    if (RNG() > 0.08 || (x <= 2 && y < 10)) continue;
-    const ax = alongX(x, y), first = L9_ST.has(ax ? y - 1 : x - 1) ? false : true;   // first cell of the pair -> park on its outer side
-    const off = first ? -1.25 : 1.25;
-    buildCar(B, ax ? cellCenter(x) : cellCenter(x) + off, ax ? cellCenter(y) + off : cellCenter(y), ax ? Math.PI / 2 + (RNG() < 0.5 ? 0 : Math.PI) : (RNG() < 0.5 ? 0 : Math.PI));
+    if (RNG() > 0.1 || (x <= 2 && y < 10)) continue;
+    const ax = alongX(x, y), first = !L9_ST.has(ax ? y - 1 : x - 1), out = first ? -1 : 1;   // the side the kerb is on
+    const ox = ax ? x : x + out, oy = ax ? y + out : y, oz = inGrid(ox, oy) ? LV.zone[cIdx(ox, oy)] : ZN.VOID;
+    if (oz === ZN.DRIVE || oz === ZN.VOID) continue;   // a curb cut, or the edge of the world
+    if (ax ? (isX(x - 1, y) || isX(x + 1, y)) : (isX(x, y - 1) || isX(x, y + 1))) continue;   // keep the corners clear
+    if (parked.some(([px, py]) => Math.abs(px - x) + Math.abs(py - y) < 2)) continue;
+    const off = -out * 0.62, cx = ax ? cellCenter(x) + rnd(-0.4, 0.4) : cellCenter(x) + off, cz = ax ? cellCenter(y) + off : cellCenter(y) + rnd(-0.4, 0.4);
+    const ry = ax ? (out < 0 ? Math.PI / 2 : -Math.PI / 2) : (out < 0 ? Math.PI : 0);
+    buildCar(B, cx, cz, ry, { leaves: RNG() < 0.6, flat: RNG() < 0.12, hazard: RNG() < 0.07 }); parked.push([x, y]);
   }
   const vanC = shuffle(streetCells.filter(([x, y]) => Math.hypot(x - 2, y - 6) > 18 && Math.hypot(x - BX - 4.5, y - BX - 4.5) > 12 && !alongX(x, y)))[0] || [36, 30];
-  { const [x, y] = vanC, vx = cellCenter(x) + 0.9, vz = cellCenter(y), ry = 0.35 + RNG() * 0.3, r = propRoot(vx, vz, ry), WH = [0.8, 0.8, 0.76];
+  { const [x, y] = vanC, vx = cellCenter(x) + (L9_ST.has(x - 1) ? -0.9 : 0.9), vz = cellCenter(y),   // r7: nose-down in the road, off the kerb
+     ry = 0.35 + RNG() * 0.3, r = propRoot(vx, vz, ry), WH = [0.8, 0.8, 0.76];
     B.add(r, 'Box', { width: 2.1, height: 1.9, depth: 5.2 }, WH, 0, [0, 1.3, 0]); B.add(r, 'Box', { width: 2.12, height: 0.25, depth: 5.22 }, COL9.meg, 0, [0, 1.2, 0]);
     B.add(r, 'Box', { width: 2.0, height: 0.7, depth: 0.05 }, [0.04, 0.05, 0.06], 0, [0, 1.85, 2.61], [0.25, 0, 0]);
     for (const sx of [-1, 1]) for (const sz of [-1, 1]) B.add(r, 'Cylinder', { diameter: 0.72, height: 0.26, tessellation: 12 }, COL9.dark, 0, [sx * 0.95, 0.36, sz * 1.8], [0, 0, Math.PI / 2]);
@@ -336,16 +346,80 @@ function buildProps9() {
     new Set(keep).forEach(r => r && r.dispose && r.dispose());
   };
 }
-function buildCar(B, x, z, ry) {
-  const r = propRoot(x, z, ry), c = pick([[0.36, 0.1, 0.09], [0.18, 0.24, 0.34], [0.58, 0.58, 0.56], [0.14, 0.14, 0.15], [0.4, 0.36, 0.25], [0.22, 0.3, 0.22]]), GL = [0.04, 0.05, 0.06];
-  B.add(r, 'Box', { width: 1.74, height: 0.62, depth: 4.4 }, c, 0, [0, 0.62, 0]);
-  B.add(r, 'Box', { width: 1.56, height: 0.56, depth: 2.2 }, c, 0, [0, 1.2, -0.25]);
-  B.add(r, 'Box', { width: 1.58, height: 0.42, depth: 2.0 }, GL, 0, [0, 1.2, -0.25]);
-  B.add(r, 'Box', { width: 1.5, height: 0.44, depth: 0.05 }, GL, 0, [0, 1.18, 0.88], [-0.45, 0, 0]);
-  for (const sx of [-1, 1]) for (const sz of [-1, 1]) B.add(r, 'Cylinder', { diameter: 0.64, height: 0.22, tessellation: 12 }, COL9.dark, 0, [sx * 0.8, 0.32, sz * 1.4], [0, 0, Math.PI / 2]);
-  for (const s of [-1, 1]) { B.add(r, 'Box', { width: 0.3, height: 0.12, depth: 0.03 }, [0.8, 0.78, 0.7], 0, [s * 0.6, 0.72, 2.2]); B.add(r, 'Box', { width: 0.28, height: 0.1, depth: 0.03 }, [0.45, 0.04, 0.03], 0, [s * 0.62, 0.78, -2.2]); }
-  B.add(r, 'Box', { width: 1.78, height: 0.14, depth: 0.12 }, COL9.metal, 0, [0, 0.42, 2.22]); B.add(r, 'Box', { width: 1.78, height: 0.14, depth: 0.12 }, COL9.metal, 0, [0, 0.42, -2.22]);
-  solidLocal(r, -0.9, -2.25, 0.9, 2.25);
+// r7: a 1990s American car, built from parts: separate lower body panels around real wheel openings, a glasshouse with pillars,
+// bumpers, lamps, plates and mirrors. Kinds: sedan, wagon, hatch, pickup. Local +z is the nose; the car sits on its tyres at y = 0.
+const CAR9 = { col: [[0.34, 0.07, 0.08], [0.12, 0.16, 0.3], [0.62, 0.62, 0.6], [0.1, 0.1, 0.11], [0.62, 0.55, 0.4], [0.14, 0.26, 0.18], [0.82, 0.82, 0.78], [0.12, 0.34, 0.36], [0.5, 0.2, 0.08]] };
+function buildCar(B, x, z, ry, o = {}) {
+  const kind = o.kind || pick(['sedan', 'sedan', 'sedan', 'wagon', 'hatch', 'pickup']);
+  const L = kind === 'hatch' ? 4.25 : kind === 'pickup' ? 5.1 : 4.9, W = kind === 'pickup' ? 1.86 : 1.8, wb = kind === 'hatch' ? 2.55 : kind === 'pickup' ? 3.1 : 2.85;
+  const r = propRoot(x, z, ry), c = o.col || pick(CAR9.col), c2 = c.map(v => v * 0.8), GL = [0.06, 0.08, 0.1], DK = [0.035, 0.035, 0.04], CH = [0.6, 0.6, 0.62], TY = [0.05, 0.05, 0.05];
+  if (o.tilt) { r.rotation.z = o.tilt; r.computeWorldMatrix(true); }
+  const y0 = 0.3, y1 = 0.82, fz = wb / 2, rz = -wb / 2, WR = 0.36, hl = L / 2;   // body bottom/top, axle z, wheel radius
+  const seg = (za, zb, ya, yb, col = c, w = W) => { if (zb - za > 0.01) B.add(r, 'Box', { width: w, height: yb - ya, depth: zb - za }, col, 0, [0, (ya + yb) / 2, (za + zb) / 2]); };
+  // lower body, cut around the wheels; fender lips over the openings; black wheel wells inside
+  seg(fz + WR + 0.06, hl - 0.1, y0, y1); seg(rz + WR + 0.06, fz - WR - 0.06, y0, y1); seg(-hl + 0.1, rz - WR - 0.06, y0, y1);
+  for (const az of [fz, rz]) { seg(az - WR - 0.06, az + WR + 0.06, 0.7, y1); seg(az - WR - 0.04, az + WR + 0.04, y0, 0.7, DK, W - 0.42); }
+  B.add(r, 'Box', { width: W + 0.012, height: 0.05, depth: L - 0.5 }, DK, 0, [0, 0.6, 0]);   // rubbing strip
+  B.add(r, 'Box', { width: W - 0.06, height: 0.06, depth: L - 0.4 }, DK, 0, [0, y0 - 0.02, 0]);   // sill / underside
+  // bumpers, grille, lamps, plates
+  for (const s of [-1, 1]) {
+    B.add(r, 'Box', { width: W + 0.04, height: 0.17, depth: 0.16 }, kind === 'pickup' ? CH : [0.2, 0.2, 0.21], 0, [0, 0.42, s * (hl - 0.02)]);
+    B.add(r, 'Box', { width: W - 0.1, height: 0.2, depth: 0.12 }, c, 0, [0, 0.64, s * (hl - 0.07)]);
+    B.add(r, 'Box', { width: 0.32, height: 0.15, depth: 0.012 }, [0.88, 0.86, 0.7], 0, [0, 0.43, s * (hl + 0.065)]);
+  }
+  B.add(r, 'Box', { width: W * 0.5, height: 0.14, depth: 0.03 }, DK, 0, [0, 0.66, hl - 0.005]); for (let i = 0; i < 4; i++) B.add(r, 'Box', { width: W * 0.5, height: 0.01, depth: 0.035 }, CH, 0, [0, 0.6 + i * 0.04, hl - 0.004]);
+  const hz = !!o.hazard, LB = hz ? W9.BFl : B;
+  for (const s of [-1, 1]) {
+    B.add(r, 'Box', { width: 0.36, height: 0.13, depth: 0.03 }, [0.82, 0.84, 0.8], 0.04, [s * (W / 2 - 0.28), 0.67, hl - 0.005]);   // headlights
+    LB.add(r, 'Box', { width: 0.1, height: 0.12, depth: 0.03 }, [1, 0.55, 0.1], hz ? 1 : 0, [s * (W / 2 - 0.05), 0.67, hl - 0.03]);   // corner lights (blinking when the hazards are on)
+    LB.add(r, 'Box', { width: 0.34, height: 0.14, depth: 0.03 }, [0.55, 0.04, 0.03], hz ? 0.9 : 0, [s * (W / 2 - 0.25), 0.68, -hl + 0.005]);   // tail lights
+    B.add(r, 'Box', { width: 0.12, height: 0.14, depth: 0.031 }, [0.85, 0.82, 0.78], 0, [s * (W / 2 - 0.5), 0.68, -hl + 0.006]);
+  }
+  // wheels: tyre, steel rim, hubcap
+  for (const sx of [-1, 1]) for (const az of [fz, rz]) {
+    const wx = sx * (W / 2 - 0.13), flat = o.flat && sx > 0 && az === rz;
+    B.add(r, 'Cylinder', { diameter: WR * 2, height: 0.22, tessellation: 16 }, TY, 0, [wx, flat ? WR - 0.08 : WR, az], [0, 0, Math.PI / 2], flat ? [1, 1, 1.15] : null);
+    B.add(r, 'Cylinder', { diameter: WR * 1.15, height: 0.225, tessellation: 14 }, [0.42, 0.42, 0.43], 0, [wx + sx * 0.002, flat ? WR - 0.08 : WR, az], [0, 0, Math.PI / 2]);
+    B.add(r, 'Cylinder', { diameter: WR * 0.55, height: 0.232, tessellation: 10 }, CH, 0, [wx + sx * 0.004, flat ? WR - 0.08 : WR, az], [0, 0, Math.PI / 2]);
+  }
+  // hood, deck, glasshouse
+  const hood0 = kind === 'hatch' ? 0.7 : 0.85, roofY = kind === 'pickup' ? 1.55 : 1.4, cabF = kind === 'pickup' ? 0.75 : 0.55, roofF = cabF - 0.55;
+  B.add(r, 'Box', { width: W - 0.04, height: 0.05, depth: hl - hood0 - 0.08 }, c, 0, [0, y1 + 0.02, (hl + hood0) / 2 - 0.04], [0.04, 0, 0]);
+  B.add(r, 'Box', { width: 0.02, height: 0.012, depth: hl - hood0 - 0.2 }, c2, 0, [0, y1 + 0.05, (hl + hood0) / 2]);
+  const cabR = kind === 'wagon' ? -hl + 0.15 : kind === 'hatch' ? -hl + 0.35 : kind === 'pickup' ? -0.75 : -1.05, roofR = kind === 'wagon' ? -hl + 0.22 : kind === 'hatch' ? -hl + 0.95 : kind === 'pickup' ? -0.7 : -0.55;
+  // the glasshouse: trapezoid panels (ribbons) that lean in toward the roof, tube pillars along their edges
+  const bw = W / 2 - 0.12, tw = W / 2 - 0.27, yb = y1 + 0.02, V = (x, y, z) => new BABYLON.Vector3(x, y, z), DS = BABYLON.Mesh.DOUBLESIDE;
+  const rib = (p1, p2, col, e = 0) => B.add(r, 'Ribbon', { pathArray: [p1.map(q => V(...q)), p2.map(q => V(...q))], sideOrientation: DS }, col, e);
+  const Wp = (x, y, z) => { const q = localPt(r, x, y, z); return [q.x, q.y, q.z]; }, tube = (a, b, rr, col) => B.pipe(Wp(...a), Wp(...b), rr, col, 0, 6);
+  rib([[-bw, yb, cabF], [-tw, roofY, roofF]], [[bw, yb, cabF], [tw, roofY, roofF]], GL, 0.03);   // windscreen
+  rib([[-tw, roofY, roofF], [-tw, roofY, roofR]], [[tw, roofY, roofF], [tw, roofY, roofR]], c);   // roof
+  rib([[-tw, roofY, roofR], [-bw, yb, cabR]], [[tw, roofY, roofR], [bw, yb, cabR]], GL, 0.03);   // rear window / tailgate glass
+  for (const s of [-1, 1]) {
+    rib([[s * bw, yb + 0.01, cabF - 0.03], [s * bw, yb + 0.01, cabR + 0.03]], [[s * tw, roofY - 0.01, roofF - 0.01], [s * tw, roofY - 0.01, roofR + 0.01]], GL, 0.03);   // side glass
+    tube([s * bw, yb, cabF], [s * tw, roofY, roofF], 0.04, c); tube([s * bw, yb, cabR], [s * tw, roofY, roofR], kind === 'wagon' ? 0.045 : 0.07, c);   // A, C/D pillars
+    tube([s * tw, roofY, roofF], [s * tw, roofY, roofR], 0.03, kind === 'wagon' ? CH : c2);   // drip rail / roof rack
+    tube([s * bw, yb, cabF], [s * bw, yb, cabR], 0.025, DK);   // window seal
+    const mz = kind === 'pickup' ? (roofF + roofR) / 2 : (roofF + roofR) / 2 + 0.08;
+    if (kind !== 'pickup') tube([s * (bw - 0.01), yb, mz], [s * (tw + 0.005), roofY - 0.02, mz], 0.04, DK);   // B pillar
+    B.add(r, 'Box', { width: 0.12, height: 0.09, depth: 0.05 }, DK, 0, [s * (W / 2 + 0.03), y1 + 0.16, cabF - 0.1]);   // mirror
+    for (const dz of kind === 'pickup' ? [cabF - 1.0] : [cabF - 1.05, mz - 0.62]) B.add(r, 'Box', { width: 0.004, height: y1 - y0 - 0.06, depth: 0.012 }, DK, 0, [s * (W / 2 + 0.003), (y0 + y1) / 2, dz]);   // door seams
+    for (const dz of kind === 'pickup' ? [cabF - 0.95] : [cabF - 0.95, mz - 0.55]) B.add(r, 'Box', { width: 0.02, height: 0.025, depth: 0.12 }, CH, 0, [s * (W / 2 + 0.01), y1 - 0.08, dz - 0.15]);   // handles
+  }
+  for (const zz of kind === 'pickup' ? [cabF - 0.75] : [cabF - 0.75, cabR + 0.55]) { B.add(r, 'Box', { width: W - 0.4, height: 0.42, depth: 0.5 }, [0.16, 0.13, 0.12], 0, [0, y1 + 0.05, zz]); B.add(r, 'Box', { width: W - 0.4, height: 0.5, depth: 0.12 }, [0.18, 0.15, 0.13], 0, [0, y1 + 0.3, zz - 0.25], [-0.15, 0, 0]); }   // seats
+  B.add(r, 'Box', { width: W - 0.3, height: 0.1, depth: 0.42 }, [0.06, 0.06, 0.06], 0, [0, y1 + 0.06, cabF - 0.2]);   // dash
+  if (kind === 'pickup') {   // the bed: open box behind the cab
+    const b0 = -hl + 0.12, b1 = cabR - 0.08;
+    B.add(r, 'Box', { width: W - 0.08, height: 0.06, depth: b1 - b0 }, DK, 0, [0, y1 - 0.05, (b0 + b1) / 2]);
+    for (const s of [-1, 1]) B.add(r, 'Box', { width: 0.06, height: 0.42, depth: b1 - b0 }, c, 0, [s * (W / 2 - 0.03), y1 + 0.18, (b0 + b1) / 2]);
+    B.add(r, 'Box', { width: W - 0.04, height: 0.42, depth: 0.06 }, c, 0, [0, y1 + 0.18, b0]); B.add(r, 'Box', { width: W - 0.04, height: 0.42, depth: 0.06 }, c, 0, [0, y1 + 0.18, b1]);
+    if (RNG() < 0.5) B.add(r, 'Box', { width: 0.6, height: 0.3, depth: 0.5 }, [0.5, 0.36, 0.2], 0, [0.3, y1 + 0.15, b0 + 0.6], [0, 0.3, 0]);
+  } else if (kind === 'sedan') B.add(r, 'Box', { width: W - 0.04, height: 0.05, depth: hl + cabR - 0.08 }, c, 0, [0, y1 + 0.02, (-hl + cabR) / 2 + 0.02]);   // boot lid
+  B.add(r, 'Cylinder', { diameter: 0.008, height: 0.8, tessellation: 4 }, DK, 0, [W / 2 - 0.15, y1 + 0.4, -hl + 0.5]);   // antenna
+  for (const s of [-1, 1]) B.add(r, 'Box', { width: 0.36, height: 0.012, depth: 0.03 }, DK, 0, [s * 0.32, y1 + 0.06, hood0 - 0.02], [0, s * 0.12, 0]);   // wipers
+  if (o.leaves) for (let i = 0; i < 9; i++) B.add(r, 'Box', { width: rnd(0.05, 0.1), height: 0.006, depth: rnd(0.04, 0.08) }, [0.38, 0.24, 0.1].map(v => v * rnd(0.7, 1.2)), 0, [rnd(-0.7, 0.7), y1 + 0.07, rnd(hood0, hl - 0.2)], [0, rnd(0, TAU), 0]);
+  solidLocal(r, -W / 2 - 0.06, -hl - 0.06, W / 2 + 0.06, hl + 0.06);
+  (W9.cars || (W9.cars = [])).push({ x, z, ry, W, L, kind });
+  return r;
 }
 function buildTree(B, x, z, dead) {
   const r = propRoot(x, z, rnd(0, TAU)), TR = [0.2, 0.15, 0.11], h = rnd(2.2, 3.4);
