@@ -72,6 +72,7 @@ function genLayout9() {
   reds.forEach(h => h.red = true);
   const cansH = farFrom([...reds, spawnPt], enter.filter(h => !h.red), 2, 10); cansH.forEach(h => h.cans = true);
   enter.filter(h => !h.red && !h.cans).slice(0, 5).forEach(h => h.lit = true);
+  rolePlan9();   // r6: the Hale house, the Watch house, the blue house, street names and numbers
   // off-map slots for the upstairs floors (4x4 + a one-cell gap), east and south of the neighbourhood
   const slots = [];
   for (const x0 of [LAB_X, LAB_X + 5]) for (let z0 = 13; z0 + HS <= n - 1; z0 += 5) slots.push([x0, z0]);

@@ -100,6 +100,10 @@ function holdTick(dt) {
   if (H.t >= H.dur) { HOLD.cur = null; H.done(); }
 }
 
+// a second root with the same transform: PropBatch.finish() disposes the roots of merged parts (and every child),
+// so anything that must outlive the batch (pages, handles, signs, text planes) hangs off a twin
+function twin(r) { r.computeWorldMatrix(true); return propRoot(r.position.x, r.position.z, r.rotation.y); }
+
 // ----- shared beat: one line said by whoever of the listed explorers is still alive (Level 0) -----
 function aliveExp(i) { const e = AI.exps && AI.exps[i]; return e && e.alive ? e : null; }
 function sayExp(i, text, o = {}) {   // radio from a named explorer; silent if that explorer is dead

@@ -164,6 +164,7 @@ function drawMap9(c, w, h, o = {}) {
   c.fillStyle = '#2b5a3d'; c.fillRect(X(19), Y(25), 7 * sc, 6 * sc);
   c.fillStyle = '#b8ffd0'; c.font = `bold ${Math.round(sc * 1.25)}px monospace`; c.fillText('M.E.G.', X(19.6), Y(22.6)); c.font = `${Math.round(sc * 0.95)}px monospace`; c.fillText('OUTPOST 9', X(19.5), Y(21.2));
   if (G9.crowbar && W9.van) { c.fillStyle = '#ffd23a'; c.fillRect(X(W9.van.x / CELL) - sc * 0.6, Y(W9.van.z / CELL) - sc * 0.6, sc * 1.2, sc * 1.2); }
+  drawStory9(c, X, Y, sc);
   // you-are-here / camcorder position
   const pp = phys9(PL.x, PL.z), px = o.kiosk ? W9.kiosk.x / CELL : pp[0] / CELL, pz = o.kiosk ? W9.kiosk.z / CELL + 0.3 : pp[1] / CELL;
   if (o.kiosk || (px < n && pz < n)) {
@@ -482,6 +483,7 @@ function buildStory9() {
   }
   { const s = takeSlot(LV.base.R.S, { noWin: true }); if (s) { const [px, pz, ry] = wallPt(s.x, s.y, s.d, 0.01, 0); buildLocker(px, pz, ry, 'locker', 'base'); } }
   if (W9.van) { const p = localPt(W9.van.root, 0, 0, -3.35); buildLocker(p.x, p.z, W9.van.ry + Math.PI + 0.25, 'crate', 'van'); }
+  buildPlaces9();   // r6: story houses claim their wall slots before the furniture does
   // furniture
   for (const h of LV.houses) if (h.enter) for (const r of h.rooms) {
     const cf = ROOMC[r.t]; if (cf) placeCentre(B, r, r.t === 'kitchen' ? (r.cells.length >= 4 ? 'island' : 'ktable') : cf[0]);

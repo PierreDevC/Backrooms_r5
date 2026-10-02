@@ -17,6 +17,7 @@ function radio9(key, delay = 0) {
   say('M.E.G. OUTPOST 9', txt, { radio: true, vo: 'm9_' + key, delay });
 }
 function obj9() {
+  if (spareRoute9()) return 'TAKE THE SERVICE ELEVATOR — OR CURE DR. HALE';   // r6: Hale's spare card
   switch (G9.phase) {
     case 'arrive': return 'FIND THE M.E.G. OUTPOST · NORTH-EAST';
     case 'data': return `DOWNLOAD M.E.G. DATA FROM THE RED HOUSES · ${G9.data}/3`;
@@ -32,7 +33,7 @@ function obj9() {
   }
   return '';
 }
-function setPhase9(p) { if (p) G9.phase = p; objective(obj9()); }
+function setPhase9(p) { if (p) G9.phase = p; objective(obj9()); tasks9(); }
 
 // ----- map kiosk / camcorder snapshot -----
 function studyMap9() {
@@ -106,6 +107,7 @@ function useLocker(L) {
     L.st = 'prying'; L.pryT = 0; SFX9.pry(p); makeNoise(0.55);
     later(1.35, () => { L.st = 'open'; FX.glitch = Math.max(FX.glitch, 0.3); toast('PADLOCK SNAPPED', 1.4); });
   } else if (L.st === 'open') {
+    if (G9.cans >= 4) { toast('YOU ALREADY HAVE FOUR CANISTERS', 2); return; }   // r6: five lockers, four needed
     L.st = 'empty'; L.can.setEnabled(false); G9.carry++; G9.cans++; SFX.pickup();
     toast(`FLUID CANISTER ${G9.cans}/4`, 2.4);
     if (G9.cans >= 4) radio9('cans', 0.8);
@@ -188,7 +190,7 @@ function useElevator() {
   const E = W9.elev, p = P9({ x: E.rx, z: E.rz, y: 1.3 });
   if (!G9.keycard) { SFX.beep(240, 0.25); later(0.3, () => SFX.beep(200, 0.3)); toast('ADMINISTRATOR KEYCARD REQUIRED', 2.4); return; }
   if (E.want) return;
-  SFX.beep(1500, 0.15); setEmi(E.rm, 0.15, 3, 0.3); toast('ACCESS GRANTED', 1.8);
+  SFX.beep(1500, 0.15); setEmi(E.rm, 0.15, 3, 0.3); toast('ACCESS GRANTED', 1.8); elevator9Leave();
   SFX9.elevator(P9(E.light));
   later(2.2, () => { SFX9.ding(P9(E.light)); E.want = 1; LV.solids[E.sol].off = true; objective('STEP INTO THE ELEVATOR'); });
 }
@@ -209,7 +211,7 @@ function wonCam9(dt) {
   if (h && !G9.haleIn && t > 1.9) { G9.haleIn = true; h.place(cx + 0.45, cz + 0.62, -Math.PI / 2); h.st = 'wait'; h.update(0.016); }
   if (t > 3.3 && E.want) { E.want = 0; LV.solids[E.sol].off = false; SFX9.elevator(P9(E.light)); }
   FX.fadeW = smooth(5.4, 7.2, t); FX.glitch = Math.max(FX.glitch, t > 6 ? 0.6 : 0);
-  if (t > 7.6 && !DEATH.shown) { DEATH.shown = true; G9.endWon = true; goLevel5(carryFrom9()); }
+  if (t > 7.6 && !DEATH.shown) { DEATH.shown = true; G9.endWon = true; flags9(); goLevel5(carryFrom9()); }
 }
 function showEnd9(won) {
   if (document.pointerLockElement) document.exitPointerLock();
@@ -245,7 +247,7 @@ async function goLevel9(from) {
   if (AU.ctx && AU.ctx.state === 'suspended') AU.ctx.resume();
   teardownScene();
   LVL = 9; setDims(L9_N, L9_LMR); document.body.classList.add('lvl9'); AU.remap = remap9;
-  resetG9();
+  resetG9(); resetP9(); tasksReset('LEVEL 9 · DARKENED SUBURBS');
   const prog = (p, m) => { $('loadFill').style.width = (p * 100).toFixed(0) + '%'; $('loadMsg').textContent = m; };
   RNG = mulberry32((Math.random() * 4294967296) >>> 0);
   await buildWorld9(prog);
@@ -286,7 +288,7 @@ function beginPlay9() {
   G.state = 'play'; FX.fadeW = 0; FX.fadeB = 0; PL.pitch = 0;
   $('osd').classList.remove('hide'); if (IS_TOUCH) $('touch').classList.remove('hide');
   setPhase9('arrive'); cpSave('LEVEL START', { x: PL.x, z: PL.z, yaw: PL.yaw, quiet: true });
-  later(1.4, () => radio9('arrive'));
+  later(1.4, () => arrive9());   // r6: rewritten arrival (text only; the old voiced clip is unused)
   later(26, () => toast(IS_TOUCH ? 'LATCH · MAP BUTTONS' : '[RIGHT-CLICK] LATCH DOORS   [TAB] MAP   [F] FLASHLIGHT', 3.6));
 }
 
@@ -313,7 +315,7 @@ function startStairTp9(h, up) {
   if (!G9.stairTip) { G9.stairTip = true; later(1.1, () => toast(up ? 'UPSTAIRS — WALK BACK INTO THE STAIRWELL TO GO DOWN' : 'DOWNSTAIRS', 2.6)); }
 }
 function gameEvents9(dt) {
-  updateTerms9(dt);
+  updateTerms9(dt); places9Events(dt);
   // stairwell between the outpost and the lab (fade through black)
   if (G9.tp) {
     const T = G9.tp; T.t += dt; FX.fadeB = T.t < 0.3 ? T.t / 0.3 : Math.max(0, 1 - (T.t - 0.45) / 0.45);
@@ -472,6 +474,7 @@ function target9raw() {
   const toLab = () => lab ? null : comp ? { x: 25.5 * CELL, z: 20.3 * CELL } : W9.gate;
   const up = { x: (LAB_X + 2.5) * CELL, z: 0.9 };
   const near = arr => { let b = null, bd = 1e9; for (const o of arr) { const d = dist2(o.x, o.z, PL.x, PL.z); if (d < bd) { bd = d; b = o; } } return b; };
+  if (spareRoute9()) return lab ? (W9.elev ? { x: W9.elev.rx, z: W9.elev.rz } : null) : toLab();
   switch (G9.phase) {
     case 'arrive': return W9.kiosk;
     case 'data': return G9.mapSeen ? near(W9.terms.filter(T => !T.done)) : W9.kiosk;
@@ -495,7 +498,7 @@ function hudObj9() {
   if (G9.crowbar) return `CANISTERS ${G9.cans}/4` + (G9.carry ? ` · CARRY ${G9.carry}` : '');
   return `DATA ${G9.data}/3`;
 }
-function hudItems9() { const a = []; if (G9.crowbar) a.push('CROWBAR'); if (G9.keycard) a.push('KEYCARD'); if (G9.mapSeen) a.push('MAP'); return a.join(' · ') || 'LEVEL 9'; }
+function hudItems9() { const a = []; if (P9S.rota) a.push(watchTimer9()); if (G9.crowbar) a.push('CROWBAR'); if (G9.keycard) a.push('KEYCARD'); if (G9.mapSeen) a.push('MAP'); return a.join(' · ') || 'LEVEL 9'; }
 
 // ----- start (after every module has initialised) -----
 if (/[?&]debug/.test(location.search)) window.__BR = { CP, cpRetry, cpSave, cpAvail, cpPorch9, ERRS, frameErr, inRun, hasAlt, startLevelPick, openLevels, G9, W9, AI9, hearLimit9, noiseAt9, hear9, physD9, cellPt, cIdx, cellOf, cellCenter, floorOf, updateHUD, BRIEF, openBrief, closeBrief, briefStep, startIntro9, brief9Seen, briefSlides, LV9: () => LV, goLevel9, worldFX9, restartGame, teardownScene, openGate, startDownload, finishDownload, takeCrowbar, useLocker, installCans, releaseSubject, pullLever, releaseCure, takeKeycard, useElevator, win9, spawnWatch, studyMap9, toggleMap9, setDoor, latchDoor, radio9, target9, raiseCage, Hale, HINT, G, PL, AI, FX, W, LV, CAM: () => CAM, SCN: () => SCN, ENG: () => ENG, startBlackout, takeTape, spawnHowler, lightAt, useExit, hurt, startGame, beginPlay, baseLight, S, DBG, los, pauseGame, die, win, showEnd, simStep, K, useExit, SFX, AU, SUBS, say, playVoice, playS, VO_TXT, ABANK_G };

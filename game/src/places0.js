@@ -22,14 +22,15 @@ function planPlaces0() {
     for (let y = y0; y < y0 + h; y++) for (let x = x0; x < x0 + w; x++) { const c = cIdx(x, y); if (busy.has(c) || D[c] < 0) return; sd += D[c]; dk += LV.dark[c]; }
     cand.push({ x0, y0, w, h, hall, d: sd / (w * h), dark: dk / (w * h) });
   };
-  for (const h of LV.halls) { const w = Math.min(h.w, 4), hh = Math.min(h.h, 4); add(h.x0 + ((h.w - w) >> 1), h.y0 + ((h.h - hh) >> 1), w, hh, true); }
-  for (let i = 0; i < 90; i++) { const w = rndi(3, 4), h = rndi(3, 4); add(rndi(1, N - 1 - w), rndi(1, N - 1 - h), w, h, false); }
+  for (const h of LV.halls) for (const m of [3, 4]) { const w = Math.min(h.w, m), hh = Math.min(h.h, 3); add(h.x0 + ((h.w - w) >> 1), h.y0 + ((h.h - hh) >> 1), w, hh, true); }
+  for (let i = 0; i < 90; i++) { const w = rndi(3, 4), h = 3; add(rndi(1, N - 1 - w), rndi(1, N - 1 - h), w, h, false); }
   const apart = (a, b) => a.x0 > b.x0 + b.w || b.x0 > a.x0 + a.w || a.y0 > b.y0 + b.h || b.y0 > a.y0 + a.h;
   const cdist = (a, b) => Math.hypot(a.x0 + a.w / 2 - b.x0 - b.w / 2, a.y0 + a.h / 2 - b.y0 - b.h / 2);
   const best = (score, ok) => { let bs = -1e9, bc = null; for (const c of cand) { if (!ok(c)) continue; const s = score(c); if (s > bs) { bs = s; bc = c; } } return bc; };
-  const camp = best(c => -Math.abs(c.d - 11) + (c.hall ? 2.5 : 0) - c.dark * 4 + RNG(), () => true);
+  const small = c => c.w * c.h <= 9;
+  const camp = best(c => -Math.abs(c.d - 11) + (c.hall ? 2.5 : 0) - c.dark * 4 + RNG(), small);
   if (!camp) return;
-  const sub = best(c => c.d * 0.35 + c.dark * 7 + cdist(c, camp) * 0.35 + (c.hall ? 1 : 0) + RNG(), c => apart(c, camp) && cdist(c, camp) > 7);
+  const sub = best(c => c.d * 0.35 + c.dark * 7 + cdist(c, camp) * 0.35 + (c.hall ? 1 : 0) + RNG(), c => small(c) && apart(c, camp) && cdist(c, camp) > 7);
   const off = sub && best(c => cdist(c, camp) * 0.3 + cdist(c, sub) * 0.3 + (c.hall ? 2 : 0) + c.d * 0.15 - c.dark * 3 + RNG(), c => apart(c, camp) && apart(c, sub) && cdist(c, camp) > 6 && cdist(c, sub) > 6);
   for (const [k, r] of [['camp', camp], ['sub', sub], ['off', off]]) if (r) carvePlace0(k, r);
   // repair: closing a room can cut off a pocket of the maze; open a doorway on the cut until everything reaches the spawn again
@@ -111,7 +112,7 @@ function buildCamp0(B, R) {
   for (const sx of [-1, 1]) for (const sz of [-1, 1]) B.add(t, 'Cylinder', { diameter: 0.03, height: 0.74, tessellation: 6 }, C0.steel, 0, [sx * 0.68, 0.37, sz * 0.34]);
   B.add(t, 'Box', { width: 0.12, height: 0.2, depth: 0.12 }, [0.2, 0.3, 0.18], 0, [0.55, 0.86, 0.2]);
   B.add(t, 'Cylinder', { diameter: 0.09, height: 0.12, tessellation: 10 }, [1, 0.85, 0.5], 1.4, [0.55, 0.9, 0.2]);   // lantern glass, lit
-  const mp = dynTexPlane('campMap', 0.9, 0.6, 384, 256, t, [-0.15, 0.765, 0], 0.25); mp.mesh.rotation.x = Math.PI / 2; mp.mesh.rotation.y = 0; mp.mat.backFaceCulling = false;
+  const mp = dynTexPlane('campMap', 0.9, 0.6, 384, 256, twin(t), [-0.15, 0.765, 0], 0.25); mp.mesh.rotation.x = Math.PI / 2; mp.mesh.rotation.y = 0; mp.mat.backFaceCulling = false;
   drawCampMap0(mp.ctx, 384, 256); mp.dt.update();
   addSolid(t.position.x - 0.85, t.position.z - 0.85, t.position.x + 0.85, t.position.z + 0.85, 'prop');
   W.interact.push({ x: t.position.x, z: t.position.z, y: 0.78, r: 2.0, label: () => 'STUDY THE HAND-DRAWN MAP', ok: () => true, act: () => readDoc('campmap', 'MAP ON THE CAMP TABLE', campMapText0(), { kind: 'board' }) });
@@ -121,7 +122,7 @@ function buildCamp0(B, R) {
   W.interact.push({ x: bp.x, z: bp.z, y: 0.2, r: 1.8, label: () => 'TAKE BRANDT\'S BATTERY (HEAVY)', ok: () => !P0.carry && !P0.power && W.p0.battery.isEnabled(), act: () => takeBattery0() });
   // cots, the radio, the supply crate, the whiteboard
   if (S[0]) for (const a of [-0.9, 0.9]) { const r = at(S[0], a); cot0(B, r); solidLocal(r, -0.4, 0.05, 0.4, 2.05); }
-  if (S[0]) { const r = at(S[0], 0.9); page0(0, r, [0.05, 0.36, 1.2], [0, 0.4, 0]); }
+  if (S[0]) { const r = at(S[0], 0.9); page0(0, twin(r), [0.05, 0.36, 1.2], [0, 0.4, 0]); }
   if (S[1]) {
     const r = at(S[1], 0);
     if (!B.mdl('crate', r, [0, 0, 0.35], null, 0.8)) { B.add(r, 'Box', { width: 0.7, height: 0.55, depth: 0.55 }, C0.wood, 0, [0, 0.275, 0.35]); }
@@ -145,12 +146,27 @@ function buildCamp0(B, R) {
   if (S[3]) {
     const r = at(S[3], 0, 0.01);
     B.add(r, 'Box', { width: 1.5, height: 1.0, depth: 0.03 }, [0.75, 0.75, 0.72], 0, [0, 1.45, 0.015]);
-    const wb = dynTexPlane('campBoard', 1.42, 0.92, 512, 332, r, [0, 1.45, 0.034], 0.3); drawBoard0(wb.ctx, 512, 332); wb.dt.update();
+    const wb = dynTexPlane('campBoard', 1.42, 0.92, 512, 332, twin(r), [0, 1.45, 0.034], 0.3); drawBoard0(wb.ctx, 512, 332); wb.dt.update();
     const p = localPt(r, 0, 1.45, 0.3);
     W.interact.push({ x: p.x, z: p.z, y: 1.45, r: 2.2, label: () => 'READ THE WHITEBOARD', ok: () => true, act: () => readDoc('board', 'CAMP WHITEBOARD', BOARD0, { kind: 'board' }) });
   }
   if (S[4]) { const r = at(S[4], 0); for (let i = 0; i < 3; i++) B.add(r, 'Box', { width: 0.34, height: 0.48, depth: 0.22 }, i === 1 ? [0.55, 0.2, 0.08] : C0.olive, 0, [-0.5 + i * 0.5, 0.24, 0.2], [0, rnd(-0.3, 0.3), rnd(-0.1, 0.1)]); solidLocal(r, -0.75, 0.05, 0.75, 0.4); }
   if (S[0]) sign0('M.E.G. CAMP · NOBODY SLEEPS ALONE', R, S[0], 1.75, { w: 1.6, h: 0.22 });
+  for (const a of [-1, 1]) { const c = propRoot(t.position.x + a * 0.55 * Math.cos(t.rotation.y) + Math.sin(t.rotation.y) * 0.75, t.position.z - a * 0.55 * Math.sin(t.rotation.y) + Math.cos(t.rotation.y) * 0.75, t.rotation.y + Math.PI + rnd(-0.3, 0.3)); B.add(c, 'Box', { width: 0.42, height: 0.04, depth: 0.4 }, C0.olive, 0, [0, 0.44, 0]); B.add(c, 'Box', { width: 0.42, height: 0.4, depth: 0.03 }, C0.olive, 0, [0, 0.68, -0.19]); for (const sx of [-1, 1]) B.add(c, 'Box', { width: 0.025, height: 0.44, depth: 0.42 }, C0.steel, 0, [sx * 0.2, 0.22, 0], [sx * 0.15, 0, 0]); }
+  { const g = propRoot(R.cx + rnd(-1, 1), R.cz + rnd(-1, 1), rnd(0, TAU)); if (!inPlace0(R, g.position.x, g.position.z, 0.6) || solidAt(g.position.x, g.position.z)) g.position.x = R.cx; B.add(g, 'Box', { width: 1.1, height: 0.02, depth: 0.8 }, [0.22, 0.3, 0.2], 0, [0, 0.01, 1.4]); B.add(g, 'Box', { width: 0.3, height: 0.2, depth: 0.2 }, C0.olive, 0, [0.2, 0.11, 1.4]); B.add(g, 'Cylinder', { diameter: 0.07, height: 0.2, tessellation: 8 }, [0.86, 0.84, 0.74], 0, [-0.25, 0.1, 1.3]); }
+  clutter0(B, R, 3, ['box', 'crate', 'box']);
+}
+function clutter0(B, R, n, kinds) {   // boxes, drums and junk tucked into the room's inner corners, clear of the doors
+  const C = shuffle([[R.X0 + 0.7, R.Z0 + 0.7], [R.X1 - 0.7, R.Z0 + 0.7], [R.X0 + 0.7, R.Z1 - 0.7], [R.X1 - 0.7, R.Z1 - 0.7]]);
+  let k = 0;
+  for (const [x, z] of C) {
+    if (k >= n) break; if (doorNear0(R, x, z, 2.0) || solidAt(x, z)) continue; k++;
+    const r = propRoot(x, z, rnd(0, TAU)), kind = pick(kinds);
+    if (kind === 'drum') { if (!B.mdl('barrel', r, null, null, 0.9)) B.add(r, 'Cylinder', { diameter: 0.56, height: 0.86, tessellation: 14 }, [0.3, 0.36, 0.42], 0, [0, 0.43, 0]); }
+    else if (kind === 'crate') { if (!B.mdl('crate', r, null, null, 0.9)) B.add(r, 'Box', { width: 0.7, height: 0.6, depth: 0.7 }, C0.wood, 0, [0, 0.3, 0]); }
+    else { const s = mdlOk('cbox') ? 1 : 0; if (!B.mdl('cbox', r, null, null, 1.2)) B.add(r, 'Box', { width: 0.5, height: 0.4, depth: 0.45 }, [0.52, 0.4, 0.24], 0, [0, 0.2, 0]); if (!B.mdl('cbox', r, [0.05, s ? 0.41 : 0.4, 0], [0, 0.4, 0], 1.0)) B.add(r, 'Box', { width: 0.42, height: 0.34, depth: 0.4 }, [0.46, 0.35, 0.2], 0, [0.05, 0.57, 0], [0, 0.4, 0]); }
+    addSolid(x - 0.45, z - 0.45, x + 0.45, z + 0.45, 'prop');
+  }
 }
 function cot0(B, r) {
   for (const sx of [-1, 1]) for (const sz of [0.15, 1.95]) B.add(r, 'Box', { width: 0.04, height: 0.32, depth: 0.04 }, C0.steel, 0, [sx * 0.34, 0.16, sz]);
@@ -179,17 +195,18 @@ function buildSub0(B, R) {
   B.add(r, 'Box', { width: 0.5, height: 0.08, depth: 0.01 }, C0.yel, 0.2, [0, 1.75, 0.296]);
   for (let i = 0; i < 6; i++) B.add(r, 'Cylinder', { diameter: 0.03, height: 0.9, tessellation: 6 }, C0.dark, 0, [-0.5 + i * 0.2, 2.35, 0.08]);   // conduit up into the ceiling
   solidLocal(r, -0.68, 0, 0.68, 0.45);
+  const rk = twin(r);
   for (let i = 0; i < 3; i++) {
     const bx = -0.38 + i * 0.38, hm = actMat('brk' + i, { spec: 0.4, shin: 30, emis: 1, wrap: 0.3 });
-    part('Box', { width: 0.16, height: 0.3, depth: 0.04 }, r, hm, C0.dark, 0, [bx, 1.15, 0.3]);
-    const h = tnode(r, bx, 1.15, 0.33); part('Box', { width: 0.07, height: 0.2, depth: 0.05 }, h, hm, [0.75, 0.1, 0.05], 0, [0, 0.08, 0.02]);
+    part('Box', { width: 0.16, height: 0.3, depth: 0.04 }, rk, hm, C0.dark, 0, [bx, 1.15, 0.3]);
+    const h = tnode(rk, bx, 1.15, 0.33); part('Box', { width: 0.07, height: 0.2, depth: 0.05 }, h, hm, [0.75, 0.1, 0.05], 0, [0, 0.08, 0.02]);
     h.rotation.x = 0.55;
-    const lamp = actMat('brkL' + i, { emis: 1 }); part('Sphere', { diameter: 0.04, segments: 6 }, r, lamp, [1, 1, 1], 1, [bx, 1.42, 0.31]); setEmi(lamp, 1.6, 0.12, 0.05);
+    const lamp = actMat('brkL' + i, { emis: 1 }); part('Sphere', { diameter: 0.04, segments: 6 }, rk, lamp, [1, 1, 1], 1, [bx, 1.42, 0.31]); setEmi(lamp, 1.6, 0.12, 0.05);
     const p = localPt(r, bx, 1.15, 0.6);
     const it = { x: p.x, z: p.z, y: 1.15, r: 1.9, i, h, lamp, label: () => holdBusy(it) ? `THROWING… ${holdPct(it)}%` : `THROW BREAKER ${i + 1}`, ok: () => !P0.breakers[i] && !P0.power, act: () => holdStart(it, 1.3, () => throwBreaker0(i), { tick: (dt, k) => { h.rotation.x = 0.55 - 0.3 * k; PL.shake = Math.max(PL.shake, 0.1); }, cancel: 'THE BREAKER SNAPS BACK' }) };
     W.interact.push(it); W.p0.breakers.push(it);
   }
-  page0(1, r, [0.78, 1.2, 0.2], [Math.PI / 2, 0, 0.15]);
+  page0(1, rk, [0.78, 1.2, 0.2], [Math.PI / 2, 0, 0.15]);
   sign0('SUBSTATION 4B · DANGER', R, s, 2.12, { w: 1.2, h: 0.24, stripe: true });
   // transformer, cable runs, a ladder and Brandt's tool bag
   const tr = propRoot(R.cx + rnd(-0.6, 0.6), R.cz + rnd(-0.6, 0.6), rnd(0, TAU));
@@ -199,6 +216,8 @@ function buildSub0(B, R) {
   addSolid(tr.position.x - 0.85, tr.position.z - 0.85, tr.position.x + 0.85, tr.position.z + 0.85, 'prop');
   if (B.pipe) B.pipe([x, 0.04, z], [tr.position.x, 0.04, tr.position.z], 0.035, C0.dark);
   if (S[1]) { const [a, b, q] = wallPt(S[1].x, S[1].y, S[1].d, 0.02, 0), lr = propRoot(a, b, q); for (const sx of [-1, 1]) B.add(lr, 'Box', { width: 0.04, height: 2.2, depth: 0.05 }, [0.7, 0.6, 0.2], 0, [sx * 0.22, 1.08, 0.35], [-0.16, 0, 0]); for (let i = 0; i < 6; i++) B.add(lr, 'Box', { width: 0.44, height: 0.03, depth: 0.04 }, [0.7, 0.6, 0.2], 0, [0, 0.25 + i * 0.32, 0.38 - i * 0.05]); solidLocal(lr, -0.3, 0, 0.3, 0.55); }
+  if (S[3]) { const [a, b, q] = wallPt(S[3].x, S[3].y, S[3].d, 0.01, 0), sh = propRoot(a, b, q); if (!B.mdl('sshelf', sh, null, null, 1)) { for (const y of [0.05, 0.6, 1.15, 1.7]) B.add(sh, 'Box', { width: 1.2, height: 0.03, depth: 0.45 }, C0.steel, 0, [0, y, 0.25]); for (const sx of [-1, 1]) for (const sz of [0.03, 0.47]) B.add(sh, 'Box', { width: 0.03, height: 1.8, depth: 0.03 }, C0.steel, 0, [sx * 0.58, 0.9, sz]); } for (let i = 0; i < 5; i++) B.add(sh, 'Cylinder', { diameter: 0.22, height: 0.12, tessellation: 12 }, i % 2 ? [0.2, 0.2, 0.2] : [0.55, 0.3, 0.1], 0, [-0.4 + i * 0.2, 0.68 + (i % 2) * 0.55, 0.25], [Math.PI / 2, 0, 0]); solidLocal(sh, -0.62, 0, 0.62, 0.5); }
+  clutter0(B, R, 2, ['drum', 'crate']);
   if (S[2]) { const [a, b, q] = wallPt(S[2].x, S[2].y, S[2].d, 0, 0.6), br = propRoot(a, b, q); B.add(br, 'Box', { width: 0.5, height: 0.24, depth: 0.25 }, [0.55, 0.2, 0.08], 0, [0, 0.12, 0.3]); B.add(br, 'Box', { width: 0.3, height: 0.03, depth: 0.03 }, C0.steel, 0, [0, 0.27, 0.3]); B.add(br, 'Box', { width: 0.2, height: 0.03, depth: 0.05 }, C0.steel, 0, [0.3, 0.02, 0.6], [0, 0.6, 0]); }
 }
 function buildOffice0(B, R) {
@@ -224,13 +243,14 @@ function buildOffice0(B, R) {
       P0.offDesks.push(d); deskN++;
     }
   }
-  page0(2, P0.offDesks[P0.offDesks.length - 1], [-0.1, 0.775, -0.2], [0, -0.5, 0]);
+  page0(2, twin(P0.offDesks[P0.offDesks.length - 1]), [-0.1, 0.775, -0.2], [0, -0.5, 0]);
   // standing water: dark wet patches on the carpet
   for (let i = 0; i < 9; i++) { const r = propRoot(rnd(R.X0 + 0.8, R.X1 - 0.8), rnd(R.Z0 + 0.8, R.Z1 - 0.8), rnd(0, TAU)); B.add(r, 'Cylinder', { diameter: rnd(0.9, 2.2), height: 0.004, tessellation: 14 }, [0.3, 0.25, 0.12], 0, [0, 0.003, 0], null, [1, 1, rnd(0.5, 1)]); }
   // a dead water cooler by the door
   const S = slotsAway0(R, 2);
   if (S[0]) { const [a, b, q] = wallPt(S[0].x, S[0].y, S[0].d, 0, 0), r = propRoot(a, b, q); B.add(r, 'Box', { width: 0.34, height: 0.95, depth: 0.34 }, [0.86, 0.85, 0.8], 0, [0, 0.475, 0.22]); B.add(r, 'Cylinder', { diameter: 0.3, height: 0.42, tessellation: 12 }, [0.55, 0.7, 0.85], 0.05, [0, 1.16, 0.22]); solidLocal(r, -0.2, 0.03, 0.2, 0.41); }
   if (S[1]) sign0('3RD FLOOR · ACCOUNTS', R, S[1], 1.8, { w: 1.0, h: 0.2, bg: '#c8c4b4' });
+  clutter0(B, R, 2, ['box']);
 }
 function trail0(B, from, R, col) {   // M.E.G. spray chevrons on the walls along the route from a cell to a room
   if (!R) return;
