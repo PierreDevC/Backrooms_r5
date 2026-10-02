@@ -13,7 +13,8 @@ await tp(100.8,99,Math.PI,0);await shot('slides');
 await tp(20,109,-Math.PI/2,0);await shot('meadow');
 await tp(123,101,Math.PI/2,0);await shot('bedroom');
 await tp(123,34,-Math.PI/2,0);await shot('kitchen');
-logs.push('QA interactions '+JSON.stringify(await page.evaluate(()=>{const B=window.__BR;B.readNote18('desk');B.setPhase18('memories');B.AI18.dino.hug();for(const d of B.W18.drawings)B.takeDrawing18(d);B.pinDrawings18();return {found:B.G18.found,pinned:B.G18.pinned,phase:B.G18.phase,exit:B.W18.exitDoor.on,fog:B.AI18.fog.length,water:B.PL.water};})));
+logs.push('QA interactions '+JSON.stringify(await page.evaluate(()=>{const B=window.__BR;B.readNote18('desk');B.setPhase18('memories');B.AI18.dino.hug();if(B.M18)B.M18.signed=true;for(const d of B.W18.drawings)B.takeDrawing18(d);(B.takeCrayons18 && !B.P18.crayons && B.takeCrayons18()), B.pinDrawings18();   // r6: the door needs crayons before it can be finished
+return {found:B.G18.found,pinned:B.G18.pinned,phase:B.G18.phase,exit:B.W18.exitDoor.on,fog:B.AI18.fog.length,water:B.PL.water};})));
 await tp(34,65,-Math.PI/2,0);await page.waitForTimeout(4000);await shot('exit');
 await page.evaluate(()=>window.__BR.win18());await page.waitForFunction(()=>document.getElementById('endTitle').textContent==='YOU REMEMBERED',null,{timeout:60000});await shot('ending');
 logs.push('QA ending '+await page.evaluate(()=>document.getElementById('endTitle').textContent));

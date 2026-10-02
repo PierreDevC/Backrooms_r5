@@ -1,0 +1,7 @@
+error: Failed to load resource: net::ERR_FAILED
+QA load ms 777
+QA loaded {"phase":"arrive","drawings":4,"slides":4,"meshes":209,"dino":"wait"}
+QA dino {"st":"wait","pos":[23.400000000000002,73.8],"ph":"arrive"}
+QA interactions {"found":4,"pinned":["family","dog","monster","house"],"phase":"exit","exit":true,"fog":1,"water":2}
+QA ending YOU REMEMBERED
+QA PAGE CLOSE

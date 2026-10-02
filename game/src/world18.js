@@ -493,7 +493,7 @@ function buildProps18() {
   for (const b of LV.bulbs) bulb18(b);
   for (const e of LV.ek.values()) if (e.kind === 'deco') decoDoor18(B, e);
   furnishHall18(B); furnishClass18(B); furnishNap18(B); furnishYel18(B); furnishPlay18(B); furnishSlides18(B);
-  furnishMead18(B); furnishBed18(B); furnishKit18(B); furnishVoid18(B);
+  furnishMead18(B); furnishBed18(B); furnishKit18(B); furnishVoid18(B); furnishMem18(B);   // r7
   W18.finishProps = () => {
     const keep = [], out = [...(B.finish('props18', keep) || []), ...(BOn.finish('lensOn18', keep) || []), ...(BFl.finish('lensFl18', keep) || [])];
     out.forEach(m => m._sortD = 300);
@@ -508,7 +508,7 @@ function buildProps18() {
 // which cells are bright enough that the Forgotten won't step into them
 function brightCells18() {
   const b = new Uint8Array(N * N);
-  for (let c = 0; c < N * N; c++) { const z = LV.zone[c]; if (!z) continue; const x = cellCenter(c % N), y = cellCenter((c / N) | 0); b[c] = (z === Z18.CLASS || z === Z18.NAP || baseLight(x, y, 1) * 0.667 > 0.5) ? 1 : 0; }
+  for (let c = 0; c < N * N; c++) { const z = LV.zone[c]; if (!z) continue; const x = cellCenter(c % N), y = cellCenter((c / N) | 0); b[c] = (z === Z18.CLASS || z === Z18.NAP || z === Z18.MUSIC || baseLight(x, y, 1) * 0.667 > 0.5) ? 1 : 0; }
   W18.bright = b;
 }
 function buildItems18(diff) {
@@ -538,7 +538,7 @@ async function buildWorld18(progress) {
   CAM = new BABYLON.FreeCamera('cam', V3(10, 1.6, 10), SCN); CAM.inputs.clear(); CAM.minZ = 0.05; CAM.maxZ = 70; CAM.fov = 1.0;
   resetW9(); resetW18();
   progress(0.05, 'REMEMBERING…'); await nextFrame();
-  genLayout18(); collectPieces5(side18, opening18); planLights18();
+  genLayout18(); collectPieces5(side18, opening18); planLights18(); lightPlaces18();
   const T = {};
   progress(0.12, 'PAINTING THE CORRIDOR…'); await nextFrame();
   for (const k of ['skyw', 'yelw', 'teal', 'bedw', 'kitw', 'voidw']) T[k] = TEX18[k](SCN, 512);

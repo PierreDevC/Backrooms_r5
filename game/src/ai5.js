@@ -1,9 +1,9 @@
 // ---------- Level 5 · AI: the moths — huge, dusty, and drawn to your light ----------
 const AI5 = { moths: [], fl: null };
-function buildMoth() {
-  const mat = actMat('moth', { spec: 0.12, shin: 8, wrinkle: 0.7, emis: 1, wrap: 0.6, mottle: 0.9 });
-  const root = tnode(null), r = { root, mat, kind: 'moth', hipH: 1.1 }, tn = rnd(0.85, 1.12);
-  const BR = [0.4, 0.33, 0.25].map(v => v * tn), DK = [0.12, 0.1, 0.08], FUR = [0.55, 0.48, 0.38].map(v => v * tn);
+function buildMoth(o = {}) {   // r7: o.fem = a female (drawn 2x bigger by her agent): darker, banded, red-eyed
+  const mat = actMat(o.fem ? 'mothF' : 'moth', { spec: 0.12, shin: 8, wrinkle: 0.7, emis: 1, wrap: 0.6, mottle: 0.9 });
+  const root = tnode(null), r = { root, mat, kind: 'moth', hipH: 1.1 }, tn = o.fem ? 0.85 : rnd(0.85, 1.12);
+  const BR = (o.fem ? [0.36, 0.3, 0.3] : [0.4, 0.33, 0.25]).map(v => v * tn), DK = [0.12, 0.1, 0.08], FUR = (o.fem ? [0.5, 0.44, 0.4] : [0.55, 0.48, 0.38]).map(v => v * tn);
   const fur = (x, y, z) => 0.78 + 0.36 * hash1(Math.floor(x * 60) * 7.1 + Math.floor(y * 60) * 3.3 + Math.floor(z * 60) * 1.7);
   r.body = tnode(root, 0, 0, 0);
   part('Sphere', { diameter: 0.36, segments: 10 }, r.body, mat, FUR, 0, [0, 0, 0.06], null, [0.95, 0.85, 1.15], fur);                       // thorax
@@ -11,7 +11,7 @@ function buildMoth() {
   r.head = tnode(r.body, 0, 0.02, 0.26);
   part('Sphere', { diameter: 0.2, segments: 10 }, r.head, mat, FUR, 0, [0, 0, 0], null, [1.1, 0.9, 0.8], fur);
   for (const s of [-1, 1]) {
-    part('Sphere', { diameter: 0.1, segments: 8 }, r.head, mat, [1, 0.42, 0.08], 1, [s * 0.075, 0.02, 0.05]);                              // ember eyes
+    part('Sphere', { diameter: 0.1, segments: 8 }, r.head, mat, o.fem ? [1, 0.1, 0.04] : [1, 0.42, 0.08], 1, [s * 0.075, 0.02, 0.05]);      // ember eyes
     const an = tnode(r.head, s * 0.04, 0.07, 0.06); an.rotation.set(-1.0, s * 0.5, 0);
     part('Box', { width: 0.012, height: 0.36, depth: 0.012 }, an, mat, DK, 0, [0, 0.18, 0]);
     for (let k = 0; k < 8; k++) part('Box', { width: 0.13 - k * 0.013, height: 0.007, depth: 0.004 }, an, mat, FUR, 0, [0, 0.05 + k * 0.04, 0]);   // feathered antennae
@@ -46,7 +46,7 @@ function collideW(p, r) {
 class Moth extends Agent {
   constructor(nest, i) {
     super(buildMoth(), 0.42); mergeRig(this.rig); this.noSep = true;   // flies: no ground personal space
-    this.nest = nest; this.boil = nest.boil; this.i = i;
+    this.nest = nest; this.boil = nest.boil; this.i = i; this.male = true; this.loyal = !!nest.loyal;   // r7: Mothex kills these; loyal ones keep to the Gold Room's chandeliers
     this.cellFn = this.boil ? (c => !boilZ5(LV.zone[c])) : (c => { const z = LV.zone[c]; return !z || boilZ5(z) || z === Z5.VEST || z === Z5.ELEV || z === Z5.STAIR || z === Z5.SERV || LV.reg[c] === R5.E; });
     this.edgeFn = (x, y, d) => !doorClosed(x, y, d);
     const a = rnd(0, TAU); this.home = { x: nest.x + Math.sin(a) * 0.55, z: nest.z + Math.cos(a) * 0.55 };
@@ -95,10 +95,21 @@ class Moth extends Agent {
     for (const f of LV.fixtures) { if (!f.state) continue; const d = dist2(f.x, f.z, this.x, this.z); if (d < bd && this.mine(cIdx(cellOf(f.x), cellOf(f.z))) && los(this.x, this.z, f.x, f.z)) { bd = d; b = f; } }
     return b;
   }
-  ceil() { return LV.zone[this.cell()] === Z5.BEV ? BEV_H : CEIL; }
+  ceil() { return ceil5(this.cell()); }
+  die() {   // r7: Mothex
+    if (!this.alive) return;
+    this.alive = false; this.st = 'dead'; this.stT = 0; this.vy = 0; this.shadowR = 0; SFX5.burst(this.pos(this.y)); later(0.3, () => SFX5.chitter(this.pos(0.3)));
+  }
+  deadTick(dt) {
+    this.vy -= 9 * dt; this.y = Math.max(0.1, this.y + this.vy * dt); this.roll = damp(this.roll, 2.9, 3, dt); this.pitch = damp(this.pitch, 0, 3, dt);
+    const tw = this.stT < 3 ? (1 - this.stT / 3) * Math.sin(FX.t * 40) * 0.4 : 0;
+    for (const W of this.rig.wings) W.n.rotation.set(0, W.s * 0.4, W.s * (0.05 + tw));
+    this.sync();
+  }
   update(dt) {
     const d = this.d, t = FX.t, play = G.state === 'play';
     this.stT += dt; this.atkCd -= dt; this.percT -= dt; this.chitCd -= dt;
+    if (this.st === 'dead') { if (this.y > 0.11 || this.stT < 3.2) this.deadTick(dt); return; }
     if (this.st === 'roost' && d > 34) { if (this.shown) this.cull(); return; }
     let spd = 0, alt = 2.0, flap = 9;
     if (this.percT <= 0) {
@@ -111,7 +122,7 @@ class Moth extends Agent {
     const top = this.ceil() - 0.35;
     switch (this.st) {
       case 'roost': {   // folded under the ceiling at the nest, twitching now and then
-        this.x = damp(this.x, this.home.x, 2, dt); this.z = damp(this.z, this.home.z, 2, dt); alt = CEIL - 0.42; flap = 0; spd = 0;
+        this.x = damp(this.x, this.home.x, 2, dt); this.z = damp(this.z, this.home.z, 2, dt); alt = this.ceil() - 0.42; flap = 0; spd = 0;
         this.flapA = hash1(Math.floor(t * 2 + this.i * 7)) < 0.06 ? 0.3 : 0;
         break;
       }
@@ -148,7 +159,7 @@ class Moth extends Agent {
         const L = this.lamp, R = 0.95 + 0.25 * Math.sin(t * 0.7 + this.i); this.orbA += dt * 1.9;
         const ly = L.y ?? (LV.zone[cIdx(cellOf(L.x), cellOf(L.z))] === Z5.BEV ? 5.4 : CEIL - 0.45);
         this.navTo(L.x + Math.sin(this.orbA) * R, L.z + Math.cos(this.orbA) * R, 2.2, dt); spd = 2.2; alt = Math.min(ly - 0.1, top); flap = 11;
-        if (this.stT > rnd(14, 20)) { this.st = 'drift'; this.stT = 0; this.wp = null; }
+        if (!this.loyal && this.stT > rnd(14, 20)) { this.st = 'drift'; this.stT = 0; this.wp = null; }
         break;
       }
       case 'drift': {
@@ -161,7 +172,7 @@ class Moth extends Agent {
         break;
       }
       case 'return': {
-        const r = this.navTo(this.home.x, this.home.z, 1.6, dt); spd = 1.6; alt = r < 1.5 ? CEIL - 0.42 : 2.1; flap = r < 1.5 ? 5 : 8;
+        const r = this.navTo(this.home.x, this.home.z, 1.6, dt); spd = 1.6; alt = r < 1.5 ? this.ceil() - 0.42 : 2.1; flap = r < 1.5 ? 5 : 8;
         if (r < 0.35) { this.st = 'roost'; this.stT = 0; }
         break;
       }
@@ -185,19 +196,26 @@ function spawnMoth5(n) { const m = new Moth(n, AI5.moths.length); AI.all.push(m)
 function initAI5() {
   Object.assign(AI, { all: [], howlers: [], smilers: [], exps: [], crawler: null, mimic: null, flick: 0 });
   AI5.moths = [];
-  for (const n of W5.nests.filter(n => !n.boil)) { spawnMoth5(n); if (G.diff === 2 && RNG() < 0.6) spawnMoth5(n); }
+  for (const n of W5.nests.filter(n => !n.boil)) {
+    if (n.loyal) {   // r7: the Gold Room: males already circling the lit chandeliers
+      for (let i = 0; i < [2, 3, 3][G.diff]; i++) { const L = n.loyal[i % n.loyal.length], m = spawnMoth5(n); m.home = { x: L.x, z: L.z }; m.lamp = L; m.loyalLamp = L; m.st = 'circle'; m.place(L.x + rnd(-1, 1), L.z + rnd(-1, 1), rnd(0, TAU)); m.y = 2.8; }
+      continue;
+    }
+    spawnMoth5(n); if (G.diff === 2 && RNG() < 0.6) spawnMoth5(n);
+  }
   const bn = W5.nests.filter(n => n.boil); if (bn.length) for (let i = 0; i < [2, 3, 3][G.diff]; i++) spawnMoth5(bn[i % bn.length]);
+  femaleInit5();   // r7
 }
 // steam from a valve rouses the moths down in the boiler room
 function wakeBoiler5(v, all) {
-  const bm = AI5.moths.filter(m => m.boil && m.st === 'roost').sort((a, b) => dist2(a.x, a.z, v.x, v.z) - dist2(b.x, b.z, v.x, v.z));
+  const bm = AI5.moths.filter(m => m.boil && !m.fem && m.st === 'roost').sort((a, b) => dist2(a.x, a.z, v.x, v.z) - dist2(b.x, b.z, v.x, v.z));
   for (const m of all ? bm : bm.slice(0, 1)) { m.wake('steam'); m.lk = { x: v.x, z: v.z }; }
 }
 function foes5() {
   const out = [], pb = boilZ5(LV.zone[cIdx(cellOf(PL.x), cellOf(PL.z))]);
   for (const m of AI5.moths) {
-    if (m.st === 'roost' || m.boil !== pb) continue;
-    const d = m.d, ch = m.st === 'hunt' || m.st === 'wake' || m.st === 'retreat', maxD = ch ? 24 : 16; if (d > maxD) continue;
+    if (m.st === 'roost' || m.st === 'calm' || !m.alive || m.boil !== pb) continue;
+    const d = m.d, ch = m.st === 'hunt' || m.st === 'wake' || m.st === 'retreat' || m.st === 'angry', maxD = ch ? 24 : 16; if (d > maxD) continue;
     out.push({ ang: Math.atan2(m.x - PL.x, m.z - PL.z), d, k: clamp(1 - d / maxD, 0.2, 1), ch, kind: 'w', fl: 0 });
   }
   return out.sort((a, b) => a.d - b.d).slice(0, 3);
@@ -205,12 +223,13 @@ function foes5() {
 function updateAI5(dt) {
   PL.fear = 0; PL.interf = 0; AI.flick = 0; G.chase = 0;
   for (const a of AI.all) a.update(dt);
+  femaleTick5(dt);   // r7: acid, puddles, spray mist
   // the nearest flying moth: a soft, fast flutter you can track through walls
   let bm = null, bd = 18;
-  for (const m of AI5.moths) { if (m.st === 'roost') continue; const d = m.d; if (d < bd) { bd = d; bm = m; } }
+  for (const m of AI5.moths) { if (m.st === 'roost' || m.st === 'calm' || !m.alive) continue; const d = m.d; if (d < bd) { bd = d; bm = m; } }
   if (AU.ctx && !AI5.fl) AI5.fl = mkFlutter5();
   if (AI5.fl) {
-    if (bm) { AI5.fl.set(bm.x, bm.y, bm.z, PL.x, PL.z); AI5.fl.lfo.frequency.value = bm.st === 'hunt' ? 14 : 9; }
+    if (bm) { AI5.fl.set(bm.x, bm.y, bm.z, PL.x, PL.z); AI5.fl.lfo.frequency.value = bm.fem ? 6 : bm.st === 'hunt' ? 14 : 9; }
     setGain(AI5.fl, bm && G.state === 'play' ? (bm.st === 'hunt' ? 0.75 : 0.4) * clamp(1.2 - bd / 18, 0, 1) : 0, 0.2);
   }
   AI.visT -= dt;

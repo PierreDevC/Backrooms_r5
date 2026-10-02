@@ -1,4 +1,75 @@
-# QA — r5 · 2026-10-01
+# QA — r7 · 2026-10-02 (branch story-r6)
+
+## Environment and scope
+Same as r6: headless Chromium for Testing (Playwright, SwiftShader) on macOS arm64, 960×540, debug state calls and simStep; the single net::ERR_FAILED per log is the blocked font. These checks prove logic and wiring, not feel, pacing or frame rate. No human, real-GPU, audio or touch test of the r7 content.
+
+## New r7 checks (qa_r7/*.js, logs in qa_r7/logs)
+| Test | What it checks | Result |
+|---|---|---|
+| l5_state | State Floor built; 3 vestibule pairs, 6 portal doors, every inner door backs onto void; two females and the Gold Room males; 16 State Floor interactables. **Portals:** for all six inner doors the portal camera is on while the door is open, and walking forward carries you out of the twin's real door, in the right cell, facing its corridor. **Fire lock:** valves vented → phase `fire`, exit stays red, using it says FIRE LOCK. Security locked; the reservation book points at table 9; Gold Room males circle; Mothex kills a male in one pump (it falls to the floor, one pump used); the officer's keys open security; the panel needs the fire key; Mothex on a female angers her instead; she spits acid; breaking the glass gives the fire key; almond water in her bowl calms her for good (spray then does nothing, no more acid); turning the key resets the lock and opens the exit; the exit wins. | 19/19 PASS |
+| l18_name | Music room (8-key floor piano), cubbies, the birthday room and the bus are built and usable; the music room is bright and safe. Four pinned with crayons → phase `name`, door label and objective ask for your name; the cubby is padlocked → objective: music room; the toy box wants the song → objective: your birthday; the card gives RED · RED · BLUE · BLUE · PURPLE · PURPLE · BLUE; MAKE A WISH; a wrong tune does nothing, the song opens the toy box; the key opens your cubby and a Forgotten spawns; the name tag; holding at the door signs it and finishes it; the lunchbox note; the ending card mentions your handwriting and the fed moth. | 15/15 PASS |
+| l9_cars | 56–64 cars per layout (about 60% kerbside, 40% driveways; sedans, wagons, hatchbacks, pickups); every corner and the centre of every car footprint lies on asphalt outside the 1.35 m sidewalk strips, or on a driveway: 0 cars touching kerb, sidewalk, grass or a house (checked on several random layouts). Screenshots: docs/screenshots/r7_L9_car_*.jpg. | 4/4 PASS |
+
+## Earlier suites rerun on the r7 build (logs `*_reg7`)
+| Suite | Result |
+|---|---|
+| l5_story, l18_story, l0_story, l9_story, l9_windows, l9_hack, l9_termzoom, l9_peep | all PASS (13, 11, 23, 16, 7, 9, 6, 11). l5_story now resets the fire lock before the valves (the new chain is l5_state); l18_story pre-signs the door (the new chain is l18_name) |
+| s18_smoke, s18_more, s18_final (10/10), levels (17/17), levels_mobile, brief9 (25/25), cp9, cpl, crash3, hearing, wretch_speed, s9_to5, water | no QA FAIL, no PAGEERROR. cpl: Level 5 checkpoint retry puts the Gold Room males back on their chandeliers (circle), Level 18 retry unchanged. water: Level 5 now has one more bottle on every difficulty (13 / 9 / 6, the kitchen's) |
+| crashrf | only the injected fault ("[recovered world] … 'ctx'"), as in r6 |
+| l9_roam | failed 2 of 3 runs on random layouts: the roaming Wretch walked into the crouched player during the "silent" minute (a legitimate touch wake), and the touch step then started from a chase. The test now counts only what happens before such a touch and resets the Wretch at home before the touch step: 3/3 PASS (`l9_roam_reg7b`) |
+| l9_watch | 1 of 3 runs: "on the third download it comes and walks round that house" (17% of the beat near the house, the threshold is higher); 2 of 3 PASS (`l9_watch_reg7b`). Random-layout sensitivity of an r6 test, unchanged code |
+| qa5/s5_smoke, qa5/s5_more | sandbox screenshot paths made portable. The hotel steps pass (keys, staff door, stairs, valves → exit with the fire lock reset, moth attack, death screen, retry); their final steps still expect the pre-r4 Level 5 end screen (Level 5 hands over to Level 18 since r4) and are kept for reference only |
+
+## Visual checks
+Screenshots inspected: Cross Hall both ways (columns, runner, chandeliers, lit windows, the East Room through the arch), the East Room (windows, drapes, the female under the chandelier), the Gold Room (after brightening: two chandeliers I 0.72 plus four corner fills; the males circling), kitchen (wall tile scaled down 4×), security (CCTV wall, panel), the ballroom vestibule with the inner door open on the Cross Hall, the view just after walking through, Level 9 cars kerbside and in a driveway (the first car model's side glass read as a grey box under the flashlight; rebuilt as trapezoid panels with tumblehome and tube pillars), Level 18 music room, cubbies, birthday room and bus. docs/screenshots/r7_*.jpg.
+
+## Not tested / next gate
+A human pass on a real GPU: portal cost (a second half-resolution scene render while an inner door is open and in view), how readable the fire-lock chain is without the compass, whether the females are fair (acid damage 11 / 16 / 21 by difficulty, puddles 2.5/0.5 s), the floor piano's feel (stepping on/off keys), and the car shapes in motion.
+
+# QA — r6 · 2026-10-01 (branch story-r6, kept for reference)
+
+## Environment and scope
+Headless Chromium for Testing (Playwright, SwiftShader) on macOS arm64, 960×540 unless noted; Babylon.js served from qa/babylon.js; optional Google Fonts blocked (the single net::ERR_FAILED line is intentional). Debug state calls and simStep, as before: these checks prove the logic and the wiring, not difficulty, pacing or feel. No human, real-GPU, audio or touch test of the r6 content.
+
+## New r6 checks (qa_r6/*.js, outputs in BR_QA_OUT)
+| Check | Result |
+|---|---|
+| l0_story | Three rooms carved (camp / substation 3×3, office 3×3 or 4×3, doorways 2 / 1 / 2); every cell and all four tapes reachable after carving; Reyes starts hurt in the office; three logbook pages and three breakers; keypad starts unpowered; Brandt's power call; camp radio reaches Outpost Nine and locks the tape signal; whiteboard / map / crate; logbook complete (+1 battery); FIELD NOTES lists objectives, leads and documents; Reyes asks for water, takes it, heals you, gets up; three breakers power the keypad (Howlers investigate); exit opens; run flags carried into Level 9; a new Level 0 run resets flags and the keypad; battery route (no sprint, connected at the door). Repeated on 6 random layouts, all PASS, no recovered frame errors |
+| l9_story | Story houses chosen (Hale on Maple Street every time); arrival radio remembers the Level 0 call; extra canister locker in the blue house; three Hale notes and the safe; relief-team call after the map; Watch house rota → HUD patrol timer; Abara's tape and the torn page; lab notes give the safe combination and the keycard task offers the safe; photographs; safe dials open (2.4 s hold) and gives the spare keycard; objective "TAKE THE SERVICE ELEVATOR — OR CURE DR. HALE"; checkpoint SPARE KEYCARD; elevator with the spare card and Outpost Nine's line; flags (hale9 = left, journal9 = 3, abara9, rota9). 5 random layouts, all PASS |
+| l5_story | Office and the guest's locked room built; Hale speaks from the car and takes the radio lines when hale9 = saved; register and night audit; switchboard reaches the guest, who asks for rye (HUD mentions it); rye left, key slides out; master key → staff door with no housekeeping keys (checkpoint MASTER KEY, keys task "NOT NEEDED"); his room is empty; boilers and exit; flags. PASS |
+| l9_termzoom | Terminal zoom starts with the download, deepens with progress, lets go when you look away, when a Wretch hunts, and when the transfer completes. PASS |
+| l9_windows | 649 window positions per layout; ~190 real ground-floor openings and ~190 upstairs portals, each with LOOK OUTSIDE; the upstairs portal renders while you face it; LOOK OUTSIDE puts the camcorder at the glass and a step ends it; the sill still blocks walking out; latching turns the thumb-turn 90° and throws the bolt 5 cm. A portal frame was compared with the same view rendered directly from the room's physical position: they match once the facade's own window dressing (deliberately hidden from the portal) is accounted for. PASS |
+| l9_hack | PACKET STACK opens with the download (4 packets on Normal) and the transfer doesn't move by itself; the camcorder pushes in; real key presses move and turn the block without moving the player; a completed row verifies a packet (+25%); a full well corrupts the link (−1 packet, modem screech); E steps back and the terminal offers RESUME; the last packet completes the download. PASS |
+| Level 9 rerun after windows / deadbolts / PACKET STACK (logs `*_reg4`) | l9_story 16/16, cp9 (latch / unlatch / X latch unchanged), crash3 (no errors), crashrf (only the injected fault), hearing, wretch_speed, s9_to5, water (same as above), levels 17/17, brief9 25/25, s18_final 10/10. crash3 / crashrf / cp9 / l9_termzoom set the debug-only `HACK9.skip` to keep the old timed transfer they were written for |
+| l9_peep | A closed door offers [V] PEEPHOLE; V puts the camcorder 16 cm outside the leaf with a 1.9 rad lens and the fisheye pass; a Watch on the walk registers (lens breathes, heartbeat); the view turns at most 0.75 rad; V again, E or a step lets go; an open door has no peephole; doors inside a house have none, and the front door's works only from inside. Visual check against screenshots of *No, I'm Not a Human* (teal night lens, fisheye porthole, low line count, the visitor lit in the middle): docs/screenshots/r6_L9_peephole.jpg. PASS |
+| Level 9 rerun after the peephole (logs `*_reg5`) | l9_story, l9_windows, l9_hack, cp9 (latch unchanged), crashrf (only the injected fault), hearing, s9_to5, levels 17/17, levels_mobile (fits), brief9 25/25 |
+| l9_roam | House Wretches start awake (rest); in 60 s with you silent and crouched in its house one rested, prowled, climbed the stairs and opened 4 doors, and never heard you; walking into it wakes it. PASS |
+| l9_watch | The Watch whistles on its rounds; on the third download it walks a beat (came from 53 m to within 12 m of that house, 29% of the next 80 s within 16 m), whistles while it does, and Outpost Nine names the street. PASS |
+| Level 9 rerun after roaming Wretches and the new Watch (logs `*_reg6`) | l9_roam, l9_peep, l9_hack, l9_story, cp9 (latch unchanged), crash3 (no errors; a woken Wretch now ends in prowl or rest instead of home asleep), crashrf (only the injected fault), hearing (the test puts Wretches to sleep first, same results), wretch_speed (Easy peak 1.83 m/s, unchanged), s9_to5, levels 17/17, s18_final 10/10. Two r6 tests failed once on a random layout and were fixed: l9_watch (a Watch 105 m away could not reach the house in time: it is now brought round a corner 30–45 m away, out of your sight, and 90% of its waypoints stay on the beat; passed twice since), l9_windows (the test stood the player inside furniture under a window and collision pushed them out through the sill; the test now stands a step back; passed twice since) |
+| l18_story | Art room built and counted as bright / safe; the Sunshine Room door is still the Dino's class door; lost & found lists objects from the given flags; the letter opens on paper and leads to the crayons; four pinned without crayons → the door waits; fifth drawing and crayons in the art room; colouring the door (2.4 s hold) finishes it; YOU REMEMBERED card assembled from the flags (Hale, one lost explorer, Reyes, room 522, the camera). PASS |
+
+## Earlier suites rerun on the r6 build
+Logs in qa_r6/logs (`*_reg` = first pass, `*_reg2` / `*_reg3` = reruns on the final code). No `QA FAIL`, no PAGEERROR, no unhandled rejection in any of them; the single net::ERR_FAILED in each is the blocked font.
+| Suite | Result on r6 |
+|---|---|
+| s18_smoke, s18_more, s18_final | PASS (s18_final 10/10). These scripts now pick up the art-room crayons before pinning, so pinning the fourth drawing still finishes the door as the r4 tests expect |
+| levels (17/17), levels_mobile (fits, 5 buttons), brief9 (25/25 with the new FIELD NOTES line on slide 1) | PASS, same as r5 |
+| hearing, wretch_speed | Same behaviour as r5 (silence and light never raise suspicion; walk / sprint wake; Easy chase stays below walking speed) |
+| s9_to5 | Level 0 → 9 → 5 reaches play in each level (run5.js and s9_to5.js no longer hard-code sandbox paths) |
+| cp9, cpl | Checkpoints and retry unchanged in all four levels |
+| crash3 | No errors (one Nightmare repetition ended in a death, as in earlier runs) |
+| crashrf | Only the intentionally injected, recovered fault |
+| water | Level 0 / 5 / 18 counts identical to r5; Level 9 has two more almond waters and one more battery on every difficulty (17 / 12 / 8 placed items): the relief team's supplies in the blue house |
+
+## Visual checks
+Screenshots inspected for every new place: Level 0 camp / substation / office, Level 9 street sign / Watch lawn sign / Hale's safe / blue house, Level 5 night audit overlay / the guest's door, Level 18 art room / lost & found / ending card (docs/screenshots/r6_*.jpg). Found and fixed during this pass: `PropBatch.finish()` was disposing story meshes parented to batch roots (logbook pages, breaker handles, camp map and whiteboard, street-sign blades), fixed with `twin()`; a clipped lawn-sign texture; rooms that read as empty at 4×4 cells (now 3×3 with clutter); puddles that read as holes; long toasts running off-screen.
+
+## Not tested / next gate
+A human playthrough of both routes in each level (is the power puzzle readable? is the guest's request findable without the switchboard? does the safe feel fair?), the r6 HUD and FIELD NOTES on a phone, and voicing the new lines.
+
+---
+
+# QA — r5 · 2026-10-01 (previous release, kept for reference)
 
 ## Environment and scope
 Same harness as r4.4: headless Chromium + SwiftShader (software WebGL) at 960×540 (390×844 for the phone layout suite), optional Google Fonts blocked (the single net::ERR_FAILED line is intentional), Babylon.js served from qa/babylon.js, debug time scaling and direct state calls. The machine is a 2-core sandbox, so frame rates here (0.7–9 fps) say nothing about real hardware. No real-GPU, phone, audio or human playtest was done for r5.

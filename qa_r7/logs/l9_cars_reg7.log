@@ -1,0 +1,9 @@
+error: Failed to load resource: net::ERR_FAILED
+QA load ms 733
+QA cars {"n":50,"st":29,"dr":21,"kinds":{"wagon":7,"sedan":28,"hatch":6,"pickup":9},"bad":[],"nbad":0,"ex":{"x":48.517318265512586,"z":6.0200000000000005,"ry":1.5707963267948966,"W":1.8,"L":4.9,"kind":"sedan"},"ex2":{"x":12.6,"z":46.62,"ry":3.141592653589793,"W":1.8,"L":4.9,"kind":"wagon"}}
+QA PASS cars on the streets and in driveways: 29 + 21
+QA PASS no car footprint touches the kerb, sidewalk, grass or a house
+QA PASS several kinds of car: {"wagon":7,"sedan":28,"hatch":6,"pickup":9}
+QA errs {"n":0,"seen":{},"last":""}
+QA PASS no recovered frame errors
+QA PAGE CLOSE

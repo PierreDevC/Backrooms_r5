@@ -1,0 +1,16 @@
+error: Failed to load resource: net::ERR_FAILED
+QA load ms 732
+QA l5 load ms 2347
+QA {"st":"play","fps":"4.4","meshes":544,"moths":11,"keys":3,"valves":3,"doors":40,"phase":"arrive","obj":"FIND THE HOUSEKEEPING KEYS · 0/3","tapes":"KEYS 0/3","code":"LEVEL 5","guest":20,"pl":["59.4","106.6"]}
+QA shot lobby
+QA shot bev_south
+QA shot bev_north
+QA shot loop
+QA phase staff keys 3 | phase stairs
+QA after tp {"pl":["12.6","117.7"],"ph":"valves","st":"play"}
+QA shot landing
+QA shot boiler1
+QA valves {"ph":"exit","v":3,"moths":"circleH,circleH,circleH,roostH,roostH,roostH,wakeB,wakeB,wakeB,roostB,roostH"}
+QA shot exit
+QA end {"st":"intro","title":"TAPE ENDS HERE","btn":"▶ PLAY AGAIN"}
+QA PAGE CLOSE

@@ -1,0 +1,10 @@
+error: Failed to load resource: net::ERR_FAILED
+QA load ms 720
+QA termzoom {"a":{"fov0":1.082},"s1":{"sus":0,"hunt":false,"chase":0,"pitch":0.46,"tz":0.275,"fov":0.796,"prog":0.19,"active":true,"done":false},"s2":{"sus":0,"hunt":false,"chase":0,"pitch":0.54,"tz":0.619,"fov":0.589,"prog":0.61,"active":true,"done":false},"away":{"tz":0.009},"back":{"tzBefore":0.768,"wretch":true,"tzChase":0.012},"fin":{"sus":0,"hunt":false,"chase":0,"pitch":0.54,"tz":0,"fov":1.082,"prog":1.01,"active":false,"done":true}}
+QA PASS zoom starts as the download starts
+QA PASS zoom deepens as the download progresses
+QA PASS looking away lets the zoom go
+QA PASS a hunting Wretch lets the zoom go
+QA PASS zoom releases when the transfer completes
+QA PASS no recovered frame errors
+QA PAGE CLOSE

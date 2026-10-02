@@ -1,8 +1,8 @@
 // ---------- Level 18 · Nostalgic Memories: layout (the preschool, the playland, the slide hall, memory rooms hanging in the void), geometry, lights ----------
-const Z18 = { VOID: 0, HALL: 1, CLASS: 2, NAP: 3, YEL: 4, PLAY: 5, SLIDE: 6, MEAD: 7, BED: 8, KIT: 9, VWALK: 10 };
+const Z18 = { VOID: 0, HALL: 1, CLASS: 2, NAP: 3, YEL: 4, PLAY: 5, SLIDE: 6, MEAD: 7, BED: 8, KIT: 9, VWALK: 10, MUSIC: 11, CUBBY: 12, PARTY: 13, BUS: 14 };
 const R18Z = { PRE: 0, YEL: 1, PLAY: 2, SLIDE: 3, MEAD: 4, BED: 5, KIT: 6, VE: 7, VW: 8 };
 const L18_N = 40, L18_LMR = 640;
-const H18 = { [Z18.PLAY]: 4.2, [Z18.SLIDE]: 4.2, [Z18.MEAD]: 3.4, [Z18.BED]: 2.6, [Z18.KIT]: 2.6, [Z18.VWALK]: 5.0 };
+const H18 = { [Z18.PLAY]: 4.2, [Z18.SLIDE]: 4.2, [Z18.MEAD]: 3.4, [Z18.BED]: 2.6, [Z18.KIT]: 2.6, [Z18.VWALK]: 5.0, [Z18.PARTY]: 2.6, [Z18.BUS]: 2.3 };
 const zoneH18 = z => H18[z] ?? CEIL;
 const cell18 = (x, z) => cIdx(cellOf(x), cellOf(z));
 const zone18 = (x, z) => LV.zone[cell18(x, z)];
@@ -16,7 +16,7 @@ const SLIDES18 = [   // slide hall, against the south wall; each goes somewhere 
   { id: 'green', name: 'GREEN', col: [0.22, 0.64, 0.28], x: 31, to: 'hall', icon: 'school' },
 ];
 const DOORC18 = [[0.95, 0.74, 0.12], [0.84, 0.2, 0.15], [0.2, 0.46, 0.84], [0.28, 0.66, 0.32]];
-const PLATES18 = ['BUTTERFLIES', 'LADYBUGS', 'BUMBLEBEES', 'LITTLE STARS', 'RAINBOWS', 'SUNFLOWERS', 'TEDDY BEARS', 'DUCKLINGS', 'OFFICE', 'STORAGE', 'TOILETS', 'CUBBIES', 'ART ROOM', 'MUSIC'];
+const PLATES18 = ['BUTTERFLIES', 'LADYBUGS', 'BUMBLEBEES', 'LITTLE STARS', 'RAINBOWS', 'SUNFLOWERS', 'TEDDY BEARS', 'DUCKLINGS', 'OFFICE', 'STORAGE', 'TOILETS', 'ART ROOM', 'PAINTS', 'GYM'];   // r7: MUSIC and CUBBIES are real rooms now
 
 function genLayout18() {
   const n = N;
@@ -51,6 +51,8 @@ function genLayout18() {
   LV.mead = rect(room(Z18.MEAD, R18Z.MEAD, 'mead'), 3, 28, 7, 32); way(5, 28, 3, 'door', { dk: 'mead', col: 3, from: [5, 27] });
   LV.voids = [VE, VW];
   for (const r of LV.voids) for (const c of r.cells) LV.dark[c] = 1;
+  planPlaces18(room, rect, way);   // r6: the art room
+  planMem18(room, rect, way);   // r7: music room, cubbies, your birthday, the field-trip bus
   // fake doors along the preschool corridor and the yellow corridor (nothing behind them but the dark)
   const free = (x, y) => inGrid(x, y) && LV.zone[cIdx(x, y)] === Z18.VOID;
   let pi = 0;
@@ -99,6 +101,10 @@ function side18(x, y) {
     case Z18.MEAD: return { m: 'meadow', c: [1, 1, 1], h, t: TRIM18.green, tp: 2 };
     case Z18.BED: return { m: 'bedw', c: [1, 1, 1], h, t: TRIM18.white, tp: 2 };
     case Z18.KIT: return { m: 'kitw', c: [1, 1, 1], h, t: TRIM18.kit, tp: 2 };
+    case Z18.MUSIC: return { m: 'clsw', c: [0.9, 0.98, 1.1], h, t: TRIM18.white, tp: 1 };
+    case Z18.CUBBY: return { m: 'clsw', c: [1.06, 1.0, 0.88], h, t: TRIM18.white, tp: 1 };
+    case Z18.PARTY: return { m: 'bedw', c: [1.12, 0.88, 0.98], h, t: TRIM18.white, tp: 2 };
+    case Z18.BUS: return { m: 'skyw', c: [0.78, 0.88, 0.8], h, t: TRIM18.green, tp: 2 };
     default: return { m: 'voidw', c: [1, 1, 1], h, t: TRIM18.black, tp: 0 };
   }
 }
@@ -113,8 +119,8 @@ function opening18(e) {
 // ---------- geometry ----------
 const MAT18_S = { skyw: [1 / 2.85, 1 / 2.85], clsw: [1 / 2.85, 1 / 2.85], yelw: [1 / 2.4, 1 / 2.85], mural: [1 / 9, 1 / 4.2], teal: [1 / 2.85, 1 / 2.85], meadow: [1 / 7.2, 1 / 3.4],
   bedw: [1 / 2.6, 1 / 2.6], kitw: [1 / 2.6, 1 / 2.6], voidw: [1 / 4, 1 / 5], ktile: 1 / 1.2, kcarpet: 1 / 2.4, turf: 1 / 2, gcarpet: 1 / 2.4, wood: 1 / 2.4, lino: 1 / 1.2, voidf: 1 / 4, dceil: 1 / 1.2, skyc: 1 / 3.6, starc: 1 / 2.6 };
-const FLOOR18 = { [Z18.HALL]: 'ktile', [Z18.CLASS]: 'ktile', [Z18.NAP]: 'gcarpet', [Z18.YEL]: 'ktile', [Z18.PLAY]: 'kcarpet', [Z18.SLIDE]: 'gcarpet', [Z18.MEAD]: 'turf', [Z18.BED]: 'wood', [Z18.KIT]: 'lino', [Z18.VWALK]: 'voidf' };
-const CEIL18 = { [Z18.HALL]: 'dceil', [Z18.CLASS]: 'dceil', [Z18.NAP]: 'dceil', [Z18.YEL]: 'dceil', [Z18.PLAY]: 'dceil', [Z18.SLIDE]: 'dceil', [Z18.MEAD]: 'skyc', [Z18.BED]: 'starc', [Z18.KIT]: 'dceil' };
+const FLOOR18 = { [Z18.HALL]: 'ktile', [Z18.CLASS]: 'ktile', [Z18.NAP]: 'gcarpet', [Z18.YEL]: 'ktile', [Z18.PLAY]: 'kcarpet', [Z18.SLIDE]: 'gcarpet', [Z18.MEAD]: 'turf', [Z18.BED]: 'wood', [Z18.KIT]: 'lino', [Z18.VWALK]: 'voidf', [Z18.MUSIC]: 'kcarpet', [Z18.CUBBY]: 'ktile', [Z18.PARTY]: 'wood', [Z18.BUS]: 'lino' };
+const CEIL18 = { [Z18.HALL]: 'dceil', [Z18.CLASS]: 'dceil', [Z18.NAP]: 'dceil', [Z18.YEL]: 'dceil', [Z18.PLAY]: 'dceil', [Z18.SLIDE]: 'dceil', [Z18.MEAD]: 'skyc', [Z18.BED]: 'starc', [Z18.KIT]: 'dceil', [Z18.MUSIC]: 'dceil', [Z18.CUBBY]: 'dceil', [Z18.PARTY]: 'dceil', [Z18.BUS]: 'dceil' };
 function buildGeometry18(scene, mats) {
   const CH = 8, NC = Math.ceil(N / CH), G = {};
   const geo = (m, ci) => { const k = m + ':' + ci; return G[k] || (G[k] = new Geo(true)); };

@@ -21,7 +21,7 @@ function buildWatch() {
   part('Sphere', { diameter: 0.25, segments: 14 }, r.head, mat, SK, 0, [0, 0.02, 0], null, [0.78, 1.4, 0.95]);
   part('Cylinder', { diameter: 0.24, height: 0.1, tessellation: 14 }, r.head, mat, CAP, 0, [0, 0.17, -0.01]);
   part('Box', { width: 0.2, height: 0.015, depth: 0.15 }, r.head, mat, CAP, 0, [0, 0.125, 0.14], [-0.15, 0, 0]);
-  r.eyes = []; for (const s of [-1, 1]) r.eyes.push(part('Sphere', { diameter: 0.034, segments: 6 }, r.head, mat, [1, 0.95, 0.72], 1, [s * 0.043, 0.055, 0.108]));
+  r.eyes = []; for (const s of [-1, 1]) r.eyes.push(part('Sphere', { diameter: 0.034, segments: 6 }, r.head, mat, [1, 0.95, 0.72], 2.4, [s * 0.043, 0.055, 0.108]));
   part('Box', { width: 0.075, height: 0.009, depth: 0.01 }, r.head, mat, [0.04, 0.02, 0.02], 0, [0, -0.08, 0.11]);
   r.sh = []; r.el = []; r.hands = [];
   for (const s of [-1, 1]) {
@@ -45,6 +45,7 @@ function buildWatch() {
     part('Box', { width: 0.12, height: 0.1, depth: 0.3 }, kn, mat, [0.06, 0.05, 0.05], 0, [0, -0.63, 0.06]);
   }
   setEmi(mat, 0.7);
+  root.scaling.set(1.14, 1.24, 1.14);   // r6: the procedural fallback grows with the skinned one
   return r;
 }
 function buildWretch(o = {}) {
@@ -143,10 +144,11 @@ function knock(a, dmg, cause, push) {
 class Watch extends Agent {
   constructor(i) {
     super(buildWatch(), 0.36); mergeRig(this.rig);
-    Object.assign(this, { i, st: 'patrol', wp: null, percT: 0, sus: 0, lk: null, lost: 0, atkCd: 0, leaveT: 0, lurkT: 0, bangT: 0, door: null, look: 0, seen: false, shadowR: 0.7, stT: 0, bangs: 0 });
+    Object.assign(this, { i, st: 'patrol', wp: null, callT: rnd(12, 30), beat: null, whistled: -99, percT: 0, sus: 0, lk: null, lost: 0, atkCd: 0, leaveT: 0, lurkT: 0, bangT: 0, door: null, look: 0, seen: false, shadowR: 0.7, stT: 0, bangs: 0 });
     this.edgeFn = watchEdge;
   }
   newWaypoint(far) {
+    const B = this.beat; if (B && FX.t < B.until && !far && B.cells.length && RNG() < 0.9) { this.wp = cellPt(pick(B.cells), 0.7, 0.4); return; }   // r6: walking a beat round one house
     const S = streetCells9(); let c = -1;
     for (let k = 0; k < 20; k++) {
       const q = pick(S), x = cellCenter(q % N), z = cellCenter((q / N) | 0), d = dist2(x, z, this.x, this.z), dp = dist2(x, z, PL.x, PL.z);
@@ -192,11 +194,13 @@ class Watch extends Agent {
         }
       }
     }
+    if (play && ['patrol', 'search', 'leave'].includes(this.st) && (this.callT -= dt) <= 0) { this.callT = rnd(...[[30, 55], [25, 45], [20, 38]][G.diff]); watchWhistle9(this); }   // r6: the rounds have a whistle
     let spd = 1.45, amp = 0.55, look = Math.sin(t * 0.55 + this.i * 2) * 0.55, armR = -1.15, lean = 0.12;
     switch (this.st) {
       case 'patrol': case 'leave': {
         if (!this.wp) this.newWaypoint(this.st === 'leave');
         const r = this.navTo(this.wp.x, this.wp.z, this.st === 'leave' ? 2.2 : 1.45, dt);
+        this.stuckT = this.spd < 0.15 ? (this.stuckT || 0) + dt : 0; if (this.stuckT > 4) { this.stuckT = 0; this.wp = null; break; }   // r6: no way through: go somewhere else
         if (r < 1.0) { if (this.st === 'leave' && this.leaveT <= 0) this.st = 'patrol'; this.newWaypoint(this.st === 'leave'); }
         if (this.st === 'leave') spd = 2.2;
         break;
@@ -237,9 +241,13 @@ class Watch extends Agent {
       }
     }
     if (spd === 0) amp = 0;
+    // r6: under a roof it has to stoop; on its rounds the head snaps round now and then, too fast, and tilts back slowly
+    const stoop = indoorZ(LV.zone[this.cell()]); if (stoop) lean += 0.75;
+    if (['patrol', 'search', 'leave'].includes(this.st) && (this.jerkT = (this.jerkT ?? rnd(3, 8)) - dt) <= 0) { this.jerkT = rnd(3.5, 9); this.look = rnd(-1.4, 1.4); this.tilt = rnd(-0.55, 0.55); }
+    this.tilt = damp(this.tilt || 0, 0, 1.1, dt); if (this.st !== 'notice') this.rig.head.rotation.z = this.tilt;
     this.look = damp(this.look, look, 3, dt);
     this.ph += this.spd * dt * 2.1; const a = clamp(this.spd / 1.5, 0, 1.3);
-    animHuman(this.rig, this.ph, Math.max(0.12, Math.min(amp, a)), { armR: armR + Math.sin(t * 1.3) * 0.08, elR: -0.35, look: this.look * 0.6, lean, armA: 0.35, legA: 0.5 });
+    animHuman(this.rig, this.ph, Math.max(0.12, Math.min(amp, a)), { armR: armR + Math.sin(t * 1.3) * 0.08, elR: -0.35, look: this.look * 0.6, lean, armA: 0.35, legA: 0.5, drop: stoop ? -0.32 : 0 });
     this.rig.sh[1].rotation.y = this.look;
     stepPhase(this, dt, 1.25, () => footAt9(this, 'hstep', this.st === 'chase' ? 1.15 : 0.8, 0.72, 34, 3.2));
     this.sync();
@@ -266,8 +274,9 @@ const wrK9 = () => (G.diff === 0 ? 0.72 : 1);   // other fast moves (doorway lin
 // A noise of level n (PL.noise: crouch ≈0.04, walk ≈0.42, sprint 1) carries n × hearR9 metres (physical distance, floors included).
 const WR9_HEAR = [6.5, 8.5, 10];     // metres at full noise for a sleeping Wretch (walking ≈ 0.42 of that, crouching ≈ 0.04)
 const WR9_SUS = [0.6, 0.9, 1.3];     // how fast hearing you turns into waking (per second, ×0.4–1.6 by how clearly): ~1–2.5 s of noise wakes a sleeper
-const WR9_FORGET = [4, 6, 8];        // seconds of silence before a chasing Wretch loses you
-function hearR9(w) { return WR9_HEAR[G.diff] * (w.st === 'chase' ? 1.5 : w.st === 'dormant' ? 1 : 1.2); }
+const WR9_FORGET = [4, 6, 8];
+const WR9_ROAM = [0.8, 1.0, 1.15];   // r6: house Wretches roam their house at a shuffle (m/s), stopping now and then to listen        // seconds of silence before a chasing Wretch loses you
+function hearR9(w) { return WR9_HEAR[G.diff] * (w.st === 'chase' ? 1.5 : w.st === 'lost' ? 1.2 : 1); }
 function hear9(w) {   // 0 = it can't hear you; up to 1 = loud and close
   if (G.state !== 'play' || !w.present || !w.inHouse(PL.cell)) return 0;
   const d = physD9(w);
@@ -278,7 +287,7 @@ function hear9(w) {   // 0 = it can't hear you; up to 1 = loud and close
 function noiseAt9(x, z, lvl, add) {   // a sound in the world (terminal modem, …): nearby Wretches in that house stir
   const c = cIdx(cellOf(x), cellOf(z)), P = phys9(x, z);
   for (const w of AI9.wretches) {
-    if (!w.present || !w.inHouse(c) || !['dormant', 'prowl', 'return', 'lost'].includes(w.st)) continue;
+    if (!w.present || !w.inHouse(c) || !['dormant', 'prowl', 'return', 'lost', 'rest'].includes(w.st)) continue;
     const q = phys9(w.x, w.z), d = Math.hypot(q[0] - P[0], q[1] - P[1], q[2] - P[2]), R = lvl * hearR9(w);
     if (d < R) { w.sus = Math.min(1, (w.sus || 0) + add * (0.5 + (1 - d / R))); w.lk = { x, z }; }
   }
@@ -302,12 +311,12 @@ class Wretch extends Agent {
     this.cellFn = this.lab ? (c => LV.zone[c] !== ZN.LAB) : (c => LV.bld[c] !== h.id);
     this.edgeFn = (x, y, d) => { const dr = doorOn(x, y, d); return !dr || !dr.latched; };
     const p = cellPt(cell, 0.9, 0.35); this.home = p; this.hyaw = rnd(0, TAU);
-    Object.assign(this, { st: 'dormant', stT: 0, percT: rnd(0, 0.3), atkCd: 0, lk: null, doorT: 0, bangT: 0, bangs: 0, bdoor: null, look: 0, twitch: 0, shadowR: 0.5, scrCd: 0, wakeCd: 0, yOff: 0, unheardT: 0, sus: 0, hear: 0, stirred: false, cl: null });
+    Object.assign(this, { st: 'rest', restT: rnd(1, 6), stT: 0, percT: rnd(0, 0.3), atkCd: 0, lk: null, doorT: 0, bangT: 0, bangs: 0, bdoor: null, look: 0, twitch: 0, shadowR: 0.5, scrCd: 0, wakeCd: 0, yOff: 0, unheardT: 0, sus: 0, hear: 0, stirred: false, cl: null });
     this.place(p.x, p.z, this.hyaw);
   }
   inHouse(c) { return this.lab ? LV.zone[c] === ZN.LAB : LV.bld[c] === this.h.id; }
   wake(why) {
-    if (this.st !== 'dormant' && this.st !== 'return' && this.st !== 'prowl') return;
+    if (!['dormant', 'return', 'prowl', 'rest'].includes(this.st)) return;
     this.st = 'wake'; this.stT = 0; this.lk = { x: PL.x, z: PL.z };
     if (this.rig.sk) { rigBase(this.rig, null); rigPlay(this.rig, 'hit', { fade: 0.06, restart: true }); }
     if (this.scrCd <= 0) { this.scrCd = 6; playS(bpick('scrHi'), { pos: this.pos(1.3), vol: 1.1, rate: rnd(1.15, 1.35) }); }
@@ -323,13 +332,13 @@ class Wretch extends Agent {
   hearTick() {   // every 0.2 s: listen; suspicion builds while it hears you and fades in silence
     this.hear = hear9(this);
     if (this.hear > 0) { this.lk = { x: PL.x, z: PL.z }; this.unheardT = 0; }
-    if (!['dormant', 'prowl', 'return', 'lost'].includes(this.st)) { this.sus = 0; return; }
-    const alert = this.st !== 'dormant';
+    if (!['dormant', 'prowl', 'return', 'lost', 'rest'].includes(this.st)) { this.sus = 0; return; }
+    const alert = this.st === 'lost';   // r6: roaming is its normal state; only a Wretch that just lost you listens harder
     if (this.hear > 0) this.sus = Math.min(1, this.sus + 0.2 * WR9_SUS[G.diff] * (alert ? 1.5 : 1) * (0.4 + 1.2 * this.hear));
     else this.sus = Math.max(0, this.sus - 0.2 * 0.3);
     if (this.sus >= 1) {
       this.sus = 0; this.stirred = false;
-      if (this.st === 'dormant') this.wake('heard');
+      if (['dormant', 'rest', 'prowl', 'return'].includes(this.st)) this.wake('heard');
       else { this.st = 'chase'; this.stT = 0; this.unheardT = 0; if (this.scrCd <= 0) { this.scrCd = 6; playS(bpick('scrHi'), { pos: this.pos(1.3), vol: 1.0, rate: rnd(1.15, 1.35) }); } }
       return;
     }
@@ -360,7 +369,7 @@ class Wretch extends Agent {
   update(dt) {
     const d = this.d, t = FX.t, play = G.state === 'play';
     this.stT += dt; this.atkCd -= dt; this.percT -= dt; this.scrCd -= dt;
-    if (this.st === 'dormant' && d > 30) { if (this.shown) this.cull(); return; }
+    if ((this.st === 'dormant' || this.st === 'rest' || this.st === 'prowl') && physD9(this) > 30) { if (this.shown) this.cull(); return; }   // far away: it keeps its place
     let spd = 0, lean = 0.75, armL = -0.3, armR = -0.3, look = 0, drop = -0.06, amp = 0;
     if (this.percT <= 0) {
       this.percT = 0.2; this.hearTick();
@@ -434,21 +443,29 @@ class Wretch extends Agent {
         if (this.stT > 4) { this.st = 'prowl'; this.stT = 0; }
         break;
       }
-      case 'prowl': {
+      case 'rest': {   // r6: it stands where it stopped and listens, head tipping; then it moves on
+        spd = 0; look = Math.sin(t * 0.9 + this.home.x) * 0.7 + (this.sus > 0.3 ? Math.sin(t * 30) * 0.08 : 0); lean = 0.7;
+        if (this.sus > 0.3 && this.lk) this.face(Math.atan2(this.lk.x - this.x, this.lk.z - this.z), 1.4, dt);
+        if (play && d < 0.85 && this.inHouse(PL.cell)) { this.lk = { x: PL.x, z: PL.z }; this.wake('touch'); break; }   // you walked into it
+        if (this.stT > this.restT) { this.st = 'prowl'; this.stT = 0; this.wp = null; }
+        break;
+      }
+      case 'prowl': {   // r6: roaming is what it does: room to room, upstairs and down, opening any door that isn't latched
         if (!this.wp) {
           let cs;
           if (this.lab) cs = LV.lab.R.H.cells;
           else { const mf = this.myFl(), other = this.h.stair && RNG() < 0.3, pool = this.h.rooms.filter(r => ((r.fl || 0) === mf) !== other); cs = pick(pool.length ? pool : this.h.rooms).cells; }
           this.wp = cellPt(pick(cs), 0.9, 0.35);
         }
-        const r = this.goH(this.wp.x, this.wp.z, 1.3, dt); spd = 1.3; look = Math.sin(t * 1.2) * 0.6;
-        if (r < 0.8) this.wp = null;
-        if (this.stT > 16) { this.st = 'return'; this.stT = 0; }
+        spd = WR9_ROAM[G.diff] * wrK9(); const r = this.goH(this.wp.x, this.wp.z, spd, dt); look = Math.sin(t * 1.2) * 0.6;
+        if (play && d < 0.85 && this.inHouse(PL.cell)) { this.lk = { x: PL.x, z: PL.z }; this.wake('touch'); break; }
+        if (r < 0.8) { this.wp = null; if (RNG() < 0.45) { this.st = 'rest'; this.stT = 0; this.restT = rnd(2.5, 7); } }
+        if (r === 0 && this.stT > 3) { this.wp = null; this.stT = 0; }   // no way there (a latched door): pick somewhere else
         break;
       }
       case 'return': {
         const r = this.goH(this.home.x, this.home.z, 1.2, dt); spd = 1.2;
-        if (r < 0.4) { this.st = 'dormant'; this.stT = 0; }
+        if (r < 0.4) { this.st = 'rest'; this.stT = 0; this.restT = rnd(3, 7); }
         break;
       }
     }
@@ -605,7 +622,7 @@ function foes9() {
     const ch = ['wake', 'chase', 'bang', 'climb'].includes(w.st), inH = w.h && w.h.id === pb;
     if (inH) add(w, 24, ch, w.sus > 0.3 ? 'ws' : 'w'); else if (ch) add(w, 20, ch, 'w');
   }
-  for (const w of AI9.watch) { const ch = w.st === 'chase' || w.st === 'notice'; add(w, ch ? 30 : 16, ch, 'm'); }
+  for (const w of AI9.watch) { const ch = w.st === 'chase' || w.st === 'notice'; add(w, ch ? 30 : FX.t - w.whistled < 3.5 ? 90 : 16, ch, 'm'); }   // r6: a whistle gives him away for a moment
   const s = AI9.subject; if (s && ['burst', 'lured', 'sniff', 'hunt'].includes(s.st)) add(s, 20, s.st === 'hunt', 'w');
   return out.sort((a, b) => a.d - b.d).slice(0, 3);
 }

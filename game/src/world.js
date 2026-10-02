@@ -1,5 +1,5 @@
 // ---------- scene assembly, props, items, lighting slots, post-processing ----------
-let ENG = null, CAM = null, PIPE = null, VHS = null;
+let ENG = null, CAM = null, PIPE = null, VHS = null, PEEP = null;
 const W = { interact: [], items: [], tapes: [], tvs: [], dead: [], beams: [] };
 const FX = { t: 0, amt: 1, glitch: 0, nv: 0, hurt: 0, fadeB: 1, fadeW: 0, exposure: 1.2, san: 0, lightScale: 1, flicker: 1, fog: [0.1, 0.085, 0.045], fogDen: 0.03, ambBoost: 0, envA: [0.02, 0.018, 0.013, 0], envS: [0, 0, 0, 0] };
 const SLOT = { pos: new Array(24).fill(0), dir: new Array(24).fill(0), col: new Array(24).fill(0), ext: new Array(24).fill(0) };
@@ -75,7 +75,7 @@ function buildProps() {
   const B = new PropBatch(mat);
   const scrMat = actMat('screen', { frag: 'scr' }); scrMat.setVector4('aTint', new BABYLON.Vector4(1, 1, 1, 1));
   W.scrMat = scrMat;
-  const busy = new Set([cIdx(LV.spawn.x, LV.spawn.y), cIdx(LV.exit.x, LV.exit.y), ...LV.tapeCells.map(c => cIdx(c.x, c.y))]);
+  const busy = new Set([cIdx(LV.spawn.x, LV.spawn.y), cIdx(LV.exit.x, LV.exit.y), ...LV.tapeCells.map(c => cIdx(c.x, c.y)), ...(LV.placeCells || [])]);   // r6: places are furnished on their own
   const CARD = [0.52, 0.4, 0.24], CARD2 = [0.46, 0.35, 0.2], TAPEC = [0.62, 0.52, 0.34];
   const cornerSpot = (cx, cy) => { const sx = RNG() < 0.5 ? -1 : 1, sz = RNG() < 0.5 ? -1 : 1; return [cellCenter(cx) + sx * rnd(0.95, 1.2), cellCenter(cy) + sz * rnd(0.95, 1.2)]; };
   const CB = mdlOk('cbox') ? mdlDims('cbox') : [0.384, 0.342, 0.516];
@@ -256,7 +256,7 @@ function buildExit() {
   root.computeWorldMatrix(true);
   const front = BABYLON.Vector3.TransformCoordinates(V3(0, 0, 0.9), root.getWorldMatrix());
   W.exit = { root, hinge, led, white, x: front.x, z: front.z, open: 0, opening: false, signPos: BABYLON.Vector3.TransformCoordinates(V3(0, 2.45, 0.4), root.getWorldMatrix()), doorPos: BABYLON.Vector3.TransformCoordinates(V3(0, 1.2, 0.1), root.getWorldMatrix()) };
-  W.interact.push({ x: W.exit.doorPos.x, z: W.exit.doorPos.z, y: 1.2, r: 2.2, label: () => G.code.length < 4 ? 'KEYPAD — LOCKED' : 'ENTER CODE', ok: () => !W.exit.opening, act: () => useExit() });
+  W.interact.push({ x: W.exit.doorPos.x, z: W.exit.doorPos.z, y: 1.2, r: 2.2, label: () => exitLabel0(), ok: () => !W.exit.opening, act: () => useExit() });
 }
 
 // ----- atmosphere: dust motes & flashlight beams -----
@@ -293,6 +293,8 @@ function setupPost(q) {
   PIPE.imageProcessingEnabled = false; PIPE.fxaaEnabled = false;
   PIPE.samples = q >= 2 ? 4 : 1;
   PIPE.bloomEnabled = true; PIPE.bloomThreshold = 1.1; PIPE.bloomWeight = 0.42; PIPE.bloomKernel = q >= 1 ? 64 : 32; PIPE.bloomScale = 0.5;
+  PEEP = LVL === 9 ? new BABYLON.PostProcess('peep', 'peep', ['pk'], null, 1.0, CAM, BABYLON.Texture.BILINEAR_SAMPLINGMODE, ENG) : null;   // r6: the Level 9 peephole
+  if (PEEP) { PEEP.__k = 0; PEEP.onApply = e => e.setFloat4('pk', PEEP.__k, Math.floor(FX.t * 12), PEEP.width / PEEP.height, 230); }
   VHS = new BABYLON.PostProcess('vhs', 'vhs', ['res', 'p1', 'p2', 'p3'], null, 1.0, CAM, BABYLON.Texture.BILINEAR_SAMPLINGMODE, ENG);
   VHS.onApply = e => { e.setFloat2('res', VHS.width, VHS.height); e.setFloat4('p1', FX.t, FX.amt, FX.glitch, FX.nv); e.setFloat4('p2', FX.hurt, FX.fadeB, FX.fadeW, FX.exposure); e.setFloat4('p3', FX.san, 0, 0, 0); };
 }
@@ -308,7 +310,7 @@ async function buildWorld(progress, diff) {
   SCN.clearColor = new BABYLON.Color4(0, 0, 0, 1); SCN.skipPointerMovePicking = true; SCN.blockMaterialDirtyMechanism = false;
   CAM = new BABYLON.FreeCamera('cam', V3(10, 1.6, 10), SCN); CAM.inputs.clear(); CAM.minZ = 0.05; CAM.maxZ = 95; CAM.fov = 1.0;
   progress(0.08, 'MAPPING LEVEL 0…'); await nextFrame();
-  genLayout(); planLevel(); collectPieces();
+  genLayout(); planLevel(); planPlaces0(); collectPieces();
   progress(0.16, 'PRINTING WALLPAPER…'); await nextFrame();
   const wp = genWallpaper(SCN, 1024);
   progress(0.3, 'SOAKING CARPET…'); await nextFrame();
@@ -323,7 +325,7 @@ async function buildWorld(progress, diff) {
   const mats = { wall: envMat('wallMat', 'MAT_WALL', wp.albedo, wp.normal), floor: envMat('floorMat', 'MAT_FLOOR', cp.albedo, cp.normal), ceil: envMat('ceilMat', 'MAT_CEIL', ce.albedo, ce.normal), trim: envMat('trimMat', 'MAT_TRIM', wp.albedo, wp.normal), fixture: fm };
   buildGeometry(SCN, mats);
   progress(0.84, 'SCATTERING DEBRIS…'); await nextFrame();
-  buildProps(); buildTapeSites(); buildExit(); buildDust();
+  buildProps(); buildTapeSites(); buildExit(); buildPlaces0(); buildDust();
   SCN.setRenderingOrder(0, (a, b) => (a.getMesh()._sortD ?? 400) - (b.getMesh()._sortD ?? 400));
   progress(0.94, 'SPOOLING TAPE…'); await nextFrame();
 }

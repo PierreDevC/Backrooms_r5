@@ -1,0 +1,14 @@
+error: Failed to load resource: net::ERR_FAILED
+QA load ms 788
+QA L0 {"st":"play","tapes":"TAPES 0/4","code":"CODE _ _ _ _","sig":true,"meshes":438}
+Error: ENOENT: no such file or directory, open '/data/qa5/l0.png'
+    at async open (node:internal/fs/promises:636:25)
+    at async Object.writeFile (node:internal/fs/promises:1243:14)
+    at async _Page.screenshot (/private/tmp/claude-501/-Volumes-crucial-Downloads-Backrooms-r5/e549f242-1f73-4657-828b-a9671490d7ac/scratchpad/node_modules/playwright-core/lib/coreBundle.js:61797:11)
+    at async module.exports (/Volumes/crucial/Downloads/Backrooms_r5/qa5/s9_to5.js:9:3)
+    at async /Volumes/crucial/Downloads/Backrooms_r5/qa5/run5.js:21:3 {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/data/qa5/l0.png'
+}

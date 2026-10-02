@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Read `AGENTS.md`, then `HANDOFF.md`, `docs/LEVEL18.md` and `docs/QA.md`.
+Read `AGENTS.md`, then `HANDOFF.md`, `docs/STORY.md`, `docs/LEVEL18.md` and `docs/QA.md`. r6: any player-facing words go through the `backrooms-dialogue` skill (`.claude/skills/`).
 
 - Build: `cd game && python3 build.py` (r5: if you change anything in `game/assets`, run `python3 tools/build_assets.py` in `game/` first; see docs/ASSETS.md)
 - Serve: `cd game && python3 -m http.server 8000 --bind 127.0.0.1`

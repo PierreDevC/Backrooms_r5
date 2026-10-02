@@ -1,6 +1,6 @@
 // ---------- Level 5 · The Hotel: layout (hotel wings, Beverly Room, boiler maze), wall pieces, geometry, lights ----------
-const Z5 = { VOID: 0, HALL: 1, ROOM: 2, BEV: 3, SERV: 4, BOIL: 5, BHALL: 6, VEST: 7, CLOS: 8, LOBBY: 9, ELEV: 10, STAIR: 11 };
-const R5 = { S: 0, W: 1, N: 2, E: 3, E2: 4, BEV: 5, SV: 6, BO: 7 };
+const Z5 = { VOID: 0, HALL: 1, ROOM: 2, BEV: 3, SERV: 4, BOIL: 5, BHALL: 6, VEST: 7, CLOS: 8, LOBBY: 9, ELEV: 10, STAIR: 11, EXEC: 12, REST: 13, KITCH: 14 };
+const R5 = { S: 0, W: 1, N: 2, E: 3, E2: 4, BEV: 5, SV: 6, BO: 7, ST: 8 };
 const L5_N = 44, L5_LMR = 704, BEV_H = 7.0, BEV5 = { x0: 14, z0: 14, x1: 19, z1: 19 };
 const LOOP5 = { z: 16, x0: 20, x1: 40, trig: 29, back: 5 };      // the endless east corridor: pass x = 29 and you are quietly moved back 5 cells (everything there repeats every 5 cells)
 const hotelZ5 = z => z === Z5.HALL || z === Z5.ROOM || z === Z5.VEST || z === Z5.LOBBY || z === Z5.ELEV;
@@ -38,10 +38,11 @@ function genLayout5() {
   // ...and the part of the east wing you can only reach through the wrong door
   const E2 = room(Z5.HALL, R5.E2, 'hall', { wing: 'E2' }); rect(E2, 28, 7, 34, 7);
   const cE = rect(room(Z5.CLOS, R5.E2, 'closet', { key: 'E' }), 35, 7, 35, 7); way(34, 7, 0, 'door', { dk: 'closet', plaque: 'HOUSEKEEPING', from: [34, 7] });
-  // warp vestibules: identical one-cell rooms with a real door in and a dummy door opposite; walk past the middle and you are in the twin
+  // r7: portal vestibules: identical one-cell rooms with a real door in and an inner door opposite. Open the inner door and it gives onto
+  // the corridor outside the twin's real door (portal5.js); step through and you are there. The inner door swings in toward you.
   const vest = (x, y, d, reg, sign) => {
-    const r = rect(room(Z5.VEST, reg, 'vest'), x, y, x, y);
-    way(x, y, d, 'door', { dk: 'warp', sign, from: [x + DX[d], y + DY[d]] }); way(x, y, (d + 2) % 4, 'deco', { from: [x, y], vest: true });
+    const r = rect(room(Z5.VEST, reg, 'vest'), x, y, x, y), b = (d + 2) % 4;
+    way(x, y, d, 'door', { dk: 'warp', sign, from: [x + DX[d], y + DY[d]] }); way(x, y, b, 'door', { dk: 'portal', from: [x + DX[b], y + DY[b]], vest: true });
     Object.assign(r, { vx: x, vy: y, vd: d, cx: cellCenter(x), cz: cellCenter(y), fx: -DX[d], fz: -DY[d] }); return r;
   };
   LV.warps.push({ a: vest(8, 5, 0, R5.N, 'EAST WING'), b: vest(27, 7, 0, R5.E2, 'NORTH WING'), key: 'A' });
@@ -116,6 +117,8 @@ function genLayout5() {
     for (const e of cand) { if (used.length >= k) break; if (used.some(u => Math.abs(u[0] - e[0]) + Math.abs(u[1] - e[1]) < 2)) continue; used.push(e); way(e[0], e[1], e[2], 'arch', { boil: true, from: [e[0], e[1]] }); }
   }
   LV.mazeCells = [...LV.maze];
+  planPlaces5(room, rect, way);   // r6: the night manager's office, the guest who never checked out
+  planState5(room, rect, way, vest);   // r7: the State Floor, through the ballroom's portal door
   // ---- resolve every edge ----
   const rule = (a, b) => {
     const za = a < 0 ? 0 : LV.zone[a], zb = b < 0 ? 0 : LV.zone[b];
@@ -137,6 +140,7 @@ function side5(x, y) {
   if (!inGrid(x, y)) return null;
   const c = cIdx(x, y), z = LV.zone[c];
   if (z === Z5.VOID) return null;
+  const rr = LV.rooms[LV.room[c]]; if (rr && rr.side) return rr.side;   // r7: State Floor rooms
   if (z === Z5.BEV) return { m: 'deco', c: [1, 1, 1], h: BEV_H, t: TRIM5.gold };
   if (z === Z5.SERV || z === Z5.STAIR || z === Z5.CLOS) return { m: 'bconc', c: [0.8, 0.84, 0.74], h: CEIL, t: TRIM5.serv };
   if (boilZ5(z)) return { m: 'bconc', c: [0.62, 0.6, 0.56], h: CEIL, t: TRIM5.steel };
@@ -147,7 +151,7 @@ function side5(x, y) {
 // size of the hole an edge needs (null = solid wall)
 function opening5(e) {
   if (!e) return null;
-  if (e.kind === 'arch') return e.boil ? { w: 1.5, h: 2.35, cw: 0.07 } : { w: 2.0, h: 2.5, cw: 0.12 };
+  if (e.kind === 'arch') return e.boil ? { w: 1.5, h: 2.35, cw: 0.07 } : e.big ? { w: 2.7, h: 3.3, cw: 0.16 } : { w: 2.0, h: 2.5, cw: 0.12 };
   if (e.kind === 'door' || e.kind === 'elev' || e.kind === 'exit') return { w: DOORW, h: DOORH, cw: 0.09 };
   if (e.kind === 'brick') return { w: 1.7, h: 2.75, cw: 0.13 };
   return null;
@@ -207,7 +211,7 @@ Geo.prototype.face2 = function (ox, oy, oz, U, V, du, dv, Nn, su, sv, col) {
   }
   if (FLIP_WINDING) this.i.push(b, b + 2, b + 1, b, b + 3, b + 2); else this.i.push(b, b + 1, b + 2, b, b + 2, b + 3);
 };
-const MAT5_S = { hwall: [1 / 3.0, 1 / 2.85], deco: [1 / 7, 1 / 7], bconc: [1 / 2.4, 1 / 2.4], brick: [1 / 1.6, 1 / 1.6], carpet: 1 / 2.25, check: 1 / 2.4, tile: 1 / 1.2, bfloor: 1 / 2.4, hceil: 1 / 1.8, bceil: 1 / 3.5, sconc: 1 / 2.4 };
+const MAT5_S = { hwall: [1 / 3.0, 1 / 2.85], deco: [1 / 7, 1 / 7], bconc: [1 / 2.4, 1 / 2.4], brick: [1 / 1.6, 1 / 1.6], tilew: [1 / 0.3, 1 / 0.3], carpet: 1 / 2.25, check: 1 / 2.4, tile: 1 / 1.2, bfloor: 1 / 2.4, hceil: 1 / 1.8, bceil: 1 / 3.5, sconc: 1 / 2.4 };
 function buildGeometry5(scene, mats) {
   const CH = 8, NC = Math.ceil(N / CH), G = {};
   const geo = (m, ci) => { const k = m + ':' + ci; return G[k] || (G[k] = new Geo(true)); };
@@ -260,7 +264,11 @@ function buildGeometry5(scene, mats) {
   for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
     const c = cIdx(x, y), z = LV.zone[c]; if (z === Z5.VOID) continue;
     const x0 = x * CELL, z0 = y * CELL, x1 = x0 + CELL, z1 = z0 + CELL, ci = chunkOf(x0 + 1, z0 + 1), hv = hash1(x * 31.7 + y * 17.3);
-    if (hotelZ5(z) || z === Z5.ROOM) {
+    const rf = LV.room[c] >= 0 && LV.rooms[LV.room[c]].flr;
+    if (rf) {   // r7: State Floor rooms carry their own floor, ceiling and height
+      up(geo(rf.m, ci), x0, z0, x1, z1, 0, MAT5_S[rf.m], C4(rf.col));
+      dn(geo(rf.cm, ci), x0, z0, x1, z1, rf.h, rf.cm === 'bconc' ? MAT5_S.sconc : MAT5_S[rf.cm], C4(rf.ccol));
+    } else if (hotelZ5(z) || z === Z5.ROOM) {
       const r = LV.rooms[LV.room[c]], k = z === Z5.ROOM ? r.tint.map(v => v * 0.92) : z === Z5.ELEV ? [0.62, 0.5, 0.46] : [1, 1, 1];
       up(geo('carpet', ci), x0, z0, x1, z1, 0, MAT5_S.carpet, C4(k));
       dn(geo('hceil', ci), x0, z0, x1, z1, CEIL, MAT5_S.hceil, z === Z5.ROOM ? [0.95, 0.92, 0.86, 1] : W1);
@@ -361,3 +369,5 @@ function planLights5() {
   { const x = 28 * CELL, z = 33 * CELL; F(x, z, { I: 0.3, rad: 6, sc: 1.8, state: 2 }); LV.bulbs.push({ x, z, y: CEIL, kind: 'cage', state: 2 }); }
   LV.sky = null;
 }
+// ceiling height of a cell (the State Floor rooms are tall)
+function ceil5(c) { if (c < 0 || c >= N * N) return CEIL; const r = LV.room[c] >= 0 ? LV.rooms[LV.room[c]] : null; return r && r.flr ? r.flr.h : LV.zone[c] === Z5.BEV ? BEV_H : CEIL; }

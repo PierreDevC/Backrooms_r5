@@ -46,9 +46,10 @@ function buildDoors9() {
       open: startOpen ? 1 : 0, target: startOpen ? 1 : 0, latched: false, solid: addSolid(bx[0], bx[1], bx[2], bx[3], 'door'), shake: 0, cull: e.dk === 'front' ? 44 : 26, bangs: 0 };
     LV.solids[dr.solid].off = startOpen; if (!startOpen) markDyn(bx[0], bx[1], bx[2], bx[3], 1);
     hinge.rotation.y = startOpen ? c1 : c0;
-    W9.doors.push(dr); W9.doorAt.set(dr.key, dr);
+    W9.doors.push(dr); W9.doorAt.set(dr.key, dr); addLock9(dr);   // r6: a deadbolt you can see turn
     W.interact.push({ x: mx, z: mz, y: 1.1, r: 1.75, door: dr, label: () => dr.target ? 'CLOSE DOOR' : dr.latched ? 'UNLATCH & OPEN' : 'OPEN DOOR',
-      ok: () => true, act: () => useDoor(dr), altLabel: () => dr.target ? null : dr.latched ? 'UNLATCH' : 'LATCH', alt: () => latchDoor(dr) });
+      ok: () => true, act: () => useDoor(dr), altLabel: () => dr.target ? null : dr.latched ? 'UNLATCH' : 'LATCH', alt: () => latchDoor(dr),
+      alt2Label: () => peepUse9(dr) ? 'PEEPHOLE' : null, alt2: () => peepToggle9(dr) });   // r6: look through the door
   }
 }
 function doorClosed(x, y, d) { const dr = W9.doorAt.get(eKey(x, y, d)); return !!dr && dr.target === 0; }
@@ -62,24 +63,25 @@ function setDoor(dr, open) {
 }
 function useDoor(dr) {
   if (dr.target) { setDoor(dr, false); makeNoise(0.3); }
-  else { if (dr.latched) SFX9.latch(P9({ x: dr.mx, z: dr.mz }), false); setDoor(dr, true); makeNoise(0.18); }
+  else { if (dr.latched) SFX9.deadbolt(P9({ x: dr.mx, z: dr.mz }), false); setDoor(dr, true); makeNoise(0.18); }
 }
 function latchDoor(dr) {
   if (dr.target) return;
-  dr.latched = !dr.latched; LV.navVer++; SFX9.latch(P9({ x: dr.mx, z: dr.mz }), dr.latched); makeNoise(0.08);
+  dr.latched = !dr.latched; LV.navVer++; SFX9.deadbolt(P9({ x: dr.mx, z: dr.mz }), dr.latched); makeNoise(0.08); W9.doorAnim.add(dr);
   toast(dr.latched ? 'DOOR LATCHED' : 'DOOR UNLATCHED', 1.3);
   if (dr.latched && !G9.latchTip) { G9.latchTip = true; }
 }
 function bangDoor(dr, hard = 1) { dr.shake = 0.45 * hard; dr.bangs++; W9.doorAnim.add(dr); SFX9.bang(P9({ x: dr.mx, z: dr.mz }), hard); FX.glitch = Math.max(FX.glitch, 0.4 * hard); }
 function updateDoors9(dt) {
   for (const dr of W9.doorAnim) {
+    const lm = lockAnim9(dr, dt);   // r6: the thumb-turn and bolt
     const prev = dr.open, sp = dr.target ? 1.9 : 3.4;
     dr.open = dr.target ? Math.min(1, dr.open + dt * sp) : Math.max(0, dr.open - dt * sp);
     let a = lerp(dr.c0, dr.c1, smooth(0, 1, dr.open));
     if (dr.shake > 0) { dr.shake -= dt; a += Math.sin(FX.t * 70) * 0.03 * Math.max(0, dr.shake) * (dr.horiz ? 1 : -1); }
     dr.hinge.rotation.y = a;
     if (!dr.target && prev > 0 && dr.open === 0) SFX9.shut(P9({ x: dr.mx, z: dr.mz }), dr.metal);
-    if (dr.open === dr.target && dr.shake <= 0) { dr.hinge.rotation.y = dr.target ? dr.c1 : dr.c0; W9.doorAnim.delete(dr); }
+    if (dr.open === dr.target && dr.shake <= 0 && !lm) { dr.hinge.rotation.y = dr.target ? dr.c1 : dr.c0; W9.doorAnim.delete(dr); }
   }
 }
 
@@ -102,12 +104,13 @@ function buildTerminal(h, idx) {
   solidLocal(r, -0.66, 0, 0.66, 0.68);
   const dyn = propRoot(px, pz, ry), sc = dynTexPlane('term' + idx, 0.35, 0.26, 256, 192, dyn, [-0.1, 0.955, 0.472], 1.2);
   const pos = localPt(r, -0.1, 0.96, 0.6);
-  const T = { h, i: idx, x: pos.x, z: pos.z, pos, sc, done: false, prog: 0, active: false, away: 0, drawK: '', need: 12, woke: 0 };
+  const T = { h, i: idx, x: pos.x, z: pos.z, pos, scr: localPt(r, -0.1, 0.955, 0.472), sc, done: false, prog: 0, active: false, away: 0, drawK: '', need: 12, woke: 0 };
   W9.terms.push(T); h.term = T;
-  W.interact.push({ x: pos.x, z: pos.z, y: 0.96, r: 2.1, label: () => 'DOWNLOAD M.E.G. DATA', ok: () => !T.done && !T.active, act: () => startDownload(T) });
+  W.interact.push({ x: pos.x, z: pos.z, y: 0.96, r: 2.1, label: () => T.active ? 'RESUME THE TRANSFER' : 'DOWNLOAD M.E.G. DATA', ok: () => !T.done && (!T.active || (!HACK9.on && !HACK9.skip)), act: () => T.active ? hackStart9(T) : startDownload(T) });   // r6: PACKET STACK
   drawTerm(T);
 }
 function drawTerm(T) {
+  if (T.active && !T.done && HACK9.T === T && HACK9.g && !HACK9.skip) { drawHack9(T); return; }   // r6: the mini-game owns the screen
   const c = T.sc.ctx, w = 256, h = 192, blink = Math.floor(FX.t * 2) % 2, st = T.done ? 'done' : T.active ? (T.away > 0.25 ? 'lost' : 'dl') : 'idle';
   const pc = Math.floor(clamp(T.prog / T.need, 0, 1) * 100), key = st + pc + blink;
   if (key === T.drawK) return; T.drawK = key;
@@ -164,6 +167,7 @@ function drawMap9(c, w, h, o = {}) {
   c.fillStyle = '#2b5a3d'; c.fillRect(X(19), Y(25), 7 * sc, 6 * sc);
   c.fillStyle = '#b8ffd0'; c.font = `bold ${Math.round(sc * 1.25)}px monospace`; c.fillText('M.E.G.', X(19.6), Y(22.6)); c.font = `${Math.round(sc * 0.95)}px monospace`; c.fillText('OUTPOST 9', X(19.5), Y(21.2));
   if (G9.crowbar && W9.van) { c.fillStyle = '#ffd23a'; c.fillRect(X(W9.van.x / CELL) - sc * 0.6, Y(W9.van.z / CELL) - sc * 0.6, sc * 1.2, sc * 1.2); }
+  drawStory9(c, X, Y, sc);
   // you-are-here / camcorder position
   const pp = phys9(PL.x, PL.z), px = o.kiosk ? W9.kiosk.x / CELL : pp[0] / CELL, pz = o.kiosk ? W9.kiosk.z / CELL + 0.3 : pp[1] / CELL;
   if (o.kiosk || (px < n && pz < n)) {
@@ -482,6 +486,7 @@ function buildStory9() {
   }
   { const s = takeSlot(LV.base.R.S, { noWin: true }); if (s) { const [px, pz, ry] = wallPt(s.x, s.y, s.d, 0.01, 0); buildLocker(px, pz, ry, 'locker', 'base'); } }
   if (W9.van) { const p = localPt(W9.van.root, 0, 0, -3.35); buildLocker(p.x, p.z, W9.van.ry + Math.PI + 0.25, 'crate', 'van'); }
+  buildPlaces9();   // r6: story houses claim their wall slots before the furniture does
   // furniture
   for (const h of LV.houses) if (h.enter) for (const r of h.rooms) {
     const cf = ROOMC[r.t]; if (cf) placeCentre(B, r, r.t === 'kitchen' ? (r.cells.length >= 4 ? 'island' : 'ktable') : cf[0]);

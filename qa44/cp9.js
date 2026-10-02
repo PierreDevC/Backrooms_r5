@@ -1,5 +1,6 @@
 // r4.4 QA: level select L9, right-click latch, Ctrl no longer crouches, Level 9 checkpoints (Normal) + Nightmare has none, unload guard
 module.exports = async (page) => {
+  await page.evaluate(() => { const B = window.__BR; if (B.HACK9) B.HACK9.skip = true; });   // r6: the old timed transfer (PACKET STACK is tested in qa_r6/l9_hack.js)
   const R = {};
   const canvas = await page.$('#c');
   // --- level select has Level 9

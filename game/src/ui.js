@@ -4,7 +4,7 @@ function later(sec, fn) { TIMERS.push({ t: FX.t + sec, fn }); }
 function runTimers() { for (let i = TIMERS.length - 1; i >= 0; i--) if (FX.t >= TIMERS[i].t) { const f = TIMERS[i].fn; TIMERS.splice(i, 1); try { f(); } catch (e) { frameErr('timer', e); } } }
 
 let toastT = 0;
-function toast(msg, dur = 2.4) { const el = $('toast'); el.textContent = msg; el.classList.add('show'); toastT = dur; }
+function toast(msg, dur = 2.4) { const el = $('toast'); el.textContent = msg; el.classList.toggle('long', msg.length > 30); el.classList.add('show'); toastT = dur; }
 const SUBS = { q: [], cur: null, t: 0 };
 function say(who, text, o = {}) {
   if (o.drop && (SUBS.cur || SUBS.q.length)) return;
@@ -77,7 +77,7 @@ function updateHUD(dt) {
   const w = $('compass').clientWidth, hd = ((PL.yaw * 180 / Math.PI) % 360 + 360) % 360;
   $('compassStrip').style.transform = `translateX(${(w / 2 - (hd + 360) * CPX).toFixed(1)}px)`;
   const mk = $('compassMark');
-  const tg = LVL === 18 ? target18() : LVL === 5 ? target5() : LVL === 9 ? target9() : G.exitOn ? W.exit : null;
+  const tg = LVL === 18 ? target18() : LVL === 5 ? target5() : LVL === 9 ? target9() : target0();
   if (tg) {
     const a = angDiff(PL.yaw, Math.atan2(tg.x - PL.x, tg.z - PL.z)) * 180 / Math.PI;
     mk.classList.toggle('hide', Math.abs(a) > 70); mk.style.left = (w / 2 + a * CPX).toFixed(1) + 'px';
@@ -118,12 +118,12 @@ function updateHUD(dt) {
   $('signal').classList.toggle('lock', HINT.stage >= 1 && !!HINT.site);
   $('signal').classList.toggle('pulse', HINT.stage >= 2 && Math.floor(FX.t * 4) % 2 === 0);
   const f = PL.focus;
-  if (f) { const al = f.altLabel && f.altLabel(); hset('prompt', (IS_TOUCH ? '' : '[E] ') + f.label() + (al ? (IS_TOUCH ? '   ·   ' : '   [RIGHT-CLICK] ') + al : '')); $('prompt').classList.add('show'); } else $('prompt').classList.remove('show');
+  if (f) { const al = f.altLabel && f.altLabel(), a2 = f.alt2Label && f.alt2Label(); hset('prompt', (IS_TOUCH ? '' : '[E] ') + f.label() + (al ? (IS_TOUCH ? '   ·   ' : '   [RIGHT-CLICK] ') + al : '') + (a2 ? (IS_TOUCH ? '   ·   ' : '   [V] ') + a2 : '')); $('prompt').classList.add('show'); } else $('prompt').classList.remove('show');
   $('hurt').style.opacity = clamp(FX.hurt * 0.9 + (PL.hp < 30 ? 0.25 + 0.1 * Math.sin(FX.t * 4) : 0), 0, 1).toFixed(2);
 }
 
 // ----- screens -----
-const SCREENS = ['loading', 'title', 'levels', 'brief', 'controls', 'settings', 'pause', 'end'];
+const SCREENS = ['loading', 'title', 'levels', 'brief', 'controls', 'settings', 'pause', 'notes', 'end'];
 let backTo = 'title';
 function show(id) { for (const s of SCREENS) $(s).classList.toggle('hide', s !== id); }
 function openLevels() {
@@ -158,6 +158,8 @@ function bindUI() {
   $('btnControls').onclick = () => { backTo = 'title'; show('controls'); };
   $('btnPSettings').onclick = () => { backTo = 'pause'; show('settings'); };
   $('btnPControls').onclick = () => { backTo = 'pause'; show('controls'); };
+  $('btnPNotes').onclick = () => openNotes();
+  $('btnNotesBack').onclick = () => { show('pause'); $('btnResume').focus({ preventScroll: true }); };
   document.querySelectorAll('.back').forEach(b => b.onclick = () => show(backTo));
   $('btnResume').onclick = () => resumeGame();
   $('btnRestart').onclick = () => restartGame(true);

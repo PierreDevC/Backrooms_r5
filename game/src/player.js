@@ -14,12 +14,12 @@ const TOUCH = { mx: 0, mz: 0 };
 
 function lightAt(x, z) { return baseLight(x, z, FX.flicker) * 0.667 * FX.lightScale; } // ~1 in a lit room, <0.1 in the dead zones
 function makeNoise(v) { PL.noise = Math.max(PL.noise, v); }
-function carpetWet(x, z) { return noise1(x * 0.35 + 3.1) + noise1(z * 0.35 - 8.7) > 0.7; }
+function carpetWet(x, z) { return noise1(x * 0.35 + 3.1) + noise1(z * 0.35 - 8.7) > 0.7 || (LVL === 0 && !!P0.off && inPlace0(P0.off, x, z)); }
 
 function resetPlayer() {
   Object.assign(PL, { x: cellCenter(LV.spawn.x), z: cellCenter(LV.spawn.y), vx: 0, vz: 0, crouch: false, ck: 0, sta: 1, exh: false, hp: 100, san: 100,
     batt: [100, 90, 75][G.diff], spare: [2, 1, 0][G.diff], water: [3, 1, 0][G.diff], flash: false, fk: 0, nv: false, zoomT: false, zk: 0,
-    noise: 0, dist: 0, lastHurt: -99, shake: 0, cell: -1, fear: 0, pitch: 0, lookAt: null, lookK: 0 });
+    noise: 0, load: false, dist: 0, lastHurt: -99, shake: 0, cell: -1, fear: 0, pitch: 0, lookAt: null, lookK: 0 });
   // face the most open direction
   let bd = 0, best = 0;
   for (let d = 0; d < 4; d++) { let n = 0, x = LV.spawn.x, y = LV.spawn.y; while (passable(x, y, d) && n < 8) { x += DX[d]; y += DY[d]; n++; } if (n > best) { best = n; bd = d; } }
@@ -72,7 +72,7 @@ function findInteract() {
   }
   return best;
 }
-function interact() { const it = PL.focus; if (it && it.ok()) it.act(); }
+function interact() { if (DOC.open) { docClose(); return; } if (LVL === 9 && HACK9.on) { hackStop9('YOU STEP BACK FROM THE TERMINAL'); return; } if (LVL === 9 && PEEPH.dr) { peepStop9(); return; } const it = PL.focus; if (it && it.ok()) it.act(); }   // r6: E first closes an open document
 
 function hurt(dmg, src) {
   if (G.state !== 'play') return;
@@ -85,7 +85,7 @@ function hurt(dmg, src) {
 function updatePlayer(dt) {
   const t = FX.t;
   // look
-  const sens = 0.0021 * S.sens * (1 - PL.zk * 0.6);
+  const sens = 0.0021 * S.sens * (1 - Math.max(PL.zk, LVL === 9 ? PL.tz || 0 : 0) * 0.6);
   if (!PL.lookAt) { PL.yaw += MDX * sens; PL.pitch = clamp(PL.pitch + MDY * sens * (S.inv ? -1 : 1), -1.3, 1.3); }
   else {
     const dx = PL.lookAt.x - PL.x, dz = PL.lookAt.z - PL.z, dy = PL.lookAt.y - CAM.position.y;
@@ -101,20 +101,24 @@ function updatePlayer(dt) {
   if (JUST.has('KeyQ')) drinkWater();
   if (JUST.has('KeyE') || JUST.has('Enter')) interact();
   if ((ALTCLICK || JUST.has('KeyX')) && hasAlt(PL.focus)) PL.focus.alt(); // right-click (or X) latches / unlatches
+  if (JUST.has('KeyV') && LVL === 9) { if (PEEPH.dr) peepStop9(); else if (PL.focus && PL.focus.alt2 && PL.focus.alt2Label && PL.focus.alt2Label()) PL.focus.alt2(); }   // r6: the peephole
   ALTCLICK = false;
   if (JUST.has('Tab') && LVL === 9) toggleMap9();
   if (JUST.has('KeyC')) PL.crouch = !PL.crouch;
   if (JUST.has('KeyZ')) PL.zoomT = !PL.zoomT;
+  if (JUST.has('KeyG') && LVL === 5) useSpray5();   // r7: Mothex
+  if (LVL === 9) hackKeys9(JUST);   // r6: PACKET STACK takes the movement keys while you're at a terminal
   JUST.clear();
   // movement
   let ix = (K.has('KeyD') || K.has('ArrowRight') ? 1 : 0) - (K.has('KeyA') || K.has('ArrowLeft') ? 1 : 0) + TOUCH.mx;
   let iz = (K.has('KeyW') || K.has('ArrowUp') ? 1 : 0) - (K.has('KeyS') || K.has('ArrowDown') ? 1 : 0) + TOUCH.mz;
+  if (LVL === 9 && HACK9.on) { ix = 0; iz = 0; }
   const il = Math.hypot(ix, iz); if (il > 1) { ix /= il; iz /= il; }
   const crouch = PL.crouch; // C toggles crouch (Ctrl removed in r4.4: Ctrl+W closed the browser tab)
   const runKey = K.has('ShiftLeft') || K.has('ShiftRight');
-  const wantRun = runKey && iz > 0.3 && !crouch && !PL.exh;
+  const wantRun = runKey && iz > 0.3 && !crouch && !PL.exh && !PL.load;   // r6: carrying Brandt's battery: no sprint
   if (runKey && PL.crouch && iz > 0.3) PL.crouch = false;
-  const sp = (crouch ? 1.25 : wantRun ? 4.4 : 2.35) * (PL.hp < 30 ? 0.86 : 1) * (PL.exh ? 0.85 : 1) * (PL.spdK ?? 1);
+  const sp = (crouch ? 1.25 : wantRun ? 4.4 : 2.35) * (PL.hp < 30 ? 0.86 : 1) * (PL.exh ? 0.85 : 1) * (PL.spdK ?? 1) * (PL.load ? 0.74 : 1);
   const sy = Math.sin(PL.yaw), cyw = Math.cos(PL.yaw);
   const tx = (sy * iz + cyw * ix) * sp, tz = (cyw * iz - sy * ix) * sp;
   const acc = il > 0.01 ? 8 : 11;
@@ -180,7 +184,7 @@ function playerCamera(dt) {
   CAM.position.set(PL.x + Math.cos(PL.yaw) * bobX, eye + bobY, PL.z - Math.sin(PL.yaw) * bobX);
   CAM.rotation.set(PL.pitch + np + bobY * 0.25, PL.yaw + ny, PL.roll);
   PL.fovK = damp(PL.fovK, PL.run ? 1 : 0, 4, dt);
-  const base = S.fov * Math.PI / 180, zf = lerp(1, 2.4, PL.zk);
+  const base = S.fov * Math.PI / 180, zf = lerp(1, 2.4, PL.zk) * lerp(1, LVL === 9 && HACK9.on ? 3.6 : 2.6, LVL === 9 ? PL.tz || 0 : 0);   // r6: Level 9 terminals push in
   CAM.fov = 2 * Math.atan(Math.tan(base / 2) / zf) + PL.fovK * 0.05;
   // flashlight / IR lamp in slot 0
   const f = CAM.getDirection(BABYLON.Axis.Z), r = CAM.getDirection(BABYLON.Axis.X), u = CAM.getDirection(BABYLON.Axis.Y);

@@ -412,6 +412,7 @@ class Explorer extends Agent {
   }
   talk() {
     this.st = 'talk'; this.stT = 0; this.talks++;
+    if (talk0(this)) return;   // r6: lines that know the story so far
     const open = W.tapes.filter(s => !s.taken);
     let line, vo, i = this.i;
     if (this.talks === 1) {
@@ -430,7 +431,7 @@ class Explorer extends Agent {
     say(this.name, line, { pos: this, vo });
   }
   die(killer) {
-    this.alive = false; this.st = 'dead'; G.lost++; this.threat = null;
+    this.alive = false; this.st = 'dead'; G.lost++; this.threat = null; this.hurt = false; expDied0(this);
     SFX.scream(this.pos(1.5), EXP[this.i].f);
     if (killer) this.yaw = Math.atan2(killer.x - this.x, killer.z - this.z) + Math.PI;
     this.sync(); poseDead(this.rig, RNG() < 0.5 ? -1 : 1); this.shadowR = 0.8;
@@ -447,7 +448,7 @@ class Explorer extends Agent {
       const hd = dist2(h.x, h.z, this.x, this.z);
       if (hd < td && (h.prey === this || (hd < 12 && los(h.x, h.z, this.x, this.z)))) { th = h; td = hd; }
     }
-    if (th && this.st !== 'flee') {
+    if (th && this.st !== 'flee' && !this.hurt) {
       this.st = 'flee'; this.stT = 0; this.threat = th; this.ft = null;
       if (d < 25) { const k = Math.floor(RNG() * 3); say(this.name, VO_TXT.flee[k], { pos: this, vo: `e${this.i}_flee${k}`, vol: 2.4 }); }
     }
@@ -460,9 +461,10 @@ class Explorer extends Agent {
       case 'wander':
         if (this.navTo(this.wt.x, this.wt.z, 1.1, dt) < 0.7 || this.stT > 25 || (d < 3.5 && pl)) { this.st = 'idle'; this.stT = 0; this.dur = rnd(4, 11); }
         break;
+      case 'hurt': hurtUpdate0(this, dt); break;
       case 'talk':
         this.spd = damp(this.spd, 0, 6, dt); this.face(Math.atan2(PL.x - this.x, PL.z - this.z), 5, dt);
-        if (this.stT > 7) { this.st = 'idle'; this.stT = 0; this.dur = rnd(3, 6); }
+        if (this.stT > 7) { this.st = this.hurt ? 'hurt' : 'idle'; this.stT = 0; this.dur = rnd(3, 6); }
         break;
       case 'flee': {
         const h = this.threat;
@@ -486,7 +488,7 @@ class Explorer extends Agent {
     const talkP = this.st === 'talk' && !r.sk;   // skinned explorers gesture with the talking clip instead
     if (r.sk) rigBase(r, this.st === 'talk' ? 'talk' : null);
     animHuman(r, this.ph, amp, { armR: -1.2 + 0.07 * Math.sin(t * 0.9 + this.sweep) + (fleeing ? 0.3 : 0), elR: -0.25, armA: 0.4, armL: talkP ? -0.35 + 0.15 * Math.sin(t * 3) : 0,
-      elL: talkP ? -0.9 : undefined, look: this.look, lookX: this.st === 'talk' ? -0.1 : 0.12, lean: fleeing ? 0.2 : 0.05 });
+      elL: talkP ? -0.9 : undefined, look: this.look, lookX: this.st === 'talk' ? -0.1 : 0.12, lean: fleeing ? 0.2 : this.hurt ? 0.35 : 0.05, drop: this.hurt && !r.sk ? -0.42 : 0 });
     r.sh[1].rotation.y = this.look * 0.55 + 0.1 * Math.sin(t * 0.6 + this.sweep);
     this.sync();
   }
@@ -530,7 +532,7 @@ class Mimic extends Agent {
     let look = 0, amp = 0, jit = 0;
     if (play && (this.st === 'pose' || this.st === 'lure')) {   // it borrows the explorers' voices
       this.vT = (this.vT ?? rnd(4, 9)) - dt;
-      if (this.vT <= 0 && d > 5 && d < 19) { this.vT = rnd(11, 19); const k = Math.floor(RNG() * VO_TXT.mimic.length); say('???', VO_TXT.mimic[k], { pos: this, vo: `mim${RNG() < 0.5 ? 0 : 2}_${k}`, mode: 'mimic', drop: true }); }
+      if (this.vT <= 0 && d > 5 && d < 19) { this.vT = rnd(11, 19); const k = Math.floor(RNG() * VO_TXT.mimic.length), alt = mimicLine0(); say('???', alt ? alt.text : VO_TXT.mimic[k], { pos: this, vo: alt ? null : `mim${RNG() < 0.5 ? 0 : 2}_${k}`, mode: 'mimic', drop: true }); }
     }
     switch (this.st) {
       case 'pose':
@@ -592,6 +594,7 @@ function initAI() {
   const ns = Math.min(LV.darkCenters.length, [1, 2, 3][G.diff]);
   for (let i = 0; i < ns; i++) { const s = new Smiler(LV.darkCenters[i], i); AI.smilers.push(s); AI.all.push(s); }
   if (G.diff >= 1) { AI.mimic = new Mimic(); AI.all.push(AI.mimic); }
+  placeReyes0();   // r6: Reyes starts hurt in the flooded office
 }
 function spawnHowler(minCells) {
   const h = new Howler(AI.howlers.length), c = farCell(minCells, 99), p = cellPt(c >= 0 ? c : 0);

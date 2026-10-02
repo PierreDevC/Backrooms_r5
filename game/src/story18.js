@@ -1,9 +1,9 @@
 // ---------- Level 18 · story objects: the painted door, your four drawings, the MY MEMORIES board, the door you draw, notes, the music box, the slides ----------
 const DRAW18 = {
-  family: { name: 'MOMMY & DADDY', slot: 0, line: 'Saturdays at the play place. They sat at the little table and watched you. You never told them you were sorry.' },
-  dog: { name: 'BISCUIT', slot: 1, line: 'Biscuit. You were supposed to close the gate. You told everyone you had.' },
-  monster: { name: 'MY ROOM', slot: 2, line: 'The monster in the closet. It was never a monster. It was always just the coat on the hook.' },
-  house: { name: 'OUR HOUSE', slot: 3, line: 'The house on Maple Street. The yellow kitchen. You said you would go back one day. You never went back.' },
+  family: { name: 'MOMMY & DADDY', slot: 0, line: 'Saturdays at the play place. They sat at the little table with their coats still on. Dad ate your fries.' },   // r6: rewritten with the dialogue skill
+  dog: { name: 'BISCUIT', slot: 1, line: 'Biscuit. He ate the garden hose and the mailman\'s glove. The gate latch stuck if you didn\'t lift it.' },
+  monster: { name: 'MY ROOM', slot: 2, line: 'The thing in the closet had Mom\'s coat on. It was Mom\'s coat.' },
+  house: { name: 'OUR HOUSE', slot: 3, line: 'Maple Street. The yellow kitchen. Your height in pencil on the door frame, stopping at seven.' },
 };
 const NOTE18 = {
   desk: 'To the grown-up who fell in —  You forgot us. That\'s okay, everybody does. Your drawings are still here but they got lost all over. Find all four and pin them on the MY MEMORIES board, then you can draw yourself a door. Dino will help you. Don\'t let the tall one catch you in the dark. It only looks like someone you know.  — the Children',
@@ -66,8 +66,9 @@ function drawBoard18(c, w, h) {
     c.fillStyle = '#fbf8ef'; c.fillRect(x0 + 4, y0 + hh + 10, ww - 8, 30); c.fillStyle = '#2a2a2a'; c.font = 'bold 17px "Comic Sans MS", sans-serif'; c.textAlign = 'center'; c.fillText(DRAW18[id].name, x0 + ww / 2, y0 + hh + 26); c.textAlign = 'left';
   });
 }
-function drawExit18(c, w, h, done) {
-  if (done) { drawDoor18(c, w, h, { glow: true, fill: '#f3c230', line: '#b07a10', word: 'HOME', wordCol: '#e2483c', sun: true, bg: '#fff8e4' }); return; }
+function drawExit18(c, w, h, done, o = {}) {
+  if (done) { drawDoor18(c, w, h, { glow: true, fill: '#f3c230', line: '#b07a10', word: 'HOME', wordCol: '#e2483c', sun: true, bg: '#fff8e4' }); if (M18.signed) crayonLine18(c, [[w * 0.3, h * 0.4], [w * 0.36, h * 0.36], [w * 0.42, h * 0.42], [w * 0.5, h * 0.35], [w * 0.56, h * 0.41], [w * 0.64, h * 0.36], [w * 0.7, h * 0.4]], '#2f7fd0', 5); return; }
+  if (o.colored) { drawDoor18(c, w, h, { fill: '#f3c230', line: '#b07a10', bg: '#fff8e4' }); crayonText18(c, 'NAME:', w * 0.32, h * 0.06 + 8, 22, '#8a8a8a'); crayonLine18(c, [[w * 0.48, h * 0.075], [w * 0.86, h * 0.075]], '#9a9a9a', 3); return; }   // r7: coloured in, no name yet
   paper18(c, w, h, '#f4efe0');
   c.globalAlpha = 0.35; crayonLine18(c, [[w * 0.18, h * 0.96], [w * 0.18, h * 0.12], [w * 0.5, h * 0.12]], '#666666', 4); c.globalAlpha = 1;
   crayonText18(c, 'MY DOOR', w / 2, h * 0.06 + 10, 26, '#8a8a8a');
@@ -105,7 +106,7 @@ function buildStory18(T) {
   { const r = atWall5({ x: 8, y: 17, d: 2 }, 1.8, 0);
     const S = paperPlane18('exit18', 1.36, 2.36, 256, 444, r, [0, 1.19, 0.014], 0.45, (c, w, h) => drawExit18(c, w, h, false));
     const p = localPt(r, 0, 0, 0.45), f = localPt(r, 0, 0, 0.05); W18.exitDoor = { S, r, x: p.x, z: p.z, fx: f.x, fz: f.z, on: false, k: 0, yaw: r.rotation.y };
-    W.interact.push({ x: p.x, z: p.z, y: 1.2, r: 1.9, label: () => W18.exitDoor.on ? 'WALK THROUGH THE DOOR YOU DREW' : 'A DRAWING OF A DOOR · IT ISN\'T FINISHED', ok: () => G.state === 'play', act: () => { if (W18.exitDoor.on) win18(); else { SFX18.paper(); toast(`IT ISN'T FINISHED · ${4 - G18.pinned.length} MEMOR${4 - G18.pinned.length === 1 ? 'Y' : 'IES'} MISSING`, 2.6); } } }); }
+    W.interact.push({ x: p.x, z: p.z, y: 1.2, r: 1.9, label: () => exitLabel18(), ok: () => G.state === 'play', act: () => { if (exitUse18()) return; if (W18.exitDoor.on) win18(); else { SFX18.paper(); toast(`IT ISN'T FINISHED · ${4 - G18.pinned.length} MEMOR${4 - G18.pinned.length === 1 ? 'Y' : 'IES'} MISSING`, 2.6); } } }); }
   // notes: the Children's letter on the teacher's desk, the nap-time rules
   { const n = W18.deskNote, r = propRoot(n.x, n.z, 0.12); r.rotation.x = 0; const S = dynTexPlane('note18', 0.28, 0.2, 128, 92, r, [0, n.y + 0.004, 0], 0.5); S.mesh.rotation.x = Math.PI / 2; drawNote18(S.ctx, 128, 92, '#fff8d8'); S.dt.update(); W18.signs.push(S);
     W.interact.push({ x: n.x, z: n.z, y: n.y, r: 1.7, label: () => 'READ THE NOTE', ok: () => G.state === 'play', act: () => readNote18('desk') }); }
@@ -115,6 +116,7 @@ function buildStory18(T) {
   { const m = W18.musicBox; W.interact.push({ x: m.x, z: m.z, y: m.y, r: 1.7, label: () => G18.musicT > 0 ? 'THE MUSIC BOX IS PLAYING' : 'WIND THE MUSIC BOX', ok: () => G.state === 'play', act: () => windBox18() }); }
   // the slides: climb one at its bottom end
   for (const S of W18.slides) W.interact.push({ x: S.x, z: S.z, y: 0.7, r: 1.7, label: () => `CLIMB THE ${S.name} SLIDE`, ok: () => G.state === 'play' && !G18.slide, act: () => startSlide18(S) });
+  buildPlaces18();   // r6
 }
 function drawNote18(c, w, h, bg) { paper18(c, w, h, bg); c.strokeStyle = 'rgba(120,120,200,0.35)'; c.lineWidth = 1; for (let y = 14; y < h; y += 10) { c.beginPath(); c.moveTo(4, y); c.lineTo(w - 4, y); c.stroke(); } for (let i = 0; i < 6; i++) crayonLine18(c, [[10, 16 + i * 11], [w - 12 - (i === 5 ? 50 : Math.random() * 16), 16 + i * 11]], '#3a3a8a', 2); }
 const inPit18 = (x, z, m = 0) => x > PIT18.x0 + m && x < PIT18.x1 - m && z > PIT18.z0 + m && z < PIT18.z1 - m;
@@ -122,8 +124,8 @@ const inPit18 = (x, z, m = 0) => x > PIT18.x0 + m && x < PIT18.x1 - m && z > PIT
 // ----- story actions -----
 function readNote18(k) {
   SFX18.paper();
-  const parts=k==='desk' ? ["To the grown-up who fell in: You forgot us. That's okay, everybody does.","Your drawings got lost all over. Find all four and pin them on the MY MEMORIES board.","Then you can draw yourself a door. Dino will help you.","Don't let the tall one catch you in the dark. It only looks like someone you know. — the Children"] : ['NAP TIME: RED = bedtime. YELLOW = ball pit.', 'BLUE = outside to play. GREEN = back to class. Hold on tight!'];
-  for(const text of parts) say('NOTE',text,{dur:4.5});
+  if (k === 'desk') readLetter18();   // r6: the letter opens on paper; NOTE18 keeps the old text for reference
+  else readDoc('nap18', 'NAP TIME RULES', ['RED slide = bedtime.', 'YELLOW slide = ball pit.', 'BLUE slide = outside to play.', 'GREEN slide = back to class.', 'Hold on tight and NO climbing up the wrong way!'], { kind: 'board' });
   if (k === 'desk' && !G18.noteRead) { G18.noteRead = true; setPhase18(); }
   if (k === 'nap') G18.napRead = true;
 }
@@ -150,13 +152,20 @@ function pinDrawings18() {
   SFX18.pin(); later(0.3, () => SFX18.pin()); PL.san = Math.min(100, PL.san + 6 * n);
   const S = W18.board.S; drawBoard18(S.ctx, 512, 304); S.dt.update();
   toast(`PINNED · ${G18.pinned.length}/4`, 2); cpSave(`PINNED ${G18.pinned.length}/4`);
-  if (G18.pinned.length >= 4) finishDoor18(); else setPhase18();
+  if (G18.pinned.length >= 4) doorReady18(); else setPhase18();   // r6: the door may still need its colors
 }
-function finishDoor18() {
+function finishDoor18() {   // r7: a coloured door still needs your name on it
+  if (needName18()) {
+    const X = W18.exitDoor; drawExit18(X.S.ctx, 256, 444, false, { colored: true }); X.S.dt.update(); for (let i = 0; i < 6; i++) later(0.3 + i * 0.2, () => SFX18.crayon());
+    setPhase18('name'); later(1.6, () => say('THE CHILDREN', 'Now put your name on it. Or it goes to anybody\'s house.', { dur: 5, mode: 'whisper' })); cpSave('THE DOOR · NO NAME'); return;
+  }
+  openDoor18();
+}
+function openDoor18() {
   const X = W18.exitDoor; X.on = true;
   for (let i = 0; i < 8; i++) later(0.4 + i * 0.22, () => SFX18.crayon());
   later(2.2, () => { drawExit18(X.S.ctx, 256, 444, true); X.S.dt.update(); FX.fadeW = Math.max(FX.fadeW, 0.4); G18.flash = 0.4; SFX18.chime(); });
-  later(3.0, () => say('THE CHILDREN', 'You remembered us. Now you can go home. Use the door you drew.', { dur: 5, mode: 'whisper' }));
+  later(3.0, () => say('THE CHILDREN', 'Bye. Close the door behind you. Dino can\'t reach the handle.', { dur: 5, mode: 'whisper' }));
   setPhase18('exit');
   for (const f of AI18.fog) f.goAway(8);
 }

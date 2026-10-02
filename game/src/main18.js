@@ -3,8 +3,8 @@ const G18 = {from:null};
 function resetG18(){const from=G18.from;for(const k of Object.keys(G18))delete G18[k];Object.assign(G18,{from,phase:'arrive',carry:[],pinned:[],found:0,noteRead:false,napRead:false,musicT:0,flash:0,digging:false,slide:null,slides:{},paintTip:false,boxTip:false,slideTip:false,hugged:false,doorT:0,whisperT:20,gigT:25,rustleT:0,endWon:false,lull:null,drone:null});}
 resetG18();
 DEATH_TXT.forgotten=['FORGOTTEN','It wore the shape of someone you used to know.'];
-function obj18(){return G18.phase==='arrive'?'FOLLOW THE PLUSH DINO':G18.phase==='exit'?'WALK THROUGH THE DOOR YOU DREW':`FIND YOUR DRAWINGS · ${G18.found}/4 · PINNED ${G18.pinned.length}/4`;}
-function setPhase18(p){const old=G18.phase;if(p)G18.phase=p;objective(obj18());if(old==='arrive'&&G18.phase==='memories'){cpSave('SUNSHINE ROOM');spawnForgotten18();if(G.diff===2)spawnForgotten18();later(2,()=>toast('BRIGHT ROOMS ARE SAFE · KEEP YOUR LIGHT READY',4));}}
+function obj18(){return G18.phase==='arrive'?'FOLLOW THE PLUSH DINO':G18.phase==='exit'?'WALK THROUGH THE DOOR YOU DREW':G18.phase==='name'?objName18():G18.phase==='color'?(P18.crayons?'COLOR IN THE DOOR YOU DREW':'THE DOOR NEEDS COLOR · CRAYONS IN THE ART ROOM'):`FIND YOUR DRAWINGS · ${G18.found}/4 · PINNED ${G18.pinned.length}/4`;}
+function setPhase18(p){const old=G18.phase;if(p)G18.phase=p;objective(obj18());tasks18();if(old==='arrive'&&G18.phase==='memories'){cpSave('SUNSHINE ROOM');spawnForgotten18();if(G.diff===2)spawnForgotten18();later(2,()=>toast('BRIGHT ROOMS ARE SAFE · KEEP YOUR LIGHT READY',4));}}
 function carryFrom5(){return carryFrom9();}
 function teardown18(){for(const k of ['lull','drone']){const v=G18[k];if(v){try{v.src&&v.src.stop();(v.v?v.v.g:v.g).disconnect();v.bed&&v.bed.disconnect();}catch(e){}G18[k]=null;}}PL.spdK=1;document.body.classList.remove('lvl18');}
 async function goLevel18(from) {
@@ -15,7 +15,7 @@ async function goLevel18(from) {
   if (AU.ctx && AU.ctx.state === 'suspended') AU.ctx.resume();
   teardownScene();
   LVL = 18; setDims(L18_N, L18_LMR); document.body.classList.remove('lvl9', 'lvl5'); document.body.classList.add('lvl18'); AU.remap = null;
-  resetG18();
+  resetG18(); resetP18(); resetM18(); tasksReset('LEVEL 18 · NOSTALGIC MEMORIES');
   const prog = (p, m) => { $('loadFill').style.width = (p * 100).toFixed(0) + '%'; $('loadMsg').textContent = m; };
   RNG = mulberry32((Math.random() * 4294967296) >>> 0);
   await buildWorld18(prog);
@@ -40,14 +40,15 @@ function startLevel18Menu() {
   applySettings(); lockPointer(); G18.from = null; goLevel18(null);
 }
 function introCam18(dt){INTRO.t+=dt;const t=INTRO.t,k=smooth(0.5,4.5,t);FX.fadeW=1-smooth(0.3,2.3,t);FX.fadeB=0;CAM.position.set(PL.x,lerp(0.24,1.6,k),PL.z);CAM.rotation.set(lerp(-0.65,0,k),PL.yaw,lerp(0.65,0,k));CAM.fov=S.fov*Math.PI/180;if(t>4.8)beginPlay18();}
-function beginPlay18(){G.state='play';FX.fadeW=FX.fadeB=0;PL.pitch=0;$('osd').classList.remove('hide');if(IS_TOUCH)$('touch').classList.remove('hide');setPhase18('arrive');cpSave('LEVEL START',{x:PL.x,z:PL.z,yaw:PL.yaw,quiet:true});later(0.8,()=>{SFX.staticBurst(0.8,0.6);say('M.E.G. RADIO','…expedition… can you hear… Level eigh— …don’t forget…',{dur:4,radio:true});});later(8,()=>toast('A SMALL GREEN TOY IS WAITING FOR YOU',3));}
+function beginPlay18(){G.state='play';FX.fadeW=FX.fadeB=0;PL.pitch=0;$('osd').classList.remove('hide');if(IS_TOUCH)$('touch').classList.remove('hide');setPhase18('arrive');cpSave('LEVEL START',{x:PL.x,z:PL.z,yaw:PL.yaw,quiet:true});arrive18();later(8,()=>toast('A SMALL GREEN TOY IS WAITING FOR YOU',3));}
 function gameEvents18(dt){
+ places18Events(dt);
  const z=zone18(PL.x,PL.z),pit=inPit18(PL.x,PL.z);PL.spdK=pit?0.55:1;
  if(pit){CAM.position.y-=0.45;G18.rustleT-=dt;if(PL.spd>0.2&&G18.rustleT<=0){G18.rustleT=0.7;SFX18.rustle(P9({x:PL.x,y:0.4,z:PL.z}),0.45);}}
  G18.flash=Math.max(0,G18.flash-dt);if(!G18.slide)FX.fadeW=G18.flash;
  G18.musicT=Math.max(0,G18.musicT-dt);
  const d=AI18.dino,near=d&&d.d<3.5&&los(d.x,d.z,PL.x,PL.z);PL.san=clamp(PL.san+(near?2:z===Z18.CLASS?0.16:-(voidZ18(z)?0.25:0.04)*[0.6,1,1.3][G.diff])*dt,0,100);
- G18.whisperT-=dt;if(G18.whisperT<=0&&(PL.san<45||voidZ18(z))){G18.whisperT=rnd(15,30);SFX.whisper();say('',pick(['…you said you would come back…','…you never closed the gate…','…they waited for you…','…you forgot our names…','…it was only a coat…']),{dur:4,mode:'whisper'});}
+ G18.whisperT-=dt;if(G18.whisperT<=0&&(PL.san<45||voidZ18(z))){G18.whisperT=rnd(15,30);SFX.whisper();say('',pick(['…you have to lift the latch or it doesn\'t catch…','…his bowl is still by the back door…','…you said you fed him…','…there\'s a coat on the hook, that\'s all it is…','…they kept a chair for you…','…the kitchen was yellow… wasn\'t it…']),{dur:4,mode:'whisper'});}
  G18.gigT-=dt;if(G18.gigT<=0){G18.gigT=rnd(25,45);SFX.giggle({x:PL.x+12,y:1,z:PL.z-8,pl:{x:PL.x,z:PL.z}});}
  const C=W18.closet;if(C){C.open=damp(C.open,C.want,1.2,dt);C.hinge.rotation.y=C.ry-1.35*C.open;}
  slideCam18(dt);
@@ -67,9 +68,9 @@ function worldFX18(dt){
 }
 function win18(){if(G.state!=='play'||!W18.exitDoor.on)return;G.state='won';DEATH.t=0;DEATH.shown=false;clearSlot(0);$('prompt').classList.remove('show');G18.wc={x:CAM.position.x,z:CAM.position.z,yaw:CAM.rotation.y,pitch:CAM.rotation.x};for(const f of AI18.fog)f.goAway(99);SFX18.chime();}
 function wonCam18(dt){DEATH.t+=dt;const t=DEATH.t,X=W18.exitDoor,w=G18.wc,k=smooth(0,2.8,t);updateAI18(dt);CAM.position.set(lerp(w.x,X.fx-0.3,k),1.6,lerp(w.z,X.fz,k));CAM.rotation.set(lerp(w.pitch,0,k),w.yaw+angDiff(w.yaw,-Math.PI/2)*k,0);FX.fadeW=smooth(1.6,4,t);if(t>5&&!DEATH.shown){DEATH.shown=true;showEnd18(true);}}
-function showEnd18(won){if(document.pointerLockElement)document.exitPointerLock();$('osd').classList.add('hide');$('touch').classList.add('hide');G18.endWon=won;const [title,text]=won?['YOU REMEMBERED','For a moment the voices sound like people you loved. You step through the door you drew. The little green dinosaur stays behind, waiting for the next child who forgot.']:(DEATH_TXT[G.cause]||DEATH_TXT.forgotten);$('endKicker').textContent=won?'WOKEN UP · END OF RECORDING':'■ SIGNAL LOST · LEVEL 18';$('endTitle').textContent=title;$('endText').textContent=text;const st=[['TIME ON TAPE',fmtTC(G.time)],['DISTANCE',Math.round(PL.dist)+' M'],['DRAWINGS',G18.pinned.length+'/4'],['LEVEL','18 · NOSTALGIC MEMORIES'],['DIFFICULTY',DIFFS[G.diff]]];$('endStats').innerHTML=st.map(([a,b])=>`<div><span>${a}</span><b>${b}</b></div>`).join('');$('btnAgain').textContent=won?'▶ PLAY AGAIN (LEVEL 0)':'▶ RETRY LEVEL 18';show('end');}
-function target18(){let to=null;const pc=cell18(PL.x,PL.z),z=LV.zone[pc];if(G18.phase==='arrive')to=AI18.dino;else if(G18.phase==='exit')to=W18.exitDoor;else if(!G18.noteRead)to=W18.deskNote;else if(G18.carry.length&&(z===Z18.CLASS||G18.found===4))to=W18.board;else{const left=W18.drawings.filter(d=>!d.taken);to=left.sort((a,b)=>dist2(a.x,a.z,PL.x,PL.z)-dist2(b.x,b.z,PL.x,PL.z))[0]||W18.board;}if(!to)return null;const gc=cell18(to.x,to.z);if(gc===pc||los(PL.x,PL.z,to.x,to.z))return to;if(G18.targetCell!==gc||G18.targetVer!==LV.navVer){G18.targetCell=gc;G18.targetVer=LV.navVer;G18.targetField=bfs(gc%N,(gc/N)|0,c=>!LV.zone[c]);}const F=G18.targetField;let c=pc;if(F[c]<0)return to;for(let i=0;i<3;i++){let best=c;const x=c%N,y=(c/N)|0;for(let d=0;d<4;d++){const nx=x+DX[d],ny=y+DY[d],n=cIdx(nx,ny);if(inGrid(nx,ny)&&passable(x,y,d)&&F[n]>=0&&F[n]<F[best])best=n;}if(best===c)break;c=best;}return {x:cellCenter(c%N),z:cellCenter((c/N)|0)};}
-function hudObj18(){return `DRAWINGS ${G18.found}/4`;}
-function hudItems18(){return `CARRYING ${G18.carry.length} · PINNED ${G18.pinned.length}/4`;}
+function showEnd18(won){if(document.pointerLockElement)document.exitPointerLock();$('osd').classList.add('hide');$('touch').classList.add('hide');G18.endWon=won;if(won)flags18();const [title,text]=won?['YOU REMEMBERED',endText18()]:(DEATH_TXT[G.cause]||DEATH_TXT.forgotten);$('endKicker').textContent=won?'WOKEN UP · END OF RECORDING':'■ SIGNAL LOST · LEVEL 18';$('endTitle').textContent=title;$('endText').textContent=text;const st=[['TIME ON TAPE',fmtTC(G.time)],['DISTANCE',Math.round(PL.dist)+' M'],['DRAWINGS',G18.pinned.length+'/4'],['LEVEL','18 · NOSTALGIC MEMORIES'],['DIFFICULTY',DIFFS[G.diff]]];$('endStats').innerHTML=st.map(([a,b])=>`<div><span>${a}</span><b>${b}</b></div>`).join('');$('btnAgain').textContent=won?'▶ PLAY AGAIN (LEVEL 0)':'▶ RETRY LEVEL 18';show('end');}
+function target18(){let to=null;const pc=cell18(PL.x,PL.z),z=LV.zone[pc];if(G18.phase==='arrive')to=AI18.dino;else if(G18.phase==='exit')to=W18.exitDoor;else if(G18.phase==='name')to=targetMem18();else if(G18.phase==='color')to=P18.crayons||!W18.p18||!W18.p18.tub?W18.exitDoor:W18.p18.tub;else if(!G18.noteRead)to=W18.deskNote;else if(G18.carry.length&&(z===Z18.CLASS||G18.found===4))to=W18.board;else{const left=W18.drawings.filter(d=>!d.taken);to=left.sort((a,b)=>dist2(a.x,a.z,PL.x,PL.z)-dist2(b.x,b.z,PL.x,PL.z))[0]||W18.board;}if(!to)return null;const gc=cell18(to.x,to.z);if(gc===pc||los(PL.x,PL.z,to.x,to.z))return to;if(G18.targetCell!==gc||G18.targetVer!==LV.navVer){G18.targetCell=gc;G18.targetVer=LV.navVer;G18.targetField=bfs(gc%N,(gc/N)|0,c=>!LV.zone[c]);}const F=G18.targetField;let c=pc;if(F[c]<0)return to;for(let i=0;i<3;i++){let best=c;const x=c%N,y=(c/N)|0;for(let d=0;d<4;d++){const nx=x+DX[d],ny=y+DY[d],n=cIdx(nx,ny);if(inGrid(nx,ny)&&passable(x,y,d)&&F[n]>=0&&F[n]<F[best])best=n;}if(best===c)break;c=best;}return {x:cellCenter(c%N),z:cellCenter((c/N)|0)};}
+function hudObj18(){return G18.phase==='name'?'YOUR NAME':`DRAWINGS ${G18.found}/4`;}
+function hudItems18(){return `CARRYING ${G18.carry.length} · PINNED ${G18.pinned.length}/4`+(P18.crayons?' · CRAYONS':'');}
 if (/[?&]debug/.test(location.search)) Object.assign(window.__BR || (window.__BR={}),{SKN,SKP,sknOn,sknTick,rigPlay,rigWant,rigStop,rigBase,MdlBatch,mdlOk,mdlDims,MDL_K,MDL,buildExplorerSk,buildHowlerSk,buildWatchSk,buildWretchSk,buildHaleSk,buildForgottenSk,poseDeadSk,mergeRig,G18,W18,AI18,findInteract,interact,collide,updateField,updateHUD,LV18:()=>LV,goLevel18,beginPlay18,worldFX18,gameEvents18,target18,win18,takeDrawing18,digPit18,pinDrawings18,setPhase18,spawnForgotten18,startSlide18,slideCam18,readNote18,windBox18,foes18,Z18,PIT18,SLIDE_TO18,carryFrom5,updateAI18,INTRO,DEATH});
 boot();

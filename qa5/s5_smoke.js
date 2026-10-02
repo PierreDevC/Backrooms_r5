@@ -1,5 +1,5 @@
 module.exports = async (page, logs) => {
-  const shot = async (n) => { await page.waitForTimeout(1200); await page.screenshot({ path: '/data/qa5/' + n + '.png' }); logs.push('QA shot ' + n); };
+  const shot = async (n) => { await page.waitForTimeout(1200); await page.screenshot({ path: (process.env.BR_QA_OUT || __dirname) + '/' + n + '.png' }); logs.push('QA shot ' + n); };
   const tp = async (x, z, yaw, pitch = 0) => page.evaluate(([x, z, yaw, pitch]) => { const B = window.__BR, P = B.PL; P.x = x; P.z = z; P.yaw = yaw; P.pitch = pitch; P.vx = P.vz = 0; P.hp = 100; P.san = 100; }, [x, z, yaw, pitch]);
   const cc = await page.evaluate(() => window.__BR.CELL5());
   const c = i => (i + 0.5) * cc;
@@ -9,7 +9,7 @@ module.exports = async (page, logs) => {
   await page.evaluate(() => { window.__BR.goLevel5(null); });
   await page.waitForFunction(() => window.__BR.G.state === 'intro' && window.__BR.W5 && window.__BR.W5.elev, null, { timeout: 300000 }).catch(e => logs.push('TIMEOUT l5 load'));
   logs.push('QA l5 load ms ' + (Date.now() - t0));
-  await page.screenshot({ path: '/data/qa5/intro.png' });
+  await page.screenshot({ path: (process.env.BR_QA_OUT || __dirname) + '/intro.png' });
   await page.waitForFunction(() => window.__BR.G.state === 'play', null, { timeout: 60000 }).catch(e => logs.push('TIMEOUT l5 play'));
   // freeze AI damage for screenshots
   await page.evaluate(() => { const B = window.__BR; B.DBG.god = true; });
@@ -29,6 +29,7 @@ module.exports = async (page, logs) => {
   logs.push('QA after tp ' + JSON.stringify(await page.evaluate(() => { const B = window.__BR; return { pl: [B.PL.x.toFixed(1), B.PL.z.toFixed(1)], ph: B.G5.phase, st: B.G.state }; })));
   await shot('landing');
   await tp(vs[0][0] + 1.2, vs[0][1], -Math.PI / 2); await shot('boiler1');
+  await page.evaluate(() => { window.__BR.ST5.reset = true; });   // r7: fire lock (qa_r7/l5_state.js)
   for (let i = 0; i < 3; i++) await page.evaluate(i => { const B = window.__BR, v = B.W5.valves[i]; try { B.startValve5(v); B.finishValve5(v); } catch (e) { console.log('QA valve err ' + e.message + ' ' + e.stack); } }, i);
   logs.push('QA valves ' + JSON.stringify(await page.evaluate(() => ({ ph: window.__BR.G5.phase, v: window.__BR.G5.valves, moths: window.__BR.AI5.moths.map(m => m.st + (m.boil ? 'B' : 'H')).join(',') }))));
   const ex = await page.evaluate(() => [window.__BR.W5.exit.x, window.__BR.W5.exit.z]);
@@ -36,5 +37,5 @@ module.exports = async (page, logs) => {
   await page.evaluate(() => { const B = window.__BR; B.useExit5(); });
   await page.waitForTimeout(7000);
   logs.push('QA end ' + JSON.stringify(await page.evaluate(() => ({ st: window.__BR.G.state, title: document.getElementById('endTitle').textContent, btn: document.getElementById('btnAgain').textContent }))));
-  await page.screenshot({ path: '/data/qa5/end.png' });
+  await page.screenshot({ path: (process.env.BR_QA_OUT || __dirname) + '/end.png' });
 };

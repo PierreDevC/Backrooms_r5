@@ -1,7 +1,7 @@
 # Level 18 — Nostalgic Memories
 
 ## Objective
-Arrive → FOLLOW THE PLUSH DINO → FIND YOUR DRAWINGS 0/4 → pin all four at MY MEMORIES → WALK THROUGH THE DOOR YOU DREW → YOU REMEMBERED.
+Arrive → FOLLOW THE PLUSH DINO → FIND YOUR DRAWINGS 0/4 → pin all four at MY MEMORIES → (r6) COLOR IN THE DOOR with the crayons from the ART ROOM (pick them up any time; then the door finishes on the fourth pin) → (r7) PUT YOUR NAME ON IT: your cubby (CUBBIES, padlocked) ← the cubby key in the MUSIC room's toy box ← play the class song on the floor piano (eight coloured keys you step on; C C G G A A G = RED RED BLUE BLUE PURPLE PURPLE BLUE) ← the song is on your BIRTHDAY card (a party room off the dark east walk) → hold to write your name on the door (any part of this can be done before the door is coloured) → WALK THROUGH THE DOOR YOU DREW → YOU REMEMBERED (r6: the card is assembled from the run's flags, see docs/STORY.md). Optional: a fifth drawing in the art room (Dad's camcorder), the LOST & FOUND by the Sunshine Room door.
 
 | Drawing | Place | Memory | Effect |
 |---|---|---|---|
@@ -11,6 +11,14 @@ Arrive → FOLLOW THE PLUSH DINO → FIND YOUR DRAWINGS 0/4 → pin all four at 
 | OUR HOUSE | Kitchen fridge | Maple Street, a home never revisited | Sanity hit/white flash |
 
 Pinning restores 6 sanity per picture. Drawings can be pinned in batches; carried and pinned HUD counters are separate.
+
+## r7 rooms
+| Room | Where | What |
+|---|---|---|
+| MUSIC | north of the corridor, cells 16–18 × 17–19 (bright, safe) | floor piano, PLAY OUR SONG poster, toy box with the cubby key, drum, xylophone table, chairs on a rug |
+| CUBBIES | south of the corridor, cells 7–11 × 21–22 (one flickering light) | three tall cubby units with names, your padlocked cubby ("?") with your backpack and name tag; opening it is heard (a Forgotten) |
+| YOUR BIRTHDAY | off the east void walk at (36,13), cells 37–38 × 12–14 | cake with candles (MAKE A WISH: +12 sanity), party hats, presents, balloons, HAPPY BIRTHDAY banner, the birthday card with the song |
+| THE FIELD TRIP | off the east void walk at (36,22), cells 37 × 20–24 (optional) | school-bus seats, sky in the windows, the driver's seat, a lunchbox (note from Mom, almond water, +15 sanity) |
 
 ## Dino
 Small green plush with stitched belly, feet, tail and button eyes. Leads from hall to Sunshine Room, opens class door and sits on rug. Hugs restore 30 sanity (45-second cooldown); first hug brings one almond water. Nearby Dino restores sanity. On completion it guides you toward HOME.

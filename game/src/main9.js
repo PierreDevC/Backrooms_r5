@@ -17,6 +17,7 @@ function radio9(key, delay = 0) {
   say('M.E.G. OUTPOST 9', txt, { radio: true, vo: 'm9_' + key, delay });
 }
 function obj9() {
+  if (spareRoute9()) return 'TAKE THE SERVICE ELEVATOR — OR CURE DR. HALE';   // r6: Hale's spare card
   switch (G9.phase) {
     case 'arrive': return 'FIND THE M.E.G. OUTPOST · NORTH-EAST';
     case 'data': return `DOWNLOAD M.E.G. DATA FROM THE RED HOUSES · ${G9.data}/3`;
@@ -32,7 +33,7 @@ function obj9() {
   }
   return '';
 }
-function setPhase9(p) { if (p) G9.phase = p; objective(obj9()); }
+function setPhase9(p) { if (p) G9.phase = p; objective(obj9()); tasks9(); }
 
 // ----- map kiosk / camcorder snapshot -----
 function studyMap9() {
@@ -55,22 +56,42 @@ function startDownload(T) {
   if (T.done || T.active) return;
   T.active = true; T.prog = 0; T.away = 0; T.need = [8, 10, 13][G.diff]; T.chirpT = 0.8; T.half = false; T.warned = false;
   SFX9.modem(P9({ x: T.x, z: T.z, y: 0.96 })); makeNoise(0.3); FX.glitch = Math.max(FX.glitch, 0.5);
-  toast('DOWNLOADING — STAY CLOSE TO THE TERMINAL', 2.6);
+  if (HACK9.skip) toast('DOWNLOADING — STAY CLOSE TO THE TERMINAL', 2.6);
+  hackStart9(T);   // r6: the transfer moves as you verify packets
+  if (G9.data === 2 && !T.beatDone) { T.beatDone = true; watchBeat9(T.h); }   // r6: the last house draws the Watch
   if (G9.phase === 'arrive') setPhase9('data');
   noiseAt9(T.x, T.z, 0.9, 0.55);   // the modem screech carries: a Wretch sleeping close by stirs (it only wakes if it then hears you)
   drawTerm(T);
 }
 function updateTerms9(dt) {
+  hackTick9(dt); termZoom9(dt);
   for (const T of W9.terms) {
     if (!T.active) continue;
     const near = dist2(T.x, T.z, PL.x, PL.z) < 3.4;
-    if (near) { T.prog += dt; T.away = 0; T.warned = false; } else T.away += dt;
+    if (near) { if (HACK9.skip) T.prog += dt; T.away = 0; T.warned = false; } else T.away += dt;   // r6: progress comes from PACKET STACK (skip = the old timed transfer, tests only)
+    if (HACK9.T === T && !HACK9.skip) drawTerm(T);
     T.chirpT -= dt;
     if (near && T.chirpT <= 0) { T.chirpT = rnd(0.5, 1.3); SFX9.chirp(P9({ x: T.x, z: T.z, y: 0.96 })); makeNoise(0.14); noiseAt9(T.x, T.z, 0.4, 0.1); }
     if (!T.half && T.prog > T.need * 0.5) { T.half = true; SFX9.modem(P9({ x: T.x, z: T.z, y: 0.96 })); noiseAt9(T.x, T.z, 0.9, 0.55); }
     if (T.away > 0.4 && !T.warned) { T.warned = true; toast('LINK INTERRUPTED — RETURN TO THE TERMINAL', 2.2); SFX.beep(420, 0.12); }
     if (T.prog >= T.need) finishDownload(T);
   }
+}
+// the camcorder pushes in on the screen as the transfer runs: only while you stand at it and look at it; danger or looking away lets go
+function termZoom9(dt) {
+  let want = 0, aim = null;
+  for (const T of W9.terms) {
+    if (!T.active || !T.scr || dist2(T.x, T.z, PL.x, PL.z) > 3.4) continue;
+    const s = T.scr, cp = CAM.position, dx = s.x - cp.x, dy = s.y - cp.y, dz = s.z - cp.z, d = Math.hypot(dx, dy, dz) || 1;
+    const yawTo = Math.atan2(dx, dz), pitchTo = -Math.atan2(dy, Math.hypot(dx, dz));
+    const off = Math.hypot(angDiff(PL.yaw, yawTo), pitchTo - PL.pitch);
+    if (off > 0.55) continue;
+    const H = hearLimit9(); if (H.hunt || H.sus > 0.6 || G.chase > 0.3) continue;   // the modem's own screech stirs a sleeper a little; that alone doesn't break the shot
+    const pr = clamp(T.prog / T.need, 0, 1); want = (HACK9.on && HACK9.T === T ? 1 : 0.2 + 0.8 * pr) * clamp(1 - (off - 0.3) / 0.25, 0, 1); aim = { yaw: yawTo, pitch: pitchTo };
+  }
+  PL.tz = want > (PL.tz || 0) ? damp(PL.tz || 0, want, HACK9.on ? 3 : 1.6, dt) : damp(PL.tz || 0, want, 7, dt);
+  document.body.classList.toggle('hacking', HACK9.on && PL.tz > 0.3);
+  if (aim && PL.tz > 0.02) { const k = Math.min(1, dt * 2.2 * PL.tz); PL.yaw += angDiff(PL.yaw, aim.yaw) * k; PL.pitch += (aim.pitch - PL.pitch) * k; }   // a soft frame on the monitor; the mouse still wins
 }
 function finishDownload(T) {
   T.done = true; T.active = false; G9.data++; T.drawK = ''; drawTerm(T);
@@ -106,6 +127,7 @@ function useLocker(L) {
     L.st = 'prying'; L.pryT = 0; SFX9.pry(p); makeNoise(0.55);
     later(1.35, () => { L.st = 'open'; FX.glitch = Math.max(FX.glitch, 0.3); toast('PADLOCK SNAPPED', 1.4); });
   } else if (L.st === 'open') {
+    if (G9.cans >= 4) { toast('YOU ALREADY HAVE FOUR CANISTERS', 2); return; }   // r6: five lockers, four needed
     L.st = 'empty'; L.can.setEnabled(false); G9.carry++; G9.cans++; SFX.pickup();
     toast(`FLUID CANISTER ${G9.cans}/4`, 2.4);
     if (G9.cans >= 4) radio9('cans', 0.8);
@@ -188,7 +210,7 @@ function useElevator() {
   const E = W9.elev, p = P9({ x: E.rx, z: E.rz, y: 1.3 });
   if (!G9.keycard) { SFX.beep(240, 0.25); later(0.3, () => SFX.beep(200, 0.3)); toast('ADMINISTRATOR KEYCARD REQUIRED', 2.4); return; }
   if (E.want) return;
-  SFX.beep(1500, 0.15); setEmi(E.rm, 0.15, 3, 0.3); toast('ACCESS GRANTED', 1.8);
+  SFX.beep(1500, 0.15); setEmi(E.rm, 0.15, 3, 0.3); toast('ACCESS GRANTED', 1.8); elevator9Leave();
   SFX9.elevator(P9(E.light));
   later(2.2, () => { SFX9.ding(P9(E.light)); E.want = 1; LV.solids[E.sol].off = true; objective('STEP INTO THE ELEVATOR'); });
 }
@@ -209,7 +231,7 @@ function wonCam9(dt) {
   if (h && !G9.haleIn && t > 1.9) { G9.haleIn = true; h.place(cx + 0.45, cz + 0.62, -Math.PI / 2); h.st = 'wait'; h.update(0.016); }
   if (t > 3.3 && E.want) { E.want = 0; LV.solids[E.sol].off = false; SFX9.elevator(P9(E.light)); }
   FX.fadeW = smooth(5.4, 7.2, t); FX.glitch = Math.max(FX.glitch, t > 6 ? 0.6 : 0);
-  if (t > 7.6 && !DEATH.shown) { DEATH.shown = true; G9.endWon = true; goLevel5(carryFrom9()); }
+  if (t > 7.6 && !DEATH.shown) { DEATH.shown = true; G9.endWon = true; flags9(); goLevel5(carryFrom9()); }
 }
 function showEnd9(won) {
   if (document.pointerLockElement) document.exitPointerLock();
@@ -232,6 +254,7 @@ function remap9(x, y, z) {
   return [S[0] - (L[0] - c.x), y + S[2] - L[2], S[1] - (L[1] - c.z)];
 }
 function teardown9() {
+  teardownWin9();
   if (G9.night) { try { G9.night.g.disconnect(); } catch (e) {} G9.night = null; }
   if (AI9.wz) { try { AI9.wz.g.disconnect(); if (AI9.wz.src) AI9.wz.src.stop(); } catch (e) {} AI9.wz = null; }
   AU.remap = null;
@@ -245,14 +268,14 @@ async function goLevel9(from) {
   if (AU.ctx && AU.ctx.state === 'suspended') AU.ctx.resume();
   teardownScene();
   LVL = 9; setDims(L9_N, L9_LMR); document.body.classList.add('lvl9'); AU.remap = remap9;
-  resetG9();
+  resetG9(); resetP9(); resetHack9(); tasksReset('LEVEL 9 · DARKENED SUBURBS');
   const prog = (p, m) => { $('loadFill').style.width = (p * 100).toFixed(0) + '%'; $('loadMsg').textContent = m; };
   RNG = mulberry32((Math.random() * 4294967296) >>> 0);
   await buildWorld9(prog);
   setupPost(+S.qual); applySettings();
   Object.assign(PL, { x: 2 * CELL, z: 6.3 * CELL, yaw: 0, pitch: 0, vx: 0, vz: 0, kx: 0, kz: 0, crouch: false, ck: 0, sta: 1, exh: false,
     hp: Math.max(f.hp, 75), san: Math.max(f.san, 75), batt: Math.max(f.batt, 60), spare: f.spare, water: f.water, flash: false, fk: 0, nv: false, zoomT: false, zk: 0,
-    noise: 0, dist: f.dist, lastHurt: -99, shake: 0, cell: -1, fear: 0, lookAt: null, lookK: 0, focus: null, interf: 0 });
+    noise: 0, dist: f.dist, lastHurt: -99, shake: 0, cell: -1, fear: 0, lookAt: null, lookK: 0, focus: null, interf: 0, tz: 0 });
   updateField();
   Object.assign(G, { time: f.time, lost: f.lost, tapes: f.tapes, cause: '', blackout: 0, exitOn: false, chase: 0, hintT: 0, grace: 0 });
   HINT.stage = 0; HINT.site = null;
@@ -286,7 +309,7 @@ function beginPlay9() {
   G.state = 'play'; FX.fadeW = 0; FX.fadeB = 0; PL.pitch = 0;
   $('osd').classList.remove('hide'); if (IS_TOUCH) $('touch').classList.remove('hide');
   setPhase9('arrive'); cpSave('LEVEL START', { x: PL.x, z: PL.z, yaw: PL.yaw, quiet: true });
-  later(1.4, () => radio9('arrive'));
+  later(1.4, () => arrive9());   // r6: rewritten arrival (text only; the old voiced clip is unused)
   later(26, () => toast(IS_TOUCH ? 'LATCH · MAP BUTTONS' : '[RIGHT-CLICK] LATCH DOORS   [TAB] MAP   [F] FLASHLIGHT', 3.6));
 }
 
@@ -313,7 +336,8 @@ function startStairTp9(h, up) {
   if (!G9.stairTip) { G9.stairTip = true; later(1.1, () => toast(up ? 'UPSTAIRS — WALK BACK INTO THE STAIRWELL TO GO DOWN' : 'DOWNSTAIRS', 2.6)); }
 }
 function gameEvents9(dt) {
-  updateTerms9(dt);
+  peekTick9(dt); peepTick9(dt); portalTick9(dt);   // r6: after playerCamera, before the frame renders
+  updateTerms9(dt); places9Events(dt);
   // stairwell between the outpost and the lab (fade through black)
   if (G9.tp) {
     const T = G9.tp; T.t += dt; FX.fadeB = T.t < 0.3 ? T.t / 0.3 : Math.max(0, 1 - (T.t - 0.45) / 0.45);
@@ -472,6 +496,7 @@ function target9raw() {
   const toLab = () => lab ? null : comp ? { x: 25.5 * CELL, z: 20.3 * CELL } : W9.gate;
   const up = { x: (LAB_X + 2.5) * CELL, z: 0.9 };
   const near = arr => { let b = null, bd = 1e9; for (const o of arr) { const d = dist2(o.x, o.z, PL.x, PL.z); if (d < bd) { bd = d; b = o; } } return b; };
+  if (spareRoute9()) return lab ? (W9.elev ? { x: W9.elev.rx, z: W9.elev.rz } : null) : toLab();
   switch (G9.phase) {
     case 'arrive': return W9.kiosk;
     case 'data': return G9.mapSeen ? near(W9.terms.filter(T => !T.done)) : W9.kiosk;
@@ -495,7 +520,7 @@ function hudObj9() {
   if (G9.crowbar) return `CANISTERS ${G9.cans}/4` + (G9.carry ? ` · CARRY ${G9.carry}` : '');
   return `DATA ${G9.data}/3`;
 }
-function hudItems9() { const a = []; if (G9.crowbar) a.push('CROWBAR'); if (G9.keycard) a.push('KEYCARD'); if (G9.mapSeen) a.push('MAP'); return a.join(' · ') || 'LEVEL 9'; }
+function hudItems9() { const a = []; if (P9S.rota) a.push(watchTimer9()); if (G9.crowbar) a.push('CROWBAR'); if (G9.keycard) a.push('KEYCARD'); if (G9.mapSeen) a.push('MAP'); return a.join(' · ') || 'LEVEL 9'; }
 
 // ----- start (after every module has initialised) -----
 if (/[?&]debug/.test(location.search)) window.__BR = { CP, cpRetry, cpSave, cpAvail, cpPorch9, ERRS, frameErr, inRun, hasAlt, startLevelPick, openLevels, G9, W9, AI9, hearLimit9, noiseAt9, hear9, physD9, cellPt, cIdx, cellOf, cellCenter, floorOf, updateHUD, BRIEF, openBrief, closeBrief, briefStep, startIntro9, brief9Seen, briefSlides, LV9: () => LV, goLevel9, worldFX9, restartGame, teardownScene, openGate, startDownload, finishDownload, takeCrowbar, useLocker, installCans, releaseSubject, pullLever, releaseCure, takeKeycard, useElevator, win9, spawnWatch, studyMap9, toggleMap9, setDoor, latchDoor, radio9, target9, raiseCage, Hale, HINT, G, PL, AI, FX, W, LV, CAM: () => CAM, SCN: () => SCN, ENG: () => ENG, startBlackout, takeTape, spawnHowler, lightAt, useExit, hurt, startGame, beginPlay, baseLight, S, DBG, los, pauseGame, die, win, showEnd, simStep, K, useExit, SFX, AU, SUBS, say, playVoice, playS, VO_TXT, ABANK_G };
