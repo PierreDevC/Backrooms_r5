@@ -246,7 +246,7 @@ function spareRoute9() { return G9.keycard && !AI9.hale && ['lab', 'cans', 'prim
 function arrive9() {
   const n0 = flag('nine0'), lost = flag('lost0');
   say('M.E.G. OUTPOST 9', n0 ? 'Nine. Is that you? The camera? You came through the wrong door.' : 'Outpost Nine. Somebody just came through our fence. Copy?', { radio: true });
-  say('M.E.G. OUTPOST 9', 'Watch is out early tonight. Lights on the street aren\'t ours. Don\'t wave. Get off the road.', { radio: true });
+  say('M.E.G. OUTPOST 9', `Three flashlights went up ${shortSt9(LV.st9.v[2])} ten minutes ago. Not ours. Stay off the asphalt.`, { radio: true });
   say('M.E.G. OUTPOST 9', 'Outpost is north-east, inside the chain-link. The map is on the gate.', { radio: true });
   if (lost !== undefined && G.lost !== undefined) later(40, () => { if (LVL === 9 && G.state === 'play') say('M.E.G. OUTPOST 9', lost ? `Marsh's band went quiet for ${lost === 1 ? 'one of them' : lost + ' of them'}. Keep that recorder running.` : 'Marsh\'s people are still on the lobby band. All four. Loud as ever.', { radio: true }); });
 }

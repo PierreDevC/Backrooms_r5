@@ -8,22 +8,23 @@ function resetG5() {
 }
 resetG5();
 DEATH_TXT.moth = ['THE MOTHS CAME FOR YOUR LIGHT', 'The last frames are nothing but wings and dust.'];
-const L5_TXT = {
-  arrive: '…Outpost Nine to expedition… you took the elevator. That isn\'t the surface. That\'s Level 5. The hotel.',
-  arrive2: 'Staff stairs in the Beverly Room lead down to the boilers — the emergency exit is down there. Three locks on the staff door. Housekeeping keeps the keys.',
-  eyes: 'Don\'t stare at the wallpaper. Whatever\'s behind it stares back — and it takes something from you every second.',
-  moth: 'Moths. Big ones. They\'re drawn to light — kill your flashlight and they lose you. Let them find a lamp instead.',
-  loop: 'That corridor folds back on itself. The door numbers repeat. There was a door marked EAST WING at the far end of the north wing — try that one.',
-  keys: 'That\'s all three keys. The staff door is on the south wall of the Beverly Room, right of the arch.',
-  stairs: 'Good. Service stairs, straight ahead. Take them down.',
-  boil: 'Boiler room. The pressure\'s keeping the exit sealed. Three machine halls, three relief valves. Vent them all.',
-  valve: 'Pressure\'s falling. Keep going — and watch the dark.',
-  exit: 'That\'s it — the exit\'s released. Emergency door at the east end. Go. Now.',
+const L5_TXT = {   // r6: rewritten with the dialogue skill (text only, as before)
+  arrive: 'Nine. That car doesn\'t go up. You\'re in the hotel.',
+  arrive2: 'Way out is under the boilers. The staff door is in the ballroom. Three locks.',
+  eyes: 'Nine. Eyes off the wallpaper. Last man who counted the roses lost an hour.',
+  moth: 'Moths. Kill your light. Let them have the lamps.',
+  loop: 'Your room numbers just repeated on my end. Turn around. Last door of the north wing says EAST WING. Try that one.',
+  keys: 'That\'s three. Staff door, south wall of the ballroom, right of the arch.',
+  master: 'Where did you get a master key? No. Don\'t tell me. Ballroom, staff door.',
+  stairs: 'Service stairs. Down.',
+  boil: 'Boilers. Pressure is holding the exit shut. Three halls, three valves.',
+  valve: 'One down. Watch the dark.',
+  exit: 'Exit\'s released. East end. Go.',
 };
-function radio5(key, delay = 0) { const t = L5_TXT[key]; if (t) say('M.E.G. OUTPOST 9', t, { radio: true, delay }); }
+function radio5(key, delay = 0) { const [who, t] = radio5who(key); if (t) say(who, t, { radio: true, delay }); }
 function obj5() {
   switch (G5.phase) {
-    case 'arrive': case 'keys': return `FIND THE HOUSEKEEPING KEYS · ${G5.keys}/3`;
+    case 'arrive': case 'keys': return `FIND THE HOUSEKEEPING KEYS · ${G5.keys}/3` + (P5.pr === 'asked' && !P5.master && LV.pruitt ? ` · OR RYE FOR ${pruittNum5()}` : '');
     case 'staff': return 'UNLOCK THE STAFF DOOR · BEVERLY ROOM';
     case 'stairs': return 'TAKE THE SERVICE STAIRS DOWN';
     case 'valves': return `VENT THE BOILERS · VALVES ${G5.valves}/3`;
@@ -31,7 +32,7 @@ function obj5() {
   }
   return '';
 }
-function setPhase5(p) { if (p) G5.phase = p; objective(obj5()); }
+function setPhase5(p) { if (p) G5.phase = p; objective(obj5()); tasks5(); }
 
 // ----- story actions -----
 function takeKey5(k) {
@@ -69,7 +70,7 @@ function ringBell5() {
 }
 function readNote5() {
   SFX.click(); G5.noteRead = true;
-  say('NOTE', 'HOUSEKEEPING — Keys for the staff door hang in the closets: WEST wing, NORTH wing, EAST wing. Do not walk the east corridor. Use the door marked EAST WING at the end of the north wing.', { dur: 8 });
+  readDoc('note5', 'NOTE ON THE FRONT DESK', ['Night shift: I moved the spare housekeeping keys to the wing closets. West, North, East. Third time this month somebody walked off with the ring.', 'East closet: take the door marked EAST WING at the end of the north wing.', 'Do not walk the east corridor. You will be at it till breakfast.'], { kind: 'note' });   // r6
   if (G5.phase === 'arrive') setPhase5('keys');
 }
 function closeElev5() {
@@ -103,7 +104,7 @@ async function goLevel5(from) {
   if (AU.ctx && AU.ctx.state === 'suspended') AU.ctx.resume();
   teardownScene();
   LVL = 5; setDims(L5_N, L5_LMR); document.body.classList.remove('lvl9'); document.body.classList.add('lvl5'); AU.remap = remap5;
-  resetG5();
+  resetG5(); resetP5(); tasksReset('LEVEL 5 · THE HOTEL');
   const prog = (p, m) => { $('loadFill').style.width = (p * 100).toFixed(0) + '%'; $('loadMsg').textContent = m; };
   RNG = mulberry32((Math.random() * 4294967296) >>> 0);
   await buildWorld5(prog);
@@ -142,7 +143,7 @@ function beginPlay5() {
   G.state = 'play'; FX.fadeW = 0; FX.fadeB = 0; PL.pitch = 0;
   $('osd').classList.remove('hide'); if (IS_TOUCH) $('touch').classList.remove('hide');
   setPhase5('arrive'); cpSave('LEVEL START', { x: PL.x, z: PL.z, yaw: PL.yaw, quiet: true });
-  later(1.2, () => radio5('arrive')); later(9, () => radio5('arrive2'));
+  later(1.2, () => radio5('arrive')); later(9, () => radio5('arrive2')); arrive5extra();
   later(24, () => toast(IS_TOUCH ? 'THE LIGHT BUTTON TOGGLES YOUR FLASHLIGHT' : '[F] FLASHLIGHT — BUT LIGHT DRAWS THINGS IN', 3.6));
 }
 function win5() {
@@ -158,7 +159,7 @@ function wonCam5(dt) {
   CAM.position.set(lerp(w.x, tx + smooth(2.2, 4.4, t) * 1.2, k1), 1.6 + noise1(FX.t * 1.1) * 0.01, lerp(w.z, X.z, k1));
   CAM.rotation.set(lerp(w.pitch, 0, k1), w.yaw + angDiff(w.yaw, Math.PI / 2) * k1, noise1(FX.t * 0.5) * 0.01);
   FX.fadeW = smooth(2.6, 4.8, t); FX.glitch = Math.max(FX.glitch, t > 4 ? 0.6 : 0);
-  if (t > 5.4 && !DEATH.shown) { DEATH.shown = true; G5.endWon = true; goLevel18(carryFrom5()); }
+  if (t > 5.4 && !DEATH.shown) { DEATH.shown = true; G5.endWon = true; flags5(); goLevel18(carryFrom5()); }
 }
 function showEnd5(won) {
   if (document.pointerLockElement) document.exitPointerLock();
@@ -245,6 +246,7 @@ function eyes5(dt) {
 }
 function gameEvents5(dt) {
   const pc = cIdx(cellOf(PL.x), cellOf(PL.z)), zc = LV.zone[pc];
+  places5Events(dt);
   // service stairs <-> boiler room (fade through black)
   if (G5.tp) {
     const T = G5.tp; T.t += dt; FX.fadeB = T.t < 0.3 ? T.t / 0.3 : Math.max(0, 1 - (T.t - 0.45) / 0.45);
@@ -301,7 +303,7 @@ function gameEvents5(dt) {
     G5.hallT = rnd(7, 18) * (PL.san / 40 + 0.35); const k = RNG();
     if (k < 0.3) SFX.whisper();
     else if (k < 0.55) { const b = { x: PL.x - Math.sin(PL.yaw) * 4, y: 0.1, z: PL.z - Math.cos(PL.yaw) * 4, pl: { x: PL.x, z: PL.z } }; SFX.heavyStep(b); later(0.55, () => SFX.heavyStep(b)); }
-    else if (k < 0.78) { const w = Math.floor(RNG() * VO_TXT.whisper.length); say('', '…' + VO_TXT.whisper[w].toLowerCase().replace(/[.?]$/, '') + '…', { vo: 'wh' + w, mode: 'whisper' }); }
+    else if (k < 0.78) { if (RNG() < 0.6) whisper5(); else { const w = Math.floor(RNG() * VO_TXT.whisper.length); say('', '…' + VO_TXT.whisper[w].toLowerCase().replace(/[.?]$/, '') + '…', { vo: 'wh' + w, mode: 'whisper' }); } }   // r6: the hotel's own whispers
     else { FX.glitch = 1.6; SFX.staticBurst(0.3, 0.4); }
   }
 }

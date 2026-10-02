@@ -1,0 +1,33 @@
+error: Failed to load resource: net::ERR_FAILED
+QA load ms 768
+QA l0 start {"state":"play","rooms":["camp:3x3:doors3","sub:3x3:doors1","off:3x3:doors2"],"unreach":0,"tapeReach":true,"reyesHurt":true,"reyesIn":true,"led":0,"obj":"FIND THE LOST TAPES · 0/4","tasks0":["tapes"],"pages":3,"breakers":3}
+QA PASS Level 0 plays
+QA PASS three places carved
+QA PASS every cell and tape reachable after carving
+QA PASS Reyes starts hurt in the flooded office
+QA PASS three logbook pages and three breakers
+QA PASS exit keypad starts unpowered
+QA l0 story {"powerTask":true,"subs":"","seenCamp":true,"radioLead":true,"board":true,"docOpen":true,"docT":"CAMP WHITEBOARD","docHidden":"kind-board","map":true,"nine":true,"hintStage":2,"crate":true,"logs":3,"logDone":true,"spare":3,"docs":["board","campmap","log0","log1","log2"]}
+QA PASS power objective appears
+QA PASS entering camp opens the radio lead
+QA PASS whiteboard opens a document
+QA PASS camp radio reaches Outpost Nine and locks the tape signal
+QA PASS supply crate searchable
+QA PASS logbook complete
+QA l0 notes {"main":"□ FIND THE 4 LOST TAPES · 0/4□ POWER THE EXIT KEYPADTHROW THE THREE BREAKERS IN SUBSTATION 4B — OR CARRY BRANDT'S BATTERY FROM CAMP","opt":"□ SOMEONE IS IN THE FLOODED OFFICE■ OUTPOST NINE ANSWERED■ OKAFOR'S LOGBOOK · ALL THREE PAGES","docs":"CAMP WHITEBOARDMAP ON THE CAMP TABLEOKAFOR · LOG · PAGE 1OKAFOR · LOG · PAGE 2OKAFOR · LOG · PAGE 3"}
+QA PASS FIELD NOTES lists objectives, leads and documents
+QA l0 end {"r1":"asked","label":"GIVE L. REYES ALMOND WATER","r2":"helped","water":1,"hp":100,"hurtAfter":false,"reyesSt":"idle","alive":true,"power":1,"route":"breakers","led":3,"cp":"POWER ON","howlSt":["investigate"],"obj":"REACH THE EXIT — FOLLOW THE RED MARKER","exitLabel":"ENTER CODE","state":"won"}
+QA PASS Reyes asks for water, then takes it
+QA PASS Reyes heals the player and gets up
+QA PASS three breakers power the keypad
+QA PASS keypad accepts the code once powered
+QA PASS exit opens
+QA l0 flags {"f":{"nine0":true,"log0":true,"reyes0":"helped","power0":"breakers","lost0":0},"lvl":9}
+QA PASS Level 0 choices carried as run flags
+QA l0 battery {"flagsCleared":true,"led":0,"carry":true,"obj":"FIND THE LOST TAPES · 0/4 · EXIT HAS NO POWER","run":false,"spd":0,"label":"CONNECT BRANDT'S BATTERY","power":1,"route":"battery","load":false,"exitBatt":true}
+QA PASS a new Level 0 run resets flags and the keypad
+QA PASS carrying the battery: no sprint, slower
+QA PASS battery connected at the exit
+QA errs {"n":0,"seen":{},"last":""}
+QA PASS no recovered frame errors
+QA PAGE CLOSE

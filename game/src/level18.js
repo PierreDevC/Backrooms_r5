@@ -51,6 +51,7 @@ function genLayout18() {
   LV.mead = rect(room(Z18.MEAD, R18Z.MEAD, 'mead'), 3, 28, 7, 32); way(5, 28, 3, 'door', { dk: 'mead', col: 3, from: [5, 27] });
   LV.voids = [VE, VW];
   for (const r of LV.voids) for (const c of r.cells) LV.dark[c] = 1;
+  planPlaces18(room, rect, way);   // r6: the art room
   // fake doors along the preschool corridor and the yellow corridor (nothing behind them but the dark)
   const free = (x, y) => inGrid(x, y) && LV.zone[cIdx(x, y)] === Z18.VOID;
   let pi = 0;

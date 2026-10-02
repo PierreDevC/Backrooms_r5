@@ -1,4 +1,6 @@
-# Status — r5
+# Status — r6
+
+r6 (branch story-r6): story pass. New places in every level (L0 camp / substation / flooded office; L9 Hale house, blue house, Watch house, street names; L5 night manager's office, the guest's room, the rye; L18 art room, lost & found), a second route through each level's key step (L0 breakers or battery, L9 cure Hale or his safe, L5 keys or the master key; L18 adds the crayons step), optional leads, documents, FIELD NOTES (J), run flags and an ending assembled from them. All new dialogue written with the backrooms-dialogue skill, text only. Checked headless with qa_r6/*.js and the earlier suites (docs/QA.md); no human playthrough of the new content yet.
 
 r5: scanned PBR surfaces (27 ambientCG sets) in every level, skinned + motion-captured characters (Quaternius base mesh, 24 clips) for explorers / bodies, Howler, Watch, Wretches / Subject, Dr. Hale and the Forgotten, 17 scanned Poly Haven props, movement substeps and enemy personal space; ?noassets / ?noskin / ?nomodels fall back to the procedural look with identical layouts. Checked headless (all r4.4 suites rerun on the r5 build with the same results, visual captures of every model kind and character, before/after views, same-seed layout check of the three fallback modes); real-GPU look, frame rate and load time are not yet checked by a human.
 

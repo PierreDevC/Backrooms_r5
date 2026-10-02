@@ -359,7 +359,7 @@ async function buildWorld5(progress) {
   CAM = new BABYLON.FreeCamera('cam', V3(10, 1.6, 10), SCN); CAM.inputs.clear(); CAM.minZ = 0.05; CAM.maxZ = 70; CAM.fov = 1.0;
   resetW9(); resetW5();
   progress(0.05, 'CHECKING IN…'); await nextFrame();
-  genLayout5(); collectPieces5(); planLights5();
+  genLayout5(); collectPieces5(); planLights5(); lightPlaces5();
   const T = {};
   progress(0.12, 'HANGING THE WALLPAPER…'); await nextFrame();
   for (const k of ['hwall', 'carpet', 'hceil']) T[k] = TEX5[k](SCN, 512);

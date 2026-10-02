@@ -1,7 +1,7 @@
 # Level 18 — Nostalgic Memories
 
 ## Objective
-Arrive → FOLLOW THE PLUSH DINO → FIND YOUR DRAWINGS 0/4 → pin all four at MY MEMORIES → WALK THROUGH THE DOOR YOU DREW → YOU REMEMBERED.
+Arrive → FOLLOW THE PLUSH DINO → FIND YOUR DRAWINGS 0/4 → pin all four at MY MEMORIES → (r6) COLOR IN THE DOOR with the crayons from the ART ROOM (pick them up any time; then the door finishes on the fourth pin) → WALK THROUGH THE DOOR YOU DREW → YOU REMEMBERED (r6: the card is assembled from the run's flags, see docs/STORY.md). Optional: a fifth drawing in the art room (Dad's camcorder), the LOST & FOUND by the Sunshine Room door.
 
 | Drawing | Place | Memory | Effect |
 |---|---|---|---|

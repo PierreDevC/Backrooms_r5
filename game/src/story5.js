@@ -23,10 +23,12 @@ function buildDoors5() {
   }
 }
 function doorLabel5(dr) {
+  const p = doorLabel5p(dr); if (p) return p;   // r6: the guest's door, the master key
   if (dr.locked) return G5.keys >= 3 ? 'UNLOCK THE STAFF DOOR' : `LOCKED · STAFF ONLY · KEYS ${G5.keys}/3`;
   return dr.target ? 'CLOSE DOOR' : 'OPEN DOOR';
 }
 function useDoor5(dr) {
+  if (useDoor5p(dr)) return;
   if (dr.locked) {
     if (G5.keys >= 3) { unlockStaff5(dr); return; }
     SFX9.rattle(P9({ x: dr.mx, z: dr.mz })); makeNoise(0.15);
@@ -131,6 +133,7 @@ function buildStory5() {
   // stair voids: you walk into the flight and the tape cuts to the landing below
   const sv = LV.svStair; addSolid(sv.x * CELL, sv.y * CELL + 1.35, (sv.x + 1) * CELL, (sv.y + 1) * CELL, 'stair');
   const ar = LV.arrive5; addSolid(ar.x * CELL, ar.y * CELL, (ar.x + 1) * CELL, ar.y * CELL + 1.7, 'stair');
+  buildPlaces5();   // r6
 }
 function drawExit5(on) {
   const S = W5.exit.sign, c = S.ctx, w = 256, h = 86;

@@ -538,7 +538,7 @@ async function buildWorld18(progress) {
   CAM = new BABYLON.FreeCamera('cam', V3(10, 1.6, 10), SCN); CAM.inputs.clear(); CAM.minZ = 0.05; CAM.maxZ = 70; CAM.fov = 1.0;
   resetW9(); resetW18();
   progress(0.05, 'REMEMBERING…'); await nextFrame();
-  genLayout18(); collectPieces5(side18, opening18); planLights18();
+  genLayout18(); collectPieces5(side18, opening18); planLights18(); lightPlaces18();
   const T = {};
   progress(0.12, 'PAINTING THE CORRIDOR…'); await nextFrame();
   for (const k of ['skyw', 'yelw', 'teal', 'bedw', 'kitw', 'voidw']) T[k] = TEX18[k](SCN, 512);

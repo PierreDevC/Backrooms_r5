@@ -62,7 +62,8 @@ module.exports = async (page) => {
     for (let i = 0; i < 400 && G.state !== 'play'; i++) B.simStep(0.05);
     o.state = G.state; o.cp0 = CP.on && CP.on.label; o.water = PL.water; o.items = W.items.filter(i => i.type === 'water').length;
     B.takeDrawing18(W18.drawings[0]); o.cpD = CP.on.label; o.phase = G18.phase;
-    B.pinDrawings18(); o.cpP = CP.on.label;
+    (B.takeCrayons18 && !B.P18.crayons && B.takeCrayons18()), B.pinDrawings18();   // r6: the door needs crayons before it can be finished
+ o.cpP = CP.on.label;
     B.takeDrawing18(W18.drawings[1]); o.cpD2 = CP.on.label;
     for (let i = 0; i < 60; i++) B.simStep(0.05); o.fog = AI18.fog.map(f => f.st).join(',');
     return o;

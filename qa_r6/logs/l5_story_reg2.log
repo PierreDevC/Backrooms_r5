@@ -1,0 +1,21 @@
+error: Failed to load resource: net::ERR_FAILED
+QA load ms 737
+QA l5 start {"state":"play","office":true,"pruitt":522,"prDoor":true,"subs":"","subs2":"DR. HALE:This is as far as the car takes me. Go on. I will find you on the radio.","eyes":"DR. HALE","labels":["KNOCK ON 522","TAKE THE RYE · GOLD LABEL","READ THE GUEST REGISTER","USE THE SWITCHBOARD","READ THE NIGHT AUDIT"],"tasks":["staff","keys"]}
+QA PASS office built; a guest room is locked for the guest
+QA PASS Hale speaks from the car when he was saved
+QA PASS Hale takes over some radio lines
+QA PASS register, audit, switchboard, rye and the door are usable: KNOCK ON 522,TAKE THE RYE · GOLD LABEL,READ THE GUEST REGISTER,USE THE SWITCHBOARD,READ THE NIGHT AUDIT
+QA l5 story {"reg":true,"audit":true,"sw":true,"pr":"asked","lead":"HE WANTS RYE FROM THE BEVERLY BAR. HE HAS THE NIGHT MANAGER'S KEY","rye":true,"obj":"FIND THE HOUSEKEEPING KEYS · 0/3 · OR RYE FOR 522","docs":["register5","audit5"],"take":true,"leave":true,"pr2":"given","keyOut":true,"key":true,"master":true,"phase":"staff","label":"UNLOCK THE STAFF DOOR · MASTER KEY","cp":"MASTER KEY","phase2":"stairs","locked":false,"staffTask":true,"keysTask":"HOUSEKEEPING KEYS · NOT NEEDED","open":true,"opened":true,"empty":"ROOM 522 WAS EMPTY"}
+QA PASS register and night audit read
+QA PASS switchboard reaches the guest, who asks for rye
+QA PASS rye left at the door, the key comes out
+QA PASS master key taken; staff door accepts it
+QA PASS staff door opens with no housekeeping keys
+QA PASS his room is empty
+QA l5 end {"boil":true,"phase":"exit","tasks":["staff✓","keys✓","boil✓","exit5"],"state":"won"}
+QA PASS boilers vented, exit taken
+QA l5 flags {"hale9":"saved","nine0":true,"pruitt5":"opened","pruittN":522,"staff5":"master","register5":true}
+QA PASS Level 5 choices carried
+QA errs {"n":0,"seen":{},"last":""}
+QA PASS no recovered frame errors
+QA PAGE CLOSE

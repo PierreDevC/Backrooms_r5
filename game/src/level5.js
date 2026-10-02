@@ -116,6 +116,7 @@ function genLayout5() {
     for (const e of cand) { if (used.length >= k) break; if (used.some(u => Math.abs(u[0] - e[0]) + Math.abs(u[1] - e[1]) < 2)) continue; used.push(e); way(e[0], e[1], e[2], 'arch', { boil: true, from: [e[0], e[1]] }); }
   }
   LV.mazeCells = [...LV.maze];
+  planPlaces5(room, rect, way);   // r6: the night manager's office, the guest who never checked out
   // ---- resolve every edge ----
   const rule = (a, b) => {
     const za = a < 0 ? 0 : LV.zone[a], zb = b < 0 ? 0 : LV.zone[b];

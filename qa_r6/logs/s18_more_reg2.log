@@ -1,0 +1,14 @@
+error: Failed to load resource: net::ERR_FAILED
+QA load ms 752
+log: QA natural dino {"st":"sit","pos":[39.23278644989846,68.22079136408743],"phase":"memories","door":1,"fog":1}
+log: QA slide red {"slide":false,"pos":[124.6,101.4],"target":{"x":124.6,"z":101.4,"yaw":0.4},"speed":1}
+log: QA slide yellow {"slide":false,"pos":[96.4,78.50000000000003],"target":{"x":96.4,"z":78.50000000000003,"yaw":3.141592653589793},"speed":0.55}
+log: QA slide blue {"slide":false,"pos":[19.4,104.6],"target":{"x":19.4,"z":104.6,"yaw":0.2},"speed":1}
+log: QA slide green {"slide":false,"pos":[23.400000000000002,73.8],"target":{"x":23.400000000000002,"z":73.8,"yaw":1.5707963267948966},"speed":1}
+log: QA beam {"st":"fade","burn":1.0666666666666667,"hp":66}
+log: QA hit {"hp":66,"cause":"","st":"fade"}
+QA anchors [{"id":"family","pos":[97.9000015258789,0.5,78.69999694824219],"disposed":false,"bright":0},{"id":"dog","pos":[15.399999618530273,0.24,112.68000030517578],"disposed":false,"bright":0},{"id":"monster","pos":[124.19999694824219,1.36,107.90599816894532],"disposed":false,"bright":0},{"id":"house","pos":[119.59300213623047,1.28,34.28000076293945],"disposed":false,"bright":0}]
+QA retry {"drawings":0,"phase":"arrive"}
+QA L5 -> L18 {"time":123,"water":4,"phase":"arrive","from":{"hp":100,"san":100,"batt":90,"spare":1,"water":4,"time":123,"dist":0,"lost":0,"tapes":4}}
+QA continue true
+QA PAGE CLOSE

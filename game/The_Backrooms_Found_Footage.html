@@ -260,6 +260,34 @@ body:not(.lvl9) #btnPBrief{display:none}
 /* r4.4: long toasts wrap on narrow portrait screens instead of running off both edges */
 @media (max-width:560px){#toast{white-space:normal;width:90vw;font-size:24px;line-height:1.15}}
 
+/* r6: paper documents over the tape, FIELD NOTES */
+#doc{position:absolute;right:4%;top:18%;width:min(430px,40vw);max-height:58%;overflow:auto;padding:16px 20px 12px;background:rgba(236,228,204,.94);color:#2a2418;font:19px/1.28 "Courier New",monospace;text-shadow:none;box-shadow:0 6px 30px rgba(0,0,0,.6);transform:rotate(-.6deg)}
+#doc.hide{display:none}
+#doc.kind-log{background:rgba(222,226,214,.95)}
+#doc.kind-board{background:rgba(240,240,236,.95);font-family:"Comic Sans MS","Marker Felt",cursive}
+#doc.kind-screen{background:rgba(8,20,10,.92);color:#8dff9e;font-family:VT323,monospace;font-size:22px}
+#docT{font-weight:bold;letter-spacing:.06em;margin-bottom:8px;border-bottom:1px solid rgba(0,0,0,.25);padding-bottom:4px}
+#doc.kind-screen #docT{border-color:rgba(141,255,158,.4)}
+#docB p{margin:0 0 9px}
+#docHint{font-size:14px;opacity:.6;text-align:right}
+.tasks,.docs{list-style:none;margin:0;padding:0;font-size:22px;line-height:1.25}
+.tasks li{margin:4px 0;color:#f4efd8}
+.tasks li b{color:var(--amber);font-weight:400;margin-right:6px}
+.tasks li i{display:block;font-style:normal;color:var(--dim);font-size:18px;margin-left:26px}
+.tasks li.done{color:var(--dim);text-decoration:line-through}
+.tasks li.fail{color:#b86a5a}
+.tasks li.none,.docs li.none{color:var(--dim)}
+.docs li{display:inline-block;margin:0 8px 8px 0}
+.docs .docBtn{font-size:18px;padding:4px 10px}
+#notesRead{margin-top:12px;padding:12px 16px;background:rgba(236,228,204,.92);color:#2a2418;font:18px/1.3 "Courier New",monospace;text-shadow:none}
+#notesRead h3{color:#2a2418;margin:0 0 8px;font-size:20px}
+#notesRead p{margin:0 0 8px}
+#notesRead.hide{display:none}
+@media (max-width:700px){#doc{left:4%;right:4%;width:auto;top:14%;font-size:16px}}
+#toast.long{font-size:clamp(18px,2.6vw,30px);max-width:92vw;white-space:normal;text-align:center}
+body.docopen #subs,body.docopen #toast{left:31%;width:min(560px,56vw);white-space:normal}
+@media (max-width:700px){body.docopen #subs,body.docopen #toast{left:50%;top:auto}}
+
 </style>
 </head>
 <body>
@@ -282,6 +310,7 @@ body:not(.lvl9) #btnPBrief{display:none}
   <div id="prompt"></div>
   <div id="subs"></div>
   <div id="objective"></div>
+  <div id="doc" class="hide"><div id="docT"></div><div id="docB"></div><div id="docHint"></div></div>
   <div id="osdBL">
     <div class="meters">
       <div class="m"><label>VIT</label><div class="bar"><div id="hpBar"></div></div></div>
@@ -372,6 +401,7 @@ body:not(.lvl9) #btnPBrief{display:none}
       <div><kbd>E</kbd> Interact / pick up</div><div><kbd>R</kbd> Swap battery</div>
       <div><kbd>Q</kbd> Drink almond water</div><div><kbd>RMB</kbd> hold / <kbd>Z</kbd> Zoom</div>
       <div><kbd>RMB</kbd>/<kbd>X</kbd> Latch door</div><div><kbd>Tab</kbd> Map snapshot (Level 9)</div>
+      <div><kbd>J</kbd> Field notes</div><div><kbd>E</kbd> Close a document</div>
         <div><kbd>Esc</kbd> Pause</div><div><kbd>M</kbd> Mute</div>
     </div>
     <h3>FIELD NOTES</h3>
@@ -412,12 +442,25 @@ body:not(.lvl9) #btnPBrief{display:none}
     <h2>PAUSED</h2>
     <nav class="menu">
       <button class="mi primary" id="btnResume">▶ RESUME</button>
+      <button class="mi" id="btnPNotes">FIELD NOTES</button>
       <button class="mi" id="btnPBrief">FIELD BRIEFING</button>
       <button class="mi" id="btnPSettings">SETTINGS</button>
       <button class="mi" id="btnPControls">CONTROLS</button>
       <button class="mi" id="btnRestart">REWIND (RESTART)</button>
       <button class="mi" id="btnQuit">EJECT (MAIN MENU)</button>
     </nav>
+  </div>
+</div>
+
+<div id="notes" class="screen hide">
+  <div class="panel">
+    <div class="kicker">FIELD NOTES · <span id="notesLvl"></span></div>
+    <h2>NOTES</h2>
+    <h3>OBJECTIVES</h3><ul id="notesMain" class="tasks"></ul>
+    <h3>LEADS</h3><ul id="notesOpt" class="tasks"></ul>
+    <h3>DOCUMENTS</h3><ul id="notesDocs" class="docs"></ul>
+    <div id="notesRead" class="hide"></div>
+    <button class="mi" id="btnNotesBack">◀ BACK</button>
   </div>
 </div>
 
@@ -2389,6 +2432,7 @@ function collectPieces() {
   for (let gy = 1; gy < N; gy++) for (let gx = 1; gx < N; gx++) {
     const e = LV.hE[hI(gx - 1, gy)] | LV.hE[hI(gx, gy)] | LV.vE[vI(gx, gy - 1)] | LV.vE[vI(gx, gy)];
     if (e) continue;
+    if (LV.place && [cIdx(gx - 1, gy - 1), cIdx(gx, gy - 1), cIdx(gx - 1, gy), cIdx(gx, gy)].some(c => LV.place[c] >= 0)) continue;   // r6: rooms keep a clear floor
     const hs = [cIdx(gx - 1, gy - 1), cIdx(gx, gy - 1), cIdx(gx - 1, gy), cIdx(gx, gy)].map(c => LV.hall[c]);
     const hall = hs[0] >= 0 && hs.every(h => h === hs[0]);
     if (RNG() < (hall ? 0.8 : 0.1)) {
@@ -2665,6 +2709,7 @@ function genLayout9() {
   reds.forEach(h => h.red = true);
   const cansH = farFrom([...reds, spawnPt], enter.filter(h => !h.red), 2, 10); cansH.forEach(h => h.cans = true);
   enter.filter(h => !h.red && !h.cans).slice(0, 5).forEach(h => h.lit = true);
+  rolePlan9();   // r6: the Hale house, the Watch house, the blue house, street names and numbers
   // off-map slots for the upstairs floors (4x4 + a one-cell gap), east and south of the neighbourhood
   const slots = [];
   for (const x0 of [LAB_X, LAB_X + 5]) for (let z0 = 13; z0 + HS <= n - 1; z0 += 5) slots.push([x0, z0]);
@@ -3265,6 +3310,7 @@ function genLayout5() {
     for (const e of cand) { if (used.length >= k) break; if (used.some(u => Math.abs(u[0] - e[0]) + Math.abs(u[1] - e[1]) < 2)) continue; used.push(e); way(e[0], e[1], e[2], 'arch', { boil: true, from: [e[0], e[1]] }); }
   }
   LV.mazeCells = [...LV.maze];
+  planPlaces5(room, rect, way);   // r6: the night manager's office, the guest who never checked out
   // ---- resolve every edge ----
   const rule = (a, b) => {
     const za = a < 0 ? 0 : LV.zone[a], zb = b < 0 ? 0 : LV.zone[b];
@@ -3565,6 +3611,7 @@ function genLayout18() {
   LV.mead = rect(room(Z18.MEAD, R18Z.MEAD, 'mead'), 3, 28, 7, 32); way(5, 28, 3, 'door', { dk: 'mead', col: 3, from: [5, 27] });
   LV.voids = [VE, VW];
   for (const r of LV.voids) for (const c of r.cells) LV.dark[c] = 1;
+  planPlaces18(room, rect, way);   // r6: the art room
   // fake doors along the preschool corridor and the yellow corridor (nothing behind them but the dark)
   const free = (x, y) => inGrid(x, y) && LV.zone[cIdx(x, y)] === Z18.VOID;
   let pi = 0;
@@ -4910,7 +4957,7 @@ function buildProps() {
   const B = new PropBatch(mat);
   const scrMat = actMat('screen', { frag: 'scr' }); scrMat.setVector4('aTint', new BABYLON.Vector4(1, 1, 1, 1));
   W.scrMat = scrMat;
-  const busy = new Set([cIdx(LV.spawn.x, LV.spawn.y), cIdx(LV.exit.x, LV.exit.y), ...LV.tapeCells.map(c => cIdx(c.x, c.y))]);
+  const busy = new Set([cIdx(LV.spawn.x, LV.spawn.y), cIdx(LV.exit.x, LV.exit.y), ...LV.tapeCells.map(c => cIdx(c.x, c.y)), ...(LV.placeCells || [])]);   // r6: places are furnished on their own
   const CARD = [0.52, 0.4, 0.24], CARD2 = [0.46, 0.35, 0.2], TAPEC = [0.62, 0.52, 0.34];
   const cornerSpot = (cx, cy) => { const sx = RNG() < 0.5 ? -1 : 1, sz = RNG() < 0.5 ? -1 : 1; return [cellCenter(cx) + sx * rnd(0.95, 1.2), cellCenter(cy) + sz * rnd(0.95, 1.2)]; };
   const CB = mdlOk('cbox') ? mdlDims('cbox') : [0.384, 0.342, 0.516];
@@ -5091,7 +5138,7 @@ function buildExit() {
   root.computeWorldMatrix(true);
   const front = BABYLON.Vector3.TransformCoordinates(V3(0, 0, 0.9), root.getWorldMatrix());
   W.exit = { root, hinge, led, white, x: front.x, z: front.z, open: 0, opening: false, signPos: BABYLON.Vector3.TransformCoordinates(V3(0, 2.45, 0.4), root.getWorldMatrix()), doorPos: BABYLON.Vector3.TransformCoordinates(V3(0, 1.2, 0.1), root.getWorldMatrix()) };
-  W.interact.push({ x: W.exit.doorPos.x, z: W.exit.doorPos.z, y: 1.2, r: 2.2, label: () => G.code.length < 4 ? 'KEYPAD — LOCKED' : 'ENTER CODE', ok: () => !W.exit.opening, act: () => useExit() });
+  W.interact.push({ x: W.exit.doorPos.x, z: W.exit.doorPos.z, y: 1.2, r: 2.2, label: () => exitLabel0(), ok: () => !W.exit.opening, act: () => useExit() });
 }
 
 // ----- atmosphere: dust motes & flashlight beams -----
@@ -5143,7 +5190,7 @@ async function buildWorld(progress, diff) {
   SCN.clearColor = new BABYLON.Color4(0, 0, 0, 1); SCN.skipPointerMovePicking = true; SCN.blockMaterialDirtyMechanism = false;
   CAM = new BABYLON.FreeCamera('cam', V3(10, 1.6, 10), SCN); CAM.inputs.clear(); CAM.minZ = 0.05; CAM.maxZ = 95; CAM.fov = 1.0;
   progress(0.08, 'MAPPING LEVEL 0…'); await nextFrame();
-  genLayout(); planLevel(); collectPieces();
+  genLayout(); planLevel(); planPlaces0(); collectPieces();
   progress(0.16, 'PRINTING WALLPAPER…'); await nextFrame();
   const wp = genWallpaper(SCN, 1024);
   progress(0.3, 'SOAKING CARPET…'); await nextFrame();
@@ -5158,10 +5205,497 @@ async function buildWorld(progress, diff) {
   const mats = { wall: envMat('wallMat', 'MAT_WALL', wp.albedo, wp.normal), floor: envMat('floorMat', 'MAT_FLOOR', cp.albedo, cp.normal), ceil: envMat('ceilMat', 'MAT_CEIL', ce.albedo, ce.normal), trim: envMat('trimMat', 'MAT_TRIM', wp.albedo, wp.normal), fixture: fm };
   buildGeometry(SCN, mats);
   progress(0.84, 'SCATTERING DEBRIS…'); await nextFrame();
-  buildProps(); buildTapeSites(); buildExit(); buildDust();
+  buildProps(); buildTapeSites(); buildExit(); buildPlaces0(); buildDust();
   SCN.setRenderingOrder(0, (a, b) => (a.getMesh()._sortD ?? 400) - (b.getMesh()._sortD ?? 400));
   progress(0.94, 'SPOOLING TAPE…'); await nextFrame();
 }
+
+// ==== places0.js ====
+// ---------- r6 · Level 0 places and story: BASE CAMP, SUBSTATION, FLOODED OFFICE ----------
+// The exit keypad has no power: throw the three breakers in the substation (loud) or carry Brandt's battery from camp (slow).
+// Optional leads: Okafor's logbook (3 pages, one per place), Reyes hurt in the flooded office, the camp radio to Outpost Nine.
+const P0 = { rooms: [], camp: null, sub: null, off: null };
+const PLACE0_NAME = { camp: 'M.E.G. BASE CAMP', sub: 'SUBSTATION 4B', off: 'FLOODED OFFICE' };
+function resetP0() {
+  Object.assign(P0, { power: 0, route: '', breakers: [false, false, false], carry: false, logs: [false, false, false], logDone: false,
+    reyes: 'unmet', reyesCalls: 0, reyesCallT: rnd(60, 80), radioN: 0, radioCd: 0, crate: false, powerTold: false, seen: {},
+    okSaid: false, brSaid: false, marshSaid: false, deadSaid: {}, powerT: rnd(30, 40), bossT: 0 });
+}
+resetP0();
+
+// ----- planning: pick three rectangles (open halls preferred), wall them in, keep two doorways, keep every cell reachable -----
+function planPlaces0() {
+  LV.place = new Int8Array(N * N).fill(-1); LV.placeCells = []; P0.rooms = []; P0.camp = P0.sub = P0.off = null;
+  const D = LV.spawnD, busy = new Set([LV.exit && cIdx(LV.exit.x, LV.exit.y), ...LV.tapeCells.map(c => cIdx(c.x, c.y))]);
+  for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (inGrid(LV.spawn.x + dx, LV.spawn.y + dy)) busy.add(cIdx(LV.spawn.x + dx, LV.spawn.y + dy));
+  const cand = [];
+  const add = (x0, y0, w, h, hall) => {
+    if (x0 < 1 || y0 < 1 || x0 + w > N - 1 || y0 + h > N - 1) return;
+    let sd = 0, dk = 0;
+    for (let y = y0; y < y0 + h; y++) for (let x = x0; x < x0 + w; x++) { const c = cIdx(x, y); if (busy.has(c) || D[c] < 0) return; sd += D[c]; dk += LV.dark[c]; }
+    cand.push({ x0, y0, w, h, hall, d: sd / (w * h), dark: dk / (w * h) });
+  };
+  for (const h of LV.halls) for (const m of [3, 4]) { const w = Math.min(h.w, m), hh = Math.min(h.h, 3); add(h.x0 + ((h.w - w) >> 1), h.y0 + ((h.h - hh) >> 1), w, hh, true); }
+  for (let i = 0; i < 90; i++) { const w = rndi(3, 4), h = 3; add(rndi(1, N - 1 - w), rndi(1, N - 1 - h), w, h, false); }
+  const apart = (a, b) => a.x0 > b.x0 + b.w || b.x0 > a.x0 + a.w || a.y0 > b.y0 + b.h || b.y0 > a.y0 + a.h;
+  const cdist = (a, b) => Math.hypot(a.x0 + a.w / 2 - b.x0 - b.w / 2, a.y0 + a.h / 2 - b.y0 - b.h / 2);
+  const best = (score, ok) => { let bs = -1e9, bc = null; for (const c of cand) { if (!ok(c)) continue; const s = score(c); if (s > bs) { bs = s; bc = c; } } return bc; };
+  const small = c => c.w * c.h <= 9;
+  const camp = best(c => -Math.abs(c.d - 11) + (c.hall ? 2.5 : 0) - c.dark * 4 + RNG(), small);
+  if (!camp) return;
+  const sub = best(c => c.d * 0.35 + c.dark * 7 + cdist(c, camp) * 0.35 + (c.hall ? 1 : 0) + RNG(), c => small(c) && apart(c, camp) && cdist(c, camp) > 7);
+  const off = sub && best(c => cdist(c, camp) * 0.3 + cdist(c, sub) * 0.3 + (c.hall ? 2 : 0) + c.d * 0.15 - c.dark * 3 + RNG(), c => apart(c, camp) && apart(c, sub) && cdist(c, camp) > 6 && cdist(c, sub) > 6);
+  for (const [k, r] of [['camp', camp], ['sub', sub], ['off', off]]) if (r) carvePlace0(k, r);
+  // repair: closing a room can cut off a pocket of the maze; open a doorway on the cut until everything reaches the spawn again
+  for (let guard = 0; guard < 40; guard++) {
+    const F = bfs(LV.spawn.x, LV.spawn.y); let fix = null;
+    for (const R of P0.rooms) { for (const b of R.bnd) { const a = F[cIdx(b[0], b[1])] >= 0, o = F[cIdx(b[0] + DX[b[2]], b[1] + DY[b[2]])] >= 0; if (a !== o && edgeVal(b[0], b[1], b[2]) === 1) { fix = [R, b]; break; } } if (fix) break; }
+    if (!fix) break;
+    setEdge(fix[1][0], fix[1][1], fix[1][2], 2); fix[0].doors.push(fix[1]);
+  }
+  LV.spawnD = bfs(LV.spawn.x, LV.spawn.y);
+}
+function carvePlace0(k, r) {
+  const R = Object.assign({ k, bnd: [], doors: [], cells: [] }, r), inR = (x, y) => x >= R.x0 && x < R.x0 + R.w && y >= R.y0 && y < R.y0 + R.h;
+  for (let y = R.y0; y < R.y0 + R.h; y++) for (let x = R.x0; x < R.x0 + R.w; x++) {
+    const c = cIdx(x, y); LV.place[c] = P0.rooms.length; R.cells.push(c); LV.placeCells.push(c);
+    for (let d = 0; d < 4; d++) {
+      const nx = x + DX[d], ny = y + DY[d]; if (!inGrid(nx, ny)) continue;
+      if (inR(nx, ny)) setEdge(x, y, d, 0); else { R.bnd.push([x, y, d]); setEdge(x, y, d, 1); }
+    }
+    const f = LV.fixtures[c];
+    if (k === 'camp') { LV.dark[c] = 0; f.state = 1; }
+    else if (k === 'sub') { LV.dark[c] = 1; f.state = 0; }
+    else { LV.dark[c] = 0; f.state = RNG() < 0.35 ? 2 : 1; }
+  }
+  // two doorways on different sides, never onto the outer rim
+  const sides = shuffle([0, 1, 2, 3]).slice(0, k === 'sub' ? 1 : 2);
+  for (const s of sides) {
+    const opts = R.bnd.filter(b => b[2] === s); if (!opts.length) continue;
+    const b = opts[(opts.length - 1) >> 1]; setEdge(b[0], b[1], b[2], 2); R.doors.push(b);
+  }
+  R.X0 = R.x0 * CELL; R.Z0 = R.y0 * CELL; R.X1 = (R.x0 + R.w) * CELL; R.Z1 = (R.y0 + R.h) * CELL; R.cx = (R.X0 + R.X1) / 2; R.cz = (R.Z0 + R.Z1) / 2;
+  P0.rooms.push(R); P0[k] = R;
+}
+const inPlace0 = (R, x, z, m = 0) => !!R && x > R.X0 + m && x < R.X1 - m && z > R.Z0 + m && z < R.Z1 - m;
+function placeAt0(x, z) { if (!LV.place) return null; const i = LV.place[cIdx(cellOf(x), cellOf(z))]; return i >= 0 ? P0.rooms[i] : null; }
+// plain wall slots of a room (local +z faces into the room)
+function wallSlots0(R) { return R.bnd.filter(b => edgeVal(b[0], b[1], b[2]) === 1).map(b => ({ x: b[0], y: b[1], d: b[2] })); }
+function doorNear0(R, x, z, m) { return R.doors.some(b => { const [mx, mz] = edgeMid(b[0], b[1], b[2]); return Math.hypot(mx - x, mz - z) < m; }); }
+
+// ----- building: props, signs, interactables -----
+const C0 = { olive: [0.3, 0.33, 0.22], canvas: [0.36, 0.38, 0.26], steel: [0.4, 0.42, 0.43], dark: [0.1, 0.1, 0.11], orange: [0.95, 0.45, 0.08], yel: [0.95, 0.8, 0.1], paper: [0.92, 0.9, 0.82],
+  grey: [0.5, 0.52, 0.55], blue: [0.3, 0.36, 0.48], red: [0.75, 0.12, 0.08], wood: [0.5, 0.38, 0.24] };
+function buildPlaces0() {
+  W.p0 = null;
+  if (!P0.rooms.length) return;
+  const mat = actMat('places0', { spec: 0.22, shin: 16, wrinkle: 0.2, emis: 1, wrap: 0.35, mottle: 0.3 }), B = new PropBatch(mat);
+  W.p0 = { B, mat, pages: [], breakers: [], battery: null, exitBatt: null, crate: null };
+  P0.pageMat = actMat('p0page', { spec: 0.1, shin: 8, emis: 1, wrap: 0.4 }); setEmi(P0.pageMat, 0.35);
+  if (P0.camp) buildCamp0(B, P0.camp);
+  if (P0.sub) buildSub0(B, P0.sub);
+  if (P0.off) buildOffice0(B, P0.off);
+  trail0(B, LV.spawn, P0.camp, C0.orange);
+  if (P0.camp && P0.sub) trail0(B, { x: P0.camp.x0 + (P0.camp.w >> 1), y: P0.camp.y0 + (P0.camp.h >> 1) }, P0.sub, C0.yel);
+  const m = B.finish('places0') || []; m.forEach(q => q._sortD = 300);
+}
+function sign0(text, R, s, y, o = {}) {   // stencilled sign on a wall slot
+  const [x, z, ry] = wallPt(s.x, s.y, s.d, 0.012, o.along || 0), r = propRoot(x, z, ry);
+  const S = dynTexPlane('sign0', o.w || 1.3, o.h || 0.32, 512, Math.round(512 * (o.h || 0.32) / (o.w || 1.3)), r, [0, y, 0.004], o.emis ?? 0.35), c = S.ctx, W_ = 512, H_ = S.dt.getSize().height;
+  c.fillStyle = o.bg || '#d9cfa8'; c.fillRect(0, 0, W_, H_);
+  c.fillStyle = o.fg || '#1d1a14'; c.font = `bold ${Math.round(H_ * 0.56)}px "Courier New", monospace`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(text, W_ / 2, H_ / 2 + 2);
+  if (o.stripe) { c.fillStyle = '#e8b00f'; for (let i = -2; i < 14; i++) { c.beginPath(); c.moveTo(i * 40, H_); c.lineTo(i * 40 + 18, H_); c.lineTo(i * 40 + 18 + 10, H_ - 10); c.lineTo(i * 40 + 10, H_ - 10); c.fill(); } }
+  S.dt.update(); return S;
+}
+function page0(i, root, pos, rot) {   // a loose logbook page: its own small mesh so it reads as paper
+  const p = part('Box', { width: 0.21, height: 0.004, depth: 0.29 }, root, P0.pageMat, C0.paper, 0, pos, rot);
+  const w = BABYLON.Vector3.TransformCoordinates(V3(pos[0], pos[1], pos[2]), root.computeWorldMatrix(true));
+  const it = { x: w.x, z: w.z, y: w.y, r: 1.8, label: () => P0.logs[i] ? 'READ OKAFOR\'S PAGE AGAIN' : 'READ THE LOGBOOK PAGE', ok: () => true, act: () => readLog0(i) };
+  W.interact.push(it); W.p0.pages.push(p); return it;
+}
+function slotsAway0(R, n, avoid = 1.9) {   // wall slots spread around the room, away from the doors
+  const S = shuffle(wallSlots0(R)).filter(s => { const [x, z] = wallPt(s.x, s.y, s.d); return !doorNear0(R, x, z, avoid); });
+  return S.slice(0, n);
+}
+function buildCamp0(B, R) {
+  const S = slotsAway0(R, 6), at = (s, along = 0, off = 0) => { const [x, z, ry] = wallPt(s.x, s.y, s.d, off, along); return propRoot(x, z, ry); };
+  // centre: folding table with a hand-drawn map and a lantern
+  const t = propRoot(R.cx + rnd(-0.4, 0.4), R.cz + rnd(-0.4, 0.4), rnd(-0.3, 0.3));
+  B.add(t, 'Box', { width: 1.5, height: 0.04, depth: 0.8 }, [0.42, 0.4, 0.36], 0, [0, 0.74, 0]);
+  for (const sx of [-1, 1]) for (const sz of [-1, 1]) B.add(t, 'Cylinder', { diameter: 0.03, height: 0.74, tessellation: 6 }, C0.steel, 0, [sx * 0.68, 0.37, sz * 0.34]);
+  B.add(t, 'Box', { width: 0.12, height: 0.2, depth: 0.12 }, [0.2, 0.3, 0.18], 0, [0.55, 0.86, 0.2]);
+  B.add(t, 'Cylinder', { diameter: 0.09, height: 0.12, tessellation: 10 }, [1, 0.85, 0.5], 1.4, [0.55, 0.9, 0.2]);   // lantern glass, lit
+  const mp = dynTexPlane('campMap', 0.9, 0.6, 384, 256, twin(t), [-0.15, 0.765, 0], 0.25); mp.mesh.rotation.x = Math.PI / 2; mp.mesh.rotation.y = 0; mp.mat.backFaceCulling = false;
+  drawCampMap0(mp.ctx, 384, 256); mp.dt.update();
+  addSolid(t.position.x - 0.85, t.position.z - 0.85, t.position.x + 0.85, t.position.z + 0.85, 'prop');
+  W.interact.push({ x: t.position.x, z: t.position.z, y: 0.78, r: 2.0, label: () => 'STUDY THE HAND-DRAWN MAP', ok: () => true, act: () => readDoc('campmap', 'MAP ON THE CAMP TABLE', campMapText0(), { kind: 'board' }) });
+  // the battery Brandt left by the table
+  const bp = { x: t.position.x + Math.cos(t.rotation.y) * 1.25, z: t.position.z - Math.sin(t.rotation.y) * 1.25 }; collide(bp, 0.3);
+  W.p0.battery = batteryMesh0(bp.x, bp.z, rnd(0, TAU));
+  W.interact.push({ x: bp.x, z: bp.z, y: 0.2, r: 1.8, label: () => 'TAKE BRANDT\'S BATTERY (HEAVY)', ok: () => !P0.carry && !P0.power && W.p0.battery.isEnabled(), act: () => takeBattery0() });
+  // cots, the radio, the supply crate, the whiteboard
+  if (S[0]) for (const a of [-0.9, 0.9]) { const r = at(S[0], a); cot0(B, r); solidLocal(r, -0.4, 0.05, 0.4, 2.05); }
+  if (S[0]) { const r = at(S[0], 0.9); page0(0, twin(r), [0.05, 0.36, 1.2], [0, 0.4, 0]); }
+  if (S[1]) {
+    const r = at(S[1], 0);
+    if (!B.mdl('crate', r, [0, 0, 0.35], null, 0.8)) { B.add(r, 'Box', { width: 0.7, height: 0.55, depth: 0.55 }, C0.wood, 0, [0, 0.275, 0.35]); }
+    B.add(r, 'Box', { width: 0.42, height: 0.22, depth: 0.26 }, C0.olive, 0, [0, 0.66, 0.35]);
+    B.add(r, 'Box', { width: 0.3, height: 0.08, depth: 0.01 }, C0.dark, 0, [0, 0.69, 0.485]);
+    B.add(r, 'Cylinder', { diameter: 0.012, height: 0.9, tessellation: 5 }, C0.steel, 0, [0.16, 1.2, 0.3]);
+    B.add(r, 'Sphere', { diameter: 0.025, segments: 5 }, [1, 0.3, 0.1], 1.5, [-0.12, 0.72, 0.49]);
+    solidLocal(r, -0.4, 0.05, 0.4, 0.7);
+    const p = localPt(r, 0, 0.7, 0.5);
+    W.interact.push({ x: p.x, z: p.z, y: 0.7, r: 1.9, label: () => P0.radioCd > 0 ? 'FIELD RADIO · WARMING UP' : 'USE THE FIELD RADIO', ok: () => true, act: () => useRadio0() });
+  }
+  if (S[2]) {
+    const r = at(S[2], 0);
+    B.add(r, 'Box', { width: 0.9, height: 0.5, depth: 0.55 }, C0.olive, 0, [0, 0.25, 0.32]);
+    B.add(r, 'Box', { width: 0.92, height: 0.03, depth: 0.57 }, [0.24, 0.27, 0.18], 0, [0, 0.51, 0.32]);
+    B.add(r, 'Box', { width: 0.5, height: 0.06, depth: 0.12 }, [0.9, 0.9, 0.86], 0, [0, 0.45, 0.6]);   // stencil plate
+    solidLocal(r, -0.5, 0.05, 0.5, 0.62);
+    const p = localPt(r, 0, 0.5, 0.6);
+    W.interact.push({ x: p.x, z: p.z, y: 0.5, r: 1.8, label: () => 'SEARCH THE SUPPLY CRATE', ok: () => !P0.crate, act: () => searchCrate0() });
+  }
+  if (S[3]) {
+    const r = at(S[3], 0, 0.01);
+    B.add(r, 'Box', { width: 1.5, height: 1.0, depth: 0.03 }, [0.75, 0.75, 0.72], 0, [0, 1.45, 0.015]);
+    const wb = dynTexPlane('campBoard', 1.42, 0.92, 512, 332, twin(r), [0, 1.45, 0.034], 0.3); drawBoard0(wb.ctx, 512, 332); wb.dt.update();
+    const p = localPt(r, 0, 1.45, 0.3);
+    W.interact.push({ x: p.x, z: p.z, y: 1.45, r: 2.2, label: () => 'READ THE WHITEBOARD', ok: () => true, act: () => readDoc('board', 'CAMP WHITEBOARD', BOARD0, { kind: 'board' }) });
+  }
+  if (S[4]) { const r = at(S[4], 0); for (let i = 0; i < 3; i++) B.add(r, 'Box', { width: 0.34, height: 0.48, depth: 0.22 }, i === 1 ? [0.55, 0.2, 0.08] : C0.olive, 0, [-0.5 + i * 0.5, 0.24, 0.2], [0, rnd(-0.3, 0.3), rnd(-0.1, 0.1)]); solidLocal(r, -0.75, 0.05, 0.75, 0.4); }
+  if (S[0]) sign0('M.E.G. CAMP · NOBODY SLEEPS ALONE', R, S[0], 1.75, { w: 1.6, h: 0.22 });
+  for (const a of [-1, 1]) { const c = propRoot(t.position.x + a * 0.55 * Math.cos(t.rotation.y) + Math.sin(t.rotation.y) * 0.75, t.position.z - a * 0.55 * Math.sin(t.rotation.y) + Math.cos(t.rotation.y) * 0.75, t.rotation.y + Math.PI + rnd(-0.3, 0.3)); B.add(c, 'Box', { width: 0.42, height: 0.04, depth: 0.4 }, C0.olive, 0, [0, 0.44, 0]); B.add(c, 'Box', { width: 0.42, height: 0.4, depth: 0.03 }, C0.olive, 0, [0, 0.68, -0.19]); for (const sx of [-1, 1]) B.add(c, 'Box', { width: 0.025, height: 0.44, depth: 0.42 }, C0.steel, 0, [sx * 0.2, 0.22, 0], [sx * 0.15, 0, 0]); }
+  { const g = propRoot(R.cx + rnd(-1, 1), R.cz + rnd(-1, 1), rnd(0, TAU)); if (!inPlace0(R, g.position.x, g.position.z, 0.6) || solidAt(g.position.x, g.position.z)) g.position.x = R.cx; B.add(g, 'Box', { width: 1.1, height: 0.02, depth: 0.8 }, [0.22, 0.3, 0.2], 0, [0, 0.01, 1.4]); B.add(g, 'Box', { width: 0.3, height: 0.2, depth: 0.2 }, C0.olive, 0, [0.2, 0.11, 1.4]); B.add(g, 'Cylinder', { diameter: 0.07, height: 0.2, tessellation: 8 }, [0.86, 0.84, 0.74], 0, [-0.25, 0.1, 1.3]); }
+  clutter0(B, R, 3, ['box', 'crate', 'box']);
+}
+function clutter0(B, R, n, kinds) {   // boxes, drums and junk tucked into the room's inner corners, clear of the doors
+  const C = shuffle([[R.X0 + 0.7, R.Z0 + 0.7], [R.X1 - 0.7, R.Z0 + 0.7], [R.X0 + 0.7, R.Z1 - 0.7], [R.X1 - 0.7, R.Z1 - 0.7]]);
+  let k = 0;
+  for (const [x, z] of C) {
+    if (k >= n) break; if (doorNear0(R, x, z, 2.0) || solidAt(x, z)) continue; k++;
+    const r = propRoot(x, z, rnd(0, TAU)), kind = pick(kinds);
+    if (kind === 'drum') { if (!B.mdl('barrel', r, null, null, 0.9)) B.add(r, 'Cylinder', { diameter: 0.56, height: 0.86, tessellation: 14 }, [0.3, 0.36, 0.42], 0, [0, 0.43, 0]); }
+    else if (kind === 'crate') { if (!B.mdl('crate', r, null, null, 0.9)) B.add(r, 'Box', { width: 0.7, height: 0.6, depth: 0.7 }, C0.wood, 0, [0, 0.3, 0]); }
+    else { const s = mdlOk('cbox') ? 1 : 0; if (!B.mdl('cbox', r, null, null, 1.2)) B.add(r, 'Box', { width: 0.5, height: 0.4, depth: 0.45 }, [0.52, 0.4, 0.24], 0, [0, 0.2, 0]); if (!B.mdl('cbox', r, [0.05, s ? 0.41 : 0.4, 0], [0, 0.4, 0], 1.0)) B.add(r, 'Box', { width: 0.42, height: 0.34, depth: 0.4 }, [0.46, 0.35, 0.2], 0, [0.05, 0.57, 0], [0, 0.4, 0]); }
+    addSolid(x - 0.45, z - 0.45, x + 0.45, z + 0.45, 'prop');
+  }
+}
+function cot0(B, r) {
+  for (const sx of [-1, 1]) for (const sz of [0.15, 1.95]) B.add(r, 'Box', { width: 0.04, height: 0.32, depth: 0.04 }, C0.steel, 0, [sx * 0.34, 0.16, sz]);
+  for (const sx of [-1, 1]) B.add(r, 'Box', { width: 0.04, height: 0.04, depth: 1.86 }, C0.steel, 0, [sx * 0.34, 0.32, 1.05]);
+  B.add(r, 'Box', { width: 0.66, height: 0.03, depth: 1.84 }, C0.canvas, 0, [0, 0.33, 1.05]);
+  B.add(r, 'Box', { width: 0.6, height: 0.1, depth: 0.85 }, [0.24, 0.3, 0.42], 0, [0, 0.39, 1.35], [0, 0.05, 0]);   // sleeping bag
+}
+function batteryMesh0(x, z, ry, parent) {
+  const r = tnode(parent || null, x, 0, z); r.rotation.y = ry;
+  const m = W.p0.mat;
+  part('Box', { width: 0.32, height: 0.22, depth: 0.18 }, r, m, [0.08, 0.08, 0.09], 0, [0, 0.11, 0]);
+  part('Box', { width: 0.326, height: 0.03, depth: 0.186 }, r, m, [0.12, 0.12, 0.13], 0, [0, 0.235, 0]);
+  part('Cylinder', { diameter: 0.035, height: 0.04, tessellation: 8 }, r, m, [0.8, 0.12, 0.08], 0, [0.1, 0.27, 0]);
+  part('Cylinder', { diameter: 0.035, height: 0.04, tessellation: 8 }, r, m, [0.1, 0.1, 0.1], 0, [-0.1, 0.27, 0]);
+  part('Box', { width: 0.1, height: 0.06, depth: 0.003 }, r, m, C0.yel, 0.3, [0, 0.14, 0.092]);
+  part('Box', { width: 0.24, height: 0.02, depth: 0.03 }, r, m, [0.2, 0.2, 0.2], 0, [0, 0.29, 0]);
+  return r;
+}
+function buildSub0(B, R) {
+  const S = slotsAway0(R, 5);
+  if (!S.length) return;
+  // the panel: grey cabinet, three breaker handles with their own lamps
+  const s = S[0], [x, z, ry] = wallPt(s.x, s.y, s.d, 0.01, 0), r = propRoot(x, z, ry);
+  B.add(r, 'Box', { width: 1.25, height: 1.5, depth: 0.28 }, C0.grey, 0, [0, 1.15, 0.14]);
+  B.add(r, 'Box', { width: 1.15, height: 1.38, depth: 0.02 }, [0.42, 0.44, 0.46], 0, [0, 1.15, 0.285]);
+  B.add(r, 'Box', { width: 0.5, height: 0.08, depth: 0.01 }, C0.yel, 0.2, [0, 1.75, 0.296]);
+  for (let i = 0; i < 6; i++) B.add(r, 'Cylinder', { diameter: 0.03, height: 0.9, tessellation: 6 }, C0.dark, 0, [-0.5 + i * 0.2, 2.35, 0.08]);   // conduit up into the ceiling
+  solidLocal(r, -0.68, 0, 0.68, 0.45);
+  const rk = twin(r);
+  for (let i = 0; i < 3; i++) {
+    const bx = -0.38 + i * 0.38, hm = actMat('brk' + i, { spec: 0.4, shin: 30, emis: 1, wrap: 0.3 });
+    part('Box', { width: 0.16, height: 0.3, depth: 0.04 }, rk, hm, C0.dark, 0, [bx, 1.15, 0.3]);
+    const h = tnode(rk, bx, 1.15, 0.33); part('Box', { width: 0.07, height: 0.2, depth: 0.05 }, h, hm, [0.75, 0.1, 0.05], 0, [0, 0.08, 0.02]);
+    h.rotation.x = 0.55;
+    const lamp = actMat('brkL' + i, { emis: 1 }); part('Sphere', { diameter: 0.04, segments: 6 }, rk, lamp, [1, 1, 1], 1, [bx, 1.42, 0.31]); setEmi(lamp, 1.6, 0.12, 0.05);
+    const p = localPt(r, bx, 1.15, 0.6);
+    const it = { x: p.x, z: p.z, y: 1.15, r: 1.9, i, h, lamp, label: () => holdBusy(it) ? `THROWING… ${holdPct(it)}%` : `THROW BREAKER ${i + 1}`, ok: () => !P0.breakers[i] && !P0.power, act: () => holdStart(it, 1.3, () => throwBreaker0(i), { tick: (dt, k) => { h.rotation.x = 0.55 - 0.3 * k; PL.shake = Math.max(PL.shake, 0.1); }, cancel: 'THE BREAKER SNAPS BACK' }) };
+    W.interact.push(it); W.p0.breakers.push(it);
+  }
+  page0(1, rk, [0.78, 1.2, 0.2], [Math.PI / 2, 0, 0.15]);
+  sign0('SUBSTATION 4B · DANGER', R, s, 2.12, { w: 1.2, h: 0.24, stripe: true });
+  // transformer, cable runs, a ladder and Brandt's tool bag
+  const tr = propRoot(R.cx + rnd(-0.6, 0.6), R.cz + rnd(-0.6, 0.6), rnd(0, TAU));
+  B.add(tr, 'Box', { width: 1.2, height: 1.3, depth: 0.9 }, [0.34, 0.36, 0.36], 0, [0, 0.65, 0]);
+  for (let i = 0; i < 7; i++) B.add(tr, 'Box', { width: 0.05, height: 1.1, depth: 0.92 }, [0.28, 0.3, 0.3], 0, [-0.55 + i * 0.18, 0.62, 0]);
+  B.add(tr, 'Box', { width: 1.22, height: 0.12, depth: 0.92 }, C0.yel, 0.1, [0, 1.25, 0]);
+  addSolid(tr.position.x - 0.85, tr.position.z - 0.85, tr.position.x + 0.85, tr.position.z + 0.85, 'prop');
+  if (B.pipe) B.pipe([x, 0.04, z], [tr.position.x, 0.04, tr.position.z], 0.035, C0.dark);
+  if (S[1]) { const [a, b, q] = wallPt(S[1].x, S[1].y, S[1].d, 0.02, 0), lr = propRoot(a, b, q); for (const sx of [-1, 1]) B.add(lr, 'Box', { width: 0.04, height: 2.2, depth: 0.05 }, [0.7, 0.6, 0.2], 0, [sx * 0.22, 1.08, 0.35], [-0.16, 0, 0]); for (let i = 0; i < 6; i++) B.add(lr, 'Box', { width: 0.44, height: 0.03, depth: 0.04 }, [0.7, 0.6, 0.2], 0, [0, 0.25 + i * 0.32, 0.38 - i * 0.05]); solidLocal(lr, -0.3, 0, 0.3, 0.55); }
+  if (S[3]) { const [a, b, q] = wallPt(S[3].x, S[3].y, S[3].d, 0.01, 0), sh = propRoot(a, b, q); if (!B.mdl('sshelf', sh, null, null, 1)) { for (const y of [0.05, 0.6, 1.15, 1.7]) B.add(sh, 'Box', { width: 1.2, height: 0.03, depth: 0.45 }, C0.steel, 0, [0, y, 0.25]); for (const sx of [-1, 1]) for (const sz of [0.03, 0.47]) B.add(sh, 'Box', { width: 0.03, height: 1.8, depth: 0.03 }, C0.steel, 0, [sx * 0.58, 0.9, sz]); } for (let i = 0; i < 5; i++) B.add(sh, 'Cylinder', { diameter: 0.22, height: 0.12, tessellation: 12 }, i % 2 ? [0.2, 0.2, 0.2] : [0.55, 0.3, 0.1], 0, [-0.4 + i * 0.2, 0.68 + (i % 2) * 0.55, 0.25], [Math.PI / 2, 0, 0]); solidLocal(sh, -0.62, 0, 0.62, 0.5); }
+  clutter0(B, R, 2, ['drum', 'crate']);
+  if (S[2]) { const [a, b, q] = wallPt(S[2].x, S[2].y, S[2].d, 0, 0.6), br = propRoot(a, b, q); B.add(br, 'Box', { width: 0.5, height: 0.24, depth: 0.25 }, [0.55, 0.2, 0.08], 0, [0, 0.12, 0.3]); B.add(br, 'Box', { width: 0.3, height: 0.03, depth: 0.03 }, C0.steel, 0, [0, 0.27, 0.3]); B.add(br, 'Box', { width: 0.2, height: 0.03, depth: 0.05 }, C0.steel, 0, [0.3, 0.02, 0.6], [0, 0.6, 0]); }
+}
+function buildOffice0(B, R) {
+  // cubicle blocks: a plus-shaped partition, four desks in its corners; aisles stay open along the walls
+  const nb = R.w >= 4 && R.h < 4 ? 2 : R.h >= 4 && R.w < 4 ? 2 : 1, horiz = R.w >= R.h;
+  const PT = [0.34, 0.38, 0.44], DESK = [0.55, 0.5, 0.42];
+  const blocks = nb === 1 ? [[R.cx, R.cz]] : horiz ? [[R.cx - CELL * 0.75, R.cz], [R.cx + CELL * 0.75, R.cz]] : [[R.cx, R.cz - CELL * 0.75], [R.cx, R.cz + CELL * 0.75]];
+  let deskN = 0; P0.offDesks = [];
+  for (const [bx, bz] of blocks) {
+    const r = propRoot(bx, bz, 0), L = 3.4;
+    B.add(r, 'Box', { width: L, height: 1.3, depth: 0.07 }, PT, 0, [0, 0.65, 0]);
+    B.add(r, 'Box', { width: 0.07, height: 1.3, depth: L }, PT, 0, [0, 0.65, 0]);
+    B.add(r, 'Box', { width: L + 0.02, height: 0.04, depth: 0.09 }, [0.25, 0.25, 0.27], 0, [0, 1.31, 0]);
+    B.add(r, 'Box', { width: 0.09, height: 0.04, depth: L + 0.02 }, [0.25, 0.25, 0.27], 0, [0, 1.31, 0]);
+    addSolid(bx - L / 2, bz - 0.06, bx + L / 2, bz + 0.06, 'prop'); addSolid(bx - 0.06, bz - L / 2, bx + 0.06, bz + L / 2, 'prop');
+    for (const [sx, sz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
+      const dx = bx + sx * 0.9, dz = bz + sz * 0.45, d = propRoot(dx, dz, sz < 0 ? Math.PI : 0);
+      B.add(d, 'Box', { width: 1.3, height: 0.04, depth: 0.62 }, DESK, 0, [0, 0.74, -0.3]);
+      B.add(d, 'Box', { width: 0.04, height: 0.72, depth: 0.6 }, [0.3, 0.3, 0.3], 0, [-0.62, 0.36, -0.3]); B.add(d, 'Box', { width: 0.04, height: 0.72, depth: 0.6 }, [0.3, 0.3, 0.3], 0, [0.62, 0.36, -0.3]);
+      if (deskN % 2 === 0 && !B.mdl('crt', d, [0.25, 0.76, -0.35], [0, Math.PI, 0], 0.8)) B.add(d, 'Box', { width: 0.4, height: 0.34, depth: 0.36 }, [0.62, 0.58, 0.5], 0, [0.25, 0.93, -0.35]);
+      for (let i = 0; i < 3; i++) B.add(d, 'Box', { width: 0.21, height: 0.003, depth: 0.29 }, C0.paper, 0, [-0.3 + i * 0.05, 0.763 + i * 0.002, -0.25], [0, 0.3 * i - 0.3, 0]);
+      solidLocal(d, -0.66, -0.62, 0.66, 0.02);
+      P0.offDesks.push(d); deskN++;
+    }
+  }
+  page0(2, twin(P0.offDesks[P0.offDesks.length - 1]), [-0.1, 0.775, -0.2], [0, -0.5, 0]);
+  // standing water: dark wet patches on the carpet
+  for (let i = 0; i < 9; i++) { const r = propRoot(rnd(R.X0 + 0.8, R.X1 - 0.8), rnd(R.Z0 + 0.8, R.Z1 - 0.8), rnd(0, TAU)); B.add(r, 'Cylinder', { diameter: rnd(0.9, 2.2), height: 0.004, tessellation: 14 }, [0.3, 0.25, 0.12], 0, [0, 0.003, 0], null, [1, 1, rnd(0.5, 1)]); }
+  // a dead water cooler by the door
+  const S = slotsAway0(R, 2);
+  if (S[0]) { const [a, b, q] = wallPt(S[0].x, S[0].y, S[0].d, 0, 0), r = propRoot(a, b, q); B.add(r, 'Box', { width: 0.34, height: 0.95, depth: 0.34 }, [0.86, 0.85, 0.8], 0, [0, 0.475, 0.22]); B.add(r, 'Cylinder', { diameter: 0.3, height: 0.42, tessellation: 12 }, [0.55, 0.7, 0.85], 0.05, [0, 1.16, 0.22]); solidLocal(r, -0.2, 0.03, 0.2, 0.41); }
+  if (S[1]) sign0('3RD FLOOR · ACCOUNTS', R, S[1], 1.8, { w: 1.0, h: 0.2, bg: '#c8c4b4' });
+  clutter0(B, R, 2, ['box']);
+}
+function trail0(B, from, R, col) {   // M.E.G. spray chevrons on the walls along the route from a cell to a room
+  if (!R) return;
+  const F = bfs(R.x0 + (R.w >> 1), R.y0 + (R.h >> 1));
+  let cx = from.x, cy = from.y, n = 0;
+  for (let guard = 0; guard < 120 && F[cIdx(cx, cy)] > 0; guard++) {
+    let nd = -1; for (let d = 0; d < 4; d++) { if (!passable(cx, cy, d)) continue; const v = F[cIdx(cx + DX[d], cy + DY[d])]; if (v >= 0 && v < F[cIdx(cx, cy)]) { nd = d; break; } }
+    if (nd < 0) break;
+    if (n++ % 3 === 1 && LV.place[cIdx(cx, cy)] < 0) for (const side of [(nd + 1) % 4, (nd + 3) % 4]) {
+      if (edgeVal(cx, cy, side) !== 1) continue;
+      const [x, z, ry] = wallPt(cx, cy, side, 0.004, 0), r = propRoot(x, z, ry), tx = Math.cos(ry), tz = -Math.sin(ry), sg = Math.sign(DX[nd] * tx + DY[nd] * tz) || 1;
+      B.add(r, 'Box', { width: 0.3, height: 0.05, depth: 0.006 }, col, 0.25, [-0.02 * sg, 1.42, 0.003], [0, 0, -0.75 * sg]);
+      B.add(r, 'Box', { width: 0.3, height: 0.05, depth: 0.006 }, col, 0.25, [-0.02 * sg, 1.24, 0.003], [0, 0, 0.75 * sg]);
+      B.add(r, 'Box', { width: 0.06, height: 0.06, depth: 0.006 }, col, 0.25, [-0.26 * sg, 1.33, 0.003]);
+      break;
+    }
+    cx += DX[nd]; cy += DY[nd];
+  }
+}
+function drawCampMap0(c, w, h) {
+  c.fillStyle = '#e6dfc6'; c.fillRect(0, 0, w, h);
+  c.strokeStyle = '#2b3a6b'; c.lineWidth = 3; c.beginPath();
+  const pts = [[30, 210], [90, 210], [90, 140], [170, 140], [170, 60], [260, 60], [260, 120], [340, 120]];
+  pts.forEach((p, i) => i ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1])); c.stroke();
+  c.fillStyle = '#2b3a6b'; c.font = 'bold 18px "Courier New", monospace';
+  c.fillText('CAMP', 22, 238); c.fillText('4B?', 330, 110); c.fillText('DOOR??', 160, 40);
+  c.strokeStyle = '#a32'; c.beginPath(); c.arc(170, 60, 14, 0, TAU); c.stroke();
+  c.strokeStyle = '#2b3a6b'; c.lineWidth = 2; c.strokeRect(6, 6, w - 12, h - 12);
+  c.fillText('HUM LOUDER →', 210, 200);
+}
+function drawBoard0(c, w, h) {
+  c.fillStyle = '#f2f1ec'; c.fillRect(0, 0, w, h);
+  c.fillStyle = '#1f2f7a'; c.font = '26px "Comic Sans MS", "Marker Felt", cursive';
+  BOARD0.forEach((l, i) => c.fillText(l, 14, 34 + i * 40));
+  c.strokeStyle = '#b22'; c.lineWidth = 3; c.beginPath(); c.moveTo(150, 74); c.lineTo(230, 62); c.stroke();
+}
+const BOARD0 = ['ROLL CALL: MARSH OKAFOR REYES BRANDT CAMERA', 'WATER 9 · 7 · 4', 'BATTERY IS FOR THE DOOR. NOT THE KETTLE. T.B.', 'BREAKERS: FOLLOW THE YELLOW', 'NOBODY SLEEPS ALONE', 'WHO MOVED MY COT'];
+function campMapText0() {
+  const lines = ['Pencil over pen over pencil. Somebody kept correcting it.', 'CAMP is circled. A yellow line leaves it toward a box marked 4B?.', 'DOOR?? has two question marks and a red ring.'];
+  if (P0.off) lines.push(`In the corner, smaller: "office ${compassWord(P0.off.cx - P0.camp.cx, P0.off.cz - P0.camp.cz).toLowerCase()} of here. wet. don't."`);
+  return lines;
+}
+
+// ----- the logbook -----
+const LOG0 = [
+  ['OKAFOR · LOG · PAGE 1', ['Day 1. Survey band 4.6. Nine\'s beacon is under the hum, faint, on repeat.', 'Marsh says it\'s an echo. Echo of what. Outpost Nine has been dark since their relief team went in.', 'Logging it anyway.']],
+  ['OKAFOR · LOG · PAGE 2', ['Day 2. These breakers trip if you look at them wrong. Brandt reset them twice. The hum drops a tone when the power\'s on.', 'Something down the east halls did not like that.', 'Code is split across the tapes. If Marsh asks, it was his idea.']],
+  ['OKAFOR · LOG · PAGE 3', ['Day 3, maybe. Reyes thinks the beacon is a recording. I think a recording doesn\'t answer back.', 'It answered.', 'Trying the door alone tonight. If that was a mistake, the code\'s on the tapes, and I\'m sorry.']]];
+function readLog0(i) {
+  const first = !P0.logs[i]; P0.logs[i] = true;
+  readDoc('log' + i, LOG0[i][0], LOG0[i][1], { kind: 'log' });
+  const n = P0.logs.filter(Boolean).length;
+  task('log', `OKAFOR'S LOGBOOK · ${n}/3 PAGES`, { opt: true, sub: 'PAGES WERE LEFT AT THE CAMP, THE SUBSTATION AND THE OFFICE' });
+  if (first && n === 3 && !P0.logDone) {
+    P0.logDone = true; taskDone('log', 'OKAFOR\'S LOGBOOK · ALL THREE PAGES');
+    later(2.5, () => { PL.spare++; SFX.pickup(); toast('TAPED BEHIND PAGE 3 · A SPARE BATTERY', 2.8); });
+    flag('log0', true);
+  }
+}
+
+// ----- the field radio: a line to Outpost Nine, and a fix on the nearest lost rig -----
+function useRadio0() {
+  if (P0.radioCd > 0) { SFX.staticBurst(0.2, 0.3); toast('THE RADIO IS STILL WARMING UP', 1.6); return; }
+  P0.radioCd = 60; P0.radioN++; SFX.staticBurst(0.4, 0.6); FX.glitch = Math.max(FX.glitch, 0.6); makeNoise(0.35);
+  if (P0.radioN === 1) {
+    say('???', 'Outpost Nine, Outpost Nine. Who is on this band?', { radio: true, delay: 0.6 });
+    say('OUTPOST 9', 'Say again, you broke up. Marsh\'s team?', { radio: true });
+    say('OUTPOST 9', 'Okay. Leave your recorder running. We can hear where it points.', { radio: true });
+    task('radio', 'CALL OUTPOST NINE ON THE CAMP RADIO', { opt: true, quiet: true }); taskDone('radio', 'OUTPOST NINE ANSWERED', true);
+    flag('nine0', true);
+  } else if (G.tapes < 4) say('OUTPOST 9', pick(['Nine. Still here. Pinging your rigs.', 'Nine. Copy. Hold still a second.', 'Nine. That hum is louder on your end.']), { radio: true, delay: 0.5 });
+  else say('OUTPOST 9', 'Nine. You have the numbers. Get to the door. We\'ll talk on the other side.', { radio: true, delay: 0.5 });
+  if (G.tapes < 4) later(3.2, () => { const th = HINT_T[G.diff]; G.hintT = Math.max(G.hintT, th[1] + 0.5); });
+}
+function searchCrate0() {
+  P0.crate = true; SFX.search(); PL.water += G.diff === 0 ? 2 : 1; PL.spare++; makeNoise(0.15);
+  toast(G.diff === 0 ? 'CRATE · 2 ALMOND WATER + BATTERY' : 'CRATE · ALMOND WATER + BATTERY', 2.4);
+}
+
+// ----- power for the exit -----
+function powerKnown0(why) {
+  if (P0.powerTold) return; P0.powerTold = true;
+  task('power', 'POWER THE EXIT KEYPAD', { sub: P0.sub ? 'THROW THE THREE BREAKERS IN SUBSTATION 4B — OR CARRY BRANDT\'S BATTERY FROM CAMP' : 'CARRY BRANDT\'S BATTERY FROM CAMP', delay: why === 'door' ? 1.5 : 0.2 });
+  setObj0();
+}
+function throwBreaker0(i) {
+  P0.breakers[i] = true; const it = W.p0.breakers[i]; it.h.rotation.x = -0.5; setEmi(it.lamp, 0.12, 1.6, 0.25);
+  SFX.thunk(); SFX.buzz(null); FX.glitch = Math.max(FX.glitch, 1.1); PL.shake = Math.max(PL.shake, 0.6); makeNoise(1);
+  for (const h of AI.howlers) if (h.st !== 'chase' && h.st !== 'retreat') { h.lk = { x: PL.x + rnd(-2, 2), z: PL.z + rnd(-2, 2) }; h.st = 'investigate'; h.stT = 0; }
+  powerKnown0();
+  const n = P0.breakers.filter(Boolean).length;
+  if (n === 1) later(2.2, () => sayExp(0, 'Marsh. Who is on the breakers? Everything down here heard that.') || sayExp(1, 'Okafor. Somebody is on the breakers. Quietly, please.'));
+  if (n === 3) powerOn0('breakers'); else { toast(`BREAKER ${n}/3`, 1.8); setObj0(); }
+}
+function takeBattery0() {
+  P0.carry = true; PL.load = true; W.p0.battery.setEnabled(false); SFX.pickup(); makeNoise(0.2);
+  toast('BRANDT\'S BATTERY · HEAVY · NO SPRINTING', 2.8); powerKnown0(); setObj0(); cpSave('BATTERY');
+  if (!P0.brSaid && aliveExp(3)) { P0.brSaid = true; later(3, () => sayExp(3, 'Brandt. Is that my battery moving? Keep it level. The acid eats boots.')); }
+}
+function connectBattery0() {
+  P0.carry = false; PL.load = false;
+  const E = W.exit, p = BABYLON.Vector3.TransformCoordinates(V3(0.62, 0, 0.3), E.root.getWorldMatrix());
+  W.p0.exitBatt = batteryMesh0(p.x, p.z, E.root.rotation.y + 0.4);
+  SFX.battery(); powerOn0('battery');
+}
+function powerOn0(route) {
+  P0.power = 1; P0.route = route; flag('power0', route);
+  if (W.exit) setEmi(W.exit.led, 3, 0.1, 0.05);
+  SFX.beep(880, 0.08); later(0.12, () => SFX.beep(1320, 0.1)); FX.glitch = Math.max(FX.glitch, 0.8);
+  toast('EXIT KEYPAD · POWER ON', 2.6); task('power'); taskDone('power', route === 'battery' ? 'EXIT KEYPAD POWERED · BRANDT\'S BATTERY' : 'EXIT KEYPAD POWERED · BREAKERS', true);
+  cpSave('POWER ON'); setObj0();
+  later(3.5, () => sayExp(3, route === 'battery' ? 'Brandt. Hear that beep? That\'s my battery earning its keep.' : 'Brandt. Panel\'s humming again. Don\'t touch anything else in there.'));
+}
+function exitLabel0() {
+  if (!P0.power && P0.rooms.length) return P0.carry ? (holdBusy(W.exit) ? `CONNECTING… ${holdPct(W.exit)}%` : 'CONNECT BRANDT\'S BATTERY') : 'KEYPAD — NO POWER';
+  return G.code.length < 4 ? 'KEYPAD — LOCKED' : 'ENTER CODE';
+}
+function exitUse0() {   // true = the power step handled the press
+  if (P0.power || !P0.rooms.length) return false;
+  if (P0.carry) { holdStart(W.exit, 1.6, connectBattery0, { r: 2.6, noise: 0.25, cancel: 'THE CLAMPS SLIP OFF' }); return true; }
+  SFX.beep(200, 0.3); toast('KEYPAD DEAD · NO POWER', 2.2); powerKnown0('door'); return true;
+}
+
+// ----- Reyes, hurt in the flooded office -----
+function placeReyes0() {
+  const e = AI.exps[2], R = P0.off; if (!e || !R) return;
+  const d = P0.offDesks && P0.offDesks[0], p = { x: R.cx + (R.X1 - R.cx) * 0.55, z: R.cz + (R.Z1 - R.cz) * 0.15 }; collide(p, 0.45);
+  e.place(p.x, p.z, rnd(0, TAU)); e.hurt = true; e.st = 'hurt'; e.stT = 0;
+  e.inter.label = () => P0.reyes === 'helped' ? 'TALK TO L. REYES' : PL.water > 0 && P0.reyes !== 'unmet' ? 'GIVE L. REYES ALMOND WATER' : 'TALK TO L. REYES';
+}
+function reyesTalk0(e) {
+  if (P0.reyes === 'unmet' || (P0.reyes === 'asked' && PL.water <= 0)) {
+    const first = P0.reyes === 'unmet'; P0.reyes = 'asked';
+    task('reyes', 'HELP REYES · SHE NEEDS ALMOND WATER', { opt: true, sub: 'FLOODED OFFICE' }); task('reyes', null, { hidden: false });
+    if (first) { say(e.name, 'Hey. Camera. Watch your step, the carpet is a lake.', { pos: e }); say(e.name, 'Ankle\'s done. My water went in the flood. Do you have any?', { pos: e }); }
+    else say(e.name, pick(['Still no water? Fine. I\'ll drink the carpet.', 'Go do your job. I\'m not going anywhere.']), { pos: e });
+    return true;
+  }
+  if (P0.reyes === 'asked' && PL.water > 0) {
+    PL.water--; P0.reyes = 'helped'; SFX.drink(); flag('reyes0', 'helped');
+    say(e.name, 'Oh. Thank you. Okay.', { pos: e });
+    later(2.6, () => { if (!e.alive) return; PL.hp = Math.min(100, PL.hp + 50); PL.san = Math.min(100, PL.san + 15); SFX.pickup(); toast('REYES\'S MED KIT · HEALTH +50', 2.6); say(e.name, 'Take the kit. I can\'t carry it on one leg anyway.', { pos: e }); });
+    later(7.5, () => { if (!e.alive) return; say(e.name, 'One more thing. If I call you from somewhere I can\'t be, it isn\'t me.', { pos: e }); });
+    later(12, () => { if (!e.alive) return; e.hurt = false; e.st = 'idle'; e.stT = 0; e.dur = 3; if (e.rig.sk) rigWant(e.rig, null, { fade: 0.6 }); });
+    later(25, () => sayExp(0, 'Marsh. Reyes is walking. Badly, but walking.'));
+    taskDone('reyes', 'REYES IS ON HER FEET', true); toast('LEAD CLOSED · REYES IS ON HER FEET', 2.6);
+    return true;
+  }
+  return false;
+}
+function hurtUpdate0(e, dt) {   // seated against the partition: look at the player, never wander, cannot flee
+  e.spd = damp(e.spd, 0, 6, dt);
+  if (e.d < 8 && los(e.x, e.z, PL.x, PL.z)) e.face(Math.atan2(PL.x - e.x, PL.z - e.z), 1.2, dt);
+  if (e.rig.sk) rigWant(e.rig, 'kneel', { range: [1.0, 3.6], loop: false, fade: 0.5, t: 0.45 });
+}
+
+// ----- explorer conversations that know the story so far -----
+function talk0(e) {
+  if (e.i === 2 && e.hurt) return reyesTalk0(e);
+  if (e.i === 1 && P0.logs[2] && !P0.okSaid) {
+    P0.okSaid = true;
+    say(e.name, 'You read my log. Fine.', { pos: e });
+    say(e.name, 'I did try the door. It didn\'t open for me either. Don\'t tell Marsh.', { pos: e });
+    return true;
+  }
+  if (e.i === 3 && P0.carry && !P0.brSaid) { P0.brSaid = true; say(e.name, 'That\'s my battery. Good. Keep it off the wet carpet.', { pos: e }); return true; }
+  if (e.i === 0 && e.talks === 1 && !P0.marshSaid) { P0.marshSaid = true; later(5.5, () => { if (e.alive) say(e.name, `Copy. That's ${AI.exps.filter(x => x.alive).length} of us I can count. Stay on the door when we find it.`, { pos: e }); }); }
+  return false;
+}
+function mimicLine0() {   // the Mimic borrows whoever the player trusts most right now
+  if (P0.reyes === 'helped' && RNG() < 0.4) return { text: pick(['Hey. Camera. Over here.', 'Camera. My ankle is fine now. Come look.']), vo: null };
+  return null;
+}
+const DEADSAY0 = { 0: [3, 'Brandt. Marsh? Marsh, copy.'], 1: [2, 'Reyes. Okafor stopped transmitting. Okay. Okay.'], 2: [0, 'Marsh. Reyes is off the band. Keep moving.'], 3: [1, 'Okafor. Brandt is down. His battery\'s still at camp, if anyone needs it.'] };
+function expDied0(e) {
+  if (e.i === 2 && P0.reyes !== 'helped') taskFail('reyes', 'REYES DID NOT MAKE IT');
+  const [w, line] = DEADSAY0[e.i] || [];
+  later(5, () => { if (!sayExp(w, line)) { const a = AI.exps.filter(x => x.alive); if (a.length) say(a[0].name, 'Copy. Keep moving.', { radio: true }); } });
+}
+
+// ----- per-frame story beats -----
+function places0Events(dt) {
+  if (!P0.rooms.length) return;
+  P0.radioCd = Math.max(0, P0.radioCd - dt);
+  const R = placeAt0(PL.x, PL.z);
+  if (R && !P0.seen[R.k]) {
+    P0.seen[R.k] = true; toast(PLACE0_NAME[R.k], 2.6); SFX.beep(1100, 0.05);
+    if (R.k === 'camp') { task('radio', 'CALL OUTPOST NINE ON THE CAMP RADIO', { opt: true }); powerKnown0(); }
+    if (R.k === 'sub') powerKnown0();
+    if (R.k === 'off' && P0.reyes === 'unmet') task('reyes', 'SOMEONE IS IN THE FLOODED OFFICE', { opt: true });
+  }
+  if (!P0.powerTold && (P0.powerT -= dt) <= 0) {
+    if (!sayExp(3, `Brandt. Door by the red light has a dead keypad. Breakers are ${P0.sub ? compassWord(P0.sub.cx - cellCenter(LV.spawn.x), P0.sub.cz - cellCenter(LV.spawn.y)).toLowerCase() : 'somewhere'} of where we landed. Or carry my battery from camp.`)) P0.powerT = 20;
+    else powerKnown0();
+  }
+  const e = AI.exps[2];
+  if (e && e.alive && e.hurt && P0.reyes !== 'helped' && P0.reyesCalls < 3 && (P0.reyesCallT -= dt) <= 0 && !SUBS.cur && e.d > 10) {
+    P0.reyesCallT = rnd(95, 130);
+    const lines = [`Reyes. I'm in the office with the cubicles, ${compassWord(P0.off.cx - cellCenter(LV.spawn.x), P0.off.cz - cellCenter(LV.spawn.y)).toLowerCase()} of where we landed. Ankle's gone.`, 'Reyes. Still here. Still wet.', 'Reyes. If anyone is passing the office, I would take a water. Or a joke.'];
+    say(e.name, lines[P0.reyesCalls++], { radio: true });
+    if (P0.reyes === 'unmet') task('reyes', 'REYES IS HURT · THE FLOODED OFFICE', { opt: true, sub: 'SHE CALLED FROM THE OFFICE WITH THE CUBICLES' });
+  }
+  if (P0.carry) { PL.load = true; if (PL.run) PL.run = false; }
+}
+function setObj0() {
+  const t = G.tapes;
+  let s;
+  if (t < 4) s = `FIND THE LOST TAPES · ${t}/4` + (P0.powerTold && !P0.power ? ' · EXIT HAS NO POWER' : '');
+  else if (!P0.power && P0.rooms.length) s = P0.carry ? 'CARRY THE BATTERY TO THE EXIT DOOR' : `POWER THE EXIT · BREAKERS ${P0.breakers.filter(Boolean).length}/3 OR BRANDT'S BATTERY`;
+  else s = 'REACH THE EXIT — FOLLOW THE RED MARKER';
+  objective(s);
+  task('tapes', t < 4 ? `FIND THE 4 LOST TAPES · ${t}/4` : 'FOUR TAPES · FOUR DIGITS', { quiet: true }); if (t >= 4) taskDone('tapes', null, true);
+  if (t >= 4 && (P0.power || !P0.rooms.length)) task('exit', 'ENTER THE CODE AT THE EXIT DOOR', { quiet: true });
+}
+function target0() {
+  if (!G.exitOn && !(P0.carry && P0.power === 0)) return null;
+  if (P0.carry || P0.power || !P0.rooms.length) return W.exit;
+  const s = P0.sub && !P0.power ? { x: P0.sub.cx, z: P0.sub.cz } : null, c = P0.camp && W.p0 && W.p0.battery.isEnabled() ? { x: P0.camp.cx, z: P0.camp.cz } : null;
+  if (s && c) return dist2(PL.x, PL.z, s.x, s.z) < dist2(PL.x, PL.z, c.x, c.z) ? s : c;
+  return s || c || W.exit;
+}
+function places0Start() {   // a new attempt on the same layout: put every story prop back
+  resetP0(); PL.load = false;
+  if (W.exit && P0.rooms.length) setEmi(W.exit.led, 0);
+  if (!W.p0) return;
+  if (W.p0.battery) W.p0.battery.setEnabled(true);
+  if (W.p0.exitBatt) { W.p0.exitBatt.dispose(); W.p0.exitBatt = null; }
+  for (const b of W.p0.breakers) { b.h.rotation.x = 0.55; setEmi(b.lamp, 1.6, 0.12, 0.05); }
+}
+function flags0() { flag('lost0', G.lost); if (!flag('reyes0')) flag('reyes0', P0.reyes === 'helped' ? 'helped' : AI.exps[2] && !AI.exps[2].alive ? 'lost' : P0.reyes); }
+
+if (/[?&]debug/.test(location.search)) addEventListener('load', () => Object.assign(window.__BR || (window.__BR = {}), { P0, RUN, TASKS, DOC, HOLD, readLog0, useRadio0, throwBreaker0, takeBattery0, connectBattery0, powerOn0, reyesTalk0, placeAt0, setObj0, target0, readDoc, openNotes, task, taskOf, flag }));
 
 // ==== world9.js ====
 // ---------- Level 9 · world assembly: materials, props, doors, story objects ----------
@@ -5720,6 +6254,7 @@ function drawMap9(c, w, h, o = {}) {
   c.fillStyle = '#2b5a3d'; c.fillRect(X(19), Y(25), 7 * sc, 6 * sc);
   c.fillStyle = '#b8ffd0'; c.font = `bold ${Math.round(sc * 1.25)}px monospace`; c.fillText('M.E.G.', X(19.6), Y(22.6)); c.font = `${Math.round(sc * 0.95)}px monospace`; c.fillText('OUTPOST 9', X(19.5), Y(21.2));
   if (G9.crowbar && W9.van) { c.fillStyle = '#ffd23a'; c.fillRect(X(W9.van.x / CELL) - sc * 0.6, Y(W9.van.z / CELL) - sc * 0.6, sc * 1.2, sc * 1.2); }
+  drawStory9(c, X, Y, sc);
   // you-are-here / camcorder position
   const pp = phys9(PL.x, PL.z), px = o.kiosk ? W9.kiosk.x / CELL : pp[0] / CELL, pz = o.kiosk ? W9.kiosk.z / CELL + 0.3 : pp[1] / CELL;
   if (o.kiosk || (px < n && pz < n)) {
@@ -6038,6 +6573,7 @@ function buildStory9() {
   }
   { const s = takeSlot(LV.base.R.S, { noWin: true }); if (s) { const [px, pz, ry] = wallPt(s.x, s.y, s.d, 0.01, 0); buildLocker(px, pz, ry, 'locker', 'base'); } }
   if (W9.van) { const p = localPt(W9.van.root, 0, 0, -3.35); buildLocker(p.x, p.z, W9.van.ry + Math.PI + 0.25, 'crate', 'van'); }
+  buildPlaces9();   // r6: story houses claim their wall slots before the furniture does
   // furniture
   for (const h of LV.houses) if (h.enter) for (const r of h.rooms) {
     const cf = ROOMC[r.t]; if (cf) placeCentre(B, r, r.t === 'kitchen' ? (r.cells.length >= 4 ? 'island' : 'ktable') : cf[0]);
@@ -6047,6 +6583,298 @@ function buildStory9() {
   buildKiosk(); buildGate(); buildBaseExterior(); labSigns(); buildLab(); buildPortal();
   W9.finishProps();
 }
+
+// ==== places9.js ====
+// ---------- r6 · Level 9 places and story: street names, the Hale house, the blue house, the Watch house ----------
+// Second road to the elevator: Dr. Hale's spare administrator card is in his wall safe. Curing him is no longer the only way out.
+const P9S = {};
+const ST9_H = ['OAK DRIVE', 'MAPLE STREET', 'ASH COURT', 'PINE ROAD'], ST9_V = ['BIRCH LANE', 'CEDAR AVENUE', 'ELM STREET', 'LINDEN WAY'];
+function resetP9() {
+  for (const k of Object.keys(P9S)) delete P9S[k];
+  Object.assign(P9S, { pages: [false, false, false], plate: false, photo: false, safeOpen: false, spare: false, rota: false, minutes: false, recorder: false,
+    seen: {}, reliefSaid: false, mapleSaid: false, leaveSaid: false, safeSaid: false, haleRead: false, recT: 0 });
+}
+resetP9();
+
+// ----- layout: which houses carry the story (called from genLayout9 once reds / canisters / lit houses are chosen) -----
+function rolePlan9() {
+  const pool = LV.houses.filter(h => h.enter && !h.red && !h.cans);
+  const front = h => h.lv === 0 ? h.bj : h.bj + 1;   // index of the street a house faces
+  const spawn = { hx: 1, hz: 5 }, far = (a, b) => Math.hypot(a.hx - b.hx, a.hz - b.hz);
+  const watch = pool.find(h => h.lit) || pool[0];
+  const rest = pool.filter(h => h !== watch);
+  const hale = rest.slice().sort((a, b) => (far(b, spawn) + RNG() * 8) - (far(a, spawn) + RNG() * 8))[0] || null;
+  const relief = rest.filter(h => h !== hale).sort((a, b) => (far(b, hale || spawn) + RNG() * 6) - (far(a, hale || spawn) + RNG() * 6))[0] || null;
+  LV.st9 = { h: ST9_H.slice(), v: ST9_V.slice() };
+  if (hale) { const i = front(hale), j = LV.st9.h.indexOf('MAPLE STREET'); [LV.st9.h[i], LV.st9.h[j]] = [LV.st9.h[j], LV.st9.h[i]]; }   // the Hales lived on Maple Street
+  for (const h of LV.houses) { h.street = LV.st9.h[front(h)]; h.num = 1100 + h.hx * 2 + h.lv; }
+  if (watch) { watch.role = 'watch'; watch.lit = true; }
+  if (hale) hale.role = 'hale';
+  if (relief) { relief.role = 'relief'; relief.tint = [0.56, 0.68, 0.86]; }
+  LV.role9 = { watch, hale, relief };
+}
+const addr9 = h => h ? `${h.num} ${h.street}` : '';
+const shortSt9 = s => s.split(' ')[0].charAt(0) + s.split(' ')[0].slice(1).toLowerCase();
+
+// ----- shared text materials (one texture per string) -----
+function txtMat9(text, o = {}) {
+  const key = text + '|' + (o.bg || '') + '|' + (o.fg || '');
+  W9.txt = W9.txt || new Map(); let m = W9.txt.get(key); if (m) return m;
+  const w = o.px || 512, h = o.py || 96, dt = new BABYLON.DynamicTexture('t9_' + text, { width: w, height: h }, SCN, false), c = dt.getContext();
+  c.fillStyle = o.bg || '#1f5a2c'; c.fillRect(0, 0, w, h);
+  if (o.border !== false) { c.strokeStyle = o.fg || '#f2f2ea'; c.lineWidth = 4; c.strokeRect(6, 6, w - 12, h - 12); }
+  c.fillStyle = o.fg || '#f2f2ea'; c.font = `bold ${o.size || Math.round(h * 0.52)}px ${o.font || 'Arial, Helvetica, sans-serif'}`; c.textAlign = 'center'; c.textBaseline = 'middle';
+  const lines = text.split('\n'); lines.forEach((l, i) => c.fillText(l, w / 2, h / 2 + (i - (lines.length - 1) / 2) * (o.lh || h * 0.42) + 2));
+  dt.update(); m = dtexMat('t9m', dt, o.emis ?? 0.55); W9.txt.set(key, m); return m;
+}
+function txtPlane9(mat, w, h, parent, pos, ry = 0, both = false) {
+  const mk = (r) => { const p = BABYLON.MeshBuilder.CreatePlane('t9p', { width: w, height: h }, SCN); p.material = mat; p.parent = parent; p.position.set(pos[0], pos[1], pos[2] + (r ? -0.004 : 0)); p.rotation.y = Math.PI + ry + (r ? Math.PI : 0); p.isPickable = false; return p; };
+  mk(false); if (both) mk(true);
+}
+
+// ----- building -----
+function buildPlaces9() {
+  const B = W9.B, R = LV.role9 || {};
+  W9.p9 = { pages: [], safe: null };
+  W9.pageMat = actMat('p9page', { spec: 0.1, shin: 8, emis: 1, wrap: 0.4 }); setEmi(W9.pageMat, 0.35);
+  streetSigns9(B);
+  for (const h of LV.houses) if (h.red || h.role) numberPlate9(B, h);
+  if (R.hale) buildHaleHouse9(B, R.hale);
+  if (R.watch) buildWatchHouse9(B, R.watch);
+  if (R.relief) buildReliefHouse9(B, R.relief);
+  { const [px, pz, ry] = wallPt(LAB_X, 7, 2, 0.01, 0), r = propRoot(px, pz, ry); page9(1, r, [-0.5, 0.935, 0.42], [0, 0.4, 0]); }   // on the lab workbench, beside the crowbar
+}
+function page9(i, parent, pos, rot) {
+  const p = part('Box', { width: 0.21, height: 0.004, depth: 0.29 }, parent, W9.pageMat, [0.92, 0.9, 0.82], 0, pos, rot);
+  const w = parent ? localPt(parent, pos[0], pos[1], pos[2]) : V3(pos[0], pos[1], pos[2]);
+  const it = { x: w.x, z: w.z, y: w.y, r: 1.8, label: () => P9S.pages[i] ? 'READ HALE\'S NOTES AGAIN' : 'READ THE HANDWRITTEN NOTES', ok: () => true, act: () => readHale9(i) };
+  W.interact.push(it); W9.p9.pages[i] = it; return p;
+}
+function outside9(h, along, off = 0.012) {   // a point on the outside face of the front wall, beside the door, facing the lawn
+  const f = h.front, nx = f.x + DX[f.d], ny = f.y + DY[f.d];
+  const [x, z, ry] = wallPt(nx, ny, (f.d + 2) % 4, off, along); return propRoot(x, z, ry);
+}
+function numberPlate9(B, h) {
+  const r = outside9(h, -1.0);
+  B.add(r, 'Box', { width: 0.46, height: 0.2, depth: 0.025 }, [0.2, 0.17, 0.12], 0, [0, 1.7, 0.012]);
+  txtPlane9(txtMat9(String(h.num) + (h.role === 'hale' ? ' · HALE' : ''), { bg: '#e8e0c8', fg: '#2a2014', px: 256, py: 96, size: 46, font: 'Georgia, serif', emis: 0.35 }), 0.42, 0.16, twin(r), [0, 1.7, 0.027]);
+  if (h.role === 'hale') { const p = localPt(r, 0, 1.7, 0.4); W.interact.push({ x: p.x, z: p.z, y: 1.7, r: 2.2, label: () => 'READ THE NAMEPLATE', ok: () => true, act: () => { P9S.plate = true; readDoc('plate9', 'NAMEPLATE', [`${h.num} · HALE`, 'Brass, polished more recently than anything else on this street.'], { kind: 'note' }); safeTask9(); } }); }
+}
+function streetSigns9(B) {
+  const post = [0.35, 0.36, 0.34];
+  for (let bj = 0; bj < 3; bj++) for (let bi = 0; bi < 3; bi++) {
+    if (bi === 1 && bj === 1) continue;
+    const ox = L9_BLK[bi], oz = L9_BLK[bj], x = (ox + 1) * CELL + 0.35, z = oz * CELL + 0.35, r = propRoot(x, z, 0);
+    B.add(r, 'Cylinder', { diameter: 0.07, height: 2.7, tessellation: 8 }, post, 0, [0, 1.35, 0]);
+    const hName = LV.st9.h[bj], vName = LV.st9.v[bi];
+    const r2 = twin(r), a = tnode(r2, 0, 2.62, 0); a.rotation.y = 0; txtPlane9(txtMat9(hName), 1.25, 0.24, a, [0.55, 0, 0], 0, true);
+    const b = tnode(r2, 0, 2.36, 0); b.rotation.y = Math.PI / 2; txtPlane9(txtMat9(vName), 1.25, 0.24, b, [0.55, 0, 0], 0, true);
+    addSolid(x - 0.08, z - 0.08, x + 0.08, z + 0.08, 'prop');
+  }
+}
+function roomOf9(h, t, fl = 0) { return h.rooms.find(r => r.t === t && r.fl === fl) || null; }
+function slotIn9(h, rooms, o = {}) {   // the first of the preferred rooms with a free wall, then any room of the house
+  const order = rooms.filter(Boolean).concat(h.rooms.filter(r => r.fl === 0 && r.t !== 'stair'), h.rooms);
+  for (const r of order) { const root = slotRoot9(r, o); if (root) return root; }
+  return null;
+}
+function slotRoot9(room, o = {}) { const s = room && takeSlot(room, Object.assign({ noWin: true }, o)); if (!s) return null; const [x, z, ry] = wallPt(s.x, s.y, s.d, o.off ?? 0.01, o.along || 0); return propRoot(x, z, ry); }
+function buildHaleHouse9(B, h) {
+  // kitchen: a side table with the first page and a mug
+  const kr = slotIn9(h, [roomOf9(h, 'kitchen'), roomOf9(h, 'dining'), h.entryRoom]);
+  if (kr) { B.add(kr, 'Box', { width: 0.9, height: 0.04, depth: 0.5 }, COL9.wood2, 0, [0, 0.76, 0.27]); legs4(B, kr, 0.9, 0.5, 0.74, COL9.wood); B.add(kr, 'Cylinder', { diameter: 0.08, height: 0.1, tessellation: 10 }, [0.82, 0.8, 0.76], 0, [0.28, 0.83, 0.25]); solidLocal(kr, -0.48, 0, 0.48, 0.55); page9(0, twin(kr), [-0.1, 0.785, 0.27], [0, 0.35, 0]); }
+  // entry: photographs on a sideboard
+  const er = slotIn9(h, [h.entryRoom, roomOf9(h, 'living'), roomOf9(h, 'family')]);
+  if (er) {
+    B.add(er, 'Box', { width: 1.2, height: 0.8, depth: 0.4 }, COL9.wood, 0, [0, 0.4, 0.21]); solidLocal(er, -0.62, 0, 0.62, 0.44);
+    for (let i = 0; i < 3; i++) { B.add(er, 'Box', { width: 0.2, height: 0.26, depth: 0.03 }, [0.16, 0.12, 0.08], 0, [-0.38 + i * 0.38, 0.94, 0.12], [-0.15, 0, 0]); B.add(er, 'Box', { width: 0.15, height: 0.2, depth: 0.004 }, [0.7, 0.62, 0.5], 0.2, [-0.38 + i * 0.38, 0.945, 0.137], [-0.15, 0, 0]); }
+    const p = localPt(er, 0, 0.95, 0.5);
+    W.interact.push({ x: p.x, z: p.z, y: 0.95, r: 1.9, label: () => 'LOOK AT THE PHOTOGRAPHS', ok: () => true, act: () => { P9S.photo = true; readDoc('photo9', 'PHOTOGRAPHS ON THE SIDEBOARD', ['A man in a M.E.G. jacket with a girl on his shoulders. On the back, in pencil: June, Ash Court, the summer the pool froze.', 'The same man, thinner, in front of this house. Nobody wrote on that one.', 'The third frame is empty. The glass is clean.'], { kind: 'note' }); } });
+  }
+  // the deepest room: the wall safe
+  const sr = slotIn9(h, [h.termRoom !== h.entryRoom ? h.termRoom : null, roomOf9(h, 'study', 1), roomOf9(h, 'bed', 1)], { off: 0.02 });
+  if (sr) {
+    B.add(sr, 'Box', { width: 0.56, height: 0.56, depth: 0.06 }, [0.24, 0.25, 0.26], 0, [0, 1.25, 0.03]);
+    const sk = twin(sr), sm = actMat('safe9', { spec: 0.7, shin: 40, emis: 1, wrap: 0.3 }), hinge = tnode(sk, -0.24, 1.25, 0.065);
+    const door = mkMerged(sm, P => { P('Box', { width: 0.48, height: 0.48, depth: 0.05 }, [0.3, 0.31, 0.33], 0, [0.24, 0, 0.025]); P('Cylinder', { diameter: 0.12, height: 0.03, tessellation: 16 }, [0.7, 0.68, 0.6], 0, [0.24, 0, 0.06], [Math.PI / 2, 0, 0]); P('Box', { width: 0.03, height: 0.1, depth: 0.03 }, [0.7, 0.68, 0.6], 0, [0.4, 0, 0.06]); }, 'safeDoor');
+    attach(door, hinge);
+    const card = mkMerged(W.itemMat, P => { P('Box', { width: 0.085, height: 0.055, depth: 0.004 }, [0.2, 0.6, 0.7], 0.6, [0, 0, 0]); P('Box', { width: 0.03, height: 0.03, depth: 0.005 }, [0.9, 0.85, 0.5], 0.4, [-0.02, 0.005, 0.002]); }, 'spareCard');
+    attach(card, sk, 0, 1.22, 0.05); card.rotation.x = -0.2;
+    const p = localPt(sr, 0, 1.25, 0.6);
+    const it = { x: p.x, z: p.z, y: 1.25, r: 1.9, label: () => P9S.safeOpen ? 'TAKE THE SPARE KEYCARD' : !safeKnown9() ? 'WALL SAFE · LOCKED' : holdBusy(it) ? `DIALING ${LV.role9.hale.num}… ${holdPct(it)}%` : `DIAL ${LV.role9.hale.num}`,
+      ok: () => !P9S.spare, act: () => useSafe9(it) };
+    W.interact.push(it); W9.p9.safe = { it, hinge, card, ang: 0, pos: localPt(sr, 0, 1.25, 0) };
+  }
+  const sp = localPt(outside9(h, 0), 0, 0, 2.5);
+  W9.p9.halePt = { x: sp.x, z: sp.z };
+}
+function buildWatchHouse9(B, h) {
+  const er = slotIn9(h, [h.entryRoom, roomOf9(h, 'living'), roomOf9(h, 'family')]);
+  if (er) {
+    B.add(er, 'Box', { width: 1.2, height: 0.9, depth: 0.04 }, [0.55, 0.4, 0.25], 0, [0, 1.45, 0.02]);
+    for (let i = 0; i < 9; i++) B.add(er, 'Box', { width: 0.16, height: 0.21, depth: 0.004 }, i % 3 ? [0.92, 0.9, 0.82] : [0.95, 0.85, 0.4], 0.1, [-0.45 + (i % 3) * 0.42 + rnd(-0.04, 0.04), 1.2 + ((i / 3) | 0) * 0.27, 0.043], [0, 0, rnd(-0.2, 0.2)]);
+    txtPlane9(txtMat9('PATROL ROTA', { bg: '#efe6c8', fg: '#7a1410', px: 256, py: 48, border: false, emis: 0.3 }), 0.5, 0.09, twin(er), [0, 1.84, 0.046]);
+    const p = localPt(er, 0, 1.45, 0.6);
+    W.interact.push({ x: p.x, z: p.z, y: 1.45, r: 2.0, label: () => 'READ THE PATROL ROTA', ok: () => true, act: () => readRota9() });
+  }
+  const tr = slotIn9(h, [h.rooms.find(r => r !== h.entryRoom && r.fl === 0 && r.t !== 'bath' && r.t !== 'hall'), h.entryRoom]);
+  if (tr) {
+    B.add(tr, 'Box', { width: 1.3, height: 0.04, depth: 0.6 }, COL9.wood, 0, [0, 0.74, 0.32]); legs4(B, tr, 1.3, 0.6, 0.72, COL9.dark); solidLocal(tr, -0.68, 0, 0.68, 0.64);
+    for (let i = 0; i < 3; i++) { B.add(tr, 'Cylinder', { diameter: 0.05, height: 0.26, tessellation: 8 }, [0.15, 0.15, 0.16], 0, [-0.4 + i * 0.3, 0.79, 0.3], [0, 0, Math.PI / 2]); B.add(tr, 'Box', { width: 0.09, height: 0.004, depth: 0.32 }, [0.75, 0.62, 0.1], 0, [-0.4 + i * 0.3, 0.765, 0.45]); }
+    B.add(tr, 'Box', { width: 0.24, height: 0.01, depth: 0.32 }, [0.92, 0.9, 0.82], 0, [0.45, 0.765, 0.3], [0, 0.2, 0]);
+    const p = localPt(tr, 0.45, 0.77, 0.6);
+    W.interact.push({ x: p.x, z: p.z, y: 0.77, r: 1.9, label: () => 'READ THE CLIPBOARD', ok: () => true, act: () => { P9S.minutes = true; readDoc('minutes9', 'WATCH MEETING · MINUTES', MINUTES9(), { kind: 'note' }); } });
+  }
+  // lawn sign
+  const f = h.front, lx = f.x + DX[f.d] * 1, ly = f.y + DY[f.d] * 1, sx = cellCenter(lx) + DX[(f.d + 1) % 4] * 1.0, sz = cellCenter(ly) + DY[(f.d + 1) % 4] * 1.0;
+  const lr = propRoot(sx, sz, Math.atan2(DX[f.d], DY[f.d]));
+  for (const s of [-1, 1]) B.add(lr, 'Box', { width: 0.05, height: 1.2, depth: 0.05 }, [0.85, 0.85, 0.82], 0, [s * 0.4, 0.6, 0]);
+  B.add(lr, 'Box', { width: 0.95, height: 0.55, depth: 0.03 }, [0.9, 0.9, 0.88], 0, [0, 1.0, 0]);
+  txtPlane9(txtMat9('NEIGHBORHOOD\nWATCH', { bg: '#f4f2ea', fg: '#132a6b', px: 384, py: 220, size: 44, lh: 64, emis: 0.4 }), 0.9, 0.5, twin(lr), [0, 1.0, 0.017], 0, true);
+  addSolid(sx - 0.5, sz - 0.5, sx + 0.5, sz + 0.5, 'prop');
+}
+function buildReliefHouse9(B, h) {
+  // M.E.G. tape across the front door, a spray mark on the siding
+  const tr = outside9(h, 0, 0.07);
+  for (const s of [-1, 1]) B.add(tr, 'Box', { width: 1.5, height: 0.08, depth: 0.006 }, COL9.meg, 0.15, [0, 1.15, 0.003], [0, 0, s * 0.85]);
+  const sr = outside9(h, 1.4, 0.014); txtPlane9(txtMat9('M.E.G. 4/4 X', { bg: 'rgba(0,0,0,0)', fg: '#e07a14', border: false, px: 256, py: 96, size: 54, font: '"Courier New", monospace', emis: 0.25 }), 0.8, 0.3, twin(sr), [0, 1.5, 0.003]);
+  // inside: the relief team
+  const R = h.entryRoom, c0 = R.cells[0], bx = cellCenter(c0 % N), bz = cellCenter((c0 / N) | 0);
+  for (let i = 0; i < 2; i++) {
+    const r = buildExplorer({ tint: i ? [0.8, 0.5, 0.14] : [0.86, 0.6, 0.18] }); mergeRig(r);
+    const p = { x: bx + (i ? 0.9 : -0.6), z: bz + (i ? -0.5 : 0.7) }; collide(p, 0.45);
+    r.root.position.set(p.x, 0, p.z); r.root.rotation.y = i * 2.1 + 0.4; if (r.sk) poseDeadSk(r, i ? 1 : -1, true); else poseDead(r, i ? 1 : -1);
+    if (i === 0) { W9.p9.recPt = { x: p.x + 0.55, z: p.z + 0.2 }; page9(2, null, [p.x - 0.5, 0.006, p.z + 0.35], [0, 1.1, 0]); }
+  }
+  const rp = W9.p9.recPt; collide(rp, 0.2);
+  const rec = mkMerged(W.itemMat, P => { P('Box', { width: 0.24, height: 0.07, depth: 0.15 }, [0.12, 0.12, 0.13], 0, [0, 0.035, 0]); P('Box', { width: 0.1, height: 0.004, depth: 0.065 }, [0.5, 0.5, 0.52], 0, [-0.04, 0.072, 0]); P('Sphere', { diameter: 0.014, segments: 4 }, [1, 0.15, 0.05], 1.4, [0.08, 0.075, 0.04]); }, 'recorder');
+  rec.position.set(rp.x, 0, rp.z); rec.rotation.y = 0.6;
+  W.interact.push({ x: rp.x, z: rp.z, y: 0.1, r: 1.8, label: () => P9S.recorder ? 'PLAY THE TAPE AGAIN' : 'PLAY THE TAPE RECORDER', ok: () => !P9S.recT || FX.t > P9S.recT, act: () => playAbara9() });
+  // a fifth canister and the team's supplies
+  for (const r of shuffle(h.rooms.filter(r => r !== R && r.fl === 0))) { const s = takeSlot(r, { noWin: true }); if (!s) continue; const [px, pz, ry] = wallPt(s.x, s.y, s.d, 0.01, 0); h.locker = buildLocker(px, pz, ry, 'locker', 'relief'); break; }
+  for (const [type, dx, dz] of [['water', 0.4, -0.9], ['water', 0.6, -0.8], ['battery', -0.8, -0.7]]) {
+    const p = { x: bx + dx, z: bz + dz }; collide(p, 0.3);
+    const root = tnode(null, p.x, 0, p.z); root.rotation.y = rnd(0, TAU); itemModel(type, root, W.itemMat);
+    const it = { type, x: p.x, z: p.z, root, taken: false }; W.items.push(it);
+    W.interact.push({ x: p.x, z: p.z, y: 0.1, r: 1.9, it, label: () => type === 'battery' ? 'TAKE CAMCORDER BATTERY' : 'TAKE ALMOND WATER', ok: () => !it.taken, act: () => takeItem(it) });
+  }
+}
+
+// ----- documents and voices -----
+function HALE9_PAGES() {
+  const h = LV.role9 && LV.role9.hale, num = h ? h.num : '0000';
+  return [
+    ['M. HALE · NOTES · KITCHEN', ['Week 3. The cure holds in the vials. Not in the mice.', 'Spare admin card is in the study safe. The combination is the house number, like an idiot.', 'June would have laughed at that.']],
+    ['M. HALE · NOTES · LAB BENCH', ['Week 6. No more mice. I am the only subject left who can describe it.', 'If it takes, I won\'t remember the weeks in between. Nine knows the order.', `Safe is ${String(num).split('').join(' ')}. Writing it down. Soon I won't hold it.`]],
+    ['M. HALE · TORN PAGE', ['Week 7? My hands are wrong. I can still read.', 'Abara thinks the cure is the problem. It isn\'t. The cage is. Four canisters, the lure, the mist.', 'Tell June I tried the', '(the rest of the page is missing)']]];
+}
+function MINUTES9() { return ['Item 1. Lights after dark. Agreed.', `Item 2. The ${LV.role9 && LV.role9.hale ? LV.role9.hale.num : ''} house. Agreed.`, 'Item 3. The new family on the corner. Agreed.', 'Item 4. Agreed.', 'Item 5. Agreed.', 'Meeting closed. Nobody went home.']; }
+function readHale9(i) {
+  const first = !P9S.pages[i]; P9S.pages[i] = true; const T = HALE9_PAGES()[i];
+  readDoc('hale9_' + i, T[0], T[1], { kind: 'log' });
+  const n = P9S.pages.filter(Boolean).length;
+  task('journal', `DR. HALE'S NOTES · ${n}/3`, { opt: true, sub: 'HIS HOUSE, THE LAB, AND WHEREVER HIS RELIEF TEAM ENDED UP' });
+  if (n === 3) taskDone('journal', 'DR. HALE\'S NOTES · ALL THREE', true);
+  if (first && (i === 0 || i === 1)) safeTask9();
+  if (first && n === 1 && !P9S.mapleSaid && LV.role9.hale) { P9S.mapleSaid = true; }
+}
+function safeKnown9() { return P9S.pages[1] || (P9S.pages[0] && P9S.plate); }
+function safeTask9() {
+  if (P9S.spare) return;
+  const h = LV.role9.hale; if (!h) return;
+  if (safeKnown9()) task('safe', `OPEN HALE'S WALL SAFE · ${addr9(h)}`, { opt: true, sub: `THE COMBINATION IS ${h.num}. HIS SPARE CARD WORKS THE ELEVATOR` });
+  else if (P9S.pages[0]) task('safe', 'HALE\'S SAFE · THE COMBINATION IS HIS HOUSE NUMBER', { opt: true, sub: 'READ THE NAMEPLATE BY HIS FRONT DOOR' });
+  cardTask9();
+}
+function useSafe9(it) {
+  const S = W9.p9.safe;
+  if (P9S.safeOpen) { takeSpare9(); return; }
+  if (!safeKnown9()) { SFX9.rattle(P9(it)); toast('WALL SAFE · A FOUR-DIGIT COMBINATION', 2.4); if (!taskOf('safe')) task('safe', 'A WALL SAFE IN THE HALE HOUSE', { opt: true, sub: 'FIND THE COMBINATION' }); return; }
+  holdStart(it, 2.4, () => { P9S.safeOpen = true; S.want = 1; SFX9.unlock ? SFX9.unlock(P9(it)) : SFX.click(); SFX.beep(1400, 0.08); toast('THE SAFE SWINGS OPEN', 1.8); }, { r: 2.2, noise: 0.15, cancel: 'YOU LOSE THE NUMBERS', tick: (dt) => { if (Math.floor(FX.t * 6) !== Math.floor((FX.t - dt) * 6)) SFX.click(); } });
+}
+function takeSpare9() {
+  if (P9S.spare) return;
+  P9S.spare = true; G9.keycard = true; W9.p9.safe.card.setEnabled(false); SFX.pickup(); FX.glitch = Math.max(FX.glitch, 0.4);
+  toast('SPARE ADMINISTRATOR KEYCARD', 2.6); taskDone('safe', 'HALE\'S SPARE KEYCARD', true); cpSave('SPARE KEYCARD');
+  cardTask9(); setPhase9();
+  if (!P9S.safeSaid) { P9S.safeSaid = true; say('M.E.G. OUTPOST 9', 'Nine. You opened his safe. That card works the elevator.', { radio: true, delay: 2 }); say('M.E.G. OUTPOST 9', 'He\'s still down in that cell. Your call.', { radio: true }); }
+}
+function readRota9() {
+  const first = !P9S.rota; P9S.rota = true;
+  readDoc('rota9', 'PATROL ROTA', [`${LV.st9.h.join(' · ')}`, 'Rounds start when the porch lights go out. Every street. Lights on.', 'Anyone out without a light is not a neighbor.', 'In the margin, in pencil: they walk it in the same order every time. Count.'], { kind: 'board' });
+  if (first) { taskDone('watch', 'THE PATROL ROTA · YOU CAN TIME THE WATCH NOW', true); toast('THE CAMCORDER NOW SHOWS WHEN THE NEXT PATROL STARTS', 3); }
+}
+function playAbara9() {
+  const first = !P9S.recorder; P9S.recorder = true; P9S.recT = FX.t + 18; SFX.tape(); FX.glitch = Math.max(FX.glitch, 0.8); makeNoise(0.25);
+  const L = ['Day four. The blue house. Kowalczyk is gone. Lund won\'t come down off the stairs.', 'Hale isn\'t Hale anymore. He knows the doors. He knocks first, like he is being polite.', 'If Nine sends anybody else, don\'t open the cell. Please. I mean it.'];
+  L.forEach((t, i) => say('S. ABARA · TAPE', t, { mode: 'tape', delay: i ? 0.4 : 1.1 }));
+  if (first) {
+    taskDone('relief', 'THE RELIEF TEAM · ABARA\'S TAPE', true); flag('abara9', true);
+    later(20, () => say('M.E.G. OUTPOST 9', 'Nine. That was Abara. I hoped nobody would play that.', { radio: true }));
+  }
+}
+
+// ----- objectives -----
+function cardTask9() {
+  if (!G9.labSeen && !P9S.spare) return;
+  const h = LV.role9 && LV.role9.hale, alt = safeKnown9() || P9S.pages[0] ? ` — OR OPEN HIS SAFE AT ${addr9(h)}` : '';
+  task('card', 'GET AN ADMINISTRATOR KEYCARD', { sub: 'CURE DR. HALE: CROWBAR, FOUR CANISTERS, LURE, CAGE, MIST' + alt });
+  if (G9.keycard) { taskDone('card', P9S.spare && !AI9.hale ? 'KEYCARD · HALE\'S SPARE' : 'KEYCARD · FROM DR. HALE', true); task('elev', 'TAKE THE SERVICE ELEVATOR', { quiet: true }); }
+}
+function tasks9() {
+  task('outpost', 'FIND THE M.E.G. OUTPOST · NORTH-EAST', { quiet: true }); if (G9.mapSeen) taskDone('outpost', 'THE OUTPOST MAP', true);
+  if (G9.mapSeen) { task('data', `DOWNLOAD M.E.G. DATA FROM THE RED HOUSES · ${G9.data}/3`, { quiet: true }); if (G9.data >= 3) taskDone('data', 'M.E.G. DATA 3/3 · GATE OPEN', true); }
+  if (G9.data >= 3) { task('lab', 'GO DOWN TO THE LAB', { quiet: true }); if (G9.labSeen) taskDone('lab', 'THE LAB', true); }
+  cardTask9();
+}
+function spareRoute9() { return G9.keycard && !AI9.hale && ['lab', 'cans', 'prime', 'release', 'trapped', 'gate'].includes(G9.phase); }
+
+// ----- beats -----
+function arrive9() {
+  const n0 = flag('nine0'), lost = flag('lost0');
+  say('M.E.G. OUTPOST 9', n0 ? 'Nine. Is that you? The camera? You came through the wrong door.' : 'Outpost Nine. Somebody just came through our fence. Copy?', { radio: true });
+  say('M.E.G. OUTPOST 9', `Three flashlights went up ${shortSt9(LV.st9.v[2])} ten minutes ago. Not ours. Stay off the asphalt.`, { radio: true });
+  say('M.E.G. OUTPOST 9', 'Outpost is north-east, inside the chain-link. The map is on the gate.', { radio: true });
+  if (lost !== undefined && G.lost !== undefined) later(40, () => { if (LVL === 9 && G.state === 'play') say('M.E.G. OUTPOST 9', lost ? `Marsh's band went quiet for ${lost === 1 ? 'one of them' : lost + ' of them'}. Keep that recorder running.` : 'Marsh\'s people are still on the lobby band. All four. Loud as ever.', { radio: true }); });
+}
+function places9Events(dt) {
+  const R = LV.role9 || {}, c = cIdx(cellOf(PL.x), cellOf(PL.z)), h = houseOf9(c);
+  if (h && h.role && !P9S.seen[h.role]) {
+    P9S.seen[h.role] = true; SFX.beep(1100, 0.05);
+    if (h.role === 'hale') { toast(`${addr9(h)} · HALE`, 2.8); if (!taskOf('halehouse')) task('halehouse', `THE HALE HOUSE · ${addr9(h)}`, { opt: true, quiet: true }); taskDone('halehouse', `THE HALE HOUSE · ${addr9(h)}`, true); }
+    if (h.role === 'watch') { toast('THE BLOCK CAPTAIN\'S HOUSE', 2.8); task('watch', 'THE WATCH HOUSE · READ THEIR PATROL ROTA', { opt: true }); }
+    if (h.role === 'relief') { toast('THE BLUE HOUSE', 2.8); if (!taskOf('relief')) task('relief', 'WHAT HAPPENED TO THE RELIEF TEAM', { opt: true, sub: 'THE BLUE HOUSE WITH M.E.G. TAPE ON THE DOOR' }); }
+  }
+  if (G9.mapSeen && !P9S.reliefSaid && R.relief && (P9S.mapT = (P9S.mapT || 0) + dt) > 9 && !SUBS.cur) {
+    P9S.reliefSaid = true;
+    say('M.E.G. OUTPOST 9', `Nine. Our relief team went quiet in the blue house on ${shortSt9(R.relief.street)}. Tape on the door. Don't stay long.`, { radio: true });
+    if (!P9S.seen.relief) task('relief', 'WHAT HAPPENED TO THE RELIEF TEAM', { opt: true, sub: `THE BLUE HOUSE ON ${R.relief.street}, TAPE ON THE DOOR` });
+  }
+  if (G9.labSeen && !P9S.mapleSaid2 && R.hale && (P9S.labT = (P9S.labT || 0) + dt) > 9 && !SUBS.cur) {
+    P9S.mapleSaid2 = true;
+    say('M.E.G. OUTPOST 9', `Nine. Hale lived at ${addr9(R.hale).toLowerCase().replace(/(^|\s)\S/g, s => s.toUpperCase())}. If you go up there, leave his things alone.`, { radio: true });
+    if (!P9S.seen.hale) task('halehouse', `THE HALE HOUSE · ${addr9(R.hale)}`, { opt: true });
+    cardTask9();
+  }
+  if (G9.haleStage === 2 && !P9S.haleRead && P9S.pages.some(Boolean) && AI9.hale && !SUBS.cur && !SUBS.q.length) { P9S.haleRead = true; later(3, () => say('DR. HALE', 'You read my notes. Then you know I did this to myself.', { pos: AI9.hale })); }
+  const S = W9.p9 && W9.p9.safe; if (S) { S.ang = approach(S.ang, S.want ? 1.9 : 0, 1.4, 2, dt); S.hinge.rotation.y = -S.ang; }
+}
+function elevator9Leave() {   // true = hold the doors for one line
+  if (AI9.hale || P9S.leaveSaid || !P9S.spare) return false;
+  P9S.leaveSaid = true; say('M.E.G. OUTPOST 9', 'You\'re leaving him down there. Copy. Go.', { radio: true }); return false;
+}
+function flags9() { flag('hale9', AI9.hale ? 'saved' : 'left'); flag('journal9', P9S.pages.filter(Boolean).length); flag('rota9', P9S.rota); if (!flag('abara9')) flag('abara9', P9S.recorder); }
+function watchTimer9() { return P9S.rota ? `WATCH ${Math.floor(Math.max(0, G9.watchT) / 60)}:${String(Math.floor(Math.max(0, G9.watchT)) % 60).padStart(2, '0')}` : ''; }
+function drawStory9(c, X, Y, sc) {   // street names and the story houses on the map
+  c.fillStyle = 'rgba(160,255,200,0.75)'; c.font = `${Math.round(sc * 0.8)}px monospace`;
+  [1.5, 15.5, 29.5, 43.5].forEach((z, i) => c.fillText(LV.st9.h[i], X(4), Y(z) + sc * 0.3));
+  [1.5, 15.5, 29.5, 43.5].forEach((x, i) => { c.save(); c.translate(X(x) + sc * 0.3, Y(40)); c.rotate(-Math.PI / 2); c.fillText(LV.st9.v[i], 0, 0); c.restore(); });
+  const R = LV.role9 || {}, mark = (h, ch, col) => { if (!h) return; c.fillStyle = col; c.font = `bold ${Math.round(sc * 1.4)}px monospace`; c.fillText(ch, X(h.hx + HS / 2) - sc * 0.45, Y(h.hz + HS / 2) + sc * 0.5); };
+  if (R.hale && (P9S.mapleSaid2 || P9S.seen.hale || P9S.pages[0])) mark(R.hale, 'H', '#9fd7ff');
+  if (R.relief && (P9S.reliefSaid || P9S.seen.relief)) mark(R.relief, 'R', '#ffb060');
+  if (R.watch && P9S.seen.watch) mark(R.watch, 'W', '#ff8080');
+}
+if (/[?&]debug/.test(location.search)) addEventListener('load', () => Object.assign(window.__BR || (window.__BR = {}), { P9S, readHale9, useSafe9, takeSpare9, readRota9, playAbara9, safeKnown9, tasks9, arrive9, flags9, rolePlan9, hudItems9, closeMap9, studyMap9, startTp9, LAB_X }));
 
 // ==== world5.js ====
 // ---------- Level 5 · world assembly: materials, plaques & signs, the hotel's furnishings ----------
@@ -6410,7 +7238,7 @@ async function buildWorld5(progress) {
   CAM = new BABYLON.FreeCamera('cam', V3(10, 1.6, 10), SCN); CAM.inputs.clear(); CAM.minZ = 0.05; CAM.maxZ = 70; CAM.fov = 1.0;
   resetW9(); resetW5();
   progress(0.05, 'CHECKING IN…'); await nextFrame();
-  genLayout5(); collectPieces5(); planLights5();
+  genLayout5(); collectPieces5(); planLights5(); lightPlaces5();
   const T = {};
   progress(0.12, 'HANGING THE WALLPAPER…'); await nextFrame();
   for (const k of ['hwall', 'carpet', 'hceil']) T[k] = TEX5[k](SCN, 512);
@@ -6690,10 +7518,12 @@ function buildDoors5() {
   }
 }
 function doorLabel5(dr) {
+  const p = doorLabel5p(dr); if (p) return p;   // r6: the guest's door, the master key
   if (dr.locked) return G5.keys >= 3 ? 'UNLOCK THE STAFF DOOR' : `LOCKED · STAFF ONLY · KEYS ${G5.keys}/3`;
   return dr.target ? 'CLOSE DOOR' : 'OPEN DOOR';
 }
 function useDoor5(dr) {
+  if (useDoor5p(dr)) return;
   if (dr.locked) {
     if (G5.keys >= 3) { unlockStaff5(dr); return; }
     SFX9.rattle(P9({ x: dr.mx, z: dr.mz })); makeNoise(0.15);
@@ -6798,6 +7628,7 @@ function buildStory5() {
   // stair voids: you walk into the flight and the tape cuts to the landing below
   const sv = LV.svStair; addSolid(sv.x * CELL, sv.y * CELL + 1.35, (sv.x + 1) * CELL, (sv.y + 1) * CELL, 'stair');
   const ar = LV.arrive5; addSolid(ar.x * CELL, ar.y * CELL, (ar.x + 1) * CELL, ar.y * CELL + 1.7, 'stair');
+  buildPlaces5();   // r6
 }
 function drawExit5(on) {
   const S = W5.exit.sign, c = S.ctx, w = 256, h = 86;
@@ -6826,6 +7657,224 @@ function buildItems5(diff) {
   for (let i = 0; i < [7, 6, 4][diff]; i++) place('battery');
   for (let i = 0; i < [12, 8, 5][diff]; i++) place('water');   // r4.4: more almond water the easier it is
 }
+
+// ==== places5.js ====
+// ---------- r6 · Level 5 places and story: the manager's office, the guest who never checked out, the rye ----------
+// Second road through the staff door: the night manager's master key. The guest behind a locked door has it, and he wants a drink.
+const P5 = {};
+function resetP5() {
+  for (const k of Object.keys(P5)) delete P5[k];
+  Object.assign(P5, { pr: 'unmet', rye: false, ryeLeft: false, keyOut: false, master: false, opened: false, register: false, audit: false, board: false, seenOffice: false,
+    knocks: 0, busy: 0, haleT: 0, haleSaid: false, ryeAsked: false });
+}
+resetP5();
+const OFF5 = { x0: 17, y0: 29, x1: 18, y1: 30 };
+
+// ----- layout (called from genLayout5 before the edges are resolved) -----
+function planPlaces5(room, rect, way) {
+  LV.office5 = null; LV.pruitt = null;
+  let free = true; for (let y = OFF5.y0; y <= OFF5.y1; y++) for (let x = OFF5.x0; x <= OFF5.x1; x++) if (LV.zone[cIdx(x, y)] !== Z5.VOID) free = false;
+  if (free) {
+    LV.office5 = rect(room(Z5.ROOM, R5.S, 'office', { tint: [1, 0.92, 0.82] }), OFF5.x0, OFF5.y0, OFF5.x1, OFF5.y1);
+    way(17, 28, 1, 'door', { dk: 'room', plaque: 'MANAGER', from: [17, 28], office: true });
+  }
+  // the guest who never checked out: a lit room off the north or west wing
+  const pool = LV.guest.filter(g => !g.dark && (g.reg === R5.N || g.reg === R5.W)), alt = LV.guest.filter(g => !g.dark);
+  const g = (pool.length ? pool : alt)[0] || null;
+  if (g) { g.pruitt = true; LV.pruitt = g; }
+}
+function lightPlaces5() {
+  if (!LV.office5) return;
+  const x = (OFF5.x0 + 1) * CELL, z = (OFF5.y0 + 1) * CELL;
+  LV.fixtures.push({ x, z, state: 1, seed: RNG(), I: 0.3, rad: 6, sc: 1.8 }); LV.bulbs.push({ x, z, y: CEIL, kind: 'pend', state: 1 });
+}
+const pruittNum5 = () => LV.pruitt ? LV.pruitt.num : 0;
+const pruittWho5 = () => 'ROOM ' + pruittNum5();
+
+// ----- building (end of buildStory5: doors exist, the batch is still open) -----
+function buildPlaces5() {
+  const B = W5.B;
+  W5.p5 = {};
+  // the rye: gold label, on the Beverly bar
+  { const r = atWall5({ x: BEV5.x0, y: 18, d: 2, c: cIdx(BEV5.x0, 18) }, 1.8, 0), p = localPt(r, 2.2, 1.11, 1.3);
+    const m = mkMerged(W.itemMat, P => { P('Cylinder', { diameter: 0.08, height: 0.24, tessellation: 12 }, [0.42, 0.22, 0.06], 0.1, [0, 0.12, 0]); P('Cylinder', { diameterTop: 0.028, diameterBottom: 0.07, height: 0.07, tessellation: 10 }, [0.42, 0.22, 0.06], 0.1, [0, 0.275, 0]); P('Cylinder', { diameter: 0.03, height: 0.03, tessellation: 8 }, [0.12, 0.1, 0.08], 0, [0, 0.32, 0]); P('Cylinder', { diameter: 0.083, height: 0.08, tessellation: 12 }, [0.86, 0.68, 0.22], 0.35, [0, 0.12, 0]); }, 'rye5');
+    m.position.set(p.x, 1.11, p.z); W5.p5.rye = m;
+    W.interact.push({ x: p.x, z: p.z, y: 1.2, r: 1.9, label: () => 'TAKE THE RYE · GOLD LABEL', ok: () => !P5.rye && !P5.ryeLeft, act: () => takeRye5() }); }
+  // the guest register on the front desk
+  if (W5.deskR) { const p = localPt(W5.deskR, -0.5, 1.152, 1.55); W.interact.push({ x: p.x, z: p.z, y: 1.16, r: 1.8, label: () => 'READ THE GUEST REGISTER', ok: () => true, act: () => readRegister5() }); }
+  if (LV.office5) buildOffice5(B);
+  if (LV.pruitt) buildPruitt5(B);
+}
+function buildOffice5(B) {
+  const ws = wallSlots5(LV.office5.cells).filter(s => !s.door), pick5 = (pred) => { const i = ws.findIndex(pred); return i >= 0 ? ws.splice(i, 1)[0] : ws.shift(); };
+  // the switchboard: a wall of jacks, one lamp lit
+  const s1 = pick5(s => s.d === 2 || s.d === 0); if (s1) {
+    const r = atWall5(s1, 0, 0); slotUse5(s1, 0, 1.4);
+    B.add(r, 'Box', { width: 1.3, height: 1.1, depth: 0.32 }, COL5.mahog, 0, [0, 1.0, 0.16]); B.add(r, 'Box', { width: 1.2, height: 0.9, depth: 0.02 }, [0.12, 0.08, 0.05], 0, [0, 1.1, 0.33]);
+    B.add(r, 'Box', { width: 1.3, height: 0.05, depth: 0.5 }, COL5.mahog2, 0, [0, 0.72, 0.4]);
+    for (let j = 0; j < 4; j++) for (let i = 0; i < 8; i++) B.add(r, 'Cylinder', { diameter: 0.03, height: 0.02, tessellation: 8 }, COL5.brass, 0, [-0.49 + i * 0.14, 0.82 + j * 0.2, 0.345], [Math.PI / 2, 0, 0]);
+    const lm = actMat('switch5', { emis: 1 }); setEmi(lm, 0.08, 0.05, 0.02);
+    const lamp = mkMerged(lm, P => { P('Sphere', { diameter: 0.04, segments: 6 }, [1, 0.8, 0.4], 1, [0, 0, 0]); }, 'switchLamp'); const lp = localPt(r, 0.35, 1.48, 0.35); lamp.position.copyFrom(lp);
+    plaqueOn(r, 0, 1.68, 'SWITCHBOARD', 0.4, 0.08, 0.34);
+    solidLocal(r, -0.68, 0, 0.68, 0.66); W5.p5.lamp = lm;
+    const p = localPt(r, 0, 1.0, 0.9);
+    W.interact.push({ x: p.x, z: p.z, y: 1.0, r: 1.9, label: () => 'USE THE SWITCHBOARD', ok: () => true, act: () => useSwitch5() });
+  }
+  // the manager's desk with the night audit
+  const s2 = pick5(() => true); if (s2) {
+    placeF5(B, s2, 0, 'desk', { hw: 0.55 });
+    const r = atWall5(s2, 0, 0), p = localPt(r, -0.15, 0.79, 0.45);
+    B.add(propRoot(p.x, p.z, r.rotation.y + 0.2), 'Box', { width: 0.3, height: 0.04, depth: 0.22 }, [0.16, 0.2, 0.1], 0, [0, 0.8, 0]);
+    W.interact.push({ x: p.x, z: p.z, y: 0.8, r: 1.8, label: () => 'READ THE NIGHT AUDIT', ok: () => true, act: () => readAudit5() });
+  }
+  const s3 = pick5(() => true); if (s3) placeF5(B, s3, 0, 'wardrobe', { hw: 0.55 });
+  const s4 = pick5(() => true); if (s4) FURN5.painting(B, atWall5(s4, 0), { w: 0.9, h: 0.6, y: 1.7 });
+}
+function buildPruitt5(B) {
+  const g = LV.pruitt, D = g.door, dr = W9.doorAt.get(eKey(D.x, D.y, D.d)); if (!dr) return;
+  dr.pruitt = true; dr.locked = true; snapDoor5(dr, false); W5.p5.door = dr;
+  // a card on the handle (corridor side) and, inside, a chair turned to the wall with an empty bottle
+  const [mx, mz] = edgeMid(D.x, D.y, D.d), hx = mx - DX[D.d] * (WT / 2 + 0.02), hz = mz - DY[D.d] * (WT / 2 + 0.02);
+  const card = propRoot(hx, hz, Math.atan2(-DX[D.d], -DY[D.d]));
+  B.add(card, 'Box', { width: 0.12, height: 0.2, depth: 0.004 }, [0.86, 0.2, 0.12], 0.15, [DOORW / 2 - 0.2, 1.0, 0.03]);
+  plaqueOn(card, DOORW / 2 + 0.34, 1.9, 'DO NOT DISTURB', 0.3, 0.07);
+  const far = g.cells[g.cells.length - 1], cx = cellCenter(far % N), cz = cellCenter((far / N) | 0);
+  const ch = propRoot(cx + DX[D.d] * 0.6, cz + DY[D.d] * 0.6, Math.atan2(DX[D.d], DY[D.d]));
+  FURN5.armchair(B, ch, { col: [0.32, 0.12, 0.1] }); solidLocal(ch, -0.4, 0, 0.4, 0.83);
+  const bt = propRoot(cx - DY[D.d] * 0.9, cz + DX[D.d] * 0.9, 0);
+  B.add(bt, 'Cylinder', { diameter: 0.08, height: 0.24, tessellation: 10 }, [0.42, 0.22, 0.06], 0.05, [0, 0.12, 0], [0, 0, 1.45]);
+  B.add(bt, 'Cylinder', { diameter: 0.083, height: 0.08, tessellation: 10 }, [0.86, 0.68, 0.22], 0.2, [0, 0.12, 0], [0, 0, 1.45]);
+  W5.p5.inside = { x: cx, z: cz };
+  // the master key, slid under the door once he has his drink (hidden until then)
+  const km = mkMerged(W.itemMat, P => { P('Box', { width: 0.11, height: 0.006, depth: 0.025 }, [0.86, 0.7, 0.3], 0.5, [0, 0.003, 0]); P('Torus', { diameter: 0.05, thickness: 0.008, tessellation: 12 }, [0.86, 0.7, 0.3], 0.5, [-0.07, 0.004, 0]); P('Box', { width: 0.05, height: 0.003, depth: 0.04 }, [0.85, 0.82, 0.7], 0.2, [0.03, 0.006, 0.03]); }, 'master5');
+  const kp = { x: mx - DX[D.d] * 0.55, z: mz - DY[D.d] * 0.55 }; km.position.set(kp.x, 0, kp.z); km.rotation.y = rnd(0, TAU); km.setEnabled(false);
+  const rb = mkMerged(W.itemMat, P => { P('Cylinder', { diameter: 0.08, height: 0.24, tessellation: 12 }, [0.42, 0.22, 0.06], 0.1, [0, 0.12, 0]); P('Cylinder', { diameter: 0.083, height: 0.08, tessellation: 12 }, [0.86, 0.68, 0.22], 0.35, [0, 0.12, 0]); }, 'ryeLeft');
+  rb.position.set(mx - DX[D.d] * 0.3 - DY[D.d] * 0.35, 0, mz - DY[D.d] * 0.3 + DX[D.d] * 0.35); rb.setEnabled(false);
+  W5.p5.key = { mesh: km, x: kp.x, z: kp.z }; W5.p5.ryeLeft = rb;
+  W.interact.push({ x: kp.x, z: kp.z, y: 0.05, r: 1.7, label: () => 'TAKE THE MASTER KEY', ok: () => P5.keyOut && !P5.master, act: () => takeMaster5() });
+}
+
+// ----- door hooks (doorLabel5 / useDoor5 call these first) -----
+function doorLabel5p(dr) {
+  if (dr.pruitt) {
+    if (P5.pr === 'given' && P5.keyOut) return P5.opened ? (dr.target ? 'CLOSE DOOR' : 'OPEN DOOR') : `OPEN ROOM ${pruittNum5()}`;
+    return P5.rye && P5.pr === 'asked' ? `LEAVE THE RYE AT ${pruittNum5()}` : `KNOCK ON ${pruittNum5()}`;
+  }
+  if (dr.locked && P5.master) return 'UNLOCK THE STAFF DOOR · MASTER KEY';
+  return null;
+}
+function useDoor5p(dr) {   // true = handled
+  if (dr.pruitt) {
+    if (P5.pr === 'given' && P5.keyOut) { if (!P5.opened) openPruitt5(dr); else useDoor(dr); return true; }
+    knockPruitt5(dr); return true;
+  }
+  if (dr.locked && P5.master) { unlockStaff5(dr); return true; }
+  return false;
+}
+
+// ----- the guest -----
+function sayPr5(text, delay) { const dr = W5.p5.door; say(pruittWho5(), text, { pos: { x: dr.mx, z: dr.mz }, delay }); }
+function knockPruitt5(dr) {
+  if (FX.t < P5.busy) return;
+  P5.busy = FX.t + 4; P5.knocks++; SFX5.knock({ x: dr.mx, y: 1.3, z: dr.mz, pl: { x: PL.x, z: PL.z } }, 3); makeNoise(0.2);
+  if (P5.pr === 'unmet') {
+    P5.pr = 'asked'; P5.busy = FX.t + 12;
+    later(1.2, () => sayPr5('Housekeeping came already. Twice.'));
+    later(1.3, () => sayPr5('You are not housekeeping. You have a light. Nobody here carries a light.'));
+    later(1.4, () => sayPr5('Do me a kindness. The Beverly bar, top shelf, gold label. Rye. They stopped sending it up.'));
+    later(9, () => { prTask5(); if (!P5.rye) task('rye', 'THE RYE · GOLD LABEL · BEVERLY BAR', { opt: true }); });
+  } else if (P5.pr === 'asked' && P5.rye) {
+    P5.rye = false; P5.ryeLeft = true; P5.pr = 'given'; P5.busy = FX.t + 14; W5.p5.ryeLeft.setEnabled(true); SFX.click(); toast('YOU LEAVE THE BOTTLE BY THE DOOR', 2);
+    taskDone('rye', 'THE RYE · LEFT AT HIS DOOR', true);
+    later(1.4, () => sayPr5('Leave it by the door. Step back. Further.'));
+    later(7, () => { W5.p5.ryeLeft.setEnabled(false); SFX9.shut({ x: dr.mx, y: 1, z: dr.mz, pl: { x: PL.x, z: PL.z } }, false); });
+    later(9, () => { P5.keyOut = true; W5.p5.key.mesh.setEnabled(true); SFX5.jingle(P9(W5.p5.key)); sayPr5('There. The night manager\'s key. He won\'t miss it.'); });
+    later(10, () => sayPr5('Staff door is in the ballroom, by the bandstand. Don\'t come in here. I mean that kindly.'));
+  } else if (P5.pr === 'asked') sayPr5(pick(['No rye? Then I am not decent. Come back.', 'Gold label. Not the brown one. The brown one is for guests.', 'Still out there? The bar is through the ballroom.']), 1.0);
+  else sayPr5('I said don\'t come in.', 1.0);
+}
+function takeRye5() { P5.rye = true; W5.p5.rye.setEnabled(false); SFX.pickup(); toast('RYE · GOLD LABEL', 2); task('rye', 'THE RYE · GOLD LABEL', { opt: true, quiet: true }); if (P5.pr === 'asked') task('rye', `BRING THE RYE TO ROOM ${pruittNum5()}`, { opt: true }); }
+function takeMaster5() {
+  P5.master = true; W5.p5.key.mesh.setEnabled(false); SFX5.jingle(P9(W5.p5.key)); SFX.pickup();
+  toast('THE NIGHT MANAGER\'S MASTER KEY', 2.6); cpSave('MASTER KEY'); flag('pruitt5', 'key');
+  taskDone('pruitt', `ROOM ${pruittNum5()} · THE MASTER KEY`, true);
+  task('open5', `ROOM ${pruittNum5()} · HE SAID DON'T COME IN`, { opt: true, quiet: true });
+  if (['arrive', 'keys'].includes(G5.phase)) setPhase5('staff'); else setPhase5();
+  radio5('master', 1.6);
+}
+function openPruitt5(dr) {
+  P5.opened = true; dr.locked = false; useDoor(dr); flag('pruitt5', 'opened');
+  later(0.8, () => {
+    PL.san = Math.max(0, PL.san - 15); FX.glitch = Math.max(FX.glitch, 1.4); SFX.whisper();
+    say('', '…you came in…', { mode: 'whisper' });
+    taskDone('open5', `ROOM ${pruittNum5()} WAS EMPTY`, true); toast(`ROOM ${pruittNum5()} IS EMPTY`, 2.6);
+  });
+}
+function prTask5() { if (!LV.pruitt) return; task('pruitt', `THE GUEST IN ROOM ${pruittNum5()}`, { opt: true, sub: P5.pr === 'asked' ? 'HE WANTS RYE FROM THE BEVERLY BAR. HE HAS THE NIGHT MANAGER\'S KEY' : 'HE WON\'T OPEN THE DOOR' }); setPhase5(); }
+
+// ----- documents -----
+function readRegister5() {
+  P5.register = true; const n = pruittNum5();
+  readDoc('register5', 'GUEST REGISTER', [
+    `PRUITT, E. · Room ${n} · arrived 12 Oct 1951 · departed: (blank)`,
+    'OKAFOR, D. · Room 541 · arrived 30 Sep 1996',
+    'Party of four, M.E.G. · Rooms 512 to 515 · paid in almond water · departed in a hurry',
+    'Last line, in a different pen: guest, no name given · no room · arrived 29 Sep 1996 · brought own light'], { kind: 'note' });
+  if (!taskOf('pruitt')) prTask5();
+}
+function readAudit5() {
+  P5.audit = true; const n = pruittNum5();
+  readDoc('audit5', 'NIGHT AUDIT', [
+    'Bell rang at 3:10. Nobody at the desk. Bell rang at 3:10.',
+    `${n} wants rye again. Told him the bar is closed. The bar has been closed since the war.`,
+    'Keys hang in the housekeeping closets now so I stop losing them. The east one is past the door marked EAST WING. Never walk the east corridor.',
+    'Master key with me at all times.',
+    '(the last entry is crossed out until it is just ink)'], { kind: 'log' });
+  if (!taskOf('pruitt')) prTask5();
+  setPhase5();
+}
+function useSwitch5() {
+  const n = pruittNum5(); SFX5.click(P9({ x: PL.x, y: 1, z: PL.z })); FX.glitch = Math.max(FX.glitch, 0.3);
+  if (!P5.board) {
+    P5.board = true; toast(`EVERY LINE IS DEAD BUT ONE · ROOM ${n}`, 2.8);
+    if (P5.pr === 'unmet') { P5.pr = 'asked'; later(1.5, () => say(pruittWho5(), 'Front desk? About time. Send up the rye. Gold label. I will be right here.', { radio: true })); later(6, () => { prTask5(); if (!P5.rye) task('rye', 'THE RYE · GOLD LABEL · BEVERLY BAR', { opt: true }); }); }
+    else later(1.5, () => say(pruittWho5(), P5.pr === 'given' ? 'You again. I have what I need.' : 'Front desk? Where is my rye?', { radio: true }));
+  } else say(pruittWho5(), pick(['I can hear you breathing on the line.', 'Ring off. The bell is enough.']), { radio: true, delay: 1 });
+}
+
+// ----- radio: Outpost Nine, or Dr. Hale if he made it -----
+const L5_HALE = { eyes: 'Hale. Eyes off the wallpaper. I stayed here a week once. I only remember the Tuesday.', moth: 'Hale. Moths. Kill your light, let them have the lamps.', boil: 'Hale. Boilers. Three halls, three valves. Pressure is what keeps that exit shut.' };
+function radio5who(key) { return flag('hale9') === 'saved' && L5_HALE[key] ? ['DR. HALE', L5_HALE[key]] : ['M.E.G. OUTPOST 9', L5_TXT[key]]; }
+function arrive5extra() {
+  const h = flag('hale9');
+  if (h === 'saved') later(0.6, () => say('DR. HALE', 'This is as far as the car takes me. Go on. I will find you on the radio.', { pos: W5.elev ? { x: W5.elev.x, z: W5.elev.z + 1.4 } : null }));
+  else if (h === 'left') later(30, () => { if (LVL === 5 && G.state === 'play') say('M.E.G. OUTPOST 9', 'Nine. Nobody on this end is talking about Hale. Keep moving.', { radio: true }); });
+}
+const W5_WHISPER = ['Room service.', 'Your key, sir.', 'The band is on its break.', 'Checkout was at noon.', 'Are you a guest of the hotel?', 'Shoes outside the door, please.'];
+function whisper5() { const t = pick(W5_WHISPER); SFX.whisper(); say('', '…' + t.toLowerCase().replace(/[.?]$/, '') + '…', { mode: 'whisper' }); }
+
+// ----- objectives, beats -----
+function tasks5() {
+  const keysTxt = `HOUSEKEEPING KEYS · ${G5.keys}/3`, alt = P5.master ? ' — OR THE MASTER KEY YOU HAVE' : P5.pr !== 'unmet' || P5.audit || P5.register ? ' — OR THE NIGHT MANAGER\'S MASTER KEY' : '';
+  task('staff', 'OPEN THE STAFF DOOR IN THE BEVERLY ROOM', { quiet: true, sub: 'THREE HOUSEKEEPING KEYS: WEST, NORTH AND EAST WING CLOSETS' + alt });
+  task('keys', keysTxt, { quiet: true });
+  if (G5.keys >= 3) taskDone('keys', 'HOUSEKEEPING KEYS · 3/3', true);
+  const past = ['stairs', 'valves', 'exit'].includes(G5.phase) || W5.svDoor && !W5.svDoor.locked;
+  if (past) { taskDone('staff', 'STAFF DOOR OPEN', true); if (G5.keys < 3) taskDone('keys', 'HOUSEKEEPING KEYS · NOT NEEDED', true); }
+  if (G5.boilSeen || G5.phase === 'valves' || G5.phase === 'exit') { task('boil', `VENT THE BOILERS · VALVES ${G5.valves}/3`, { quiet: true }); if (G5.valves >= 3) taskDone('boil', 'BOILERS VENTED', true); }
+  if (G5.phase === 'exit') task('exit5', 'REACH THE EMERGENCY EXIT', { quiet: true });
+}
+function places5Events(dt) {
+  const c = cIdx(cellOf(PL.x), cellOf(PL.z));
+  if (LV.office5 && LV.room[c] === LV.office5.id && !P5.seenOffice) { P5.seenOffice = true; toast('NIGHT MANAGER\'S OFFICE', 2.6); SFX.beep(1100, 0.05); }
+  if (W5.p5.lamp) { const on = !P5.master; setEmi(W5.p5.lamp, on ? (Math.floor(FX.t * 1.2) % 2 ? 2.2 : 0.4) : 0.05, on ? 1.4 : 0.03, on ? 0.4 : 0.01); }
+  if (flag('hale9') === 'saved' && !P5.haleSaid && (P5.haleT += dt) > 75 && !SUBS.cur) { P5.haleSaid = true; say('M.E.G. OUTPOST 9', 'Nine. Hale is back on our band. Says the car took him home. Don\'t ask me how.', { radio: true }); }
+  if (LV.pruitt && !P5.ryeAsked && P5.pr === 'unmet' && W5.p5.door && dist2(PL.x, PL.z, W5.p5.door.mx, W5.p5.door.mz) < 3.2 && FX.t > P5.busy) {
+    P5.ryeAsked = true; P5.busy = FX.t + 6; later(0.5, () => sayPr5('Is that housekeeping? No. Somebody with a light.'));
+  }
+}
+function flags5() { flag('pruittN', pruittNum5()); flag('pruitt5', P5.opened ? 'opened' : P5.master ? 'key' : P5.pr); flag('staff5', P5.master && G5.keys < 3 ? 'master' : 'keys'); flag('register5', P5.register); }
+if (/[?&]debug/.test(location.search)) addEventListener('load', () => Object.assign(window.__BR || (window.__BR = {}), { P5, knockPruitt5, takeRye5, takeMaster5, openPruitt5, readRegister5, readAudit5, useSwitch5, tasks5, flags5, places5Events }));
 
 // ==== world18.js ====
 // ---------- Level 18 · world assembly: materials, name cards & kids' art, the preschool's furnishings, the slides, the ball pit ----------
@@ -7368,7 +8417,7 @@ async function buildWorld18(progress) {
   CAM = new BABYLON.FreeCamera('cam', V3(10, 1.6, 10), SCN); CAM.inputs.clear(); CAM.minZ = 0.05; CAM.maxZ = 70; CAM.fov = 1.0;
   resetW9(); resetW18();
   progress(0.05, 'REMEMBERING…'); await nextFrame();
-  genLayout18(); collectPieces5(side18, opening18); planLights18();
+  genLayout18(); collectPieces5(side18, opening18); planLights18(); lightPlaces18();
   const T = {};
   progress(0.12, 'PAINTING THE CORRIDOR…'); await nextFrame();
   for (const k of ['skyw', 'yelw', 'teal', 'bedw', 'kitw', 'voidw']) T[k] = TEX18[k](SCN, 512);
@@ -7402,10 +8451,10 @@ async function buildWorld18(progress) {
 // ==== story18.js ====
 // ---------- Level 18 · story objects: the painted door, your four drawings, the MY MEMORIES board, the door you draw, notes, the music box, the slides ----------
 const DRAW18 = {
-  family: { name: 'MOMMY & DADDY', slot: 0, line: 'Saturdays at the play place. They sat at the little table and watched you. You never told them you were sorry.' },
-  dog: { name: 'BISCUIT', slot: 1, line: 'Biscuit. You were supposed to close the gate. You told everyone you had.' },
-  monster: { name: 'MY ROOM', slot: 2, line: 'The monster in the closet. It was never a monster. It was always just the coat on the hook.' },
-  house: { name: 'OUR HOUSE', slot: 3, line: 'The house on Maple Street. The yellow kitchen. You said you would go back one day. You never went back.' },
+  family: { name: 'MOMMY & DADDY', slot: 0, line: 'Saturdays at the play place. They sat at the little table with their coats still on. Dad ate your fries.' },   // r6: rewritten with the dialogue skill
+  dog: { name: 'BISCUIT', slot: 1, line: 'Biscuit. He ate the garden hose and the mailman\'s glove. The gate latch stuck if you didn\'t lift it.' },
+  monster: { name: 'MY ROOM', slot: 2, line: 'The thing in the closet had Mom\'s coat on. It was Mom\'s coat.' },
+  house: { name: 'OUR HOUSE', slot: 3, line: 'Maple Street. The yellow kitchen. Your height in pencil on the door frame, stopping at seven.' },
 };
 const NOTE18 = {
   desk: 'To the grown-up who fell in —  You forgot us. That\'s okay, everybody does. Your drawings are still here but they got lost all over. Find all four and pin them on the MY MEMORIES board, then you can draw yourself a door. Dino will help you. Don\'t let the tall one catch you in the dark. It only looks like someone you know.  — the Children',
@@ -7507,7 +8556,7 @@ function buildStory18(T) {
   { const r = atWall5({ x: 8, y: 17, d: 2 }, 1.8, 0);
     const S = paperPlane18('exit18', 1.36, 2.36, 256, 444, r, [0, 1.19, 0.014], 0.45, (c, w, h) => drawExit18(c, w, h, false));
     const p = localPt(r, 0, 0, 0.45), f = localPt(r, 0, 0, 0.05); W18.exitDoor = { S, r, x: p.x, z: p.z, fx: f.x, fz: f.z, on: false, k: 0, yaw: r.rotation.y };
-    W.interact.push({ x: p.x, z: p.z, y: 1.2, r: 1.9, label: () => W18.exitDoor.on ? 'WALK THROUGH THE DOOR YOU DREW' : 'A DRAWING OF A DOOR · IT ISN\'T FINISHED', ok: () => G.state === 'play', act: () => { if (W18.exitDoor.on) win18(); else { SFX18.paper(); toast(`IT ISN'T FINISHED · ${4 - G18.pinned.length} MEMOR${4 - G18.pinned.length === 1 ? 'Y' : 'IES'} MISSING`, 2.6); } } }); }
+    W.interact.push({ x: p.x, z: p.z, y: 1.2, r: 1.9, label: () => exitLabel18(), ok: () => G.state === 'play', act: () => { if (exitUse18()) return; if (W18.exitDoor.on) win18(); else { SFX18.paper(); toast(`IT ISN'T FINISHED · ${4 - G18.pinned.length} MEMOR${4 - G18.pinned.length === 1 ? 'Y' : 'IES'} MISSING`, 2.6); } } }); }
   // notes: the Children's letter on the teacher's desk, the nap-time rules
   { const n = W18.deskNote, r = propRoot(n.x, n.z, 0.12); r.rotation.x = 0; const S = dynTexPlane('note18', 0.28, 0.2, 128, 92, r, [0, n.y + 0.004, 0], 0.5); S.mesh.rotation.x = Math.PI / 2; drawNote18(S.ctx, 128, 92, '#fff8d8'); S.dt.update(); W18.signs.push(S);
     W.interact.push({ x: n.x, z: n.z, y: n.y, r: 1.7, label: () => 'READ THE NOTE', ok: () => G.state === 'play', act: () => readNote18('desk') }); }
@@ -7517,6 +8566,7 @@ function buildStory18(T) {
   { const m = W18.musicBox; W.interact.push({ x: m.x, z: m.z, y: m.y, r: 1.7, label: () => G18.musicT > 0 ? 'THE MUSIC BOX IS PLAYING' : 'WIND THE MUSIC BOX', ok: () => G.state === 'play', act: () => windBox18() }); }
   // the slides: climb one at its bottom end
   for (const S of W18.slides) W.interact.push({ x: S.x, z: S.z, y: 0.7, r: 1.7, label: () => `CLIMB THE ${S.name} SLIDE`, ok: () => G.state === 'play' && !G18.slide, act: () => startSlide18(S) });
+  buildPlaces18();   // r6
 }
 function drawNote18(c, w, h, bg) { paper18(c, w, h, bg); c.strokeStyle = 'rgba(120,120,200,0.35)'; c.lineWidth = 1; for (let y = 14; y < h; y += 10) { c.beginPath(); c.moveTo(4, y); c.lineTo(w - 4, y); c.stroke(); } for (let i = 0; i < 6; i++) crayonLine18(c, [[10, 16 + i * 11], [w - 12 - (i === 5 ? 50 : Math.random() * 16), 16 + i * 11]], '#3a3a8a', 2); }
 const inPit18 = (x, z, m = 0) => x > PIT18.x0 + m && x < PIT18.x1 - m && z > PIT18.z0 + m && z < PIT18.z1 - m;
@@ -7524,8 +8574,8 @@ const inPit18 = (x, z, m = 0) => x > PIT18.x0 + m && x < PIT18.x1 - m && z > PIT
 // ----- story actions -----
 function readNote18(k) {
   SFX18.paper();
-  const parts=k==='desk' ? ["To the grown-up who fell in: You forgot us. That's okay, everybody does.","Your drawings got lost all over. Find all four and pin them on the MY MEMORIES board.","Then you can draw yourself a door. Dino will help you.","Don't let the tall one catch you in the dark. It only looks like someone you know. — the Children"] : ['NAP TIME: RED = bedtime. YELLOW = ball pit.', 'BLUE = outside to play. GREEN = back to class. Hold on tight!'];
-  for(const text of parts) say('NOTE',text,{dur:4.5});
+  if (k === 'desk') readLetter18();   // r6: the letter opens on paper; NOTE18 keeps the old text for reference
+  else readDoc('nap18', 'NAP TIME RULES', ['RED slide = bedtime.', 'YELLOW slide = ball pit.', 'BLUE slide = outside to play.', 'GREEN slide = back to class.', 'Hold on tight and NO climbing up the wrong way!'], { kind: 'board' });
   if (k === 'desk' && !G18.noteRead) { G18.noteRead = true; setPhase18(); }
   if (k === 'nap') G18.napRead = true;
 }
@@ -7552,13 +8602,13 @@ function pinDrawings18() {
   SFX18.pin(); later(0.3, () => SFX18.pin()); PL.san = Math.min(100, PL.san + 6 * n);
   const S = W18.board.S; drawBoard18(S.ctx, 512, 304); S.dt.update();
   toast(`PINNED · ${G18.pinned.length}/4`, 2); cpSave(`PINNED ${G18.pinned.length}/4`);
-  if (G18.pinned.length >= 4) finishDoor18(); else setPhase18();
+  if (G18.pinned.length >= 4) doorReady18(); else setPhase18();   // r6: the door may still need its colors
 }
 function finishDoor18() {
   const X = W18.exitDoor; X.on = true;
   for (let i = 0; i < 8; i++) later(0.4 + i * 0.22, () => SFX18.crayon());
   later(2.2, () => { drawExit18(X.S.ctx, 256, 444, true); X.S.dt.update(); FX.fadeW = Math.max(FX.fadeW, 0.4); G18.flash = 0.4; SFX18.chime(); });
-  later(3.0, () => say('THE CHILDREN', 'You remembered us. Now you can go home. Use the door you drew.', { dur: 5, mode: 'whisper' }));
+  later(3.0, () => say('THE CHILDREN', 'Bye. Close the door behind you. Dino can\'t reach the handle.', { dur: 5, mode: 'whisper' }));
   setPhase18('exit');
   for (const f of AI18.fog) f.goAway(8);
 }
@@ -7609,6 +8659,171 @@ function slideCam18(dt) {
   }
 }
 
+// ==== places18.js ====
+// ---------- r6 · Level 18 places and story: the art room, the crayons, a fifth drawing, the lost and found, an ending that remembers ----------
+const P18 = {};
+function resetP18() { for (const k of Object.keys(P18)) delete P18[k]; Object.assign(P18, { crayons: false, camera: false, lost: false, seenArt: false, letterTold: false, colorT: 0 }); }
+resetP18();
+const ART18 = { x0: 13, y0: 17, x1: 15, y1: 19 };
+
+// ----- layout (genLayout18, before the fake doors are handed out) -----
+function planPlaces18(room, rect, way) {
+  LV.art = null;
+  for (let y = ART18.y0; y <= ART18.y1; y++) for (let x = ART18.x0; x <= ART18.x1; x++) if (LV.zone[cIdx(x, y)] !== Z18.VOID) return;
+  LV.art = rect(room(Z18.CLASS, R18Z.PRE, 'art'), ART18.x0, ART18.y0, ART18.x1, ART18.y1);
+  way(14, 20, 3, 'door', { dk: 'art', plate: 'ART ROOM', col: 1, from: [14, 20] });
+}
+function lightPlaces18() {
+  if (!LV.art) return;
+  for (const c of LV.art.cells) { const x = c % N, y = (c / N) | 0; if ((x + y) % 2 === 0) { LV.panels.push({ x: cellCenter(x), z: cellCenter(y), y: CEIL, state: 1, rot: 0, w: 0.62, l: 1.22 }); LV.fixtures.push({ x: cellCenter(x), z: cellCenter(y), state: 1, seed: RNG(), I: 0.5, rad: 8, sc: 2.6 }); } }
+}
+
+// ----- building (end of buildStory18) -----
+function buildPlaces18() {
+  const B = W18.B; W18.p18 = {};
+  if (LV.art) buildArt18(B);
+  buildLostFound18(B);
+}
+function buildArt18(B) {
+  const X0 = ART18.x0 * CELL, Z0 = ART18.y0 * CELL, X1 = (ART18.x1 + 1) * CELL, Z1 = (ART18.y1 + 1) * CELL, cx = (X0 + X1) / 2, cz = (Z0 + Z1) / 2;
+  // three easels along the north wall; the middle one holds a drawing that isn't one of the four
+  const W_ = [0.75, 0.55, 0.32];
+  for (let i = 0; i < 3; i++) {
+    const x = X0 + 2.2 + i * 3.1, r = propRoot(x, Z0 + 1.1, 0);
+    for (const s of [-1, 1]) B.add(r, 'Box', { width: 0.04, height: 1.6, depth: 0.04 }, COL18.wood, 0, [s * 0.32, 0.78, 0], [0.12, 0, s * 0.08]);
+    B.add(r, 'Box', { width: 0.04, height: 1.5, depth: 0.04 }, COL18.wood, 0, [0, 0.72, -0.32], [-0.32, 0, 0]);
+    B.add(r, 'Box', { width: 0.8, height: 0.04, depth: 0.08 }, COL18.wood2, 0, [0, 0.72, 0.1]);
+    const k = twin(r);
+    if (i === 1) {
+      const S = paperPlane18('pic18_camera', 0.5, 0.38, 256, 196, k, [0, 1.0, 0.13], 0.5, drawCamera18); S.mesh.rotation.x = -0.12;
+      const p = localPt(k, 0, 1.0, 0.6); W18.p18.cam = { S, x: p.x, z: p.z };
+      W.interact.push({ x: p.x, z: p.z, y: 1.0, r: 1.8, label: () => 'TAKE THE DRAWING', ok: () => !P18.camera && G.state === 'play', act: () => takeCamera18() });
+    } else { const S = paperPlane18('art18_' + i, 0.5, 0.38, 256, 196, k, [0, 1.0, 0.13], 0.45, (c, w, h) => drawScribble18(c, w, h, i)); S.mesh.rotation.x = -0.12; }
+    solidLocal(r, -0.42, -0.4, 0.42, 0.2);
+  }
+  // the paint table with the crayon tub, little chairs, a drying line of paintings
+  kidTable18(B, cx, cz + 1.4, 0, 6, COL18.yel || [0.95, 0.74, 0.1]);
+  const t = propRoot(cx + 0.35, cz + 1.4, 0.3), tk = twin(t);
+  const C6 = [[0.89, 0.28, 0.24], [0.94, 0.54, 0.14], [0.88, 0.69, 0], [0.23, 0.63, 0.29], [0.18, 0.5, 0.82], [0.54, 0.36, 0.78]];
+  const tub = mkMerged(W.itemMat, P => { P('Cylinder', { diameter: 0.26, height: 0.16, tessellation: 14 }, [0.2, 0.46, 0.84], 0.15, [0, 0.08, 0]); for (let i = 0; i < 9; i++) { const a = i / 9 * TAU; P('Cylinder', { diameter: 0.022, height: 0.12, tessellation: 6 }, C6[i % 6], 0.3, [Math.sin(a) * 0.07, 0.19, Math.cos(a) * 0.07], [Math.sin(a) * 0.2, 0, Math.cos(a) * 0.2]); } }, 'crayons18');
+  tub.parent = tk; tub.position.set(0, 0.52, 0);
+  const tp = localPt(tk, 0, 0.55, 0); W18.p18.tub = { mesh: tub, x: tp.x, z: tp.z };
+  W.interact.push({ x: tp.x, z: tp.z, y: 0.6, r: 1.9, label: () => 'TAKE THE CRAYONS', ok: () => !P18.crayons && G.state === 'play', act: () => takeCrayons18() });
+  const line = propRoot(cx, Z1 - 1.2, 0); B.add(line, 'Cylinder', { diameter: 0.01, height: X1 - X0 - 1.2, tessellation: 4 }, [0.9, 0.9, 0.86], 0, [0, 2.15, 0], [0, 0, Math.PI / 2]);
+  const lk = twin(line);
+  for (let i = 0; i < 6; i++) { const S = paperPlane18('dry18_' + i, 0.36, 0.28, 128, 98, lk, [-3.6 + i * 1.45, 1.92, 0], 0.4, (c, w, h) => drawScribble18(c, w, h, i + 3)); S.mesh.rotation.z = rnd(-0.08, 0.08); W18.signs && W18.signs.push(S); }
+  rug18(B, cx - 1.6, cz - 0.2, 1.1);
+  for (let i = 0; i < 5; i++) block18(B, cx - 2.6 + rnd(-0.6, 0.6), cz - 1 + rnd(-0.5, 0.5));
+  W18.p18.art = { x0: X0, z0: Z0, x1: X1, z1: Z1 };
+}
+function buildLostFound18(B) {
+  // a cardboard box under the coat hooks by the Sunshine Room door
+  const r = atWall5({ x: 7, y: 20, d: 1 }, 0.4, 0);
+  B.add(r, 'Box', { width: 0.7, height: 0.45, depth: 0.5 }, [0.62, 0.46, 0.28], 0, [0, 0.225, 0.3]);
+  for (const s of [-1, 1]) B.add(r, 'Box', { width: 0.7, height: 0.02, depth: 0.26 }, [0.58, 0.43, 0.26], 0, [0, 0.46, 0.3 + s * 0.2], [s * 0.6, 0, 0]);
+  B.add(r, 'Box', { width: 0.2, height: 0.12, depth: 0.12 }, COL18.red, 0, [-0.15, 0.48, 0.3]); B.add(r, 'Box', { width: 0.16, height: 0.06, depth: 0.2 }, COL18.blue || [0.16, 0.42, 0.85], 0, [0.15, 0.47, 0.25], [0, 0.4, 0]);
+  plateOn18(twin(r), 0, 0.66, 'LOST & FOUND', 0.6, 0.14);
+  solidLocal(r, -0.38, 0, 0.38, 0.58);
+  const p = localPt(r, 0, 0.4, 0.8);
+  W.interact.push({ x: p.x, z: p.z, y: 0.4, r: 1.8, label: () => 'LOOK IN THE LOST & FOUND', ok: () => G.state === 'play', act: () => readLost18() });
+}
+function drawCamera18(c, w, h) {
+  paper18(c, w, h, '#f7f2e4'); const P = ['#e2483c', '#f08a24', '#e0b000', '#3aa04a', '#2f7fd0', '#8a5cc8', '#e05a9a', '#7a4e2a', '#222222'], s = Math.min(w, h);
+  crayonLine18(c, [[w * 0.78, h * 0.86], [w * 0.88, h * 0.3], [w * 0.98, h * 0.86], [w * 0.78, h * 0.86]], P[3], 7); crayonFill18(c, w * 0.8, h * 0.4, w * 0.96, h * 0.84, '#3aa04a', 5);
+  crayonCircle18(c, w * 0.88, h * 0.26, 6, P[2], 3, P[2]);
+  stick18(c, w * 0.34, h * 0.38, h * 0.46, P[4], { hair: P[7] });
+  crayonFill18(c, w * 0.42, h * 0.44, w * 0.62, h * 0.58, '#222222', 6); crayonCircle18(c, w * 0.66, h * 0.51, s * 0.06, P[8], 4, '#555555');
+  crayonCircle18(c, w * 0.47, h * 0.42, 4, P[0], 3, P[0]);
+  crayonText18(c, 'ME', w * 0.24, h * 0.3, 20, P[8]);
+  crayonText18(c, 'DADS CAMRA', w * 0.5, h * 0.12, 22, P[0], -0.04);
+}
+function drawScribble18(c, w, h, k) {
+  paper18(c, w, h, ['#f7f2e4', '#fff8e0', '#eef6ff', '#fdf0f4', '#f2fbe8', '#fff4e4', '#f6f1e2', '#eaf2ff', '#fbf3e6'][k % 9]);
+  const P = ['#e2483c', '#f08a24', '#e0b000', '#3aa04a', '#2f7fd0', '#8a5cc8', '#e05a9a'], R = mulberry32(1000 + k * 77);
+  for (let i = 0; i < 5; i++) { const pts = []; for (let j = 0; j < 4; j++) pts.push([w * (0.1 + R() * 0.8), h * (0.15 + R() * 0.75)]); crayonLine18(c, pts, P[(k + i) % 7], 5); }
+  if (k % 2) crayonCircle18(c, w * 0.8, h * 0.2, Math.min(w, h) * 0.1, P[2], 4, '#f3c230');
+}
+
+// ----- actions -----
+function takeCrayons18() {
+  P18.crayons = true; W18.p18.tub.mesh.setEnabled(false); SFX18.crayon(); SFX.pickup(); toast('CRAYONS · THE GOOD ONES', 2.4);
+  taskDone('art', 'THE ART ROOM · CRAYONS', true);
+  if (G18.phase === 'color') { setPhase18(); later(1.2, () => say('', '…now you can finish it…', { mode: 'whisper' })); }
+  cpSave('CRAYONS');
+}
+function takeCamera18() {
+  P18.camera = true; const S = W18.p18.cam.S; S.mesh.setEnabled(false);
+  SFX18.paper(); SFX18.chime(); FX.fadeW = Math.max(FX.fadeW, 0.45); G18.flash = 0.45; PL.san = Math.min(100, PL.san + 10);
+  toast('A FIFTH DRAWING · DAD\'S CAMERA · YOU KEEP THIS ONE', 3);
+  later(0.6, () => say('MEMORY', 'Christmas. Dad\'s camera, the heavy one. Keep it rolling, kiddo.', { dur: 6 }));
+  task('camera', 'A DRAWING THAT ISN\'T ONE OF THE FOUR', { opt: true, quiet: true }); taskDone('camera', 'DAD\'S CAMERA · YOU KEPT IT', true);
+  flag('camera18', true);
+}
+function readLost18() {
+  const f = RUN.f, L = [];
+  if (f.power0 === 'battery') L.push('A car battery with a yellow tag. T.B. It\'s dry.');
+  if (f.reyes0 === 'helped') L.push('A roll of medical tape. REYES, in marker, on the inside.');
+  if (f.log0) L.push('A page from a logbook. Two words, underlined: It answered.');
+  if (f.abara9) L.push('A cassette. S.A. on the label. Rewound.');
+  if (f.hale9 === 'left') L.push('A photograph of a man with a girl on his shoulders. The glass is clean.');
+  if (f.hale9 === 'saved') L.push('A hospital bracelet. HALE, M. Cut off neatly.');
+  if (f.pruitt5) L.push('An empty bottle of rye. Gold label.');
+  L.push('One red mitten.', 'A green crayon, worn down to a stub.');
+  if (f.lost0 > 0) L.push(`A M.E.G. patch. Somebody wrote ${f.lost0} on the back and crossed it out.`);
+  readDoc('lost18', 'LOST & FOUND', L, { kind: 'board' });
+  if (!P18.lost) { P18.lost = true; task('lost', 'THE LOST & FOUND', { opt: true, quiet: true }); taskDone('lost', 'THE LOST & FOUND · YOU KNOW SOME OF THESE', true); }
+}
+function readLetter18() {
+  readDoc('letter18', 'A LETTER ON THE TEACHER\'S DESK', ['to the grown up who fell in', 'you forgot us. thats ok. everybody does.', 'your drawings got lost all over. find all 4 and pin them on MY MEMORYS.', 'then you can draw a door. you need crayons for doors. dino helps.', 'dont let the tall one get you in the dark. it looks like somebody you know. it isnt.', '— the Children'], { kind: 'board' });
+  if (!P18.letterTold) { P18.letterTold = true; if (LV.art && !P18.crayons) task('art', 'THE ART ROOM · CRAYONS FOR THE DOOR', { opt: true, delay: 3 }); }
+}
+// pinning the fourth drawing: the door is outlined; with crayons it is coloured in at once, without them it waits
+function doorReady18() {
+  if (P18.crayons || !LV.art) { finishDoor18(); return; }
+  setPhase18('color'); later(1.5, () => say('THE CHILDREN', 'It needs colors. The good crayons are in the art room.', { dur: 5, mode: 'whisper' }));
+  task('color', 'COLOR IN THE DOOR · CRAYONS IN THE ART ROOM');
+}
+function exitLabel18() {
+  const X = W18.exitDoor; if (X.on) return 'WALK THROUGH THE DOOR YOU DREW';
+  if (G18.phase === 'color') return P18.crayons ? (holdBusy(X) ? `COLORING IT IN… ${holdPct(X)}%` : 'COLOR IN THE DOOR') : 'THE DOOR NEEDS COLOR · FIND CRAYONS';
+  return 'A DRAWING OF A DOOR · IT ISN\'T FINISHED';
+}
+function exitUse18() {   // true = handled
+  const X = W18.exitDoor; if (X.on || G18.phase !== 'color') return false;
+  if (!P18.crayons) { SFX18.paper(); toast('THE ART ROOM HAS CRAYONS', 2.2); return true; }
+  holdStart(X, 2.4, () => { taskDone('color', 'THE DOOR IS COLORED IN', true); finishDoor18(); }, { r: 2.4, cancel: 'YOU STOP COLORING', tick: (dt) => { if (Math.floor(FX.t * 4) !== Math.floor((FX.t - dt) * 4)) SFX18.crayon(); } });
+  return true;
+}
+function tasks18() {
+  task('dino', 'FOLLOW THE PLUSH DINO', { quiet: true }); if (G18.phase !== 'arrive') taskDone('dino', 'THE SUNSHINE ROOM', true);
+  if (G18.phase !== 'arrive') { task('draw', `FIND YOUR DRAWINGS · ${G18.found}/4`, { quiet: true, sub: 'THE BALL PIT, THE MEADOW STUMP, ABOVE YOUR BED, THE FRIDGE' }); if (G18.found >= 4) taskDone('draw', 'FOUR DRAWINGS FOUND', true);
+    task('pin', `PIN THEM ON MY MEMORIES · ${G18.pinned.length}/4`, { quiet: true }); if (G18.pinned.length >= 4) taskDone('pin', 'MY MEMORIES · 4/4', true); }
+  if (G18.phase === 'exit') { if (taskOf('color')) taskDone('color', 'THE DOOR IS COLORED IN', true); task('home', 'WALK THROUGH THE DOOR YOU DREW', { quiet: true }); }
+}
+function places18Events(dt) {
+  if (LV.art && !P18.seenArt) { const a = W18.p18.art; if (a && PL.x > a.x0 && PL.x < a.x1 && PL.z > a.z0 && PL.z < a.z1) { P18.seenArt = true; toast('THE ART ROOM', 2.4); SFX.beep(1100, 0.05); if (!P18.crayons) task('art', 'THE ART ROOM · CRAYONS FOR THE DOOR', { opt: true, quiet: true }); } }
+}
+// radio fragments on arrival: whoever is still listening for you
+function arrive18() {
+  later(0.8, () => { SFX.staticBurst(0.8, 0.6); say('M.E.G. RADIO', '…expedition… can you hear… Level eigh— …don\'t forget…', { dur: 4, radio: true }); });
+  if (flag('hale9') === 'saved') later(9, () => say('DR. HALE', '…Hale… I can hear a music box on your carrier… stay where it\'s bright…', { radio: true }));
+  else if (flag('nine0') || flag('hale9')) later(9, () => say('OUTPOST 9', '…Nine… we lost your carrier… if you can hear this, keep the tape running…', { radio: true }));
+}
+// the last card: what the tape remembers of the whole run
+function endText18() {
+  const f = RUN.f, S = ['The door opens on a porch on Maple Street. It is morning. Somebody has left the light on anyway.'];
+  if (f.hale9 === 'saved') S.push('A radio in the kitchen says Hale\'s name, then yours.');
+  else if (f.hale9 === 'left') S.push('Far below, somebody is still knocking. Politely.');
+  if (f.lost0 !== undefined) S.push(f.lost0 ? `On the lobby band, ${f.lost0 === 1 ? 'one name never answers' : f.lost0 + ' names never answer'} again.` : 'On the lobby band, four voices are arguing about batteries.');
+  if (f.reyes0 === 'helped') S.push('One of them is laughing at a bad joke.');
+  if (f.pruitt5 === 'opened') S.push('Room ' + (f.pruittN || '') + ' is still empty. You still went in.');
+  S.push(P18.camera ? 'The camcorder is still running. You let it.' : 'The tape runs out on the step.');
+  S.push('The little green dinosaur stays behind, waiting for the next one who forgot.');
+  return S.join(' ').replace('Room  is', 'His room is');
+}
+function flags18() { flag('camera18', P18.camera); flag('crayons18', P18.crayons); }
+if (/[?&]debug/.test(location.search)) addEventListener('load', () => Object.assign(window.__BR || (window.__BR = {}), { P18, takeCrayons18, takeCamera18, readLost18, readLetter18, doorReady18, exitUse18, endText18, tasks18 }));
+
 // ==== player.js ====
 // ---------- player: input, movement, handheld camcorder, survival ----------
 const S = Object.assign({ sens: 1, fov: 62, vhs: 1, bright: 1, vol: 0.8, qual: 1, inv: false },
@@ -7626,12 +8841,12 @@ const TOUCH = { mx: 0, mz: 0 };
 
 function lightAt(x, z) { return baseLight(x, z, FX.flicker) * 0.667 * FX.lightScale; } // ~1 in a lit room, <0.1 in the dead zones
 function makeNoise(v) { PL.noise = Math.max(PL.noise, v); }
-function carpetWet(x, z) { return noise1(x * 0.35 + 3.1) + noise1(z * 0.35 - 8.7) > 0.7; }
+function carpetWet(x, z) { return noise1(x * 0.35 + 3.1) + noise1(z * 0.35 - 8.7) > 0.7 || (LVL === 0 && !!P0.off && inPlace0(P0.off, x, z)); }
 
 function resetPlayer() {
   Object.assign(PL, { x: cellCenter(LV.spawn.x), z: cellCenter(LV.spawn.y), vx: 0, vz: 0, crouch: false, ck: 0, sta: 1, exh: false, hp: 100, san: 100,
     batt: [100, 90, 75][G.diff], spare: [2, 1, 0][G.diff], water: [3, 1, 0][G.diff], flash: false, fk: 0, nv: false, zoomT: false, zk: 0,
-    noise: 0, dist: 0, lastHurt: -99, shake: 0, cell: -1, fear: 0, pitch: 0, lookAt: null, lookK: 0 });
+    noise: 0, load: false, dist: 0, lastHurt: -99, shake: 0, cell: -1, fear: 0, pitch: 0, lookAt: null, lookK: 0 });
   // face the most open direction
   let bd = 0, best = 0;
   for (let d = 0; d < 4; d++) { let n = 0, x = LV.spawn.x, y = LV.spawn.y; while (passable(x, y, d) && n < 8) { x += DX[d]; y += DY[d]; n++; } if (n > best) { best = n; bd = d; } }
@@ -7684,7 +8899,7 @@ function findInteract() {
   }
   return best;
 }
-function interact() { const it = PL.focus; if (it && it.ok()) it.act(); }
+function interact() { if (DOC.open) { docClose(); return; } const it = PL.focus; if (it && it.ok()) it.act(); }   // r6: E first closes an open document
 
 function hurt(dmg, src) {
   if (G.state !== 'play') return;
@@ -7724,9 +8939,9 @@ function updatePlayer(dt) {
   const il = Math.hypot(ix, iz); if (il > 1) { ix /= il; iz /= il; }
   const crouch = PL.crouch; // C toggles crouch (Ctrl removed in r4.4: Ctrl+W closed the browser tab)
   const runKey = K.has('ShiftLeft') || K.has('ShiftRight');
-  const wantRun = runKey && iz > 0.3 && !crouch && !PL.exh;
+  const wantRun = runKey && iz > 0.3 && !crouch && !PL.exh && !PL.load;   // r6: carrying Brandt's battery: no sprint
   if (runKey && PL.crouch && iz > 0.3) PL.crouch = false;
-  const sp = (crouch ? 1.25 : wantRun ? 4.4 : 2.35) * (PL.hp < 30 ? 0.86 : 1) * (PL.exh ? 0.85 : 1) * (PL.spdK ?? 1);
+  const sp = (crouch ? 1.25 : wantRun ? 4.4 : 2.35) * (PL.hp < 30 ? 0.86 : 1) * (PL.exh ? 0.85 : 1) * (PL.spdK ?? 1) * (PL.load ? 0.74 : 1);
   const sy = Math.sin(PL.yaw), cyw = Math.cos(PL.yaw);
   const tx = (sy * iz + cyw * ix) * sp, tz = (cyw * iz - sy * ix) * sp;
   const acc = il > 0.01 ? 8 : 11;
@@ -8254,6 +9469,7 @@ class Explorer extends Agent {
   }
   talk() {
     this.st = 'talk'; this.stT = 0; this.talks++;
+    if (talk0(this)) return;   // r6: lines that know the story so far
     const open = W.tapes.filter(s => !s.taken);
     let line, vo, i = this.i;
     if (this.talks === 1) {
@@ -8272,7 +9488,7 @@ class Explorer extends Agent {
     say(this.name, line, { pos: this, vo });
   }
   die(killer) {
-    this.alive = false; this.st = 'dead'; G.lost++; this.threat = null;
+    this.alive = false; this.st = 'dead'; G.lost++; this.threat = null; this.hurt = false; expDied0(this);
     SFX.scream(this.pos(1.5), EXP[this.i].f);
     if (killer) this.yaw = Math.atan2(killer.x - this.x, killer.z - this.z) + Math.PI;
     this.sync(); poseDead(this.rig, RNG() < 0.5 ? -1 : 1); this.shadowR = 0.8;
@@ -8289,7 +9505,7 @@ class Explorer extends Agent {
       const hd = dist2(h.x, h.z, this.x, this.z);
       if (hd < td && (h.prey === this || (hd < 12 && los(h.x, h.z, this.x, this.z)))) { th = h; td = hd; }
     }
-    if (th && this.st !== 'flee') {
+    if (th && this.st !== 'flee' && !this.hurt) {
       this.st = 'flee'; this.stT = 0; this.threat = th; this.ft = null;
       if (d < 25) { const k = Math.floor(RNG() * 3); say(this.name, VO_TXT.flee[k], { pos: this, vo: `e${this.i}_flee${k}`, vol: 2.4 }); }
     }
@@ -8302,9 +9518,10 @@ class Explorer extends Agent {
       case 'wander':
         if (this.navTo(this.wt.x, this.wt.z, 1.1, dt) < 0.7 || this.stT > 25 || (d < 3.5 && pl)) { this.st = 'idle'; this.stT = 0; this.dur = rnd(4, 11); }
         break;
+      case 'hurt': hurtUpdate0(this, dt); break;
       case 'talk':
         this.spd = damp(this.spd, 0, 6, dt); this.face(Math.atan2(PL.x - this.x, PL.z - this.z), 5, dt);
-        if (this.stT > 7) { this.st = 'idle'; this.stT = 0; this.dur = rnd(3, 6); }
+        if (this.stT > 7) { this.st = this.hurt ? 'hurt' : 'idle'; this.stT = 0; this.dur = rnd(3, 6); }
         break;
       case 'flee': {
         const h = this.threat;
@@ -8328,7 +9545,7 @@ class Explorer extends Agent {
     const talkP = this.st === 'talk' && !r.sk;   // skinned explorers gesture with the talking clip instead
     if (r.sk) rigBase(r, this.st === 'talk' ? 'talk' : null);
     animHuman(r, this.ph, amp, { armR: -1.2 + 0.07 * Math.sin(t * 0.9 + this.sweep) + (fleeing ? 0.3 : 0), elR: -0.25, armA: 0.4, armL: talkP ? -0.35 + 0.15 * Math.sin(t * 3) : 0,
-      elL: talkP ? -0.9 : undefined, look: this.look, lookX: this.st === 'talk' ? -0.1 : 0.12, lean: fleeing ? 0.2 : 0.05 });
+      elL: talkP ? -0.9 : undefined, look: this.look, lookX: this.st === 'talk' ? -0.1 : 0.12, lean: fleeing ? 0.2 : this.hurt ? 0.35 : 0.05, drop: this.hurt && !r.sk ? -0.42 : 0 });
     r.sh[1].rotation.y = this.look * 0.55 + 0.1 * Math.sin(t * 0.6 + this.sweep);
     this.sync();
   }
@@ -8372,7 +9589,7 @@ class Mimic extends Agent {
     let look = 0, amp = 0, jit = 0;
     if (play && (this.st === 'pose' || this.st === 'lure')) {   // it borrows the explorers' voices
       this.vT = (this.vT ?? rnd(4, 9)) - dt;
-      if (this.vT <= 0 && d > 5 && d < 19) { this.vT = rnd(11, 19); const k = Math.floor(RNG() * VO_TXT.mimic.length); say('???', VO_TXT.mimic[k], { pos: this, vo: `mim${RNG() < 0.5 ? 0 : 2}_${k}`, mode: 'mimic', drop: true }); }
+      if (this.vT <= 0 && d > 5 && d < 19) { this.vT = rnd(11, 19); const k = Math.floor(RNG() * VO_TXT.mimic.length), alt = mimicLine0(); say('???', alt ? alt.text : VO_TXT.mimic[k], { pos: this, vo: alt ? null : `mim${RNG() < 0.5 ? 0 : 2}_${k}`, mode: 'mimic', drop: true }); }
     }
     switch (this.st) {
       case 'pose':
@@ -8434,6 +9651,7 @@ function initAI() {
   const ns = Math.min(LV.darkCenters.length, [1, 2, 3][G.diff]);
   for (let i = 0; i < ns; i++) { const s = new Smiler(LV.darkCenters[i], i); AI.smilers.push(s); AI.all.push(s); }
   if (G.diff >= 1) { AI.mimic = new Mimic(); AI.all.push(AI.mimic); }
+  placeReyes0();   // r6: Reyes starts hurt in the flooded office
 }
 function spawnHowler(minCells) {
   const h = new Howler(AI.howlers.length), c = farCell(minCells, 99), p = cellPt(c >= 0 ? c : 0);
@@ -9434,6 +10652,7 @@ const BRIEF = { i: 0, mode: 'play', set: 'l0', open: false, tx: null };
 const bk = (key, touch) => `<kbd>${IS_TOUCH ? touch : key}</kbd>`;
 const bn = n => `<b class="bn">${n}</b>`;
 function briefSlides() { return BRIEF.set === 'l9' ? briefSlides9() : briefSlides0(); }
+function notesKey0() { return IS_TOUCH ? 'Pause → <b>FIELD NOTES</b> lists your objectives, leads and documents.' : `${bk('J', 'NOTES')} opens <b>FIELD NOTES</b>: objectives, leads and documents.`; }   // r6
 function briefSlides0() {
   return [
     { t: 'YOUR OBJECTIVE', alt: 'A lost camcorder on a tripod with the prompt to take its tape; the objective and the TAPES / CODE counters are highlighted.',
@@ -9442,7 +10661,7 @@ function briefSlides0() {
         <li>${bn(1)}<span>Your current <b>objective</b> is always shown under the compass.</span></li>
         <li>${bn(2)}<span>Find a tripod camcorder, get close and press ${bk('E', 'USE')} to <b>take the tape</b>.</span></li>
         <li>${bn(3)}<span>Every tape adds <b>one digit</b> of the exit code. With all <b>4</b>, follow the <b class="red">red compass marker</b> to the exit door and punch the code in.</span></li>
-      </ol>` },
+      </ol><p class="bNote">The exit keypad also needs <b>power</b>: the team left breakers and a battery somewhere. ${notesKey0()}</p>` },
     { t: 'THE TAPE SIGNAL', alt: 'Close-ups of the compass with a tape icon and of the TAPE SIGNAL meter with its bars and arrow.',
       body: `<p class="bLead">Your camcorder can pick up the lost rigs. Watch the meter in the bottom-right corner.</p>
       <ol class="bList">
@@ -9475,7 +10694,7 @@ function briefSlides9() {
         <li>${bn(1)}<span>Your <b>objective</b> sits under the compass. The <b>▼ marker</b> points to the next goal.</span></li>
         <li>${bn(2)}<span>Go <b>north-east</b> to the outpost and study the <b>map</b> by its gate (${bk('E', 'USE')}). Reopen it with ${bk('Tab', 'MAP')}.</span></li>
         <li>${bn(3)}<span>Start the terminal in each of the three <b class="red">red houses</b> (${bk('E', 'USE')}) and <b>stay close</b>. At <b>DATA 3/3</b> the gate opens.</span></li>
-      </ol>` },
+      </ol><p class="bNote">Some houses have more to say than others, and there is more than one way out of the lab. ${notesKey0()}</p>` },
     { t: 'THE NEIGHBORHOOD WATCH', alt: 'A tall figure in a dark coat walking down the street with a flashlight; its amber compass blip and a house porch are highlighted.',
       body: `<ol class="bList">
         <li>${bn(1)}<span>The <b>Watch</b> patrols the streets. If its <b>flashlight</b> finds you, it gives chase.</span></li>
@@ -9564,6 +10783,120 @@ function bindBrief() {
   const f = $('briefFig');   // swipe between slides on touch screens
   f.addEventListener('touchstart', e => { BRIEF.tx = e.touches[0].clientX; }, { passive: true });
   f.addEventListener('touchend', e => { if (BRIEF.tx === null) return; const dx = e.changedTouches[0].clientX - BRIEF.tx; BRIEF.tx = null; if (Math.abs(dx) > 50) briefStep(dx < 0 ? 1 : -1); }, { passive: true });
+}
+
+// ==== story.js ====
+// ---------- r6 narrative layer: run flags, task list (main + optional), documents, FIELD NOTES, hold actions ----------
+// RUN.f carries story choices from level to level inside one run. startGame (Level 0) clears it; a level started from
+// SELECT LEVEL keeps whatever is there (empty on a fresh page), so every reader must treat a missing flag as "unknown".
+const RUN = { f: {} };
+function runReset() { RUN.f = {}; }
+function flag(k, v) { if (v !== undefined) RUN.f[k] = v; return RUN.f[k]; }
+
+// ----- tasks: one list per level. opt = optional lead. The HUD line stays with each level's own obj function. -----
+const TASKS = { list: [], docs: [], lvl: '' };
+function tasksReset(lvl) { TASKS.list.length = 0; TASKS.docs.length = 0; TASKS.lvl = lvl || ''; docClose(true); HOLD.cur = null; }
+function task(id, text, o = {}) {
+  let t = TASKS.list.find(q => q.id === id);
+  if (!t) {
+    t = { id, text, opt: !!o.opt, done: false, failed: false, hidden: !!o.hidden, sub: o.sub || '' };
+    TASKS.list.push(t);
+    if (!t.hidden && !o.quiet && G.state === 'play') later(o.delay ?? 0.2, () => toast((t.opt ? 'NEW LEAD · ' : 'OBJECTIVE · ') + t.text, 2.8));
+  } else {
+    if (text) t.text = text;
+    if (o.sub !== undefined) t.sub = o.sub;
+    if (o.hidden !== undefined) {
+      const was = t.hidden; t.hidden = o.hidden;
+      if (was && !t.hidden && !o.quiet && G.state === 'play') later(o.delay ?? 0.2, () => toast((t.opt ? 'NEW LEAD · ' : 'OBJECTIVE · ') + t.text, 2.8));
+    }
+  }
+  return t;
+}
+function taskOf(id) { return TASKS.list.find(q => q.id === id) || null; }
+function taskDone(id, text, quiet) {
+  const t = taskOf(id); if (!t || t.done || t.failed) return false;
+  t.done = true; t.hidden = false; if (text) t.text = text;
+  if (!quiet && t.opt && G.state === 'play') toast('LEAD CLOSED · ' + t.text, 2.6);
+  return true;
+}
+function taskFail(id, text) { const t = taskOf(id); if (!t || t.done || t.failed) return; t.failed = true; t.hidden = false; if (text) t.text = text; }
+
+// ----- documents: a paper overlay that does not pause the tape. E closes it; walking away closes it too. -----
+const DOC = { open: false, id: '', x: 0, z: 0, t: 0 };
+function readDoc(id, title, body, o = {}) {
+  const paras = Array.isArray(body) ? body : [body];
+  if (!TASKS.docs.find(d => d.id === id)) TASKS.docs.push({ id, title, body: paras, kind: o.kind || 'note' });
+  docShow(title, paras, o.kind);
+  DOC.open = true; document.body.classList.add('docopen'); DOC.id = id; DOC.x = PL.x; DOC.z = PL.z; DOC.t = clamp(4 + paras.join(' ').split(/\s+/).length * 0.32, 6, 26);
+  SFX.click();
+}
+function docShow(title, paras, kind) {
+  const el = $('doc'); el.className = 'kind-' + (kind || 'note');
+  $('docT').textContent = title;
+  const b = $('docB'); b.innerHTML = '';
+  for (const p of paras) { const d = document.createElement('p'); d.textContent = p; b.appendChild(d); }
+  $('docHint').textContent = IS_TOUCH ? 'USE · CLOSE' : '[E] CLOSE · [J] FIELD NOTES';
+}
+function docClose(silent) { if (!DOC.open && !silent) return; DOC.open = false; document.body.classList.remove('docopen'); const el = $('doc'); if (el) el.className = 'hide'; }
+function docTick(dt) {
+  if (!DOC.open) return;
+  DOC.t -= dt;
+  if (DOC.t <= 0 || G.state !== 'play' || dist2(PL.x, PL.z, DOC.x, DOC.z) > 3.2) docClose();
+}
+
+// ----- FIELD NOTES: pause sub-screen with every objective, lead and document of this level -----
+function openNotes() {
+  const L = TASKS.list.filter(t => !t.hidden), main = L.filter(t => !t.opt), opt = L.filter(t => t.opt);
+  const row = t => `<li class="${t.done ? 'done' : t.failed ? 'fail' : ''}"><b>${t.done ? '■' : t.failed ? '✕' : '□'}</b> ${esc(t.text)}${t.sub && !t.done ? `<i>${esc(t.sub)}</i>` : ''}</li>`;
+  $('notesLvl').textContent = TASKS.lvl || 'FIELD NOTES';
+  $('notesMain').innerHTML = main.length ? main.map(row).join('') : '<li class="none">—</li>';
+  $('notesOpt').innerHTML = opt.length ? opt.map(row).join('') : '<li class="none">NOTHING YET. LOOK AROUND.</li>';
+  const dl = $('notesDocs'); dl.innerHTML = '';
+  if (!TASKS.docs.length) dl.innerHTML = '<li class="none">NO DOCUMENTS RECOVERED</li>';
+  for (const d of TASKS.docs) {
+    const li = document.createElement('li'), btn = document.createElement('button'); btn.className = 'mi docBtn'; btn.textContent = d.title;
+    btn.onclick = () => { $('notesRead').innerHTML = `<h3>${esc(d.title)}</h3>` + d.body.map(p => `<p>${esc(p)}</p>`).join(''); $('notesRead').classList.remove('hide'); };
+    li.appendChild(btn); dl.appendChild(li);
+  }
+  $('notesRead').classList.add('hide');
+  backTo = 'pause'; show('notes'); $('btnNotesBack').focus({ preventScroll: true });
+}
+function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+function notesKey(code) {   // J from play pauses into the notes; J or Esc inside the notes goes back to the pause menu
+  if (code !== 'KeyJ' && !(code === 'Escape' && !$('notes').classList.contains('hide'))) return false;
+  if (G.state === 'play' && code === 'KeyJ') { pauseGame(); openNotes(); return true; }
+  if (G.state === 'paused' && !$('notes').classList.contains('hide')) { show('pause'); $('btnResume').focus({ preventScroll: true }); return true; }
+  if (G.state === 'paused' && code === 'KeyJ') { openNotes(); return true; }
+  return false;
+}
+
+// ----- hold actions (breakers, batteries, safes): the focus label shows progress; walking off cancels -----
+const HOLD = { cur: null };
+function holdStart(it, dur, done, o = {}) {
+  if (HOLD.cur) return false;
+  HOLD.cur = { it, t: 0, dur, done, x: it.x, z: it.z, r: o.r ?? 2.4, tick: o.tick, msg: o.cancel || 'YOU LET GO' };
+  if (o.noise) makeNoise(o.noise);
+  return true;
+}
+function holdBusy(it) { return HOLD.cur && (!it || HOLD.cur.it === it); }
+function holdPct(it) { return HOLD.cur && HOLD.cur.it === it ? Math.min(99, Math.floor(HOLD.cur.t / HOLD.cur.dur * 100)) : 0; }
+function holdTick(dt) {
+  const H = HOLD.cur; if (!H) return;
+  if (G.state !== 'play') { if (G.state !== 'paused') HOLD.cur = null; return; }
+  if (dist2(PL.x, PL.z, H.x, H.z) > H.r) { HOLD.cur = null; toast(H.msg, 1.6); return; }
+  H.t += dt; if (H.tick) H.tick(dt, H.t / H.dur);
+  if (H.t >= H.dur) { HOLD.cur = null; H.done(); }
+}
+
+// a second root with the same transform: PropBatch.finish() disposes the roots of merged parts (and every child),
+// so anything that must outlive the batch (pages, handles, signs, text planes) hangs off a twin
+function twin(r) { r.computeWorldMatrix(true); return propRoot(r.position.x, r.position.z, r.rotation.y); }
+
+// ----- shared beat: one line said by whoever of the listed explorers is still alive (Level 0) -----
+function aliveExp(i) { const e = AI.exps && AI.exps[i]; return e && e.alive ? e : null; }
+function sayExp(i, text, o = {}) {   // radio from a named explorer; silent if that explorer is dead
+  const e = aliveExp(i); if (!e) return false;
+  say(e.name, text, Object.assign({ radio: e.d > 6, pos: e.d > 6 ? null : e }, o)); return true;
 }
 
 // ==== checkpoint.js ====
@@ -9681,7 +11014,7 @@ function later(sec, fn) { TIMERS.push({ t: FX.t + sec, fn }); }
 function runTimers() { for (let i = TIMERS.length - 1; i >= 0; i--) if (FX.t >= TIMERS[i].t) { const f = TIMERS[i].fn; TIMERS.splice(i, 1); try { f(); } catch (e) { frameErr('timer', e); } } }
 
 let toastT = 0;
-function toast(msg, dur = 2.4) { const el = $('toast'); el.textContent = msg; el.classList.add('show'); toastT = dur; }
+function toast(msg, dur = 2.4) { const el = $('toast'); el.textContent = msg; el.classList.toggle('long', msg.length > 30); el.classList.add('show'); toastT = dur; }
 const SUBS = { q: [], cur: null, t: 0 };
 function say(who, text, o = {}) {
   if (o.drop && (SUBS.cur || SUBS.q.length)) return;
@@ -9754,7 +11087,7 @@ function updateHUD(dt) {
   const w = $('compass').clientWidth, hd = ((PL.yaw * 180 / Math.PI) % 360 + 360) % 360;
   $('compassStrip').style.transform = `translateX(${(w / 2 - (hd + 360) * CPX).toFixed(1)}px)`;
   const mk = $('compassMark');
-  const tg = LVL === 18 ? target18() : LVL === 5 ? target5() : LVL === 9 ? target9() : G.exitOn ? W.exit : null;
+  const tg = LVL === 18 ? target18() : LVL === 5 ? target5() : LVL === 9 ? target9() : target0();
   if (tg) {
     const a = angDiff(PL.yaw, Math.atan2(tg.x - PL.x, tg.z - PL.z)) * 180 / Math.PI;
     mk.classList.toggle('hide', Math.abs(a) > 70); mk.style.left = (w / 2 + a * CPX).toFixed(1) + 'px';
@@ -9800,7 +11133,7 @@ function updateHUD(dt) {
 }
 
 // ----- screens -----
-const SCREENS = ['loading', 'title', 'levels', 'brief', 'controls', 'settings', 'pause', 'end'];
+const SCREENS = ['loading', 'title', 'levels', 'brief', 'controls', 'settings', 'pause', 'notes', 'end'];
 let backTo = 'title';
 function show(id) { for (const s of SCREENS) $(s).classList.toggle('hide', s !== id); }
 function openLevels() {
@@ -9835,6 +11168,8 @@ function bindUI() {
   $('btnControls').onclick = () => { backTo = 'title'; show('controls'); };
   $('btnPSettings').onclick = () => { backTo = 'pause'; show('settings'); };
   $('btnPControls').onclick = () => { backTo = 'pause'; show('controls'); };
+  $('btnPNotes').onclick = () => openNotes();
+  $('btnNotesBack').onclick = () => { show('pause'); $('btnResume').focus({ preventScroll: true }); };
   document.querySelectorAll('.back').forEach(b => b.onclick = () => show(backTo));
   $('btnResume').onclick = () => resumeGame();
   $('btnRestart').onclick = () => restartGame(true);
@@ -9978,6 +11313,7 @@ function startGame(force) {
   hideScreens(); G.state = 'intro'; INTRO.t = -1.8;
   Object.assign(G, { code: [], tapes: 0, time: 0, lost: 0, cause: '', blackout: 0, exitOn: false, grace: [60, 45, 30][G.diff], radioT: 70, hallT: 20, chase: 0, hintT: 0 });
   HINT.stage = 0; HINT.site = null;
+  runReset(); tasksReset('LEVEL 0 · THE LOBBY'); places0Start();
   G.digits = [rndi(0, 9), rndi(0, 9), rndi(0, 9), rndi(0, 9)];
   resetPlayer(); buildItems(G.diff); initAI();
   $('blue').classList.remove('hide'); SFX.tape(); FX.fadeB = 0;
@@ -9997,7 +11333,7 @@ function introCam(dt) {
 function beginPlay() {
   G.state = 'play'; FX.fadeB = 0; PL.pitch = 0;
   $('osd').classList.remove('hide'); if (IS_TOUCH) $('touch').classList.remove('hide');
-  objective('FIND THE 4 LOST TAPES'); cpSave('LEVEL START', { x: PL.x, z: PL.z, yaw: PL.yaw, quiet: true });
+  setObj0(); cpSave('LEVEL START', { x: PL.x, z: PL.z, yaw: PL.yaw, quiet: true });
   later(0.8, () => say('K. MARSH', VO_TXT.intro[0], { radio: true, vo: 'intro1' }));
   later(1.0, () => say('K. MARSH', VO_TXT.intro[1], { radio: true, vo: 'intro2' }));
   later(13, () => toast(IS_TOUCH ? 'LIGHT · USE · DRINK · BATT BUTTONS' : '[F] FLASHLIGHT   [E] INTERACT   [N] NIGHT SHOT', 3.5));
@@ -10010,7 +11346,7 @@ function takeTape(site) {
   SFX.tape(); FX.glitch = Math.max(FX.glitch, 1.6); PL.san = Math.min(100, PL.san + 10);
   say('TAPE ' + n, TAPE_LOGS[n - 1], { vo: 'tape' + n, mode: 'tape', delay: 1.15 });
   later(0.6, () => toast(`CODE DIGIT ${n}: ${dig}`, 3));
-  objective(n < 4 ? `FIND THE LOST TAPES · ${n}/4` : 'REACH THE EXIT — FOLLOW THE RED MARKER');
+  setObj0();
   cpSave(`TAPE ${n}/4`);
   if (n === 1) later(18, () => { AI.crawler.activate(); radioLine('crawl'); });
   if (n === 2) {
@@ -10034,6 +11370,7 @@ function searchBody() {
   PL.san = Math.max(0, PL.san - 6);
 }
 function useExit() {
+  if (exitUse0()) return;   // r6: the keypad needs power first
   if (G.code.length < 4) { SFX.beep(260, 0.3); toast(`KEYPAD LOCKED — ${4 - G.code.length} DIGIT${G.code.length === 3 ? '' : 'S'} MISSING`); return; }
   const E = W.exit; E.opening = true;
   G.code.forEach((d, i) => later(0.28 * i, () => SFX.keypad(d)));
@@ -10060,7 +11397,7 @@ function win() {
 function wonCam(dt) {
   DEATH.t += dt; FX.fadeW = smooth(0, 1.6, DEATH.t);
   CAM.position.x = damp(CAM.position.x, W.exit.doorPos.x, 1.5, dt); CAM.position.z = damp(CAM.position.z, W.exit.doorPos.z, 1.5, dt);
-  if (DEATH.t > 2.4 && !DEATH.shown) { DEATH.shown = true; goLevel9(carryFromL0()); }
+  if (DEATH.t > 2.4 && !DEATH.shown) { DEATH.shown = true; flags0(); goLevel9(carryFromL0()); }
 }
 function showEnd(won) {
   if (LVL === 18) showEnd18(won); else if (LVL === 5) showEnd5(won); else if (LVL === 9) showEnd9(won); else showEnd0(won);
@@ -10098,7 +11435,7 @@ function teardownScene() {
   try { VHS && VHS.dispose(CAM); } catch (e) {} try { PIPE && PIPE.dispose(); } catch (e) {}
   SCN.dispose(); MATS.list.length = 0;
   Object.assign(FX, { glitch: 0, hurt: 0, fadeB: 1, fadeW: 0, san: 0, nv: 0, lightScale: 1, ambBoost: 0 });
-  SLOT.pos.fill(0); SHD.fill(0); cpReset();
+  SLOT.pos.fill(0); SHD.fill(0); cpReset(); tasksReset(); PL.load = false;
   $('noise9').classList.add('hide'); HUD.nzOn = false; HUD.nzMk = null;
 }
 async function restartGame(play) {
@@ -10120,6 +11457,7 @@ async function restartGame(play) {
 function onKey(code) {
   if (code === 'KeyM') { AU.muted = !AU.muted; if (AU.master) AU.master.gain.value = AU.muted ? 0 : S.vol; toast(AU.muted ? 'MUTED' : 'SOUND ON', 1.2); return; }
   if (briefKey(code)) return;
+  if (notesKey(code)) return;
   if (G.state === 'title' && code === 'Escape' && !$('levels').classList.contains('hide')) { show('title'); $('btnLevels').focus({ preventScroll: true }); return; }
   if (code === 'Escape' || code === 'KeyP') { if (G.state === 'play') pauseGame(); else if (G.state === 'paused' && code === 'KeyP') resumeGame(); return; }
   if (G.state === 'title' && (code === 'Enter' || code === 'Space') && !$('title').classList.contains('hide') && !(document.activeElement && document.activeElement.tagName === 'BUTTON')) startGame();   // a focused menu button handles its own activation
@@ -10177,7 +11515,7 @@ function worldFX(dt) {
   for (const m of LV.chunkMeshes) { const c = m.__c || (m.__c = m.getBoundingInfo().boundingBox.centerWorld.clone()); m._sortD = Math.hypot(c.x - cp.x, c.z - cp.z); }
 }
 function gameEvents(dt) {
-  tapeHints(dt);
+  tapeHints(dt); places0Events(dt);
   if (G.diff === 2 && G.time > 80 && AI.crawler && !AI.crawler.active) AI.crawler.activate();
   G.radioT -= dt;
   if (G.radioT <= 0) { G.radioT = rnd(55, 95); const a = AI.exps.filter(e => e.alive && e.d > 12); if (a.length) { const e = pick(a), k = Math.floor(RNG() * 2); say(e.name, VO_TXT.chat[e.i][k], { radio: true, vo: `e${e.i}_chat${k}` }); } }
@@ -10211,7 +11549,7 @@ function frameSim(dt) {
   }
   if (G.state !== 'loading') {
     try { LVL === 18 ? worldFX18(dt) : LVL === 5 ? worldFX5(dt) : LVL === 9 ? worldFX9(dt) : worldFX(dt); } catch (e) { frameErr('world', e); }   // kept apart so the HUD still updates
-    cpTick(dt);
+    cpTick(dt); holdTick(dt); docTick(dt);
     if (G.state === 'play' || G.state === 'dead') updateHUD(dt);
     updateSubs(dt);
   }
@@ -10224,7 +11562,7 @@ function simStep(dt) {
     case 'dead': LVL === 18 ? updateAI18(dt) : LVL === 5 ? updateAI5(dt) : LVL === 9 ? updateAI9(dt) : updateAI(dt); deathCam(dt); break;
     case 'won': LVL === 18 ? wonCam18(dt) : LVL === 5 ? wonCam5(dt) : LVL === 9 ? wonCam9(dt) : wonCam(dt); break;
   }
-  LVL === 18 ? worldFX18(dt) : LVL === 5 ? worldFX5(dt) : LVL === 9 ? worldFX9(dt) : worldFX(dt); cpTick(dt); updateSubs(dt);
+  LVL === 18 ? worldFX18(dt) : LVL === 5 ? worldFX5(dt) : LVL === 9 ? worldFX9(dt) : worldFX(dt); cpTick(dt); holdTick(dt); docTick(dt); updateSubs(dt);
 }
 async function buildScene() {
   const prog = (p, m) => { $('loadFill').style.width = (p * 100).toFixed(0) + '%'; $('loadMsg').textContent = m; };
@@ -10279,6 +11617,7 @@ function radio9(key, delay = 0) {
   say('M.E.G. OUTPOST 9', txt, { radio: true, vo: 'm9_' + key, delay });
 }
 function obj9() {
+  if (spareRoute9()) return 'TAKE THE SERVICE ELEVATOR — OR CURE DR. HALE';   // r6: Hale's spare card
   switch (G9.phase) {
     case 'arrive': return 'FIND THE M.E.G. OUTPOST · NORTH-EAST';
     case 'data': return `DOWNLOAD M.E.G. DATA FROM THE RED HOUSES · ${G9.data}/3`;
@@ -10294,7 +11633,7 @@ function obj9() {
   }
   return '';
 }
-function setPhase9(p) { if (p) G9.phase = p; objective(obj9()); }
+function setPhase9(p) { if (p) G9.phase = p; objective(obj9()); tasks9(); }
 
 // ----- map kiosk / camcorder snapshot -----
 function studyMap9() {
@@ -10368,6 +11707,7 @@ function useLocker(L) {
     L.st = 'prying'; L.pryT = 0; SFX9.pry(p); makeNoise(0.55);
     later(1.35, () => { L.st = 'open'; FX.glitch = Math.max(FX.glitch, 0.3); toast('PADLOCK SNAPPED', 1.4); });
   } else if (L.st === 'open') {
+    if (G9.cans >= 4) { toast('YOU ALREADY HAVE FOUR CANISTERS', 2); return; }   // r6: five lockers, four needed
     L.st = 'empty'; L.can.setEnabled(false); G9.carry++; G9.cans++; SFX.pickup();
     toast(`FLUID CANISTER ${G9.cans}/4`, 2.4);
     if (G9.cans >= 4) radio9('cans', 0.8);
@@ -10450,7 +11790,7 @@ function useElevator() {
   const E = W9.elev, p = P9({ x: E.rx, z: E.rz, y: 1.3 });
   if (!G9.keycard) { SFX.beep(240, 0.25); later(0.3, () => SFX.beep(200, 0.3)); toast('ADMINISTRATOR KEYCARD REQUIRED', 2.4); return; }
   if (E.want) return;
-  SFX.beep(1500, 0.15); setEmi(E.rm, 0.15, 3, 0.3); toast('ACCESS GRANTED', 1.8);
+  SFX.beep(1500, 0.15); setEmi(E.rm, 0.15, 3, 0.3); toast('ACCESS GRANTED', 1.8); elevator9Leave();
   SFX9.elevator(P9(E.light));
   later(2.2, () => { SFX9.ding(P9(E.light)); E.want = 1; LV.solids[E.sol].off = true; objective('STEP INTO THE ELEVATOR'); });
 }
@@ -10471,7 +11811,7 @@ function wonCam9(dt) {
   if (h && !G9.haleIn && t > 1.9) { G9.haleIn = true; h.place(cx + 0.45, cz + 0.62, -Math.PI / 2); h.st = 'wait'; h.update(0.016); }
   if (t > 3.3 && E.want) { E.want = 0; LV.solids[E.sol].off = false; SFX9.elevator(P9(E.light)); }
   FX.fadeW = smooth(5.4, 7.2, t); FX.glitch = Math.max(FX.glitch, t > 6 ? 0.6 : 0);
-  if (t > 7.6 && !DEATH.shown) { DEATH.shown = true; G9.endWon = true; goLevel5(carryFrom9()); }
+  if (t > 7.6 && !DEATH.shown) { DEATH.shown = true; G9.endWon = true; flags9(); goLevel5(carryFrom9()); }
 }
 function showEnd9(won) {
   if (document.pointerLockElement) document.exitPointerLock();
@@ -10507,7 +11847,7 @@ async function goLevel9(from) {
   if (AU.ctx && AU.ctx.state === 'suspended') AU.ctx.resume();
   teardownScene();
   LVL = 9; setDims(L9_N, L9_LMR); document.body.classList.add('lvl9'); AU.remap = remap9;
-  resetG9();
+  resetG9(); resetP9(); tasksReset('LEVEL 9 · DARKENED SUBURBS');
   const prog = (p, m) => { $('loadFill').style.width = (p * 100).toFixed(0) + '%'; $('loadMsg').textContent = m; };
   RNG = mulberry32((Math.random() * 4294967296) >>> 0);
   await buildWorld9(prog);
@@ -10548,7 +11888,7 @@ function beginPlay9() {
   G.state = 'play'; FX.fadeW = 0; FX.fadeB = 0; PL.pitch = 0;
   $('osd').classList.remove('hide'); if (IS_TOUCH) $('touch').classList.remove('hide');
   setPhase9('arrive'); cpSave('LEVEL START', { x: PL.x, z: PL.z, yaw: PL.yaw, quiet: true });
-  later(1.4, () => radio9('arrive'));
+  later(1.4, () => arrive9());   // r6: rewritten arrival (text only; the old voiced clip is unused)
   later(26, () => toast(IS_TOUCH ? 'LATCH · MAP BUTTONS' : '[RIGHT-CLICK] LATCH DOORS   [TAB] MAP   [F] FLASHLIGHT', 3.6));
 }
 
@@ -10575,7 +11915,7 @@ function startStairTp9(h, up) {
   if (!G9.stairTip) { G9.stairTip = true; later(1.1, () => toast(up ? 'UPSTAIRS — WALK BACK INTO THE STAIRWELL TO GO DOWN' : 'DOWNSTAIRS', 2.6)); }
 }
 function gameEvents9(dt) {
-  updateTerms9(dt);
+  updateTerms9(dt); places9Events(dt);
   // stairwell between the outpost and the lab (fade through black)
   if (G9.tp) {
     const T = G9.tp; T.t += dt; FX.fadeB = T.t < 0.3 ? T.t / 0.3 : Math.max(0, 1 - (T.t - 0.45) / 0.45);
@@ -10734,6 +12074,7 @@ function target9raw() {
   const toLab = () => lab ? null : comp ? { x: 25.5 * CELL, z: 20.3 * CELL } : W9.gate;
   const up = { x: (LAB_X + 2.5) * CELL, z: 0.9 };
   const near = arr => { let b = null, bd = 1e9; for (const o of arr) { const d = dist2(o.x, o.z, PL.x, PL.z); if (d < bd) { bd = d; b = o; } } return b; };
+  if (spareRoute9()) return lab ? (W9.elev ? { x: W9.elev.rx, z: W9.elev.rz } : null) : toLab();
   switch (G9.phase) {
     case 'arrive': return W9.kiosk;
     case 'data': return G9.mapSeen ? near(W9.terms.filter(T => !T.done)) : W9.kiosk;
@@ -10757,7 +12098,7 @@ function hudObj9() {
   if (G9.crowbar) return `CANISTERS ${G9.cans}/4` + (G9.carry ? ` · CARRY ${G9.carry}` : '');
   return `DATA ${G9.data}/3`;
 }
-function hudItems9() { const a = []; if (G9.crowbar) a.push('CROWBAR'); if (G9.keycard) a.push('KEYCARD'); if (G9.mapSeen) a.push('MAP'); return a.join(' · ') || 'LEVEL 9'; }
+function hudItems9() { const a = []; if (P9S.rota) a.push(watchTimer9()); if (G9.crowbar) a.push('CROWBAR'); if (G9.keycard) a.push('KEYCARD'); if (G9.mapSeen) a.push('MAP'); return a.join(' · ') || 'LEVEL 9'; }
 
 // ----- start (after every module has initialised) -----
 if (/[?&]debug/.test(location.search)) window.__BR = { CP, cpRetry, cpSave, cpAvail, cpPorch9, ERRS, frameErr, inRun, hasAlt, startLevelPick, openLevels, G9, W9, AI9, hearLimit9, noiseAt9, hear9, physD9, cellPt, cIdx, cellOf, cellCenter, floorOf, updateHUD, BRIEF, openBrief, closeBrief, briefStep, startIntro9, brief9Seen, briefSlides, LV9: () => LV, goLevel9, worldFX9, restartGame, teardownScene, openGate, startDownload, finishDownload, takeCrowbar, useLocker, installCans, releaseSubject, pullLever, releaseCure, takeKeycard, useElevator, win9, spawnWatch, studyMap9, toggleMap9, setDoor, latchDoor, radio9, target9, raiseCage, Hale, HINT, G, PL, AI, FX, W, LV, CAM: () => CAM, SCN: () => SCN, ENG: () => ENG, startBlackout, takeTape, spawnHowler, lightAt, useExit, hurt, startGame, beginPlay, baseLight, S, DBG, los, pauseGame, die, win, showEnd, simStep, K, useExit, SFX, AU, SUBS, say, playVoice, playS, VO_TXT, ABANK_G };
@@ -10773,22 +12114,23 @@ function resetG5() {
 }
 resetG5();
 DEATH_TXT.moth = ['THE MOTHS CAME FOR YOUR LIGHT', 'The last frames are nothing but wings and dust.'];
-const L5_TXT = {
-  arrive: '…Outpost Nine to expedition… you took the elevator. That isn\'t the surface. That\'s Level 5. The hotel.',
-  arrive2: 'Staff stairs in the Beverly Room lead down to the boilers — the emergency exit is down there. Three locks on the staff door. Housekeeping keeps the keys.',
-  eyes: 'Don\'t stare at the wallpaper. Whatever\'s behind it stares back — and it takes something from you every second.',
-  moth: 'Moths. Big ones. They\'re drawn to light — kill your flashlight and they lose you. Let them find a lamp instead.',
-  loop: 'That corridor folds back on itself. The door numbers repeat. There was a door marked EAST WING at the far end of the north wing — try that one.',
-  keys: 'That\'s all three keys. The staff door is on the south wall of the Beverly Room, right of the arch.',
-  stairs: 'Good. Service stairs, straight ahead. Take them down.',
-  boil: 'Boiler room. The pressure\'s keeping the exit sealed. Three machine halls, three relief valves. Vent them all.',
-  valve: 'Pressure\'s falling. Keep going — and watch the dark.',
-  exit: 'That\'s it — the exit\'s released. Emergency door at the east end. Go. Now.',
+const L5_TXT = {   // r6: rewritten with the dialogue skill (text only, as before)
+  arrive: 'Nine. That car doesn\'t go up. You\'re in the hotel.',
+  arrive2: 'Way out is under the boilers. The staff door is in the ballroom. Three locks.',
+  eyes: 'Nine. Eyes off the wallpaper. Last man who counted the roses lost an hour.',
+  moth: 'Moths. Kill your light. Let them have the lamps.',
+  loop: 'Your room numbers just repeated on my end. Turn around. Last door of the north wing says EAST WING. Try that one.',
+  keys: 'That\'s three. Staff door, south wall of the ballroom, right of the arch.',
+  master: 'Where did you get a master key? No. Don\'t tell me. Ballroom, staff door.',
+  stairs: 'Service stairs. Down.',
+  boil: 'Boilers. Pressure is holding the exit shut. Three halls, three valves.',
+  valve: 'One down. Watch the dark.',
+  exit: 'Exit\'s released. East end. Go.',
 };
-function radio5(key, delay = 0) { const t = L5_TXT[key]; if (t) say('M.E.G. OUTPOST 9', t, { radio: true, delay }); }
+function radio5(key, delay = 0) { const [who, t] = radio5who(key); if (t) say(who, t, { radio: true, delay }); }
 function obj5() {
   switch (G5.phase) {
-    case 'arrive': case 'keys': return `FIND THE HOUSEKEEPING KEYS · ${G5.keys}/3`;
+    case 'arrive': case 'keys': return `FIND THE HOUSEKEEPING KEYS · ${G5.keys}/3` + (P5.pr === 'asked' && !P5.master && LV.pruitt ? ` · OR RYE FOR ${pruittNum5()}` : '');
     case 'staff': return 'UNLOCK THE STAFF DOOR · BEVERLY ROOM';
     case 'stairs': return 'TAKE THE SERVICE STAIRS DOWN';
     case 'valves': return `VENT THE BOILERS · VALVES ${G5.valves}/3`;
@@ -10796,7 +12138,7 @@ function obj5() {
   }
   return '';
 }
-function setPhase5(p) { if (p) G5.phase = p; objective(obj5()); }
+function setPhase5(p) { if (p) G5.phase = p; objective(obj5()); tasks5(); }
 
 // ----- story actions -----
 function takeKey5(k) {
@@ -10834,7 +12176,7 @@ function ringBell5() {
 }
 function readNote5() {
   SFX.click(); G5.noteRead = true;
-  say('NOTE', 'HOUSEKEEPING — Keys for the staff door hang in the closets: WEST wing, NORTH wing, EAST wing. Do not walk the east corridor. Use the door marked EAST WING at the end of the north wing.', { dur: 8 });
+  readDoc('note5', 'NOTE ON THE FRONT DESK', ['Night shift: I moved the spare housekeeping keys to the wing closets. West, North, East. Third time this month somebody walked off with the ring.', 'East closet: take the door marked EAST WING at the end of the north wing.', 'Do not walk the east corridor. You will be at it till breakfast.'], { kind: 'note' });   // r6
   if (G5.phase === 'arrive') setPhase5('keys');
 }
 function closeElev5() {
@@ -10868,7 +12210,7 @@ async function goLevel5(from) {
   if (AU.ctx && AU.ctx.state === 'suspended') AU.ctx.resume();
   teardownScene();
   LVL = 5; setDims(L5_N, L5_LMR); document.body.classList.remove('lvl9'); document.body.classList.add('lvl5'); AU.remap = remap5;
-  resetG5();
+  resetG5(); resetP5(); tasksReset('LEVEL 5 · THE HOTEL');
   const prog = (p, m) => { $('loadFill').style.width = (p * 100).toFixed(0) + '%'; $('loadMsg').textContent = m; };
   RNG = mulberry32((Math.random() * 4294967296) >>> 0);
   await buildWorld5(prog);
@@ -10907,7 +12249,7 @@ function beginPlay5() {
   G.state = 'play'; FX.fadeW = 0; FX.fadeB = 0; PL.pitch = 0;
   $('osd').classList.remove('hide'); if (IS_TOUCH) $('touch').classList.remove('hide');
   setPhase5('arrive'); cpSave('LEVEL START', { x: PL.x, z: PL.z, yaw: PL.yaw, quiet: true });
-  later(1.2, () => radio5('arrive')); later(9, () => radio5('arrive2'));
+  later(1.2, () => radio5('arrive')); later(9, () => radio5('arrive2')); arrive5extra();
   later(24, () => toast(IS_TOUCH ? 'THE LIGHT BUTTON TOGGLES YOUR FLASHLIGHT' : '[F] FLASHLIGHT — BUT LIGHT DRAWS THINGS IN', 3.6));
 }
 function win5() {
@@ -10923,7 +12265,7 @@ function wonCam5(dt) {
   CAM.position.set(lerp(w.x, tx + smooth(2.2, 4.4, t) * 1.2, k1), 1.6 + noise1(FX.t * 1.1) * 0.01, lerp(w.z, X.z, k1));
   CAM.rotation.set(lerp(w.pitch, 0, k1), w.yaw + angDiff(w.yaw, Math.PI / 2) * k1, noise1(FX.t * 0.5) * 0.01);
   FX.fadeW = smooth(2.6, 4.8, t); FX.glitch = Math.max(FX.glitch, t > 4 ? 0.6 : 0);
-  if (t > 5.4 && !DEATH.shown) { DEATH.shown = true; G5.endWon = true; goLevel18(carryFrom5()); }
+  if (t > 5.4 && !DEATH.shown) { DEATH.shown = true; G5.endWon = true; flags5(); goLevel18(carryFrom5()); }
 }
 function showEnd5(won) {
   if (document.pointerLockElement) document.exitPointerLock();
@@ -11010,6 +12352,7 @@ function eyes5(dt) {
 }
 function gameEvents5(dt) {
   const pc = cIdx(cellOf(PL.x), cellOf(PL.z)), zc = LV.zone[pc];
+  places5Events(dt);
   // service stairs <-> boiler room (fade through black)
   if (G5.tp) {
     const T = G5.tp; T.t += dt; FX.fadeB = T.t < 0.3 ? T.t / 0.3 : Math.max(0, 1 - (T.t - 0.45) / 0.45);
@@ -11066,7 +12409,7 @@ function gameEvents5(dt) {
     G5.hallT = rnd(7, 18) * (PL.san / 40 + 0.35); const k = RNG();
     if (k < 0.3) SFX.whisper();
     else if (k < 0.55) { const b = { x: PL.x - Math.sin(PL.yaw) * 4, y: 0.1, z: PL.z - Math.cos(PL.yaw) * 4, pl: { x: PL.x, z: PL.z } }; SFX.heavyStep(b); later(0.55, () => SFX.heavyStep(b)); }
-    else if (k < 0.78) { const w = Math.floor(RNG() * VO_TXT.whisper.length); say('', '…' + VO_TXT.whisper[w].toLowerCase().replace(/[.?]$/, '') + '…', { vo: 'wh' + w, mode: 'whisper' }); }
+    else if (k < 0.78) { if (RNG() < 0.6) whisper5(); else { const w = Math.floor(RNG() * VO_TXT.whisper.length); say('', '…' + VO_TXT.whisper[w].toLowerCase().replace(/[.?]$/, '') + '…', { vo: 'wh' + w, mode: 'whisper' }); } }   // r6: the hotel's own whispers
     else { FX.glitch = 1.6; SFX.staticBurst(0.3, 0.4); }
   }
 }
@@ -11164,8 +12507,8 @@ const G18 = {from:null};
 function resetG18(){const from=G18.from;for(const k of Object.keys(G18))delete G18[k];Object.assign(G18,{from,phase:'arrive',carry:[],pinned:[],found:0,noteRead:false,napRead:false,musicT:0,flash:0,digging:false,slide:null,slides:{},paintTip:false,boxTip:false,slideTip:false,hugged:false,doorT:0,whisperT:20,gigT:25,rustleT:0,endWon:false,lull:null,drone:null});}
 resetG18();
 DEATH_TXT.forgotten=['FORGOTTEN','It wore the shape of someone you used to know.'];
-function obj18(){return G18.phase==='arrive'?'FOLLOW THE PLUSH DINO':G18.phase==='exit'?'WALK THROUGH THE DOOR YOU DREW':`FIND YOUR DRAWINGS · ${G18.found}/4 · PINNED ${G18.pinned.length}/4`;}
-function setPhase18(p){const old=G18.phase;if(p)G18.phase=p;objective(obj18());if(old==='arrive'&&G18.phase==='memories'){cpSave('SUNSHINE ROOM');spawnForgotten18();if(G.diff===2)spawnForgotten18();later(2,()=>toast('BRIGHT ROOMS ARE SAFE · KEEP YOUR LIGHT READY',4));}}
+function obj18(){return G18.phase==='arrive'?'FOLLOW THE PLUSH DINO':G18.phase==='exit'?'WALK THROUGH THE DOOR YOU DREW':G18.phase==='color'?(P18.crayons?'COLOR IN THE DOOR YOU DREW':'THE DOOR NEEDS COLOR · CRAYONS IN THE ART ROOM'):`FIND YOUR DRAWINGS · ${G18.found}/4 · PINNED ${G18.pinned.length}/4`;}
+function setPhase18(p){const old=G18.phase;if(p)G18.phase=p;objective(obj18());tasks18();if(old==='arrive'&&G18.phase==='memories'){cpSave('SUNSHINE ROOM');spawnForgotten18();if(G.diff===2)spawnForgotten18();later(2,()=>toast('BRIGHT ROOMS ARE SAFE · KEEP YOUR LIGHT READY',4));}}
 function carryFrom5(){return carryFrom9();}
 function teardown18(){for(const k of ['lull','drone']){const v=G18[k];if(v){try{v.src&&v.src.stop();(v.v?v.v.g:v.g).disconnect();v.bed&&v.bed.disconnect();}catch(e){}G18[k]=null;}}PL.spdK=1;document.body.classList.remove('lvl18');}
 async function goLevel18(from) {
@@ -11176,7 +12519,7 @@ async function goLevel18(from) {
   if (AU.ctx && AU.ctx.state === 'suspended') AU.ctx.resume();
   teardownScene();
   LVL = 18; setDims(L18_N, L18_LMR); document.body.classList.remove('lvl9', 'lvl5'); document.body.classList.add('lvl18'); AU.remap = null;
-  resetG18();
+  resetG18(); resetP18(); tasksReset('LEVEL 18 · NOSTALGIC MEMORIES');
   const prog = (p, m) => { $('loadFill').style.width = (p * 100).toFixed(0) + '%'; $('loadMsg').textContent = m; };
   RNG = mulberry32((Math.random() * 4294967296) >>> 0);
   await buildWorld18(prog);
@@ -11201,14 +12544,15 @@ function startLevel18Menu() {
   applySettings(); lockPointer(); G18.from = null; goLevel18(null);
 }
 function introCam18(dt){INTRO.t+=dt;const t=INTRO.t,k=smooth(0.5,4.5,t);FX.fadeW=1-smooth(0.3,2.3,t);FX.fadeB=0;CAM.position.set(PL.x,lerp(0.24,1.6,k),PL.z);CAM.rotation.set(lerp(-0.65,0,k),PL.yaw,lerp(0.65,0,k));CAM.fov=S.fov*Math.PI/180;if(t>4.8)beginPlay18();}
-function beginPlay18(){G.state='play';FX.fadeW=FX.fadeB=0;PL.pitch=0;$('osd').classList.remove('hide');if(IS_TOUCH)$('touch').classList.remove('hide');setPhase18('arrive');cpSave('LEVEL START',{x:PL.x,z:PL.z,yaw:PL.yaw,quiet:true});later(0.8,()=>{SFX.staticBurst(0.8,0.6);say('M.E.G. RADIO','…expedition… can you hear… Level eigh— …don’t forget…',{dur:4,radio:true});});later(8,()=>toast('A SMALL GREEN TOY IS WAITING FOR YOU',3));}
+function beginPlay18(){G.state='play';FX.fadeW=FX.fadeB=0;PL.pitch=0;$('osd').classList.remove('hide');if(IS_TOUCH)$('touch').classList.remove('hide');setPhase18('arrive');cpSave('LEVEL START',{x:PL.x,z:PL.z,yaw:PL.yaw,quiet:true});arrive18();later(8,()=>toast('A SMALL GREEN TOY IS WAITING FOR YOU',3));}
 function gameEvents18(dt){
+ places18Events(dt);
  const z=zone18(PL.x,PL.z),pit=inPit18(PL.x,PL.z);PL.spdK=pit?0.55:1;
  if(pit){CAM.position.y-=0.45;G18.rustleT-=dt;if(PL.spd>0.2&&G18.rustleT<=0){G18.rustleT=0.7;SFX18.rustle(P9({x:PL.x,y:0.4,z:PL.z}),0.45);}}
  G18.flash=Math.max(0,G18.flash-dt);if(!G18.slide)FX.fadeW=G18.flash;
  G18.musicT=Math.max(0,G18.musicT-dt);
  const d=AI18.dino,near=d&&d.d<3.5&&los(d.x,d.z,PL.x,PL.z);PL.san=clamp(PL.san+(near?2:z===Z18.CLASS?0.16:-(voidZ18(z)?0.25:0.04)*[0.6,1,1.3][G.diff])*dt,0,100);
- G18.whisperT-=dt;if(G18.whisperT<=0&&(PL.san<45||voidZ18(z))){G18.whisperT=rnd(15,30);SFX.whisper();say('',pick(['…you said you would come back…','…you never closed the gate…','…they waited for you…','…you forgot our names…','…it was only a coat…']),{dur:4,mode:'whisper'});}
+ G18.whisperT-=dt;if(G18.whisperT<=0&&(PL.san<45||voidZ18(z))){G18.whisperT=rnd(15,30);SFX.whisper();say('',pick(['…you have to lift the latch or it doesn\'t catch…','…his bowl is still by the back door…','…you said you fed him…','…there\'s a coat on the hook, that\'s all it is…','…they kept a chair for you…','…the kitchen was yellow… wasn\'t it…']),{dur:4,mode:'whisper'});}
  G18.gigT-=dt;if(G18.gigT<=0){G18.gigT=rnd(25,45);SFX.giggle({x:PL.x+12,y:1,z:PL.z-8,pl:{x:PL.x,z:PL.z}});}
  const C=W18.closet;if(C){C.open=damp(C.open,C.want,1.2,dt);C.hinge.rotation.y=C.ry-1.35*C.open;}
  slideCam18(dt);
@@ -11228,10 +12572,10 @@ function worldFX18(dt){
 }
 function win18(){if(G.state!=='play'||!W18.exitDoor.on)return;G.state='won';DEATH.t=0;DEATH.shown=false;clearSlot(0);$('prompt').classList.remove('show');G18.wc={x:CAM.position.x,z:CAM.position.z,yaw:CAM.rotation.y,pitch:CAM.rotation.x};for(const f of AI18.fog)f.goAway(99);SFX18.chime();}
 function wonCam18(dt){DEATH.t+=dt;const t=DEATH.t,X=W18.exitDoor,w=G18.wc,k=smooth(0,2.8,t);updateAI18(dt);CAM.position.set(lerp(w.x,X.fx-0.3,k),1.6,lerp(w.z,X.fz,k));CAM.rotation.set(lerp(w.pitch,0,k),w.yaw+angDiff(w.yaw,-Math.PI/2)*k,0);FX.fadeW=smooth(1.6,4,t);if(t>5&&!DEATH.shown){DEATH.shown=true;showEnd18(true);}}
-function showEnd18(won){if(document.pointerLockElement)document.exitPointerLock();$('osd').classList.add('hide');$('touch').classList.add('hide');G18.endWon=won;const [title,text]=won?['YOU REMEMBERED','For a moment the voices sound like people you loved. You step through the door you drew. The little green dinosaur stays behind, waiting for the next child who forgot.']:(DEATH_TXT[G.cause]||DEATH_TXT.forgotten);$('endKicker').textContent=won?'WOKEN UP · END OF RECORDING':'■ SIGNAL LOST · LEVEL 18';$('endTitle').textContent=title;$('endText').textContent=text;const st=[['TIME ON TAPE',fmtTC(G.time)],['DISTANCE',Math.round(PL.dist)+' M'],['DRAWINGS',G18.pinned.length+'/4'],['LEVEL','18 · NOSTALGIC MEMORIES'],['DIFFICULTY',DIFFS[G.diff]]];$('endStats').innerHTML=st.map(([a,b])=>`<div><span>${a}</span><b>${b}</b></div>`).join('');$('btnAgain').textContent=won?'▶ PLAY AGAIN (LEVEL 0)':'▶ RETRY LEVEL 18';show('end');}
-function target18(){let to=null;const pc=cell18(PL.x,PL.z),z=LV.zone[pc];if(G18.phase==='arrive')to=AI18.dino;else if(G18.phase==='exit')to=W18.exitDoor;else if(!G18.noteRead)to=W18.deskNote;else if(G18.carry.length&&(z===Z18.CLASS||G18.found===4))to=W18.board;else{const left=W18.drawings.filter(d=>!d.taken);to=left.sort((a,b)=>dist2(a.x,a.z,PL.x,PL.z)-dist2(b.x,b.z,PL.x,PL.z))[0]||W18.board;}if(!to)return null;const gc=cell18(to.x,to.z);if(gc===pc||los(PL.x,PL.z,to.x,to.z))return to;if(G18.targetCell!==gc||G18.targetVer!==LV.navVer){G18.targetCell=gc;G18.targetVer=LV.navVer;G18.targetField=bfs(gc%N,(gc/N)|0,c=>!LV.zone[c]);}const F=G18.targetField;let c=pc;if(F[c]<0)return to;for(let i=0;i<3;i++){let best=c;const x=c%N,y=(c/N)|0;for(let d=0;d<4;d++){const nx=x+DX[d],ny=y+DY[d],n=cIdx(nx,ny);if(inGrid(nx,ny)&&passable(x,y,d)&&F[n]>=0&&F[n]<F[best])best=n;}if(best===c)break;c=best;}return {x:cellCenter(c%N),z:cellCenter((c/N)|0)};}
+function showEnd18(won){if(document.pointerLockElement)document.exitPointerLock();$('osd').classList.add('hide');$('touch').classList.add('hide');G18.endWon=won;if(won)flags18();const [title,text]=won?['YOU REMEMBERED',endText18()]:(DEATH_TXT[G.cause]||DEATH_TXT.forgotten);$('endKicker').textContent=won?'WOKEN UP · END OF RECORDING':'■ SIGNAL LOST · LEVEL 18';$('endTitle').textContent=title;$('endText').textContent=text;const st=[['TIME ON TAPE',fmtTC(G.time)],['DISTANCE',Math.round(PL.dist)+' M'],['DRAWINGS',G18.pinned.length+'/4'],['LEVEL','18 · NOSTALGIC MEMORIES'],['DIFFICULTY',DIFFS[G.diff]]];$('endStats').innerHTML=st.map(([a,b])=>`<div><span>${a}</span><b>${b}</b></div>`).join('');$('btnAgain').textContent=won?'▶ PLAY AGAIN (LEVEL 0)':'▶ RETRY LEVEL 18';show('end');}
+function target18(){let to=null;const pc=cell18(PL.x,PL.z),z=LV.zone[pc];if(G18.phase==='arrive')to=AI18.dino;else if(G18.phase==='exit')to=W18.exitDoor;else if(G18.phase==='color')to=P18.crayons||!W18.p18||!W18.p18.tub?W18.exitDoor:W18.p18.tub;else if(!G18.noteRead)to=W18.deskNote;else if(G18.carry.length&&(z===Z18.CLASS||G18.found===4))to=W18.board;else{const left=W18.drawings.filter(d=>!d.taken);to=left.sort((a,b)=>dist2(a.x,a.z,PL.x,PL.z)-dist2(b.x,b.z,PL.x,PL.z))[0]||W18.board;}if(!to)return null;const gc=cell18(to.x,to.z);if(gc===pc||los(PL.x,PL.z,to.x,to.z))return to;if(G18.targetCell!==gc||G18.targetVer!==LV.navVer){G18.targetCell=gc;G18.targetVer=LV.navVer;G18.targetField=bfs(gc%N,(gc/N)|0,c=>!LV.zone[c]);}const F=G18.targetField;let c=pc;if(F[c]<0)return to;for(let i=0;i<3;i++){let best=c;const x=c%N,y=(c/N)|0;for(let d=0;d<4;d++){const nx=x+DX[d],ny=y+DY[d],n=cIdx(nx,ny);if(inGrid(nx,ny)&&passable(x,y,d)&&F[n]>=0&&F[n]<F[best])best=n;}if(best===c)break;c=best;}return {x:cellCenter(c%N),z:cellCenter((c/N)|0)};}
 function hudObj18(){return `DRAWINGS ${G18.found}/4`;}
-function hudItems18(){return `CARRYING ${G18.carry.length} · PINNED ${G18.pinned.length}/4`;}
+function hudItems18(){return `CARRYING ${G18.carry.length} · PINNED ${G18.pinned.length}/4`+(P18.crayons?' · CRAYONS':'');}
 if (/[?&]debug/.test(location.search)) Object.assign(window.__BR || (window.__BR={}),{SKN,SKP,sknOn,sknTick,rigPlay,rigWant,rigStop,rigBase,MdlBatch,mdlOk,mdlDims,MDL_K,MDL,buildExplorerSk,buildHowlerSk,buildWatchSk,buildWretchSk,buildHaleSk,buildForgottenSk,poseDeadSk,mergeRig,G18,W18,AI18,findInteract,interact,collide,updateField,updateHUD,LV18:()=>LV,goLevel18,beginPlay18,worldFX18,gameEvents18,target18,win18,takeDrawing18,digPit18,pinDrawings18,setPhase18,spawnForgotten18,startSlide18,slideCam18,readNote18,windBox18,foes18,Z18,PIT18,SLIDE_TO18,carryFrom5,updateAI18,INTRO,DEATH});
 boot();
 

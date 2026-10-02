@@ -4,6 +4,7 @@ const BRIEF = { i: 0, mode: 'play', set: 'l0', open: false, tx: null };
 const bk = (key, touch) => `<kbd>${IS_TOUCH ? touch : key}</kbd>`;
 const bn = n => `<b class="bn">${n}</b>`;
 function briefSlides() { return BRIEF.set === 'l9' ? briefSlides9() : briefSlides0(); }
+function notesKey0() { return IS_TOUCH ? 'Pause → <b>FIELD NOTES</b> lists your objectives, leads and documents.' : `${bk('J', 'NOTES')} opens <b>FIELD NOTES</b>: objectives, leads and documents.`; }   // r6
 function briefSlides0() {
   return [
     { t: 'YOUR OBJECTIVE', alt: 'A lost camcorder on a tripod with the prompt to take its tape; the objective and the TAPES / CODE counters are highlighted.',
@@ -12,7 +13,7 @@ function briefSlides0() {
         <li>${bn(1)}<span>Your current <b>objective</b> is always shown under the compass.</span></li>
         <li>${bn(2)}<span>Find a tripod camcorder, get close and press ${bk('E', 'USE')} to <b>take the tape</b>.</span></li>
         <li>${bn(3)}<span>Every tape adds <b>one digit</b> of the exit code. With all <b>4</b>, follow the <b class="red">red compass marker</b> to the exit door and punch the code in.</span></li>
-      </ol>` },
+      </ol><p class="bNote">The exit keypad also needs <b>power</b>: the team left breakers and a battery somewhere. ${notesKey0()}</p>` },
     { t: 'THE TAPE SIGNAL', alt: 'Close-ups of the compass with a tape icon and of the TAPE SIGNAL meter with its bars and arrow.',
       body: `<p class="bLead">Your camcorder can pick up the lost rigs. Watch the meter in the bottom-right corner.</p>
       <ol class="bList">
@@ -45,7 +46,7 @@ function briefSlides9() {
         <li>${bn(1)}<span>Your <b>objective</b> sits under the compass. The <b>▼ marker</b> points to the next goal.</span></li>
         <li>${bn(2)}<span>Go <b>north-east</b> to the outpost and study the <b>map</b> by its gate (${bk('E', 'USE')}). Reopen it with ${bk('Tab', 'MAP')}.</span></li>
         <li>${bn(3)}<span>Start the terminal in each of the three <b class="red">red houses</b> (${bk('E', 'USE')}) and <b>stay close</b>. At <b>DATA 3/3</b> the gate opens.</span></li>
-      </ol>` },
+      </ol><p class="bNote">Some houses have more to say than others, and there is more than one way out of the lab. ${notesKey0()}</p>` },
     { t: 'THE NEIGHBORHOOD WATCH', alt: 'A tall figure in a dark coat walking down the street with a flashlight; its amber compass blip and a house porch are highlighted.',
       body: `<ol class="bList">
         <li>${bn(1)}<span>The <b>Watch</b> patrols the streets. If its <b>flashlight</b> finds you, it gives chase.</span></li>

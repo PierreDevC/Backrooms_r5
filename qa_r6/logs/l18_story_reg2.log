@@ -1,0 +1,17 @@
+error: Failed to load resource: net::ERR_FAILED
+QA load ms 794
+QA l18 start {"state":"play","art":true,"artSafe":true,"labels":["TAKE THE DRAWING","TAKE THE DRAWING","TAKE THE DRAWING","TAKE THE DRAWING","TAKE THE CRAYONS","LOOK IN THE LOST & FOUND"],"radio":"DR. HALE","classDoor":true}
+QA PASS art room built and counted as a bright, safe room
+QA PASS the Sunshine Room door is still the class door the Dino opens
+QA PASS crayons and lost & found usable
+QA l18 story {"lost":true,"lostDoc":"A car battery with a yellow tag. T.B. It's dry.A roll of medical tape. REYES, in marker, on the inside.A page from a logbook. Two words, underlined: It answered.A cassette. S.A. on the label. Rewound.A hospital bracelet. HALE, M. Cut off neatly.An empty bottle of rye. Gold label.One red mitten.A green crayon, worn down to a stub.A M.E.G. patch. Somebody wrote 1 on the back and crossed it out.","letter":"A LETTER ON THE TEACHER'S DESK","artLead":true,"phase":"color","on":false,"exitLabel":"THE DOOR NEEDS COLOR · FIND CRAYONS","obj":"THE DOOR NEEDS COLOR · CRAYONS IN THE ART ROOM","cam":true,"cray":true,"camera":true,"crayons":true,"obj2":"COLOR IN THE DOOR YOU DREW","color":true,"phase2":"exit","on2":true,"tasks":["dino✓","draw✓","pin✓","color✓","home"],"walk":true,"end":"YOU REMEMBERED","endText":"The door opens on a porch on Maple Street. It is morning. Somebody has left the light on anyway. A radio in the kitchen says Hale's name, then yours. On the lobby band, one name never answers again. One of them is laughing at a bad joke. Room 522 is still empty. You still went in. The camcorder is still running. You let it. The little green dinosaur stays behind, waiting for the next one who forgot.","f":{"power0":"battery","reyes0":"helped","log0":true,"lost0":1,"nine0":true,"abara9":true,"hale9":"saved","pruitt5":"opened","pruittN":522,"camera18":true,"crayons18":true}}
+QA PASS lost & found lists objects from earlier choices
+QA PASS the letter opens on paper and points at crayons
+QA PASS four pinned without crayons: the door waits for color
+QA PASS fifth drawing and crayons taken in the art room
+QA PASS coloring the door finishes it
+QA PASS the ending plays
+QA PASS the ending remembers Hale, the lost explorer, Reyes, room 522 and the camera
+QA errs {"n":0,"seen":{},"last":""}
+QA PASS no recovered frame errors
+QA PAGE CLOSE

@@ -1,4 +1,38 @@
-# QA — r5 · 2026-10-01
+# QA — r6 · 2026-10-01 (branch story-r6)
+
+## Environment and scope
+Headless Chromium for Testing (Playwright, SwiftShader) on macOS arm64, 960×540 unless noted; Babylon.js served from qa/babylon.js; optional Google Fonts blocked (the single net::ERR_FAILED line is intentional). Debug state calls and simStep, as before: these checks prove the logic and the wiring, not difficulty, pacing or feel. No human, real-GPU, audio or touch test of the r6 content.
+
+## New r6 checks (qa_r6/*.js, outputs in BR_QA_OUT)
+| Check | Result |
+|---|---|
+| l0_story | Three rooms carved (camp / substation 3×3, office 3×3 or 4×3, doorways 2 / 1 / 2); every cell and all four tapes reachable after carving; Reyes starts hurt in the office; three logbook pages and three breakers; keypad starts unpowered; Brandt's power call; camp radio reaches Outpost Nine and locks the tape signal; whiteboard / map / crate; logbook complete (+1 battery); FIELD NOTES lists objectives, leads and documents; Reyes asks for water, takes it, heals you, gets up; three breakers power the keypad (Howlers investigate); exit opens; run flags carried into Level 9; a new Level 0 run resets flags and the keypad; battery route (no sprint, connected at the door). Repeated on 6 random layouts, all PASS, no recovered frame errors |
+| l9_story | Story houses chosen (Hale on Maple Street every time); arrival radio remembers the Level 0 call; extra canister locker in the blue house; three Hale notes and the safe; relief-team call after the map; Watch house rota → HUD patrol timer; Abara's tape and the torn page; lab notes give the safe combination and the keycard task offers the safe; photographs; safe dials open (2.4 s hold) and gives the spare keycard; objective "TAKE THE SERVICE ELEVATOR — OR CURE DR. HALE"; checkpoint SPARE KEYCARD; elevator with the spare card and Outpost Nine's line; flags (hale9 = left, journal9 = 3, abara9, rota9). 5 random layouts, all PASS |
+| l5_story | Office and the guest's locked room built; Hale speaks from the car and takes the radio lines when hale9 = saved; register and night audit; switchboard reaches the guest, who asks for rye (HUD mentions it); rye left, key slides out; master key → staff door with no housekeeping keys (checkpoint MASTER KEY, keys task "NOT NEEDED"); his room is empty; boilers and exit; flags. PASS |
+| l18_story | Art room built and counted as bright / safe; the Sunshine Room door is still the Dino's class door; lost & found lists objects from the given flags; the letter opens on paper and leads to the crayons; four pinned without crayons → the door waits; fifth drawing and crayons in the art room; colouring the door (2.4 s hold) finishes it; YOU REMEMBERED card assembled from the flags (Hale, one lost explorer, Reyes, room 522, the camera). PASS |
+
+## Earlier suites rerun on the r6 build
+Logs in qa_r6/logs (`*_reg` = first pass, `*_reg2` / `*_reg3` = reruns on the final code). No `QA FAIL`, no PAGEERROR, no unhandled rejection in any of them; the single net::ERR_FAILED in each is the blocked font.
+| Suite | Result on r6 |
+|---|---|
+| s18_smoke, s18_more, s18_final | PASS (s18_final 10/10). These scripts now pick up the art-room crayons before pinning, so pinning the fourth drawing still finishes the door as the r4 tests expect |
+| levels (17/17), levels_mobile (fits, 5 buttons), brief9 (25/25 with the new FIELD NOTES line on slide 1) | PASS, same as r5 |
+| hearing, wretch_speed | Same behaviour as r5 (silence and light never raise suspicion; walk / sprint wake; Easy chase stays below walking speed) |
+| s9_to5 | Level 0 → 9 → 5 reaches play in each level (run5.js and s9_to5.js no longer hard-code sandbox paths) |
+| cp9, cpl | Checkpoints and retry unchanged in all four levels |
+| crash3 | No errors (one Nightmare repetition ended in a death, as in earlier runs) |
+| crashrf | Only the intentionally injected, recovered fault |
+| water | Level 0 / 5 / 18 counts identical to r5; Level 9 has two more almond waters and one more battery on every difficulty (17 / 12 / 8 placed items): the relief team's supplies in the blue house |
+
+## Visual checks
+Screenshots inspected for every new place: Level 0 camp / substation / office, Level 9 street sign / Watch lawn sign / Hale's safe / blue house, Level 5 night audit overlay / the guest's door, Level 18 art room / lost & found / ending card (docs/screenshots/r6_*.jpg). Found and fixed during this pass: `PropBatch.finish()` was disposing story meshes parented to batch roots (logbook pages, breaker handles, camp map and whiteboard, street-sign blades), fixed with `twin()`; a clipped lawn-sign texture; rooms that read as empty at 4×4 cells (now 3×3 with clutter); puddles that read as holes; long toasts running off-screen.
+
+## Not tested / next gate
+A human playthrough of both routes in each level (is the power puzzle readable? is the guest's request findable without the switchboard? does the safe feel fair?), the r6 HUD and FIELD NOTES on a phone, and voicing the new lines.
+
+---
+
+# QA — r5 · 2026-10-01 (previous release, kept for reference)
 
 ## Environment and scope
 Same harness as r4.4: headless Chromium + SwiftShader (software WebGL) at 960×540 (390×844 for the phone layout suite), optional Google Fonts blocked (the single net::ERR_FAILED line is intentional), Babylon.js served from qa/babylon.js, debug time scaling and direct state calls. The machine is a 2-core sandbox, so frame rates here (0.7–9 fps) say nothing about real hardware. No real-GPU, phone, audio or human playtest was done for r5.

@@ -449,7 +449,7 @@ function places0Events(dt) {
   const e = AI.exps[2];
   if (e && e.alive && e.hurt && P0.reyes !== 'helped' && P0.reyesCalls < 3 && (P0.reyesCallT -= dt) <= 0 && !SUBS.cur && e.d > 10) {
     P0.reyesCallT = rnd(95, 130);
-    const lines = [`Reyes. I'm in the office with the cubicles, ${compassWord(P0.off.cx - PL.x, P0.off.cz - PL.z).toLowerCase()} of the hum. Ankle's gone.`, 'Reyes. Still here. Still wet.', 'Reyes. If anyone is passing the office, I would take a water. Or a joke.'];
+    const lines = [`Reyes. I'm in the office with the cubicles, ${compassWord(P0.off.cx - cellCenter(LV.spawn.x), P0.off.cz - cellCenter(LV.spawn.y)).toLowerCase()} of where we landed. Ankle's gone.`, 'Reyes. Still here. Still wet.', 'Reyes. If anyone is passing the office, I would take a water. Or a joke.'];
     say(e.name, lines[P0.reyesCalls++], { radio: true });
     if (P0.reyes === 'unmet') task('reyes', 'REYES IS HURT · THE FLOODED OFFICE', { opt: true, sub: 'SHE CALLED FROM THE OFFICE WITH THE CUBICLES' });
   }

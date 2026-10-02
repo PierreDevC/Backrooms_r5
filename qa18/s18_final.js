@@ -21,7 +21,8 @@ assert(await ev(()=>window.__BR.W18.bright[window.__BR.PL.cell]===1),'class sanc
 await ev(()=>{const B=window.__BR;const d=B.W18.drawings.find(d=>d.id==='monster');Object.assign(B.PL,{x:d.x+0.9,z:d.z-0.8,pitch:0.15,yaw:Math.atan2(-0.9,0.8)});B.updateField();B.playerCamera(1/30);B.updatePlayer(1/30);console.log('QA FOCUS '+(B.PL.focus&&B.PL.focus.label()));});
 assert(await ev(()=>window.__BR.PL.focus?.label()==='TAKE THE DRAWING'),'bedside drawing interaction reachable');await ev(()=>window.__BR.interact());
 await ev(()=>{const B=window.__BR;for(let i=0;i<100;i++)B.simStep(1/30);});assert(await ev(()=>window.__BR.W18.closet.want===1),'closet opens after memory');
-await ev(()=>{const B=window.__BR;B.DBG.ts=0;B.SUBS.q=[];B.SUBS.cur=null;document.getElementById('subs').innerHTML='';for(const d of B.W18.drawings)B.takeDrawing18(d);B.pinDrawings18();});
+await ev(()=>{const B=window.__BR;B.DBG.ts=0;B.SUBS.q=[];B.SUBS.cur=null;document.getElementById('subs').innerHTML='';for(const d of B.W18.drawings)B.takeDrawing18(d);(B.takeCrayons18 && !B.P18.crayons && B.takeCrayons18()), B.pinDrawings18();   // r6: the door needs crayons before it can be finished
+});
 await ev(()=>{const B=window.__BR;for(let i=0;i<150;i++)B.simStep(1/30);B.SUBS.q=[];B.SUBS.cur=null;document.getElementById('subs').innerHTML='';document.getElementById('toast').classList.remove('show');});
 await pos(32,64.8,-Math.PI/2);await shot('door_clean');await pos(36,60.5,Math.PI,0);await shot('board_clean');
 await ev(()=>{window.__BR.win18();window.__BR.DBG.ts=16;});await page.waitForFunction(()=>document.getElementById('endTitle').textContent==='YOU REMEMBERED',null,{timeout:60000});await shot('ending_final');

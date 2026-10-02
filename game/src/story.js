@@ -39,7 +39,7 @@ function readDoc(id, title, body, o = {}) {
   const paras = Array.isArray(body) ? body : [body];
   if (!TASKS.docs.find(d => d.id === id)) TASKS.docs.push({ id, title, body: paras, kind: o.kind || 'note' });
   docShow(title, paras, o.kind);
-  DOC.open = true; DOC.id = id; DOC.x = PL.x; DOC.z = PL.z; DOC.t = clamp(4 + paras.join(' ').split(/\s+/).length * 0.32, 6, 26);
+  DOC.open = true; document.body.classList.add('docopen'); DOC.id = id; DOC.x = PL.x; DOC.z = PL.z; DOC.t = clamp(4 + paras.join(' ').split(/\s+/).length * 0.32, 6, 26);
   SFX.click();
 }
 function docShow(title, paras, kind) {
@@ -49,7 +49,7 @@ function docShow(title, paras, kind) {
   for (const p of paras) { const d = document.createElement('p'); d.textContent = p; b.appendChild(d); }
   $('docHint').textContent = IS_TOUCH ? 'USE · CLOSE' : '[E] CLOSE · [J] FIELD NOTES';
 }
-function docClose(silent) { if (!DOC.open && !silent) return; DOC.open = false; const el = $('doc'); if (el) el.className = 'hide'; }
+function docClose(silent) { if (!DOC.open && !silent) return; DOC.open = false; document.body.classList.remove('docopen'); const el = $('doc'); if (el) el.className = 'hide'; }
 function docTick(dt) {
   if (!DOC.open) return;
   DOC.t -= dt;

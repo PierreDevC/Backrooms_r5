@@ -1,12 +1,14 @@
-# The Backrooms: Found Footage — r5
+# The Backrooms: Found Footage — r6
 
 A Babylon.js found-footage survival-horror game, delivered as one HTML file.
 
 ## Journey
-1. Level 0: recover four tapes, learn the exit code and escape the yellow maze.
-2. Level 9: download data, make the cure, help Dr. Hale and take the elevator. Wretches inside houses are blind and hunt by sound: watch the NOISE meter and crouch. A short LEVEL 9 BRIEFING with screenshots plays on first arrival (pause → FIELD BRIEFING to see it again).
-3. Level 5: find three keys, unlock the staff door, vent three boiler valves and escape the hotel.
-4. **Level 18 — Nostalgic Memories:** follow the Plush Dino through a preschool; recover four childhood drawings, pin them on MY MEMORIES, and leave through the door you drew.
+r6 adds places, a second route through each level's key step, documents, optional leads and an ending assembled from your choices. Press **J** (or pause → FIELD NOTES) for objectives, leads and every document you've found. Story design: `docs/STORY.md`.
+
+1. Level 0: recover four tapes, learn the exit code, power the exit keypad (three breakers in the substation, or Brandt's battery from the M.E.G. camp) and escape the yellow maze. Reyes is hurt in the flooded office; Okafor left three logbook pages.
+2. Level 9: download data, get into the lab, then get an administrator keycard: cure Dr. Hale, or open the wall safe in his house on Maple Street. The blue house and the block captain's house have their own stories. Wretches inside houses are blind and hunt by sound: watch the NOISE meter and crouch. A short LEVEL 9 BRIEFING with screenshots plays on first arrival (pause → FIELD BRIEFING to see it again).
+3. Level 5: unlock the staff door with three housekeeping keys or the night manager's master key (the guest who never checked out wants a drink), vent three boiler valves and escape the hotel.
+4. **Level 18 — Nostalgic Memories:** follow the Plush Dino through a preschool; recover four childhood drawings, pin them on MY MEMORIES, colour in the door with crayons from the art room, and leave through the door you drew.
 
 ## Play and build
 Open `game/The_Backrooms_Found_Footage.html` in a modern WebGL browser. Internet is needed for Babylon.js CDN; fonts are optional. Download the HTML to play if your host blocks pointer lock/WebGL in embeds.
@@ -22,6 +24,8 @@ WASD/arrows move · mouse look · Shift sprint · C crouch (toggle) · F flashli
 On Easy and Normal, dying lets you RETRY FROM CHECKPOINT: you keep everything already done in that level and respawn at the last checkpoint (level start, each tape / download / key / valve / drawing and other milestones). Nightmare restarts the level. Checkpoints last for the current run, not across reloads.
 
 ## Status
+r6 (2026-10-01, branch `story-r6`) is a story pass: new rooms and houses in every level, branching objectives, documents and FIELD NOTES, rewritten dialogue (text only, no new voice clips) and choices that carry to the last level. Checked headless (`docs/QA.md`); not yet played by a human.
+
 r5 (2026-10-01) is a visual overhaul: CC0 photo-scanned PBR surfaces in all four levels, one skinned, motion-captured human for the explorers, Howler, Watch, Wretches, Dr. Hale and the Forgotten, and 17 scanned props (boxes, CRTs, sofas, armchairs, shelving, hydrants, crates, school chairs…), plus safer movement collision. The HTML is now 12.8 MB. If something looks wrong or runs slowly, append `?noassets` (original look), `?noskin` or `?nomodels`. Credits: `docs/CREDITS.md`.
 
 r4.4 (2026-10-01) adds Easy/Normal checkpoints in all levels, Level 9 in SELECT LEVEL, right-click door latching, crash safety (no Ctrl-crouch, leave-page confirmation, self-recovering frame loop) and more almond water on easier modes. r4.3 made Level 9 house Wretches hearing-only with a noise meter and a Level 9 briefing. r4 added Level 18 after Level 5. See `docs/QA.md` for actual automated results; no human real-GPU playthrough, touch gameplay test or audio listening has been performed. New Level 18 dialogue is subtitles, not recorded voice acting.

@@ -1,0 +1,10 @@
+error: Failed to load resource: net::ERR_FAILED
+QA load ms 769
+error: [recovered world] TypeError: Cannot read properties of null (reading 'ctx')
+    at drawTerm (file:///Volumes/crucial/Downloads/Backrooms_r5/game/The_Backrooms_Found_Footage.html?debug:6201:18)
+    at worldFX9 (file:///Volumes/crucial/Downloads/Backrooms_r5/game/The_Backrooms_Found_Footage.html?debug:12030:69)
+    at frameSim (file:///Volumes/crucial/Downloads/Backrooms_r5/game/The_Backrooms_Found_Footage.html?debug:11550:79)
+    at frame (file:///Volumes/crucial/Downloads/Backrooms_r5/game/The_Backrooms_Found_Footage.html?debug:11537:9)
+    at RR._renderFrame (https://cdn.babylonjs.com/babylon
+QA crashrf {"crouch":false,"real":{"simT":19.3,"crouch":true,"ck":1,"state":"play","minHp":100,"wst":"chase,climb,lost,prowl","errs":0,"data":3,"fps":39},"errs0":0,"inject":{"errs":11,"adv":2.7,"last":"world: Cannot read properties of null (reading 'ctx')","hudTC":"0:00:22","after":0,"adv2":1.4,"hudTC2":"0:00:23"}}
+QA PAGE CLOSE

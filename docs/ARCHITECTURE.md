@@ -34,3 +34,6 @@ G/PL/LV/AI/FX/W/SCN/CAM/ENG are shared. G18 tracks phase, carry, pinned, found, 
 
 Room geometry, anchors and memory text are in docs/LEVEL18.md and source. Stalking/hunt thresholds and difficulty tables are in ai18.js. Maintain collision, interaction range and orientation when moving drawings; pictures use local +z planes. Number-frieze texture orientation was visually checked. Supplies are procedural while the objective layout is fixed.
 
+
+## r6 story layer
+`story.js` (after brief.js): run flags, per-level tasks and FIELD NOTES, document overlay, hold actions, `twin()`. `places0.js` (after world.js), `places9.js` (after story9.js), `places5.js` (after story5.js), `places18.js` (after story18.js): each level's added places, routes, documents and beats, hooked into the existing layout / build / events / objective / target functions (see HANDOFF.md). Design and lines: docs/STORY.md.
