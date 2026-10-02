@@ -305,7 +305,11 @@ function watchBeat9(h) {   // the third terminal: odds are the Watch comes to wa
   if (!w) return null;
   const cx = (h.hx + HS / 2) * CELL, cz = (h.hz + HS / 2) * CELL, cells = [];
   for (const c of streetCells9()) if (Math.hypot(cellCenter(c % N) - cx, cellCenter((c / N) | 0) - cz) < 20) cells.push(c);   // the street in front of (and beside) the house
-  w.beat = { x: cx, z: cz, until: FX.t + 80, cells, h }; if (w.st === 'patrol' || w.st === 'leave') { w.st = 'patrol'; w.wp = null; } w.callT = rnd(2, 4);
+  if (Math.hypot(w.x - cx, w.z - cz) > 55) {   // too far to matter: it comes round the corner instead (somewhere you can't see it arrive)
+    const ok = streetCells9().filter(c => { const x = cellCenter(c % N), z = cellCenter((c / N) | 0), dh = Math.hypot(x - cx, z - cz); return dh > 30 && dh < 45 && Math.hypot(x - PL.x, z - PL.z) > 25 && !los(PL.x, PL.z, x, z); });
+    if (ok.length) { const p = cellPt(pick(ok), 0.6, 0.4); w.place(p.x, p.z, rnd(0, TAU)); }
+  }
+  w.beat = { x: cx, z: cz, until: FX.t + 100, cells, h }; if (w.st === 'patrol' || w.st === 'leave') { w.st = 'patrol'; w.wp = null; } w.callT = rnd(2, 4);
   later(5, () => { if (LVL === 9 && G.state === 'play') say('M.E.G. OUTPOST 9', `Nine. The Watch just turned onto ${shortSt9(h.street)}. Be quick in there.`, { radio: true }); });
   return w;
 }

@@ -1,0 +1,22 @@
+error: Failed to load resource: net::ERR_FAILED
+QA load ms 734
+QA PASS title visible
+QA PASS SELECT LEVEL replaces locked L5/L18 continue buttons
+QA PASS Enter on SELECT LEVEL opens level list only
+QA levels ["0:▶ LEVEL 0 THE LOBBY","9:▶ LEVEL 9 DARKENED SUBURBS","5:▶ LEVEL 5 THE HOTEL","18:▶ LEVEL 18 NOSTALGIC MEMORIES"]
+QA PASS four options: Level 0, 9, 5, 18
+QA PASS focus moves to Level 0 option
+QA PASS Esc returns to title
+QA PASS BACK returns to title
+QA PASS Level 9 option starts Level 9
+QA PASS Level 9 starts fresh
+QA PASS quit to menu via pause
+QA PASS Level 5 option starts Level 5 (not Level 18)
+QA PASS Level 5 starts fresh
+QA PASS quit to menu via pause
+QA PASS Level 18 option starts Level 18
+QA PASS Level 18 starts at arrival
+QA PASS quit to menu via pause
+QA brief shown for first Level 0 play
+QA PASS Level 0 option starts Level 0
+QA PAGE CLOSE

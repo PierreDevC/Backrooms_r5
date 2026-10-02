@@ -1,0 +1,19 @@
+error: Failed to load resource: net::ERR_FAILED
+QA load ms 718
+QA hack start {"on":true,"need":4,"piece":true,"prog":0,"tz":0.99,"pl":[37.66200015258789,77.5000015258789]}
+QA PASS the download opens PACKET STACK (4 packets on Normal) and does not progress by itself
+QA PASS the camcorder pushes in on the game
+QA keys {"before":{"x":1,"pl":[37.66200015258789,77.5000015258789]},"after":{"x":2,"pl":[37.66200015258789,77.5000015258789]}}
+QA PASS D moves the block
+QA PASS W turns the block instead of walking
+QA row {"lines0":0,"lines":1,"prog":0.25,"msg":"PACKET VERIFIED"}
+QA PASS a completed row verifies a packet and moves the transfer
+QA corrupt {"l0":1,"lines":0,"msg":"LINK CORRUPTED"}
+QA PASS a full well corrupts the link (or the game survives a crowded well)
+QA step back {"on":false,"label":"RESUME THE TRANSFER","on2":true}
+QA PASS E steps back; the terminal offers RESUME
+QA finish {"done":true,"data":1,"on":false}
+QA PASS the last packet completes the download
+QA errs {"n":0,"seen":{},"last":""}
+QA PASS no recovered frame errors
+QA PAGE CLOSE

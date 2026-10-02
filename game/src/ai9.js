@@ -148,7 +148,7 @@ class Watch extends Agent {
     this.edgeFn = watchEdge;
   }
   newWaypoint(far) {
-    const B = this.beat; if (B && FX.t < B.until && !far && B.cells.length && RNG() < 0.8) { this.wp = cellPt(pick(B.cells), 0.7, 0.4); return; }   // r6: walking a beat round one house
+    const B = this.beat; if (B && FX.t < B.until && !far && B.cells.length && RNG() < 0.9) { this.wp = cellPt(pick(B.cells), 0.7, 0.4); return; }   // r6: walking a beat round one house
     const S = streetCells9(); let c = -1;
     for (let k = 0; k < 20; k++) {
       const q = pick(S), x = cellCenter(q % N), z = cellCenter((q / N) | 0), d = dist2(x, z, this.x, this.z), dp = dist2(x, z, PL.x, PL.z);
