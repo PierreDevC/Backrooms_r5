@@ -72,7 +72,7 @@ function findInteract() {
   }
   return best;
 }
-function interact() { if (DOC.open) { docClose(); return; } if (LVL === 9 && HACK9.on) { hackStop9('YOU STEP BACK FROM THE TERMINAL'); return; } const it = PL.focus; if (it && it.ok()) it.act(); }   // r6: E first closes an open document
+function interact() { if (DOC.open) { docClose(); return; } if (LVL === 9 && HACK9.on) { hackStop9('YOU STEP BACK FROM THE TERMINAL'); return; } if (LVL === 9 && PEEPH.dr) { peepStop9(); return; } const it = PL.focus; if (it && it.ok()) it.act(); }   // r6: E first closes an open document
 
 function hurt(dmg, src) {
   if (G.state !== 'play') return;
@@ -101,6 +101,7 @@ function updatePlayer(dt) {
   if (JUST.has('KeyQ')) drinkWater();
   if (JUST.has('KeyE') || JUST.has('Enter')) interact();
   if ((ALTCLICK || JUST.has('KeyX')) && hasAlt(PL.focus)) PL.focus.alt(); // right-click (or X) latches / unlatches
+  if (JUST.has('KeyV') && LVL === 9) { if (PEEPH.dr) peepStop9(); else if (PL.focus && PL.focus.alt2 && PL.focus.alt2Label && PL.focus.alt2Label()) PL.focus.alt2(); }   // r6: the peephole
   ALTCLICK = false;
   if (JUST.has('Tab') && LVL === 9) toggleMap9();
   if (JUST.has('KeyC')) PL.crouch = !PL.crouch;

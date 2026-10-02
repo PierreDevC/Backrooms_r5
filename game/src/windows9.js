@@ -182,3 +182,65 @@ SFX9.deadbolt = function (pos, on) { shot((d, t) => {   // the thumb-turn ratche
   nz(d, tb + 0.02, 0.03, 'bandpass', 5200, 6, 0.22, 0.001);
   return 0.55; }, pos, 1); };
 if (/[?&]debug/.test(location.search)) addEventListener('load', () => Object.assign(window.__BR || (window.__BR = {}), { PORT9, PEEK9, WIN9, peekToggle9, portalTick9, planWindows9 }));
+
+// ----- the peephole: put your eye to the door and see the other side through a fisheye (V, or the PEEP button) -----
+// The camcorder goes to the far face of the leaf, looking away from you, with a wide lens; the 'peep' post pass bends it into a
+// porthole, washes it teal like a cheap night lens and drops the resolution. Whatever is waiting on the porch fills the middle.
+const PEEPH = { dr: null, k: 0, x: 0, z: 0, yaw: 0, y: 1.52, px: 0, pz: 0 }, _pv9 = new BABYLON.Vector3(), _pd9 = new BABYLON.Vector3();
+BABYLON.Effect.ShadersStore.peepFragmentShader = `precision highp float; varying vec2 vUV; uniform sampler2D textureSampler; uniform vec4 pk;
+float h(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
+void main() {
+  float k = min(pk.x, 1.0), bul = pk.x - k; vec3 src = texture2D(textureSampler, vUV).rgb;
+  if (k < 0.001) { gl_FragColor = vec4(src, 1.0); return; }
+  vec2 c = vUV - 0.5; c.x *= pk.z; float r = length(c);
+  vec2 d = c * (1.0 - k * (0.38 + bul - 0.7 * r * r));                       // the middle bulges toward you, the rim pulls away
+  d.x /= pk.z; vec2 suv = d + 0.5;
+  vec2 px = vec2(pk.w * pk.z, pk.w); suv = mix(suv, (floor(suv * px) + 0.5) / px, k);   // a cheap lens, a low line count
+  vec3 col = texture2D(textureSampler, clamp(suv, 0.002, 0.998)).rgb;
+  float l = dot(col, vec3(0.299, 0.587, 0.114));
+  l = clamp(pow(l * 1.5, 0.78), 0.0, 1.0); l = floor(l * 16.0 + h(floor(suv * px) + pk.y) * 0.3) / 16.0;
+  vec3 teal = mix(vec3(0.004, 0.02, 0.024), vec3(0.56, 1.0, 0.9), l) + vec3(0.0, 0.035, 0.032) * (1.0 - l);
+  vec2 q = abs(c) / vec2(0.5 * pk.z, 0.47); float e = pow(pow(q.x, 3.2) + pow(q.y, 3.2), 1.0 / 3.2);   // a rounded porthole
+  float vig = smoothstep(1.03, 0.66, e) * (1.0 - 0.45 * r * r);
+  gl_FragColor = vec4(mix(src, teal * vig, k), 1.0);
+}`;
+function peepUse9(dr) { return LVL === 9 && dr && !dr.target; }
+function peepToggle9(dr) {
+  if (PEEPH.dr) { peepStop9(); return; }
+  if (!peepUse9(dr)) return;
+  const e = dr.e, ax = (e.x + 0.5) * CELL, az = (e.y + 0.5) * CELL, bx = ax + DX[e.d] * CELL, bz = az + DY[e.d] * CELL;
+  const toB = dist2(PL.x, PL.z, ax, az) < dist2(PL.x, PL.z, bx, bz), nx = toB ? DX[e.d] : -DX[e.d], nz = toB ? DY[e.d] : -DY[e.d];   // look to the side you are not on
+  Object.assign(PEEPH, { dr, x: dr.mx + nx * 0.16, z: dr.mz + nz * 0.16, yaw: Math.atan2(nx, nz), px: PL.x, pz: PL.z });
+  PL.yaw = PEEPH.yaw; PL.pitch = 0.04; FX.glitch = Math.max(FX.glitch, 0.9); SFX.click(); later(0.08, () => SFX.click()); makeNoise(0.04);
+  if (!G9.peepTip) { G9.peepTip = true; toast(IS_TOUCH ? 'THE PEEPHOLE · MOVE TO STEP BACK' : 'THE PEEPHOLE · [V], [E] OR MOVE TO STEP BACK', 2.6); }
+}
+function peepStop9() { if (!PEEPH.dr) return; PEEPH.dr = null; FX.glitch = Math.max(FX.glitch, 0.6); SFX.click(); }
+function peepTick9(dt) {   // after playerCamera: the camcorder is on the other side of the door
+  const dr = PEEPH.dr;
+  if (dr && (G.state !== 'play' || dr.target || Math.hypot(PL.x - PEEPH.px, PL.z - PEEPH.pz) > 0.3 || PL.hp <= 0)) peepStop9();
+  PEEPH.k = PEEPH.dr ? Math.min(1, PEEPH.k + dt * 7) : Math.max(0, PEEPH.k - dt * 9);
+  if (PEEP) PEEP.__k = PEEPH.k;
+  document.body.classList.toggle('peeping', PEEPH.k > 0.3);
+  if (!PEEPH.dr) return;
+  const dy = angDiff(PEEPH.yaw, PL.yaw); if (Math.abs(dy) > 0.75) PL.yaw = PEEPH.yaw + Math.sign(dy) * 0.75;   // the lens only sees so far round
+  PL.pitch = clamp(PL.pitch, -0.45, 0.6);
+  CAM.position.set(PEEPH.x, PEEPH.y, PEEPH.z); CAM.rotation.set(PL.pitch, PL.yaw, 0); CAM.fov = 1.9;
+  FX.ambBoost = Math.max(FX.ambBoost, 3.2);   // the cheap lens lifts the dark, like the camcorder's night shot
+  PL.focus = null; $('prompt').classList.remove('show');   // no door prompt over the porthole; E, V or a step still let go
+  // the porch light: whoever stands outside is lit from just above the door, the street behind stays dark
+  const f = CAM.getDirection(BABYLON.Axis.Z); _pv9.set(PEEPH.x, 2.25, PEEPH.z); _pd9.set(f.x, -0.35, f.z).normalize();
+  setSlot(0, _pv9, 3.4, _pd9, Math.cos(0.95), [1, 0.92, 0.78], 9, true, 0.18);
+  // something on the other side: the lens breathes and your heart goes
+  let near = 0;
+  for (const a of [...(AI9.wretches || []), ...(AI9.watch || []), AI9.subject].filter(Boolean)) {
+    if (a.present === false) continue;
+    const dx = a.x - PEEPH.x, dz = a.z - PEEPH.z, d = Math.hypot(dx, dz); if (d > 7 || d < 0.01) continue;
+    if (Math.abs(angDiff(PL.yaw, Math.atan2(dx, dz))) > 1.1) continue;
+    near = Math.max(near, 1 - d / 7);
+  }
+  PEEPH.near = damp(PEEPH.near || 0, near, 3, dt);
+  if (PEEP) PEEP.__k = 1 + PEEPH.near * (0.06 + 0.05 * Math.sin(FX.t * 5.5));   // past 1: the extra bulge
+  PL.fear = Math.max(PL.fear, PEEPH.near * 0.8);
+  if (PEEPH.near > 0.3) FX.glitch = Math.max(FX.glitch, 0.15 * PEEPH.near);
+}
+if (/[?&]debug/.test(location.search)) addEventListener('load', () => Object.assign(window.__BR || (window.__BR = {}), { PEEPH, peepToggle9, peepStop9, peepTick9, PEEPpp: () => PEEP, useDoor }));

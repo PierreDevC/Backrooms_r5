@@ -335,7 +335,7 @@ function startStairTp9(h, up) {
   if (!G9.stairTip) { G9.stairTip = true; later(1.1, () => toast(up ? 'UPSTAIRS — WALK BACK INTO THE STAIRWELL TO GO DOWN' : 'DOWNSTAIRS', 2.6)); }
 }
 function gameEvents9(dt) {
-  peekTick9(dt); portalTick9(dt);   // r6: after playerCamera, before the frame renders
+  peekTick9(dt); peepTick9(dt); portalTick9(dt);   // r6: after playerCamera, before the frame renders
   updateTerms9(dt); places9Events(dt);
   // stairwell between the outpost and the lab (fade through black)
   if (G9.tp) {

@@ -1,5 +1,5 @@
 // ---------- scene assembly, props, items, lighting slots, post-processing ----------
-let ENG = null, CAM = null, PIPE = null, VHS = null;
+let ENG = null, CAM = null, PIPE = null, VHS = null, PEEP = null;
 const W = { interact: [], items: [], tapes: [], tvs: [], dead: [], beams: [] };
 const FX = { t: 0, amt: 1, glitch: 0, nv: 0, hurt: 0, fadeB: 1, fadeW: 0, exposure: 1.2, san: 0, lightScale: 1, flicker: 1, fog: [0.1, 0.085, 0.045], fogDen: 0.03, ambBoost: 0, envA: [0.02, 0.018, 0.013, 0], envS: [0, 0, 0, 0] };
 const SLOT = { pos: new Array(24).fill(0), dir: new Array(24).fill(0), col: new Array(24).fill(0), ext: new Array(24).fill(0) };
@@ -293,6 +293,8 @@ function setupPost(q) {
   PIPE.imageProcessingEnabled = false; PIPE.fxaaEnabled = false;
   PIPE.samples = q >= 2 ? 4 : 1;
   PIPE.bloomEnabled = true; PIPE.bloomThreshold = 1.1; PIPE.bloomWeight = 0.42; PIPE.bloomKernel = q >= 1 ? 64 : 32; PIPE.bloomScale = 0.5;
+  PEEP = LVL === 9 ? new BABYLON.PostProcess('peep', 'peep', ['pk'], null, 1.0, CAM, BABYLON.Texture.BILINEAR_SAMPLINGMODE, ENG) : null;   // r6: the Level 9 peephole
+  if (PEEP) { PEEP.__k = 0; PEEP.onApply = e => e.setFloat4('pk', PEEP.__k, Math.floor(FX.t * 12), PEEP.width / PEEP.height, 230); }
   VHS = new BABYLON.PostProcess('vhs', 'vhs', ['res', 'p1', 'p2', 'p3'], null, 1.0, CAM, BABYLON.Texture.BILINEAR_SAMPLINGMODE, ENG);
   VHS.onApply = e => { e.setFloat2('res', VHS.width, VHS.height); e.setFloat4('p1', FX.t, FX.amt, FX.glitch, FX.nv); e.setFloat4('p2', FX.hurt, FX.fadeB, FX.fadeW, FX.exposure); e.setFloat4('p3', FX.san, 0, 0, 0); };
 }

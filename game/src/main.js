@@ -222,7 +222,7 @@ function teardownScene() {
   Object.assign(AI, { all: [], howlers: [], smilers: [], exps: [], crawler: null, mimic: null });
   for (const k of ['interact', 'items', 'tapes', 'tvs', 'dead', 'beams']) W[k] = [];
   W.exit = null; TIMERS.length = 0; SUBS.q.length = 0; SUBS.cur = null; $('subs').innerHTML = ''; $('toast').classList.remove('show');
-  try { VHS && VHS.dispose(CAM); } catch (e) {} try { PIPE && PIPE.dispose(); } catch (e) {}
+  try { VHS && VHS.dispose(CAM); } catch (e) {} try { PEEP && PEEP.dispose(CAM); } catch (e) {} PEEP = null; PEEPH.dr = null; PEEPH.k = 0; try { PIPE && PIPE.dispose(); } catch (e) {}
   SCN.dispose(); MATS.list.length = 0;
   Object.assign(FX, { glitch: 0, hurt: 0, fadeB: 1, fadeW: 0, san: 0, nv: 0, lightScale: 1, ambBoost: 0 });
   SLOT.pos.fill(0); SHD.fill(0); cpReset(); tasksReset(); PL.load = false;

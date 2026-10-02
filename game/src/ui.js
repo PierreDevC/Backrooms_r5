@@ -118,7 +118,7 @@ function updateHUD(dt) {
   $('signal').classList.toggle('lock', HINT.stage >= 1 && !!HINT.site);
   $('signal').classList.toggle('pulse', HINT.stage >= 2 && Math.floor(FX.t * 4) % 2 === 0);
   const f = PL.focus;
-  if (f) { const al = f.altLabel && f.altLabel(); hset('prompt', (IS_TOUCH ? '' : '[E] ') + f.label() + (al ? (IS_TOUCH ? '   ·   ' : '   [RIGHT-CLICK] ') + al : '')); $('prompt').classList.add('show'); } else $('prompt').classList.remove('show');
+  if (f) { const al = f.altLabel && f.altLabel(), a2 = f.alt2Label && f.alt2Label(); hset('prompt', (IS_TOUCH ? '' : '[E] ') + f.label() + (al ? (IS_TOUCH ? '   ·   ' : '   [RIGHT-CLICK] ') + al : '') + (a2 ? (IS_TOUCH ? '   ·   ' : '   [V] ') + a2 : '')); $('prompt').classList.add('show'); } else $('prompt').classList.remove('show');
   $('hurt').style.opacity = clamp(FX.hurt * 0.9 + (PL.hp < 30 ? 0.25 + 0.1 * Math.sin(FX.t * 4) : 0), 0, 1).toFixed(2);
 }
 
