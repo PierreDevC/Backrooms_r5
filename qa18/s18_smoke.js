@@ -1,0 +1,20 @@
+module.exports=async(page,logs)=>{
+const shot=async n=>{await page.waitForTimeout(1300);await page.screenshot({path:(process.env.BR_QA_OUT+'/')+n+'.png'});};
+const tp=async(x,z,yaw,pitch=0)=>page.evaluate(([x,z,yaw,pitch])=>{const B=window.__BR;Object.assign(B.PL,{x,z,yaw,pitch,vx:0,vz:0,hp:100,san:100});},[x,z,yaw,pitch]);
+await page.evaluate(()=>{const B=window.__BR;B.DBG.ts=4;B.DBG.god=true;B.goLevel18(null).catch(e=>console.log('QA LOAD ERROR '+e.stack));});
+await page.waitForFunction(()=>window.__BR.G.state==='play',null,{timeout:300000});
+logs.push('QA loaded '+JSON.stringify(await page.evaluate(()=>{const B=window.__BR;return {phase:B.G18.phase,drawings:B.W18.drawings.length,slides:B.W18.slides.length,meshes:B.SCN().meshes.length,dino:B.AI18.dino.st};})));
+await shot('hall');await page.waitForTimeout(18000);
+logs.push('QA dino '+JSON.stringify(await page.evaluate(()=>{const B=window.__BR;return {st:B.AI18.dino.st,pos:[B.AI18.dino.x,B.AI18.dino.z],ph:B.G18.phase};})));
+await tp(37,70,0,-0.05);await shot('class');
+await tp(70.2,84,0,0);await shot('yellow');
+await tp(97,71,0,0);await shot('playland');
+await tp(100.8,99,Math.PI,0);await shot('slides');
+await tp(20,109,-Math.PI/2,0);await shot('meadow');
+await tp(123,101,Math.PI/2,0);await shot('bedroom');
+await tp(123,34,-Math.PI/2,0);await shot('kitchen');
+logs.push('QA interactions '+JSON.stringify(await page.evaluate(()=>{const B=window.__BR;B.readNote18('desk');B.setPhase18('memories');B.AI18.dino.hug();for(const d of B.W18.drawings)B.takeDrawing18(d);B.pinDrawings18();return {found:B.G18.found,pinned:B.G18.pinned,phase:B.G18.phase,exit:B.W18.exitDoor.on,fog:B.AI18.fog.length,water:B.PL.water};})));
+await tp(34,65,-Math.PI/2,0);await page.waitForTimeout(4000);await shot('exit');
+await page.evaluate(()=>window.__BR.win18());await page.waitForFunction(()=>document.getElementById('endTitle').textContent==='YOU REMEMBERED',null,{timeout:60000});await shot('ending');
+logs.push('QA ending '+await page.evaluate(()=>document.getElementById('endTitle').textContent));
+};

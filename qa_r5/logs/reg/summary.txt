@@ -1,0 +1,17 @@
+# r5 regression: qa_r5/reg_r5.sh, r4.4 suites on the r5 code (see docs/QA.md)
+s18_smoke exit 0 106s 0 err-lines
+s18_more exit 1 123s 1 err-lines   (stale last step: #btnL18 was removed in r4.1; same failure on r4.4 -> ../reg44/s18_more.log; this run is kept as s18_more_stale_step.log)
+s18_more exit 0 128s 0 err-lines   (rerun on the final HTML after updating that step to SELECT LEVEL -> Level 18: s18_more.log)
+s18_final exit 0 127s 0 err-lines
+hearing exit 0 25s 0 err-lines
+wretch_speed exit 0 23s 0 err-lines
+levels exit 0 384s 0 err-lines
+s9_to5 exit 0 173s 0 err-lines
+brief9 exit 0 106s 0 err-lines
+cp9 exit 0 23s 0 err-lines
+cpl exit 0 31s 0 err-lines
+crash3 exit 0 39s 0 err-lines
+crashrf exit 0 48s 1 err-lines
+water exit 0 62s 0 err-lines
+levels_mobile exit 0 10s 0 err-lines
+ALLDONE

@@ -1,0 +1,8 @@
+error: Failed to load resource: net::ERR_FAILED
+QA load ms 2580
+QA mobile {"fits":true,"o":[[true,true,66],[true,true,66],[true,true,66],[true,true,46]]}
+QA PAGE CLOSE
+error: Failed to load resource: net::ERR_FAILED
+QA load ms 2530
+QA mobile {"fits":true,"o":[[true,true,43],[true,true,43],[true,true,43],[true,true,43]]}
+QA PAGE CLOSE

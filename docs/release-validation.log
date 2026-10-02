@@ -1,0 +1,7 @@
+r5 · 2026-10-01
+PASS extracted JavaScript node --check (tools/check_bundle.py)
+PASS byte-identical rebuild from packaged game/src
+PASS asset round trip: game/tools/unpack_assets.py then game/tools/build_assets.py reproduce game/src/assetpack.js byte for byte
+HTML bytes 12838015
+HTML sha256 660fa1944a4779b36adb096ec9861ad1f18be4e18466b8f79486aa18da3bfdaf
+Manifest written after this log; verify with tools/verify_manifest.py.

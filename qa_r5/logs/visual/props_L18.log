@@ -1,0 +1,8 @@
+error: Failed to load resource: net::ERR_FAILED
+QA load ms 2074
+QA props log 49 {"duck":22,"schair":26,"sdesk":1}
+QA props 0 {"k":"duck","at":[48.8,0.36,72.33],"cam":[49.39,74.24],"d":2}
+QA props 1 {"k":"schair","at":[32.29,0,61.24],"cam":[32.88,63.15],"d":2}
+QA props 2 {"k":"sdesk","at":[120.6,0,66.6],"cam":[122.37,67.53],"d":2}
+QA props done 3 {"n":0,"seen":{},"last":""}
+QA PAGE CLOSE

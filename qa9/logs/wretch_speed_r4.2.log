@@ -1,0 +1,7 @@
+QA load ms 2009
+QA diff 0 {"pathCells":8,"chaseSec":8,"avg":1.61,"p50":1.62,"peak":1.83,"endState":"chase"}
+QA diff 1 {"pathCells":9,"chaseSec":8,"avg":2.54,"p50":2.55,"peak":3.03,"endState":"chase"}
+QA diff 2 {"pathCells":9,"chaseSec":7.3,"avg":2.96,"p50":2.96,"peak":3.45,"endState":"chase"}
+QA PASS easy peak chase below player walk 2.35 m/s: 1.83
+QA PASS normal remains faster (unchanged): 3.03
+QA PAGE CLOSE

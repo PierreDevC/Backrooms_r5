@@ -1,0 +1,37 @@
+QA fb2 L0 {"st":"intro","zone":0,"pieces":1748,"piecesH":1306541384,"solids":1732,"solidsH":-2011523278,"rigs":0,"models":0}
+QA fb2 L0 {"st":"intro","zone":0,"pieces":1748,"piecesH":1306541384,"solids":1732,"solidsH":-2011523278,"rigs":0,"models":407}
+QA fb2 L0 {"st":"intro","zone":0,"pieces":1748,"piecesH":1306541384,"solids":1732,"solidsH":-2011523278,"rigs":8,"models":0}
+QA fb2 L0 {"st":"intro","zone":0,"pieces":1748,"piecesH":1306541384,"solids":1732,"solidsH":-2011523278,"rigs":8,"models":407}
+QA fb2 L18 {"st":"intro","zone":968489276,"pieces":264,"piecesH":-1802442674,"solids":353,"solidsH":-462470118,"rigs":0,"models":0}
+QA fb2 L18 {"st":"intro","zone":968489276,"pieces":264,"piecesH":-1802442674,"solids":353,"solidsH":-462470118,"rigs":0,"models":47}
+QA fb2 L18 {"st":"intro","zone":968489276,"pieces":264,"piecesH":-1802442674,"solids":353,"solidsH":-462470118,"rigs":2,"models":0}
+QA fb2 L18 {"st":"intro","zone":968489276,"pieces":264,"piecesH":-1802442674,"solids":353,"solidsH":-462470118,"rigs":2,"models":47}
+QA fb2 L5 {"st":"intro","zone":-2001237884,"pieces":630,"piecesH":-456317696,"solids":801,"solidsH":1124588864,"rigs":0,"models":0}
+QA fb2 L5 {"st":"intro","zone":-2001237884,"pieces":630,"piecesH":-456317696,"solids":801,"solidsH":1124588864,"rigs":2,"models":0}
+QA fb2 L5 {"st":"intro","zone":-2001237884,"pieces":630,"piecesH":-456317696,"solids":801,"solidsH":532849201,"rigs":0,"models":128}
+QA fb2 L5 {"st":"intro","zone":-2001237884,"pieces":630,"piecesH":-456317696,"solids":801,"solidsH":532849201,"rigs":2,"models":128}
+QA fb2 L9 {"st":"intro","zone":1579002036,"pieces":2327,"piecesH":1928458824,"solids":3719,"solidsH":-1675653279,"rigs":0,"models":0}
+QA fb2 L9 {"st":"intro","zone":1579002036,"pieces":2327,"piecesH":1928458824,"solids":3719,"solidsH":-1675653279,"rigs":7,"models":0}
+QA fb2 L9 {"st":"intro","zone":1579002036,"pieces":2327,"piecesH":1928458824,"solids":3730,"solidsH":-1368313145,"rigs":0,"models":349}
+QA fb2 L9 {"st":"intro","zone":1579002036,"pieces":2327,"piecesH":1928458824,"solids":3730,"solidsH":-1368313145,"rigs":7,"models":349}
+
+L0 noskin: n 1732/1732  identical 1732  only-default 0  only-noskin 0  first index diff 1732
+L0 nomodels: n 1732/1732  identical 1732  only-default 0  only-nomodels 0  first index diff 1732
+L0 noassets: n 1732/1732  identical 1732  only-default 0  only-noassets 0  first index diff 1732
+L9 noskin: n 3730/3730  identical 3730  only-default 0  only-noskin 0  first index diff 3730
+L9 nomodels: n 3730/3719  identical 3719  only-default 11  only-nomodels 0  first index diff 2147
+   default-only: [(21.72, 153.05, 21.98, 153.31), (42.82, 12.29, 43.08, 12.55), (42.82, 62.69, 43.08, 62.95), (71.62, 12.29, 71.88, 12.55), (93.22, 113.09, 93.48, 113.35), (93.72, 52.25, 93.98, 52.51), (122.02, 62.69, 122.28, 62.95), (122.02, 113.09, 122.28, 113.35), (122.52, 52.25, 122.78, 52.51), (144.12, 102.65, 144.38, 102.91), (144.12, 153.05, 144.38, 153.31)]
+   nomodels-only: []
+L9 noassets: n 3730/3719  identical 3719  only-default 11  only-noassets 0  first index diff 2147
+   default-only: [(21.72, 153.05, 21.98, 153.31), (42.82, 12.29, 43.08, 12.55), (42.82, 62.69, 43.08, 62.95), (71.62, 12.29, 71.88, 12.55), (93.22, 113.09, 93.48, 113.35), (93.72, 52.25, 93.98, 52.51), (122.02, 62.69, 122.28, 62.95), (122.02, 113.09, 122.28, 113.35), (122.52, 52.25, 122.78, 52.51), (144.12, 102.65, 144.38, 102.91), (144.12, 153.05, 144.38, 153.31)]
+   noassets-only: []
+L5 noskin: n 801/801  identical 801  only-default 0  only-noskin 0  first index diff 801
+L5 nomodels: n 801/801  identical 779  only-default 22  only-nomodels 22  first index diff 708
+   default-only: [(10.92, 131.96, 11.99, 133.07), (13.44, 139.21, 14.06, 140.34), (18.15, 124.57, 19.21, 125.85), (21.82, 122.49, 22.7, 123.83), (25.43, 126.04, 26.3, 127.34), (28.95, 148.04, 30.1, 148.74), (29, 137, 29.94, 138.17), (34.83, 128.4, 35.96, 129.45), (38.35, 128.3, 39.54, 129.47), (43.27, 126.19, 44.58, 127.27), (49.14, 139.25, 50.36, 140.15), (53, 135.53, 53.7, 136.64)]
+   nomodels-only: [(11.08, 132.14, 11.83, 132.89), (13.35, 139.38, 14.15, 140.18), (18.23, 124.76, 19.14, 125.67), (21.76, 122.66, 22.76, 123.66), (25.39, 126.22, 26.34, 127.17), (29.08, 137.19, 29.86, 137.97), (29.12, 147.99, 29.92, 148.78), (35.01, 128.54, 35.78, 129.31), (38.51, 128.45, 39.38, 129.32), (43.45, 126.26, 44.4, 127.2), (49.34, 139.28, 50.17, 140.12), (52.97, 135.71, 53.73, 136.46)]
+L5 noassets: n 801/801  identical 779  only-default 22  only-noassets 22  first index diff 708
+   default-only: [(10.92, 131.96, 11.99, 133.07), (13.44, 139.21, 14.06, 140.34), (18.15, 124.57, 19.21, 125.85), (21.82, 122.49, 22.7, 123.83), (25.43, 126.04, 26.3, 127.34), (28.95, 148.04, 30.1, 148.74), (29, 137, 29.94, 138.17), (34.83, 128.4, 35.96, 129.45), (38.35, 128.3, 39.54, 129.47), (43.27, 126.19, 44.58, 127.27), (49.14, 139.25, 50.36, 140.15), (53, 135.53, 53.7, 136.64)]
+   noassets-only: [(11.08, 132.14, 11.83, 132.89), (13.35, 139.38, 14.15, 140.18), (18.23, 124.76, 19.14, 125.67), (21.76, 122.66, 22.76, 123.66), (25.39, 126.22, 26.34, 127.17), (29.08, 137.19, 29.86, 137.97), (29.12, 147.99, 29.92, 148.78), (35.01, 128.54, 35.78, 129.31), (38.51, 128.45, 39.38, 129.32), (43.45, 126.26, 44.4, 127.2), (49.34, 139.28, 50.17, 140.12), (52.97, 135.71, 53.73, 136.46)]
+L18 noskin: n 353/353  identical 353  only-default 0  only-noskin 0  first index diff 353
+L18 nomodels: n 353/353  identical 353  only-default 0  only-nomodels 0  first index diff 353
+L18 noassets: n 353/353  identical 353  only-default 0  only-noassets 0  first index diff 353

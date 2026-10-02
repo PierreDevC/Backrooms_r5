@@ -1,0 +1,35 @@
+module.exports = async (page, logs) => {
+  const ev = async (label, fn) => { try { const r = await page.evaluate(fn); logs.push('QA ' + label + ' ' + JSON.stringify(r)); return r; } catch (e) { logs.push('QA ' + label + ' EXC ' + e.message.slice(0, 300)); } };
+  await page.evaluate(() => { window.__BR.DBG.ts = 6; });
+  await page.click('#btnPlay');
+  await page.waitForFunction(() => window.__BR.G.state === 'play', null, { timeout: 180000 });
+  await page.evaluate(() => { const B = window.__BR; B.DBG.ts = 1; B.G.grace = 9999; });
+  await page.keyboard.down('KeyW'); await page.waitForTimeout(5000); await page.keyboard.up('KeyW');
+  await page.keyboard.press('KeyF'); await page.waitForTimeout(2500);
+  await ev('l0play', () => { const B = window.__BR; return { st: B.G.state, lvl9: document.body.classList.contains('lvl9'), tapes: document.getElementById('tapes').textContent, code: document.getElementById('code').textContent, sig: getComputedStyle(document.getElementById('signal')).display, flash: B.PL.flash, x: B.PL.x.toFixed(1), l9btns: getComputedStyle(document.querySelector('#touch .l9') || document.body).display }; });
+  await page.screenshot({ path: '/data/qa9/r_l0play.png' });
+  await ev('tapes', () => { const B = window.__BR; for (const t of B.W.tapes) B.takeTape(t); return { tapes: B.G.tapes, code: B.G.code }; });
+  await page.waitForTimeout(3000);
+  await page.screenshot({ path: '/data/qa9/r_l0tapes.png' });
+  await ev('win', () => { const B = window.__BR; B.PL.hp = 63; B.PL.san = 41; B.PL.batt = 33; B.win(); return B.G.state; });
+  await page.waitForTimeout(1500); await page.screenshot({ path: '/data/qa9/r_l0won.png' });
+  await page.evaluate(() => { window.__BR.DBG.ts = 4; });
+  await page.waitForFunction(() => document.body.classList.contains('lvl9') && window.__BR.G.state === 'intro', null, { timeout: 240000 });
+  await ev('l9arrive', () => { const B = window.__BR; return { st: B.G.state, hp: B.PL.hp, san: B.PL.san, batt: B.PL.batt, from: B.G9.from, loadOsd: document.getElementById('loadOsd').textContent }; });
+  await page.waitForTimeout(2500); await page.screenshot({ path: '/data/qa9/r_l9intro.png' });
+  await page.waitForFunction(() => window.__BR.G.state === 'play', null, { timeout: 240000 });
+  await page.evaluate(() => { window.__BR.DBG.ts = 1; });
+  await page.waitForTimeout(3000);
+  await ev('l9play', () => { const B = window.__BR; return { st: B.G.state, ph: B.G9.phase, tapes: document.getElementById('tapes').textContent, code: document.getElementById('code').textContent, obj: document.getElementById('objective').textContent, sig: getComputedStyle(document.getElementById('signal')).display }; });
+  await page.screenshot({ path: '/data/qa9/r_l9play.png' });
+  // pause menu -> quit to title -> L0 rebuild
+  await page.keyboard.press('Escape'); await page.waitForTimeout(1500);
+  await ev('pause', () => ({ st: window.__BR.G.state, pause: !document.getElementById('pause').classList.contains('hide') }));
+  await page.click('#btnQuit').catch(e => logs.push('QA quit click fail ' + e.message.slice(0, 100)));
+  await page.waitForFunction(() => window.__BR.G.state === 'title', null, { timeout: 240000 }).catch(() => {});
+  await ev('title', () => ({ st: window.__BR.G.state, lvl9: document.body.classList.contains('lvl9'), l9: document.getElementById('btnL9').textContent, l9d: getComputedStyle(document.getElementById('btnL9')).display }));
+  await page.screenshot({ path: '/data/qa9/r_title.png' });
+  await page.click('#btnL9');
+  await page.waitForFunction(() => document.body.classList.contains('lvl9') && ['intro', 'play'].includes(window.__BR.G.state), null, { timeout: 240000 }).catch(() => {});
+  await ev('contL9', () => ({ st: window.__BR.G.state, lvl9: document.body.classList.contains('lvl9'), hp: window.__BR.PL.hp }));
+};

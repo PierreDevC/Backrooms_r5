@@ -1,0 +1,3 @@
+QA diff 0 {"pathCells":7,"chaseSec":8,"avg":2.19,"p50":2.15,"peak":2.62,"endState":"chase"}
+QA diff 1 {"pathCells":8,"chaseSec":8,"avg":0.56,"p50":0.4,"peak":1.77,"endState":"chase"}
+QA diff 2 {"pathCells":10,"chaseSec":8,"avg":0.69,"p50":0.53,"peak":2.12,"endState":"chase"}

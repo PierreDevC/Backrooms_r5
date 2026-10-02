@@ -1,0 +1,13 @@
+error: Failed to load resource: net::ERR_FAILED
+QA load ms 2814
+QA props log 142 {"nstand":38,"armchair":18,"gchair":3,"suitcase":1,"sofa":1,"barrel":44,"crate":28,"cbox":9}
+QA props 0 {"k":"nstand","at":[50.69,0,72.66],"cam":[53.08,73.92],"d":2.7}
+QA props 1 {"k":"armchair","at":[52.73,0,75.11],"cam":[54.27,73.83],"d":2}
+QA props 2 {"k":"gchair","at":[66.45,0,83.29],"cam":[64.54,83.88],"d":2}
+QA props 3 {"k":"suitcase","at":[31,0,55.28],"cam":[31.59,57.19],"d":2}
+QA props 4 {"k":"sofa","at":[64.35,0,100.8],"cam":[63.76,98.89],"d":2}
+QA props 5 {"k":"barrel","at":[18.79,0,118.12],"cam":[19.38,120.03],"d":2}
+QA props 6 {"k":"crate","at":[38.87,0,115.86],"cam":[36.88,115.67],"d":2}
+QA props 7 {"k":"cbox","at":[38.77,0.38,115.88],"cam":[36.78,115.69],"d":2}
+QA props done 8 {"n":0,"seen":{},"last":""}
+QA PAGE CLOSE

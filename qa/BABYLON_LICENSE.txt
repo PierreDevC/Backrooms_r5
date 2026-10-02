@@ -1,0 +1,1 @@
+qa/babylon.js is an unmodified copy of Babylon.js (https://github.com/BabylonJS/Babylon.js), Apache License 2.0, used only so headless tests run offline. The game itself loads Babylon.js from https://cdn.babylonjs.com/babylon.js.

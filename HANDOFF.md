@@ -1,0 +1,110 @@
+# The Backrooms: Found Footage — Coding-Agent Handoff (r5)
+
+Release **r5 · 2026-10-01** (r4.4 + CC0 photo-scanned PBR surfaces in every level, skinned motion-captured characters, 17 scanned prop models, movement substeps and enemy personal space; before that: r4 + level select + slower Easy Wretches + hearing-only Wretches, noise meter and Level 9 briefing + Easy/Normal checkpoints, Level 9 in SELECT LEVEL, right-click latch, crash safety and more almond water) · Owner Pierre · Babylon.js CDN · single HTML game.
+Canonical hub: <mention url="https://app.notion.com/p/be27ee8b9e574b8d8a7c7ccde317e5c5">The Backrooms — Game Dashboard & Handoff</mention>.
+
+This packet is self-contained for Codex, Claude Code or another coding harness. Read AGENTS.md (or CLAUDE.md), this file, docs/QA.md and docs/LEVEL18.md. Historical r3 details are in docs/history/ and its test logs/screenshots remain in the packet.
+
+## Current scope
+Level 0 → Level 9 → Level 5 → **Level 18 — Nostalgic Memories** → YOU REMEMBERED ending. Level 5's white emergency exit is now a transition, not the final win screen. Level 18 includes the preschool corridor, Sunshine Room, nap room, yellow hall, dark playland/ball pit, four colour-coded slides, meadow room, childhood bedroom, kitchen and dark connecting spaces.
+
+The friendly Plush Dino leads you to class, opens the door, restores sanity with proximity/hugs, gives almond water on the first hug, and guides you to the exit. Recover family/Biscuit/closet/house drawings and pin all four to MY MEMORIES. The painted arrival door cannot open. The drawn exit becomes real when all four drawings are pinned. The Forgotten stalk, peek, hunt and dissolve when watched or held in a flashlight beam; the classroom and nap room are sanctuaries.
+
+**Evidence:** actual headless game checks and inspected screenshots, with debug-assisted progression. Actual results and limitations are in docs/QA.md, not inferred from previous conversation. Human playthrough, headphone listening, real-GPU performance/balance and touch gameplay are still outstanding. Level 5 and Level 18 have no recorded dialogue clips.
+
+## Quick start
+```bash
+cd game
+python3 build.py
+python3 -m http.server 8000 --bind 127.0.0.1
+# http://localhost:8000/The_Backrooms_Found_Footage.html
+# http://localhost:8000/The_Backrooms_Found_Footage.html?debug&level=18
+```
+A modern WebGL browser and Python 3 are enough to build/play. Internet is needed for the engine CDN and optional VT323 font. Audio is embedded or synthesized in-browser. No backend/npm build is needed for the game.
+
+Controls: WASD/arrows, mouse, Shift sprint, C crouch (toggle; Ctrl no longer crouches since r4.4), F flashlight, N night vision, Z or right mouse hold zoom, E/Enter interact, Q drink, R battery, Esc/P pause, M mute; Level 9: right-click a door (or X) to latch/unlatch, Tab map. Phones have shared touch controls (LATCH button). SELECT LEVEL on the title starts Level 0, 9, 5 or 18 at any time with fresh supplies. CONTINUE: LEVEL 9 appears once br_l9 is set. Neither restores saved objective progress; checkpoints (below) live only for the current run of a level.
+
+## Checkpoints (r4.4, src/checkpoint.js)
+Easy and Normal only (cpEnabled: G.diff < 2); Nightmare keeps "death restarts the level". cpSave(label, at?) stores {lvl, label, x, z, yaw} in CP.on and flashes #cpNote ("◆ CHECKPOINT · label") unless at.quiet. On death, showEnd → cpEndUI shows #btnCP "▶ RETRY FROM CHECKPOINT / ◆ label" (focused) and turns #btnAgain into the secondary ◀◀ RESTART LEVEL N / ◀◀ START OVER. cpRetry() leaves the world as it is (objective progress, doors, pickups), resets the player at the checkpoint (HP [100, 80], sanity ≥ [85, 70], battery ≥ 35, no crouch/zoom/look), fades from black (CP.fadeT, respects stair/slide fades) and calls cpRespawn0/9/5/18: L0 howlers to far unseen cells, crawler/smilers/mimic relocated; L9 active terminal downloads cancelled, house Wretches home + dormant with zero suspicion, nearby/hunting Watch moved far out of sight and back to patrol, a burst/hunting Subject back to its lure; L5 moths roosted at home and stare/ambush/vestibule timers reset; L18 slide/dig cancelled and Forgotten sent away. teardownScene calls cpReset().
+
+Triggers: L0 LEVEL START (quiet, beginPlay), TAPE n/4 (takeTape). L9 LEVEL START, M.E.G. MAP, M.E.G. DATA n/3 (saved at cpPorch9(house), 1.5 m outside the front door, so you never respawn beside that house's Wretch), THE LAB, CROWBAR, CANISTER n/4, LURE PRIMED, SUBJECT CAGED, KEYCARD. L5 LEVEL START, KEY n/3, STAFF DOOR, BOILER ROOM, VALVE n/3. L18 LEVEL START, SUNSHINE ROOM (arrive → memories), DRAWING n/4, PINNED n/4. Add new checkpoints with one cpSave() call at the moment the progress is committed; add level-specific respawn rules to the matching cpRespawn function.
+
+Crash safety: main.js frame() runs frameSim and render in separate try blocks (world FX has its own), ui.js runTimers guards each timer; errors go to frameErr(where, e) (counted in ERRS, first of each logged as "[recovered where]"), so one bad frame cannot stop the loop. A beforeunload prompt (inRun(): any state but title/loading) guards Ctrl+W / reload mid-level.
+
+## Build and architecture
+`build.py` reads template.html and style.css, concatenates modules in one strict IIFE with file markers, and writes game/The_Backrooms_Found_Footage.html. Source order:
+
+```txt
+audiobank.js, assetpack.js, util.js, shaders.js, assets.js, models.js, textures.js, textures9.js, textures5.js, textures18.js, level.js, level9.js, level5.js, level18.js, audio.js, audio9.js, audio5.js, audio18.js, actors.js, skin.js, world.js, world9.js, story9.js, world5.js, story5.js, world18.js, story18.js, player.js, ai.js, ai9.js, ai5.js, ai18.js, briefimg.js, briefimg9.js, brief.js, checkpoint.js, ui.js, main.js, main9.js, main5.js, main18.js
+```
+
+Only main18.js calls boot(). No duplicate top-level const/let names. Level modules rely on shared helpers defined earlier.
+
+- r5 assets (see docs/ASSETS.md): assetpack.js (GENERATED by game/tools/build_assets.py: ASSET_TEX / ASSET_MDL / ASSET_CHR), assets.js (AST, pbrTex, PBR_MAT scan-or-detail material table, pbrOpts/pbrBind used by every material builder), models.js (MdlBatch, mdlOk/mdlDims/mdlFoot, MDL_K/MDL_RP; PropBatch.mdl in world.js), skin.js (SKN/SKP, buildSkinned + per-role builders, rigPlay/rigWant/rigStop/rigBase clip player, sknTick before each render). Shaders: PBR/PBRBASE/DETAIL in the env shader, SH.skinV/F, SH.mdlV/F. URL flags ?noassets / ?noskin / ?nomodels fall back to the procedural look with identical layouts.
+- util/shaders/textures/level/world/actors/player/ai/ui/main: shared engine, layout, collision, materials, survival, menus and loop.
+- …9 modules: suburb, two-storey houses, enemies, cure progression, doors and audio. House Wretch speeds: WR9_CHASE and wrK9() in ai9.js (Easy-only slow-down).
+- Level 9 hearing (r4.3, ai9.js): Wretches are blind. hear9(w) = PL.noise vs distance, only while the player is in that Wretch's house; range WR9_HEAR [6.5, 8.5, 10] m at full noise (×1.2 alert, ×1.5 chase). Suspicion grows WR9_SUS [0.6, 0.9, 1.3]/s × (0.4 + 1.2·hear) (×1.5 alert), decays 0.3/s; >0.3 stirs, ≥1 wakes/chases to the last heard point; silence for WR9_FORGET [4, 6, 8] s → lost → prowl. noiseAt9(x, z, level, add) injects world noise (terminal modem pulses in main9.js). hearLimit9() feeds the HUD mark. player.js sets L9 noise by speed (crouch 0.04, walk ~0.42, sprint 1).
+- Level 9 UI (r4.3): template #noise9 in #osdBR, ui.js noiseHUD9(); brief.js BRIEF.set 'l0' | 'l9', briefSlides9 with BRIEF_IMG9 (briefimg9.js). goLevel9 opens the briefing first when localStorage br_brief9 is unset (G.state 'brief9'); closing it calls startIntro9(). Pause #btnPBrief (Level 9 only) reopens it.
+- …5 modules: hotel, ballroom jazz, warp corridor, boiler maze, keys/valves, moths and wallpaper.
+- textures18: canvas wallpaper/murals, tile/carpet/turf, ceilings, crayon drawing helpers.
+- level18: fixed zones/rooms, edge openings, geometry, lighting and slide destinations.
+- world18: furniture, fixtures, ball pit, slides, bedroom closet, materials, batching and supplies.
+- story18: drawings/board/painted doors, notes, music box, closet event and slide camera.
+- ai18: Dino and Forgotten rigs/states, spawns, safe cells, flashlight rejection and threat compass.
+- audio18: toy squeaks, rustling/crayon/paper/pin sounds, Twinkle Twinkle music box rendered by OfflineAudioContext, void drone.
+- main18: state reset, loading/arrival, sanity/whispers, world effects, HUD targets, completion, end/retry and disposal.
+
+Shared integration: main.js dispatches both frame and simStep for intro/play/dead/won/worldFX and delegates end/retry/teardown. ui.js delegates compass/foes/HUD and owns the level select (openLevels/startLevelPick → startGame, startLevel9Menu, startLevel5Menu, startLevel18Menu). player.js: right mousedown sets ALTCLICK when the focus has an alt action (hasAlt: latch), otherwise RMB zoom. template.html has btnLevels and the #levels screen. player.js supports PL.spdK for the ball pit and avoids generic dark-room sanity drain on L18 (its own model is used). main5.js calls goLevel18(carryFrom5()) on success. level5.js collectPieces5 accepts L18 side/opening functions; shaders.js adds K-wall/floor/ceiling/paper paths.
+
+## State and lifecycle
+G/PL/LV/AI/FX/W/SCN/CAM/ENG are shared. G18 tracks phase, carry, pinned, found, notes, hug/music/whisper timers, slide state, audio and endWon. W18 has scene anchors; AI18 has Dino and fog[]. Reset level state before build; teardown audio, timers, scene, materials and shadows when switching. teardown18 also resets PL.spdK. Both goLevel5 and goLevel18 intentionally floor HP/sanity at 75 and battery at 60 while retaining water/spares/time/distance/lost/tapes.
+
+## Level 18 objective and travel map
+1. White fade → wake on floor → garbled M.E.G. radio → follow Dino east to Sunshine Room.
+2. Read the Children’s letter, find four drawings in any order, pin whenever you return.
+3. Family: dig through ball pit. Biscuit: beside meadow stump. MY ROOM: above bed (reach from bed side); collection opens closet and releases a Forgotten. OUR HOUSE: on fridge.
+4. Slides from dark teal hall: RED bedroom, YELLOW ball pit, BLUE meadow, GREEN preschool. Signs pair text and pictures, not colour alone. Each is a timed fade/teleport/landing camera, not continuous traversable geometry.
+5. At 4 pinned: crayon sounds, exit drawing completes/glows, Dino walks to it, threats leave; interact with HOME door → ending.
+
+Room geometry, anchors and memory text are in docs/LEVEL18.md and source. Stalking/hunt thresholds and difficulty tables are in ai18.js. Maintain collision, interaction range and orientation when moving drawings; pictures use local +z planes. Number-frieze texture orientation was visually checked. Supplies are procedural while the objective layout is fixed.
+
+## QA commands
+Install/resolve Playwright in your Node environment (tests only). qa18/run18.js prefers require('playwright'), with an original-environment fallback. Set CHROMIUM to your binary; runner defaults to common Linux locations. It routes engine CDN to ../qa/babylon.js for deterministic offline testing and blocks Google Fonts.
+```bash
+CHROMIUM=/usr/bin/chromium node qa18/run18.js "$PWD/game/The_Backrooms_Found_Footage.html" "$PWD/qa18/s18_smoke.js" 960 540
+CHROMIUM=/usr/bin/chromium node qa18/run18.js "$PWD/game/The_Backrooms_Found_Footage.html" "$PWD/qa18/s18_more.js" 960 540
+CHROMIUM=/usr/bin/chromium node qa18/run18.js "$PWD/game/The_Backrooms_Found_Footage.html" "$PWD/qa18/s18_final.js" 960 540
+CHROMIUM=/usr/bin/chromium node qa18/run18.js "$PWD/game/The_Backrooms_Found_Footage.html" "$PWD/qa9/hearing.js" 960 540
+CHROMIUM=/usr/bin/chromium BR_QA_OUT=/tmp node qa18/run18.js "$PWD/game/The_Backrooms_Found_Footage.html" "$PWD/qa9/brief9.js" 960 540
+CHROMIUM=/usr/bin/chromium BR_QA_OUT=/tmp node qa18/run18.js "$PWD/game/The_Backrooms_Found_Footage.html" "$PWD/qa44/cp9.js" 960 540
+CHROMIUM=/usr/bin/chromium BR_QA_OUT=/tmp node qa18/run18.js "$PWD/game/The_Backrooms_Found_Footage.html" "$PWD/qa44/cpl.js" 960 540
+python3 tools/check_bundle.py game/The_Backrooms_Found_Footage.html
+python3 tools/verify_manifest.py .
+# r5 QA (qa_r5/*; Node + Playwright + Chromium, paths relative to the packet, outputs in qa_r5/out):
+qa_r5/reg_r5.sh                                  # reruns the r4.4 suites above on game/*.html, logs in qa_r5/logs/reg
+qa_r5/shots.sh a 0,9,5,18 $PWD/game/The_Backrooms_Found_Footage.html   # seeded per-level views; with the same SEED a run on an older
+                                                 # HTML (tag b) gives matching before/after pairs (later levels can differ in detail)
+qa_r5/propshots.sh l9 9                          # photographs each scanned model kind placed in a level (MDL.log) from 2 m
+qa_r5/chrshots.sh roles 0 '[{"spawn":"howl","d":3.2}]'   # stages skinned characters / clips in front of the camera
+qa_r5/modes.sh                                   # same seed, default vs ?noskin / ?nomodels / ?noassets: level structure + collision boxes must match
+```
+Software rendering is slow, so tests use DBG.ts and simStep; this does not establish real-time playability. qa/qa9/qa5 retain historical scripts with original absolute paths; adapt those when rerunning independently. Actual r4 logs are in qa18/logs. A blocked-font ERR_FAILED in those runs is intentional; game/shader errors are not. Since r4.3 all four runners pre-set localStorage br_brief9 so Level 9 starts without its first-run briefing; set BR_SHOW_BRIEF9=1 to test it. r4.4 tests are in qa44/ (cp9, cpl, water, crashrf, crash3, vis*) with logs in qa44/logs; qa18/s_levels.js now expects four level options.
+
+## Assets and licenses
+r5: CC0 ambientCG textures, Poly Haven models and Quaternius characters / animations — sources, IDs and links in docs/CREDITS.md; pipeline, runtime modules, integration rules (keep RNG draws identical with and without a model; always keep the procedural branch) and size budget in docs/ASSETS.md. game/src/assetpack.js is generated: change assets in game/assets (python3 game/tools/unpack_assets.py writes them out) and rerun python3 game/tools/build_assets.py before game/build.py.
+
+src/audiobank.js embeds existing voice/SFX clips; briefimg.js / briefimg9.js embed the Level 0 / Level 9 briefing art (copies in brief/: s1–s4.webp and l9_s1–l9_s4.webp). Audio pipeline scripts and voices.json, historical MP3 preview, procedural level assets and QA engine copy are included. Piper voice models (~581 MB), Whisper cache (~141 MB), raw audio (~31 MB) and unrelated historical recording/backups are not included; they are unnecessary for build/play. The game has runtime CDN dependency even though it is single-file.
+
+See docs/CREDITS_LEVEL18.md for research and attribution. Wikidot’s Level 18 is safe and has no threats; Forgotten, drawing recovery, slide teleportation and this ending are deliberate game adaptations, not universal lore. Do not present game-specific choices as canon. User reference images informed the scene; original image files are not redistributed because their licenses are unknown.
+
+## Next actions and known limits
+0. r5: look at the new surfaces, characters and props on a real GPU (desktop and phone): frame rate, load time with the 12.8 MB file, texture shimmer at distance, character animation feel (gait speed vs. ground speed, crossfades), prop scale and placement. Headless SwiftShader screenshots are all the visual evidence so far. Compare with ?noassets if something looks wrong.
+1. Human checkpoint test (r4.4): die after a few checkpoints in each level on Easy/Normal and confirm the respawn spot, kept progress and enemy reset feel fair; on Windows, confirm crouching (C) at a Level 9 terminal during a Wretch chase no longer ends the session. Pierre's original crash was not reproduced headless — if it happens again, note the browser and copy any "[recovered …]" console lines.
+2. Human full Level 0 → 9 → 5 → 18 playthrough on real GPU. Record device/browser/FPS and tune resources, maze routes and enemy timing — especially the r4.3 Wretch hearing distances (WR9_HEAR / WR9_SUS) and whether the NOISE meter reads clearly.
+3. Listen with headphones: music-box loop seam/mix, squeaks, rustle, occluded drone/whispers, moth sounds and old voices. Automated audio construction does not replace listening.
+4. Test actual touch gameplay; phone menu/ending visual checks are narrower than this. The top HUD row (REC / compass / battery) is crowded at 390 px portrait width (pre-existing, unchanged in r4.4).
+5. Record L5/L18 dialogue if requested. New memory whispers are text + an existing whisper sound, not custom voiced lines.
+6. Exercise randomized supply placement across difficulties, late closet events and attacks during slide travel.
+
+## Release integrity and Notion sync
+MANIFEST.sha256 records exact per-file SHA-256/bytes; use tools/verify_manifest.py rather than sha256sum -c (manifest includes a byte column). Regenerate only after all source/docs/assets/tests are current. Attach versioned HTML, HANDOFF, full zip and changed screenshots/audio artifacts to the Notion vault; update hub/docs/work queue; reload to verify. Preserve r3. If your harness has no Notion connection, finish with **Notion sync pending** and upload instructions; never claim background synchronization.

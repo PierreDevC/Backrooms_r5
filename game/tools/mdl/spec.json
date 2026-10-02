@@ -1,0 +1,20 @@
+{
+  "_doc": "r5 prop models: Poly Haven (CC0). key -> src id, node regex, triangle budget, texture size, yaw fix (deg, so the model's front faces +Z), notes",
+  "cbox":    { "src": "cardboard_box_01", "tris": 1100, "tex": 512, "yaw": 0 },
+  "wetsign": { "src": "WetFloorSign_01", "tris": 400, "tex": 256, "yaw": 0 },
+  "hydrant": { "src": "fire_hydrant", "nodes": "_aged$", "tris": 2200, "tex": 256, "yaw": 0 },
+  "tcan":    { "src": "metal_trash_can", "nodes": "^metal_trash_can(_handle_left|_handle_right)?$", "tris": 1600, "tex": 384, "yaw": 0, "ds": true },
+  "sofa":    { "src": "sofa_02", "tris": 2000, "tex": 512, "yaw": 0 },
+  "armchair":{ "src": "ArmChair_01", "tris": 2200, "tex": 512, "yaw": 0 },
+  "gchair":  { "src": "GreenChair_01", "tris": 2000, "tex": 512, "yaw": 0 },
+  "nstand":  { "src": "ClassicNightstand_01", "tris": 1200, "tex": 256, "yaw": 0 },
+  "suitcase":{ "src": "vintage_suitcase", "nodes": "^vintage_suitcase_01", "tris": 1400, "tex": 256, "yaw": 0 },
+  "barrel":  { "src": "Barrel_01", "tris": 1200, "tex": 384, "yaw": 0 },
+  "crate":   { "src": "wooden_crate_02", "tris": 1400, "tex": 384, "yaw": 0 },
+  "sdesk":   { "src": "SchoolDesk_01", "tris": 1600, "tex": 384, "yaw": 0 },
+  "schair":  { "src": "SchoolChair_01", "tris": 1600, "tex": 384, "yaw": 0 },
+  "duck":    { "src": "rubber_duck_toy", "tris": 700, "tex": 256, "yaw": 0 },
+  "gnome":   { "src": "garden_gnome", "tris": 1500, "tex": 256, "yaw": 0 },
+  "crt":     { "src": "Television_01", "tris": 1900, "tex": 384, "yaw": 0 },
+  "sshelf":  { "src": "steel_frame_shelves_01", "tris": 1600, "tex": 384, "yaw": 0, "scale": 0.1 }
+}

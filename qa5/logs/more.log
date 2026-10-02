@@ -1,0 +1,14 @@
+error: Failed to load resource: net::ERR_FAILED
+QA load ms 2011
+QA shot guest
+QA guest 501
+QA shot guest_door
+QA shot boiler_lit
+QA moth {"st":"hunt","boil":true,"keys":"rig,rad,x,z,yaw,spd,ph,fc,F,stuckT,unT,ux,uz,dir,st,stT,present,shown,shadowR,alive,nest,boil,i,cellFn,edgeFn,home,percT,atkCd,lk,y"}
+QA shot moth
+QA after moth {"hp":84,"san":81.05715499999901,"st":"play","foes":1}
+QA death {"st":"dead","k":"■ SIGNAL LOST · LEVEL 5","t":"THE MOTHS CAME FOR YOUR LIGHT","b":"▶ RETRY LEVEL 5"}
+QA retry {"st":"play","phase":"arrive","keys":0,"meshes":347,"hp":100}
+QA win {"st":"won","k":"CHECKED OUT · END OF RECORDING","t":"YOU ESCAPED THE HOTEL","b":"▶ PLAY AGAIN (LEVEL 0)","stats":"TIME ON TAPE0:00:00DISTANCE0 MKEYS0/3VALVES0/3LEVEL5 · THE HOTELDIFFICULTYNORMAL"}
+QA back to title {"st":"title","l5btn":true,"l9btn":false,"body":""}
+QA PAGE CLOSE

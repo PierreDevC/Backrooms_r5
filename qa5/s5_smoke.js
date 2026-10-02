@@ -1,0 +1,40 @@
+module.exports = async (page, logs) => {
+  const shot = async (n) => { await page.waitForTimeout(1200); await page.screenshot({ path: '/data/qa5/' + n + '.png' }); logs.push('QA shot ' + n); };
+  const tp = async (x, z, yaw, pitch = 0) => page.evaluate(([x, z, yaw, pitch]) => { const B = window.__BR, P = B.PL; P.x = x; P.z = z; P.yaw = yaw; P.pitch = pitch; P.vx = P.vz = 0; P.hp = 100; P.san = 100; }, [x, z, yaw, pitch]);
+  const cc = await page.evaluate(() => window.__BR.CELL5());
+  const c = i => (i + 0.5) * cc;
+  await page.evaluate(() => { const B = window.__BR; B.DBG.ts = 3; B.startGame(true); });
+  await page.waitForTimeout(2000);
+  const t0 = Date.now();
+  await page.evaluate(() => { window.__BR.goLevel5(null); });
+  await page.waitForFunction(() => window.__BR.G.state === 'intro' && window.__BR.W5 && window.__BR.W5.elev, null, { timeout: 300000 }).catch(e => logs.push('TIMEOUT l5 load'));
+  logs.push('QA l5 load ms ' + (Date.now() - t0));
+  await page.screenshot({ path: '/data/qa5/intro.png' });
+  await page.waitForFunction(() => window.__BR.G.state === 'play', null, { timeout: 60000 }).catch(e => logs.push('TIMEOUT l5 play'));
+  // freeze AI damage for screenshots
+  await page.evaluate(() => { const B = window.__BR; B.DBG.god = true; });
+  const info = await page.evaluate(() => { const B = window.__BR, L = B.LV5(); return { st: B.G.state, fps: B.ENG().getFps().toFixed(1), meshes: B.SCN().meshes.length, moths: B.AI5.moths.length, keys: B.W5.keys.length, valves: B.W5.valves.length, doors: (B.W9.doors || []).length, phase: B.G5.phase, obj: (document.getElementById('objective') || {}).textContent, tapes: document.getElementById('tapes').textContent, code: document.getElementById('code').textContent, guest: L.guest.length, pl: [B.PL.x.toFixed(1), B.PL.z.toFixed(1)] }; });
+  logs.push('QA ' + JSON.stringify(info));
+  await shot('lobby');
+  await page.evaluate(() => window.__BR.readNote5());
+  await tp(c(16.5) - 0.5 * cc + 0.5 * cc, c(18) + 0.5, Math.PI); await shot('bev_south');
+  await tp(c(16.5), c(15), 0, -0.1); await shot('bev_north');
+  await tp(c(22), c(16), Math.PI / 2); await shot('loop');
+  // keys, staff, valves, exit
+  const r = await page.evaluate(() => { const B = window.__BR, out = []; for (const k of B.W5.keys) { try { B.takeKey5(k); } catch (e) { out.push('key err ' + e.message); } } out.push('phase ' + B.G5.phase + ' keys ' + B.G5.keys); try { B.unlockStaff5(B.W5.svDoor); } catch (e) { out.push('staff err ' + e.message); } out.push('phase ' + B.G5.phase); return out; });
+  logs.push('QA ' + r.join(' | '));
+  const vs = await page.evaluate(() => window.__BR.W5.valves.map(v => [v.x, v.z]));
+  await page.evaluate(() => { try { window.__BR.startTp5(true); } catch (e) { console.log('QA tp err ' + e.message); } });
+  await page.waitForTimeout(3500);
+  logs.push('QA after tp ' + JSON.stringify(await page.evaluate(() => { const B = window.__BR; return { pl: [B.PL.x.toFixed(1), B.PL.z.toFixed(1)], ph: B.G5.phase, st: B.G.state }; })));
+  await shot('landing');
+  await tp(vs[0][0] + 1.2, vs[0][1], -Math.PI / 2); await shot('boiler1');
+  for (let i = 0; i < 3; i++) await page.evaluate(i => { const B = window.__BR, v = B.W5.valves[i]; try { B.startValve5(v); B.finishValve5(v); } catch (e) { console.log('QA valve err ' + e.message + ' ' + e.stack); } }, i);
+  logs.push('QA valves ' + JSON.stringify(await page.evaluate(() => ({ ph: window.__BR.G5.phase, v: window.__BR.G5.valves, moths: window.__BR.AI5.moths.map(m => m.st + (m.boil ? 'B' : 'H')).join(',') }))));
+  const ex = await page.evaluate(() => [window.__BR.W5.exit.x, window.__BR.W5.exit.z]);
+  await tp(ex[0] - 2.2, ex[1], Math.PI / 2); await shot('exit');
+  await page.evaluate(() => { const B = window.__BR; B.useExit5(); });
+  await page.waitForTimeout(7000);
+  logs.push('QA end ' + JSON.stringify(await page.evaluate(() => ({ st: window.__BR.G.state, title: document.getElementById('endTitle').textContent, btn: document.getElementById('btnAgain').textContent }))));
+  await page.screenshot({ path: '/data/qa5/end.png' });
+};

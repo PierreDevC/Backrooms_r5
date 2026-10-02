@@ -1,0 +1,17 @@
+error: Failed to load resource: net::ERR_FAILED
+QA load ms 2193
+QA PASS L0 -> L9
+QA PASS L9 -> L5
+QA PASS L5 keys/valves -> L18
+QA PASS desktop hint fits
+log: QA BEAM {"burn":1.2000000000000004,"st":"fade","hp":100}
+QA PASS beam repels before contact
+QA PASS Forgotten normal hit 34
+log: QA SAFE {"bright":1,"moved":0}
+QA PASS class sanctuary
+log: QA FOCUS TAKE THE DRAWING
+QA PASS bedside drawing interaction reachable
+Error: closet opens after memory
+    at assert (/data/qa18/s18_final.js:2:59)
+    at module.exports (/data/qa18/s18_final.js:21:81)
+    at async /data/qa18/run18.js:21:3

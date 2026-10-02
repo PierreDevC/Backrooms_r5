@@ -1,0 +1,15 @@
+error: Failed to load resource: net::ERR_FAILED
+QA load ms 2091
+QA props log 350 {"gnome":11,"tcan":33,"hydrant":8,"sofa":25,"crt":18,"nstand":111,"armchair":7,"gchair":5,"sshelf":16,"cbox":116}
+QA props 0 {"k":"gnome","at":[42.95,0,12.42],"cam":[44.23,13.96],"d":2}
+QA props 1 {"k":"tcan","at":[53.3,0,11.7],"cam":[53.89,13.61],"d":2}
+QA props 2 {"k":"hydrant","at":[10.25,0,34.2],"cam":[10.84,36.11],"d":2}
+QA props 3 {"k":"sofa","at":[39.06,0,23.39],"cam":[38.47,21.48],"d":2}
+QA props 4 {"k":"crt","at":[36.35,0.5,23.16],"cam":[37.63,24.7],"d":2}
+QA props 5 {"k":"nstand","at":[169.47,0,52.45],"cam":[170.06,54.36],"d":2}
+QA props 6 {"k":"armchair","at":[39.12,0,41.21],"cam":[37.35,40.28],"d":2}
+QA props 7 {"k":"gchair","at":[73.65,0,40.08],"cam":[74.24,41.99],"d":2}
+QA props 8 {"k":"sshelf","at":[68.74,0,70.72],"cam":[69.33,72.63],"d":2}
+QA props 9 {"k":"cbox","at":[68.74,0.12,70.97],"cam":[69.33,72.88],"d":2}
+QA props done 10 {"n":0,"seen":{},"last":""}
+QA PAGE CLOSE

@@ -1,0 +1,29 @@
+error: Failed to load resource: net::ERR_FAILED
+QA load ms 1939
+QA PASS title HOW TO PLAY opens the Level 0 briefing: FIELD BRIEFING · 1 / 4
+QA PASS Level 0 slide image present
+QA PASS Esc closes it back to the title
+QA PASS first arrival waits on the briefing (state brief9)
+QA PASS briefing screen visible
+QA slides [{"kick":"LEVEL 9 BRIEFING · 1 / 4","t":"YOUR OBJECTIVE","next":"NEXT ▶","skip":"SKIP »","img":"data:image/webp;base64,UklGRhw","imgOk":960,"alt":"The M.E.G. map snapshot open over a dark","over":false},{"kick":"LEVEL 9 BRIEFING · 2 / 4","t":"THE NEIGHBORHOOD WATCH","next":"NEXT ▶","skip":"SKIP »","img":"data:image/webp;base64,UklGRgA","imgOk":960,"alt":"A tall figure in a dark coat walking dow","over":false},{"kick":"LEVEL 9 BRIEFING · 3 / 4","t":"THE WRETCHES","next":"NEXT ▶","skip":"SKIP »","img":"data:image/webp;base64,UklGRoQ","imgOk":960,"alt":"A Wretch asleep in a dark living room, w","over":false},{"kick":"LEVEL 9 BRIEFING · 4 / 4","t":"STAY QUIET","next":"▶ ENTER LEVEL 9","skip":"SKIP »","img":"data:image/webp;base64,UklGRto","imgOk":960,"alt":"Close-ups of the NOISE meter while crouc","over":false}]
+QA PASS kicker LEVEL 9 BRIEFING · i / 4
+QA PASS slide titles
+QA PASS all four Level 9 images decode at 960 px
+QA PASS last button ENTER LEVEL 9, skip button SKIP
+QA PASS panel fits the viewport
+QA PASS ENTER LEVEL 9 starts the intro (state intro)
+QA PASS br_brief9 saved
+QA PASS intro hands over to play
+QA PASS noise meter visible in Level 9
+QA PASS pause menu shows FIELD BRIEFING in Level 9
+QA PASS pause briefing opens on slide 1 with CLOSE ×
+QA PASS pause briefing last button: ◀ BACK TO PAUSE
+QA PASS back on the pause menu, still paused
+QA PASS focus returns to FIELD BRIEFING
+QA PASS Esc also closes it back to pause
+QA PASS second arrival goes straight to the intro (state intro)
+QA PASS no noise meter right after entering Level 0
+QA PASS no noise meter in Level 0
+QA PASS Level 0 pause menu has no FIELD BRIEFING
+QA PASS Esc skips the fresh Level 9 briefing into the intro
+QA PAGE CLOSE

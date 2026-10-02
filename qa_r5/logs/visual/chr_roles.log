@@ -1,0 +1,5 @@
+error: Failed to load resource: net::ERR_FAILED
+QA load ms 2140
+QA chr rigs {"n":8,"kinds":"HAZMAT,HAZMAT,HAZMAT,HAZMAT,HAZMAT,HAZMAT,CREATURE,HAZMAT"}
+QA chr done 8 {"n":0,"seen":{},"last":""}
+QA PAGE CLOSE

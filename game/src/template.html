@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>THE BACKROOMS — Found Footage (Level 0 · Level 9)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=VT323&display=swap">
+<style>
+/*__CSS__*/
+</style>
+</head>
+<body>
+<canvas id="c" tabindex="0" aria-label="The Backrooms 3D game view"></canvas>
+
+<!-- camcorder viewfinder HUD -->
+<div id="osd" class="hide" aria-hidden="true">
+  <div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div>
+  <div id="osdTL"><span id="rec"><i></i>REC</span><span id="tc">0:00:00</span><span class="sp">SP</span></div>
+  <div id="osdTR">
+    <div id="batt"><div class="cells"><b></b><b></b><b></b><b></b><b></b></div><span id="battPct">100%</span></div>
+    <div id="spare">SPARE ×0</div>
+    <div id="nvTag" class="tag hide">NIGHT SHOT</div>
+    <div id="zoomTag" class="tag hide">ZOOM 2.0×</div>
+    <div id="cpNote" role="status"></div>
+  </div>
+  <div id="compass"><div id="compassStrip"></div><div id="compassMark" class="hide">▼</div><div id="compassTape" class="hide">◆</div><div class="compassNeedle"></div></div>
+  <div id="compassFoes"></div>
+  <div id="focus"><i></i><i></i><i></i><i></i></div>
+  <div id="prompt"></div>
+  <div id="subs"></div>
+  <div id="objective"></div>
+  <div id="osdBL">
+    <div class="meters">
+      <div class="m"><label>VIT</label><div class="bar"><div id="hpBar"></div></div></div>
+      <div class="m"><label>STA</label><div class="bar"><div id="stBar"></div></div></div>
+      <div class="m"><label>SAN</label><div class="bar"><div id="saBar"></div></div></div>
+    </div>
+    <div id="date">SEP. 29 1996</div>
+    <div id="clock">11:47:03 PM</div>
+  </div>
+  <div id="osdBR">
+    <div id="noise9" class="hide"><span>NOISE</span><div class="nz"><i id="nzFill"></i><b id="nzMark" class="hide"></b></div><span id="nzTxt">SILENT</span></div>
+    <div id="signal"><span id="sigLbl">TAPE SIGNAL</span><i id="sigDir" class="hide">▲</i><div class="sig"><b></b><b></b><b></b><b></b><b></b></div></div>
+    <div id="inv">WATER ×0</div>
+    <div id="tapes">TAPES 0/4</div>
+    <div id="code">CODE _ _ _ _</div>
+  </div>
+  <div id="toast"></div>
+    <div id="map9" class="hide"><canvas id="map9c" width="640" height="468"></canvas><div class="mapcap">M.E.G. MAP SNAPSHOT · <span class="k">[TAB]</span> CLOSE</div></div>
+</div>
+<div id="hurt"></div>
+<div id="blue" class="hide"><div>PLAY ▶</div><small>SP</small></div>
+
+<!-- loading -->
+<div id="loading" class="screen">
+  <div class="vcr">
+    <div class="osdline" id="loadOsd">▶ LOADING TAPE</div>
+    <div class="loadbar"><i id="loadFill"></i></div>
+    <div id="loadMsg" class="dim">GENERATING LEVEL 0…</div>
+  </div>
+</div>
+
+<!-- title -->
+<div id="title" class="screen hide">
+  <div class="menuWrap">
+    <div class="kicker">TAPE #0417 · RECOVERED FOOTAGE · LEVEL 0</div>
+    <h1 class="logo" data-text="THE BACKROOMS">THE BACKROOMS</h1>
+    <p class="lede">You noclipped out of reality during a routine survey. Your expedition is scattered across endless yellow rooms. Recover the four lost tapes, piece together the exit code, and get out before the things in the walls find you.</p>
+    <nav class="menu" aria-label="Main menu">
+      <button class="mi primary" id="btnPlay">▶ PLAY TAPE</button>
+      <button class="mi" id="btnLevels">SELECT LEVEL</button>
+      <button class="mi hide" id="btnL9">▶ CONTINUE: LEVEL 9</button>
+      <button class="mi" id="btnDiff">DIFFICULTY: <span id="diffLabel">NORMAL</span></button>
+      <button class="mi" id="btnSettings">SETTINGS</button>
+      <button class="mi" id="btnHow">HOW TO PLAY</button>
+      <button class="mi" id="btnControls">CONTROLS</button>
+    </nav>
+    <div class="foot"><span id="bestTime"></span><span>HEADPHONES RECOMMENDED</span></div>
+  </div>
+</div>
+
+<!-- level select -->
+<div id="levels" class="screen hide" role="dialog" aria-modal="true" aria-labelledby="levelsTitle">
+  <div class="panel narrow">
+    <div class="kicker">TAPE ARCHIVE</div>
+    <h2 id="levelsTitle">SELECT LEVEL</h2>
+    <nav class="menu lvMenu" aria-label="Levels">
+      <button class="mi lvPick" data-level="0"><b>▶ LEVEL 0</b><span>THE LOBBY</span></button>
+      <button class="mi lvPick" data-level="9"><b>▶ LEVEL 9</b><span>DARKENED SUBURBS</span></button>
+      <button class="mi lvPick" data-level="5"><b>▶ LEVEL 5</b><span>THE HOTEL</span></button>
+      <button class="mi lvPick" data-level="18"><b>▶ LEVEL 18</b><span>NOSTALGIC MEMORIES</span></button>
+    </nav>
+    <p class="lvNote">FRESH SUPPLIES · DIFFICULTY: <span id="lvDiff">NORMAL</span></p>
+    <button class="mi back">◀ BACK</button>
+  </div>
+</div>
+
+<!-- field briefing (first tape + HOW TO PLAY) -->
+<div id="brief" class="screen hide" role="dialog" aria-modal="true" aria-labelledby="briefTitle">
+  <div class="panel briefPanel">
+    <div class="briefTop"><span class="kicker" id="briefKick">FIELD BRIEFING</span><button class="mi bSkip" id="briefSkip">SKIP »</button></div>
+    <div class="briefBody">
+      <figure class="briefFig" id="briefFig"><img id="briefImg" alt="" draggable="false"></figure>
+      <div class="briefText" aria-live="polite"><h2 id="briefTitle"></h2><div id="briefCopy"></div></div>
+    </div>
+    <div class="briefNav"><button class="mi" id="briefPrev">◀ BACK</button><div class="bDots" id="briefDots"></div><button class="mi primary" id="briefNext">NEXT ▶</button></div>
+  </div>
+</div>
+
+<!-- controls -->
+<div id="controls" class="screen hide">
+  <div class="panel">
+    <div class="kicker">OPERATOR MANUAL</div>
+    <h2>CONTROLS</h2>
+    <div class="grid2">
+      <div><kbd>W A S D</kbd> Move</div><div><kbd>Mouse</kbd> Look</div>
+      <div><kbd>Shift</kbd> Sprint (loud)</div><div><kbd>C</kbd> Crouch (quiet)</div>
+      <div><kbd>F</kbd> Flashlight</div><div><kbd>N</kbd> Night shot (IR)</div>
+      <div><kbd>E</kbd> Interact / pick up</div><div><kbd>R</kbd> Swap battery</div>
+      <div><kbd>Q</kbd> Drink almond water</div><div><kbd>RMB</kbd> hold / <kbd>Z</kbd> Zoom</div>
+      <div><kbd>RMB</kbd>/<kbd>X</kbd> Latch door</div><div><kbd>Tab</kbd> Map snapshot (Level 9)</div>
+        <div><kbd>Esc</kbd> Pause</div><div><kbd>M</kbd> Mute</div>
+    </div>
+    <h3>FIELD NOTES</h3>
+    <ul class="notes">
+      <li><b>The Howler</b> hunts by sound and sight. Walk or crouch; sprint only to escape.</li>
+      <li><b>The Smiler</b> lives where the lights are dead. Keep your beam on it and it retreats.</li>
+      <li><b>The Crawler</b> only moves when nobody is looking at it. Keep watching.</li>
+      <li><b>Explorers</b> in hazmat suits may help. Not everything in a suit is human — listen to the voice.</li>
+          <li><b>Level 9 · The Neighborhood Watch</b> walks the streets with a flashlight. If its beam finds you, get inside a house and shut the door.</li>
+          <li><b>Level 9 · Wretches</b> sleep inside some houses. They're blind and hunt by sound: crouch near them and keep the NOISE bar left of the amber mark. They open doors, but they can't get past a latched one.</li>
+          <li><b>Checkpoints</b> — on Easy and Normal, a ◆ CHECKPOINT is saved as you progress (tapes, computers, keys, valves, drawings). If you die you can retry from it and keep what you've done. Nightmare restarts the level.</li>
+    </ul>
+    <p class="credit">Voices generated offline with Piper TTS (CC0 / public-domain voice models). All sound effects synthesized for this tape.</p>
+    <button class="mi primary back">BACK</button>
+  </div>
+</div>
+
+<!-- settings -->
+<div id="settings" class="screen hide">
+  <div class="panel">
+    <div class="kicker">MENU · SETUP</div>
+    <h2>SETTINGS</h2>
+    <label class="row">MOUSE SENSITIVITY <input id="sSens" type="range" min="0.3" max="2.5" step="0.05" value="1"></label>
+    <label class="row">FIELD OF VIEW <input id="sFov" type="range" min="50" max="80" step="1" value="62"></label>
+    <label class="row">VHS EFFECT <input id="sVhs" type="range" min="0" max="1.5" step="0.05" value="1"></label>
+    <label class="row">BRIGHTNESS <input id="sBright" type="range" min="0.6" max="1.6" step="0.05" value="1"></label>
+    <label class="row">VOLUME <input id="sVol" type="range" min="0" max="1" step="0.05" value="0.8"></label>
+    <label class="row">QUALITY <select id="sQual"><option value="0">LOW</option><option value="1" selected>MEDIUM</option><option value="2">HIGH</option></select></label>
+    <label class="row chk">INVERT Y <input id="sInv" type="checkbox"></label>
+    <button class="mi primary back">BACK</button>
+  </div>
+</div>
+
+<!-- pause -->
+<div id="pause" class="screen hide">
+  <div class="panel narrow">
+    <div class="kicker"><i class="pz"></i>PAUSE</div>
+    <h2>PAUSED</h2>
+    <nav class="menu">
+      <button class="mi primary" id="btnResume">▶ RESUME</button>
+      <button class="mi" id="btnPBrief">FIELD BRIEFING</button>
+      <button class="mi" id="btnPSettings">SETTINGS</button>
+      <button class="mi" id="btnPControls">CONTROLS</button>
+      <button class="mi" id="btnRestart">REWIND (RESTART)</button>
+      <button class="mi" id="btnQuit">EJECT (MAIN MENU)</button>
+    </nav>
+  </div>
+</div>
+
+<!-- end -->
+<div id="end" class="screen hide">
+  <div class="panel narrow">
+    <div class="kicker" id="endKicker">SIGNAL LOST</div>
+    <h2 id="endTitle">TAPE ENDS HERE</h2>
+    <p id="endText" class="lede"></p>
+    <div id="endStats" class="stats"></div>
+    <nav class="menu">
+      <button class="mi primary hide" id="btnCP"></button>
+      <button class="mi primary" id="btnAgain">▶ PLAY AGAIN</button>
+      <button class="mi" id="btnEndMenu">MAIN MENU</button>
+    </nav>
+  </div>
+</div>
+
+<!-- touch -->
+<div id="touch" class="hide">
+  <div id="stickL" class="stick"><i></i></div>
+  <div id="lookZone"></div>
+  <div class="tbtns">
+    <button data-k="ShiftLeft" data-hold="1">RUN</button>
+    <button data-k="KeyC">CRCH</button>
+    <button data-k="KeyF">LIGHT</button>
+    <button data-k="KeyE">USE</button>
+    <button data-k="KeyQ">DRINK</button>
+    <button data-k="KeyR">BATT</button>
+    <button data-k="KeyN">NV</button>
+    <button data-k="KeyX" class="l9">LATCH</button>
+    <button data-k="Tab" class="l9">MAP</button>
+    <button data-k="Escape"><i class="pz"></i></button>
+  </div>
+</div>
+
+<script src="https://cdn.babylonjs.com/babylon.js"></script>
+<script>
+/*__JS__*/
+</script>
+</body>
+</html>

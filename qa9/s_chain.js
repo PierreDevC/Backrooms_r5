@@ -1,0 +1,37 @@
+module.exports = async (page, logs) => {
+  const ev = async (label, fn, arg) => { try { const r = await page.evaluate(fn, arg); logs.push('QA ' + label + ' ' + JSON.stringify(r)); return r; } catch (e) { logs.push('QA ' + label + ' EXC ' + e.message.slice(0, 400)); return null; } };
+  const snap = async (name, fn) => { if (fn) await page.evaluate(fn); await page.waitForTimeout(2600); await page.screenshot({ path: '/data/qa9/' + name + '.png' }); };
+  await ev('go', async () => { try { await window.__BR.goLevel9(null); return 'ok'; } catch (e) { return 'ERR ' + e.message + e.stack; } });
+  await page.evaluate(() => { const B = window.__BR; B.DBG.ts = 0.0001;
+    window.STEP = (n, until) => { const t0 = performance.now(); for (let i = 0; i < n; i++) { B.PL.hp = 100; B.PL.san = 100; B.G9.watchT = 1e9; B.simStep(1 / 60); if (until && until()) return i; } return n; };
+    window.LOOK = (x, z, p = 0) => { const P = B.PL; P.yaw = Math.atan2(x - P.x, z - P.z); P.pitch = p; P.bdir.set(Math.sin(P.yaw), -0.1, Math.cos(P.yaw)); };
+    window.ST = () => ({ st: B.G.state, ph: B.G9.phase, obj: document.getElementById('tapes').textContent, items: document.getElementById('code').textContent, data: B.G9.data, cans: B.G9.cans, carry: B.G9.carry }); });
+  await ev('intro', () => { STEP(400, () => window.__BR.G.state === 'play'); return ST(); });
+  await ev('map', () => { const B = window.__BR, K = B.W9.kiosk; B.PL.x = K.x; B.PL.z = K.z + 1.5; B.PL.cell = -1; B.studyMap9(); STEP(30); const open = !document.getElementById('map9').classList.contains('hide'); B.toggleMap9(); STEP(10); return Object.assign(ST(), { mapSeen: B.G9.mapSeen, open, tgt: !!B.target9() }); });
+  for (let i = 0; i < 3; i++) await ev('term' + i, (i) => { const B = window.__BR, T = B.W9.terms[i]; B.PL.x = T.x; B.PL.z = T.z; B.PL.cell = -1; B.startDownload(T); STEP(10); T.prog = T.need - 0.3; STEP(60); return Object.assign(ST(), { done: T.done, gate: B.G9.gateOpen }); }, i);
+  await ev('gate', () => { const B = window.__BR; STEP(400); return Object.assign(ST(), { gopen: B.W9.gate.open }); });
+  await ev('toLab', () => { const B = window.__BR, L = B.LV9(); B.PL.x = (L.base.stair.x + 0.5) * 3.6; B.PL.z = L.base.stair.y * 3.6 + 1.6; B.PL.cell = -1; STEP(120); return Object.assign(ST(), { x: B.PL.x / 3.6, z: B.PL.z / 3.6, lab: B.G9.labSeen }); });
+  await ev('crowbar', () => { const B = window.__BR; B.takeCrowbar(); STEP(30); return ST(); });
+  await ev('lockers', () => { const B = window.__BR, out = []; for (const L of B.W9.lockers) { B.useLocker(L); STEP(95); out.push(L.st); B.useLocker(L); STEP(10); out.push(L.st); } return Object.assign(ST(), { out }); });
+  await ev('install', () => { const B = window.__BR, R = B.W9.rack; B.PL.x = R.x || B.PL.x; B.installCans(); STEP(200); return Object.assign(ST(), { n: R.n, vapor: B.W9.vapor.want }); });
+  await ev('release', () => { const B = window.__BR, P = B.W9.panel; B.PL.x = P.x; B.PL.z = P.z; B.PL.cell = -1; B.releaseSubject(); const k = STEP(1800, () => B.AI9.subject.st === 'sniff'); const s = B.AI9.subject; return Object.assign(ST(), { k, sst: s.st, sx: s.x / 3.6, sz: s.z / 3.6, inCage: s.inCage(), px: B.PL.x / 3.6, pz: B.PL.z / 3.6 }); });
+  await snap('c_lured', () => { const B = window.__BR, s = B.AI9.subject; LOOK(s.x, s.z, 0.05); document.getElementById('toast').classList.remove('show'); });
+  await ev('lever', () => { const B = window.__BR; B.pullLever(); STEP(90); return Object.assign(ST(), { sst: B.AI9.subject.st, trapped: B.W9.cage.trapped }); });
+  await snap('c_trapped', () => { const B = window.__BR, s = B.AI9.subject; LOOK(s.x, s.z, 0.05); document.getElementById('toast').classList.remove('show'); });
+  await ev('cure', () => { const B = window.__BR; B.releaseCure(); STEP(540); return Object.assign(ST(), { sst: B.AI9.subject.st, hale: B.AI9.hale && B.AI9.hale.st }); });
+  await ev('haleGive', () => { const B = window.__BR; const k = STEP(4800, () => B.AI9.hale && B.AI9.hale.st === 'give'); return Object.assign(ST(), { k, hale: B.AI9.hale.st, card: B.AI9.hale.rig.card.isVisible, cage: B.W9.cage.want }); });
+  await snap('c_give', () => { const B = window.__BR, h = B.AI9.hale; LOOK(h.x, h.z, 0.1); });
+  await ev('key', () => { const B = window.__BR; B.takeKeycard(); STEP(30); return Object.assign(ST(), { key: B.G9.keycard, hale: B.AI9.hale.st }); });
+  await ev('elev', () => { const B = window.__BR, E = B.W9.elev; B.PL.x = E.rx !== undefined ? E.rx : B.PL.x; B.PL.z = E.rz !== undefined ? E.rz : B.PL.z; B.PL.cell = -1; B.useElevator(); STEP(240); return Object.assign(ST(), { open: E.open, hale: B.AI9.hale.st, hx: B.AI9.hale.x / 3.6, hz: B.AI9.hale.z / 3.6 }); });
+  await snap('c_elev', () => { const B = window.__BR, E = B.W9.elev; B.PL.x = 41.5 * 3.6; B.PL.z = E.zc; B.PL.cell = -1; STEP(2); LOOK(E.x + 2, E.zc, 0.02); });
+  await ev('walkIn', () => { const B = window.__BR, E = B.W9.elev; B.PL.x = 43 * 3.6 - 0.2; B.PL.z = E.zc; B.PL.cell = -1; STEP(20); return ST(); });
+  await ev('won', () => { const B = window.__BR; STEP(700); const e = document.getElementById('end'); return Object.assign(ST(), { endShown: e && !e.classList.contains('hide'), endTxt: e && e.textContent.replace(/\s+/g, ' ').slice(0, 300), again: document.getElementById('btnAgain').textContent }); });
+  await page.waitForTimeout(1500); await page.screenshot({ path: '/data/qa9/c_end.png' });
+  await ev('menuToL0', async () => { const B = window.__BR; await B.restartGame(false); return { st: B.G.state, lvl9: document.body.classList.contains('lvl9'), l9btn: getComputedStyle(document.getElementById('btnL9')).display }; });
+  await page.waitForTimeout(1500); await page.screenshot({ path: '/data/qa9/c_title.png' });
+  // death + retry path
+  await ev('go2', async () => { try { await window.__BR.goLevel9({ hp: 80, san: 70, batt: 50, time: 600, tapes: 3 }); return 'ok'; } catch (e) { return 'ERR ' + e.message; } });
+  await ev('die', () => { const B = window.__BR; B.DBG.ts = 0.0001; for (let i = 0; i < 400 && B.G.state !== 'play'; i++) B.simStep(1 / 60); B.die('watch'); for (let i = 0; i < 500; i++) B.simStep(1 / 60); const e = document.getElementById('end'); return { st: B.G.state, endShown: e && !e.classList.contains('hide'), endTxt: e && e.textContent.replace(/\s+/g, ' ').slice(0, 300), again: document.getElementById('btnAgain').textContent }; });
+  await page.waitForTimeout(1500); await page.screenshot({ path: '/data/qa9/c_dead.png' });
+  await ev('retry', async () => { const B = window.__BR; await B.restartGame(true); B.DBG.ts = 0.0001; for (let i = 0; i < 400 && B.G.state !== 'play'; i++) B.simStep(1 / 60); return { st: B.G.state, lvl9: document.body.classList.contains('lvl9'), hp: B.PL.hp, ph: B.G9.phase }; });
+};

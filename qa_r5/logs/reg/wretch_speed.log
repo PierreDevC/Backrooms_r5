@@ -1,0 +1,8 @@
+error: Failed to load resource: net::ERR_FAILED
+QA load ms 2143
+QA diff 0 {"pathCells":8,"chaseSec":4,"avg":1.59,"p50":1.61,"peak":1.83,"endState":"lost"}
+QA diff 1 {"pathCells":8,"chaseSec":6,"avg":2.44,"p50":2.51,"peak":2.99,"endState":"lost"}
+QA diff 2 {"pathCells":10,"chaseSec":8,"avg":2.78,"p50":2.96,"peak":3.45,"endState":"chase"}
+QA PASS easy peak chase below player walk 2.35 m/s: 1.83
+QA PASS normal remains faster (unchanged): 2.99
+QA PAGE CLOSE
