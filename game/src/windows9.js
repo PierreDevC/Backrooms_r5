@@ -204,7 +204,8 @@ void main() {
   float vig = smoothstep(1.03, 0.66, e) * (1.0 - 0.45 * r * r);
   gl_FragColor = vec4(mix(src, teal * vig, k), 1.0);
 }`;
-function peepUse9(dr) { return LVL === 9 && dr && !dr.target; }
+// only the front and back doors have one, and only from inside the house: you look out, never in
+function peepUse9(dr) { return LVL === 9 && !!dr && !dr.target && (dr.dk === 'front' || dr.dk === 'back') && LV.bld[cIdx(cellOf(PL.x), cellOf(PL.z))] === dr.house; }
 function peepToggle9(dr) {
   if (PEEPH.dr) { peepStop9(); return; }
   if (!peepUse9(dr)) return;

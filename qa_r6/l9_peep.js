@@ -32,5 +32,16 @@ module.exports = async (page) => {
   // walking ends it too; an open door has no peephole
   const d = await page.evaluate(() => { const B = window.__BR, { dr } = window.__QP; B.peepToggle9(dr); B.simStep(0.05); B.PL.x += 0.5; for (let i = 0; i < 6; i++) B.simStep(0.05); const on1 = !!B.PEEPH.dr; B.latchDoor(dr); B.useDoor(dr); for (let i = 0; i < 20; i++) B.simStep(0.05); const it = B.W.interact.find(i => i.door === dr); return { on1, open: dr.target, a2: it.alt2Label() }; });
   console.log('QA peep move ' + JSON.stringify(d)); ok(!d.on1, 'a step ends it'); ok(d.open === 1 && d.a2 === null, 'an open door has no peephole');
+  const f = await page.evaluate(() => { const B = window.__BR, { W9, W, PL } = B, DX = [1, 0, -1, 0], DY = [0, 1, 0, -1];
+    const room = W9.doors.find(d => d.dk === 'room'); B.setDoor(room, false); for (let i = 0; i < 30; i++) B.simStep(0.05);
+    const itR = W.interact.find(i => i.door === room); PL.x = room.mx - 0.8; PL.z = room.mz; const rLab = itR.alt2Label(); B.peepToggle9(room); const rOn = !!B.PEEPH.dr;
+    const front = W9.doors.find(d => d.dk === 'front'), e = front.e; B.setDoor(front, false); for (let i = 0; i < 30; i++) B.simStep(0.05);
+    PL.x = front.mx + DX[e.d] * 1.0; PL.z = front.mz + DY[e.d] * 1.0;   // outside, on the porch
+    const itF = W.interact.find(i => i.door === front), outLab = itF.alt2Label();
+    PL.x = front.mx - DX[e.d] * 1.0; PL.z = front.mz - DY[e.d] * 1.0;   // inside
+    const inLab = itF.alt2Label(); const back = W9.doors.find(d => d.dk === 'back');
+    return { rLab, rOn, outLab, inLab, back: back ? back.dk : null }; });
+  console.log('QA peep doors ' + JSON.stringify(f));
+  ok(f.rLab === null && !f.rOn, 'doors inside the house have no peephole'); ok(f.outLab === null && f.inLab === 'PEEPHOLE', 'the front door has one, from inside only');
   const errs = await page.evaluate(() => window.__BR.ERRS); console.log('QA errs ' + JSON.stringify(errs)); ok(!errs.n, 'no recovered frame errors');
 };

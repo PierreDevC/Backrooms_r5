@@ -49,7 +49,7 @@ function buildDoors9() {
     W9.doors.push(dr); W9.doorAt.set(dr.key, dr); addLock9(dr);   // r6: a deadbolt you can see turn
     W.interact.push({ x: mx, z: mz, y: 1.1, r: 1.75, door: dr, label: () => dr.target ? 'CLOSE DOOR' : dr.latched ? 'UNLATCH & OPEN' : 'OPEN DOOR',
       ok: () => true, act: () => useDoor(dr), altLabel: () => dr.target ? null : dr.latched ? 'UNLATCH' : 'LATCH', alt: () => latchDoor(dr),
-      alt2Label: () => dr.target ? null : 'PEEPHOLE', alt2: () => peepToggle9(dr) });   // r6: look through the door
+      alt2Label: () => peepUse9(dr) ? 'PEEPHOLE' : null, alt2: () => peepToggle9(dr) });   // r6: look through the door
   }
 }
 function doorClosed(x, y, d) { const dr = W9.doorAt.get(eKey(x, y, d)); return !!dr && dr.target === 0; }
