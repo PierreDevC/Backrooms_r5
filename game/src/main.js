@@ -103,6 +103,7 @@ function startGame(force) {
   hideScreens(); G.state = 'intro'; INTRO.t = -1.8;
   Object.assign(G, { code: [], tapes: 0, time: 0, lost: 0, cause: '', blackout: 0, exitOn: false, grace: [60, 45, 30][G.diff], radioT: 70, hallT: 20, chase: 0, hintT: 0 });
   HINT.stage = 0; HINT.site = null;
+  runReset(); tasksReset('LEVEL 0 · THE LOBBY'); places0Start();
   G.digits = [rndi(0, 9), rndi(0, 9), rndi(0, 9), rndi(0, 9)];
   resetPlayer(); buildItems(G.diff); initAI();
   $('blue').classList.remove('hide'); SFX.tape(); FX.fadeB = 0;
@@ -122,7 +123,7 @@ function introCam(dt) {
 function beginPlay() {
   G.state = 'play'; FX.fadeB = 0; PL.pitch = 0;
   $('osd').classList.remove('hide'); if (IS_TOUCH) $('touch').classList.remove('hide');
-  objective('FIND THE 4 LOST TAPES'); cpSave('LEVEL START', { x: PL.x, z: PL.z, yaw: PL.yaw, quiet: true });
+  setObj0(); cpSave('LEVEL START', { x: PL.x, z: PL.z, yaw: PL.yaw, quiet: true });
   later(0.8, () => say('K. MARSH', VO_TXT.intro[0], { radio: true, vo: 'intro1' }));
   later(1.0, () => say('K. MARSH', VO_TXT.intro[1], { radio: true, vo: 'intro2' }));
   later(13, () => toast(IS_TOUCH ? 'LIGHT · USE · DRINK · BATT BUTTONS' : '[F] FLASHLIGHT   [E] INTERACT   [N] NIGHT SHOT', 3.5));
@@ -135,7 +136,7 @@ function takeTape(site) {
   SFX.tape(); FX.glitch = Math.max(FX.glitch, 1.6); PL.san = Math.min(100, PL.san + 10);
   say('TAPE ' + n, TAPE_LOGS[n - 1], { vo: 'tape' + n, mode: 'tape', delay: 1.15 });
   later(0.6, () => toast(`CODE DIGIT ${n}: ${dig}`, 3));
-  objective(n < 4 ? `FIND THE LOST TAPES · ${n}/4` : 'REACH THE EXIT — FOLLOW THE RED MARKER');
+  setObj0();
   cpSave(`TAPE ${n}/4`);
   if (n === 1) later(18, () => { AI.crawler.activate(); radioLine('crawl'); });
   if (n === 2) {
@@ -159,6 +160,7 @@ function searchBody() {
   PL.san = Math.max(0, PL.san - 6);
 }
 function useExit() {
+  if (exitUse0()) return;   // r6: the keypad needs power first
   if (G.code.length < 4) { SFX.beep(260, 0.3); toast(`KEYPAD LOCKED — ${4 - G.code.length} DIGIT${G.code.length === 3 ? '' : 'S'} MISSING`); return; }
   const E = W.exit; E.opening = true;
   G.code.forEach((d, i) => later(0.28 * i, () => SFX.keypad(d)));
@@ -185,7 +187,7 @@ function win() {
 function wonCam(dt) {
   DEATH.t += dt; FX.fadeW = smooth(0, 1.6, DEATH.t);
   CAM.position.x = damp(CAM.position.x, W.exit.doorPos.x, 1.5, dt); CAM.position.z = damp(CAM.position.z, W.exit.doorPos.z, 1.5, dt);
-  if (DEATH.t > 2.4 && !DEATH.shown) { DEATH.shown = true; goLevel9(carryFromL0()); }
+  if (DEATH.t > 2.4 && !DEATH.shown) { DEATH.shown = true; flags0(); goLevel9(carryFromL0()); }
 }
 function showEnd(won) {
   if (LVL === 18) showEnd18(won); else if (LVL === 5) showEnd5(won); else if (LVL === 9) showEnd9(won); else showEnd0(won);
@@ -223,7 +225,7 @@ function teardownScene() {
   try { VHS && VHS.dispose(CAM); } catch (e) {} try { PIPE && PIPE.dispose(); } catch (e) {}
   SCN.dispose(); MATS.list.length = 0;
   Object.assign(FX, { glitch: 0, hurt: 0, fadeB: 1, fadeW: 0, san: 0, nv: 0, lightScale: 1, ambBoost: 0 });
-  SLOT.pos.fill(0); SHD.fill(0); cpReset();
+  SLOT.pos.fill(0); SHD.fill(0); cpReset(); tasksReset(); PL.load = false;
   $('noise9').classList.add('hide'); HUD.nzOn = false; HUD.nzMk = null;
 }
 async function restartGame(play) {
@@ -245,6 +247,7 @@ async function restartGame(play) {
 function onKey(code) {
   if (code === 'KeyM') { AU.muted = !AU.muted; if (AU.master) AU.master.gain.value = AU.muted ? 0 : S.vol; toast(AU.muted ? 'MUTED' : 'SOUND ON', 1.2); return; }
   if (briefKey(code)) return;
+  if (notesKey(code)) return;
   if (G.state === 'title' && code === 'Escape' && !$('levels').classList.contains('hide')) { show('title'); $('btnLevels').focus({ preventScroll: true }); return; }
   if (code === 'Escape' || code === 'KeyP') { if (G.state === 'play') pauseGame(); else if (G.state === 'paused' && code === 'KeyP') resumeGame(); return; }
   if (G.state === 'title' && (code === 'Enter' || code === 'Space') && !$('title').classList.contains('hide') && !(document.activeElement && document.activeElement.tagName === 'BUTTON')) startGame();   // a focused menu button handles its own activation
@@ -302,7 +305,7 @@ function worldFX(dt) {
   for (const m of LV.chunkMeshes) { const c = m.__c || (m.__c = m.getBoundingInfo().boundingBox.centerWorld.clone()); m._sortD = Math.hypot(c.x - cp.x, c.z - cp.z); }
 }
 function gameEvents(dt) {
-  tapeHints(dt);
+  tapeHints(dt); places0Events(dt);
   if (G.diff === 2 && G.time > 80 && AI.crawler && !AI.crawler.active) AI.crawler.activate();
   G.radioT -= dt;
   if (G.radioT <= 0) { G.radioT = rnd(55, 95); const a = AI.exps.filter(e => e.alive && e.d > 12); if (a.length) { const e = pick(a), k = Math.floor(RNG() * 2); say(e.name, VO_TXT.chat[e.i][k], { radio: true, vo: `e${e.i}_chat${k}` }); } }
@@ -336,7 +339,7 @@ function frameSim(dt) {
   }
   if (G.state !== 'loading') {
     try { LVL === 18 ? worldFX18(dt) : LVL === 5 ? worldFX5(dt) : LVL === 9 ? worldFX9(dt) : worldFX(dt); } catch (e) { frameErr('world', e); }   // kept apart so the HUD still updates
-    cpTick(dt);
+    cpTick(dt); holdTick(dt); docTick(dt);
     if (G.state === 'play' || G.state === 'dead') updateHUD(dt);
     updateSubs(dt);
   }
@@ -349,7 +352,7 @@ function simStep(dt) {
     case 'dead': LVL === 18 ? updateAI18(dt) : LVL === 5 ? updateAI5(dt) : LVL === 9 ? updateAI9(dt) : updateAI(dt); deathCam(dt); break;
     case 'won': LVL === 18 ? wonCam18(dt) : LVL === 5 ? wonCam5(dt) : LVL === 9 ? wonCam9(dt) : wonCam(dt); break;
   }
-  LVL === 18 ? worldFX18(dt) : LVL === 5 ? worldFX5(dt) : LVL === 9 ? worldFX9(dt) : worldFX(dt); cpTick(dt); updateSubs(dt);
+  LVL === 18 ? worldFX18(dt) : LVL === 5 ? worldFX5(dt) : LVL === 9 ? worldFX9(dt) : worldFX(dt); cpTick(dt); holdTick(dt); docTick(dt); updateSubs(dt);
 }
 async function buildScene() {
   const prog = (p, m) => { $('loadFill').style.width = (p * 100).toFixed(0) + '%'; $('loadMsg').textContent = m; };

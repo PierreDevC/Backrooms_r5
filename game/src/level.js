@@ -169,6 +169,7 @@ function collectPieces() {
   for (let gy = 1; gy < N; gy++) for (let gx = 1; gx < N; gx++) {
     const e = LV.hE[hI(gx - 1, gy)] | LV.hE[hI(gx, gy)] | LV.vE[vI(gx, gy - 1)] | LV.vE[vI(gx, gy)];
     if (e) continue;
+    if (LV.place && [cIdx(gx - 1, gy - 1), cIdx(gx, gy - 1), cIdx(gx - 1, gy), cIdx(gx, gy)].some(c => LV.place[c] >= 0)) continue;   // r6: rooms keep a clear floor
     const hs = [cIdx(gx - 1, gy - 1), cIdx(gx, gy - 1), cIdx(gx - 1, gy), cIdx(gx, gy)].map(c => LV.hall[c]);
     const hall = hs[0] >= 0 && hs.every(h => h === hs[0]);
     if (RNG() < (hall ? 0.8 : 0.1)) {

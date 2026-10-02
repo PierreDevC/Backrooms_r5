@@ -250,3 +250,29 @@ body:not(.lvl9) #btnPBrief{display:none}
 }
 /* r4.4: long toasts wrap on narrow portrait screens instead of running off both edges */
 @media (max-width:560px){#toast{white-space:normal;width:90vw;font-size:24px;line-height:1.15}}
+
+/* r6: paper documents over the tape, FIELD NOTES */
+#doc{position:absolute;right:4%;top:18%;width:min(430px,40vw);max-height:58%;overflow:auto;padding:16px 20px 12px;background:rgba(236,228,204,.94);color:#2a2418;font:19px/1.28 "Courier New",monospace;text-shadow:none;box-shadow:0 6px 30px rgba(0,0,0,.6);transform:rotate(-.6deg)}
+#doc.hide{display:none}
+#doc.kind-log{background:rgba(222,226,214,.95)}
+#doc.kind-board{background:rgba(240,240,236,.95);font-family:"Comic Sans MS","Marker Felt",cursive}
+#doc.kind-screen{background:rgba(8,20,10,.92);color:#8dff9e;font-family:VT323,monospace;font-size:22px}
+#docT{font-weight:bold;letter-spacing:.06em;margin-bottom:8px;border-bottom:1px solid rgba(0,0,0,.25);padding-bottom:4px}
+#doc.kind-screen #docT{border-color:rgba(141,255,158,.4)}
+#docB p{margin:0 0 9px}
+#docHint{font-size:14px;opacity:.6;text-align:right}
+.tasks,.docs{list-style:none;margin:0;padding:0;font-size:22px;line-height:1.25}
+.tasks li{margin:4px 0;color:#f4efd8}
+.tasks li b{color:var(--amber);font-weight:400;margin-right:6px}
+.tasks li i{display:block;font-style:normal;color:var(--dim);font-size:18px;margin-left:26px}
+.tasks li.done{color:var(--dim);text-decoration:line-through}
+.tasks li.fail{color:#b86a5a}
+.tasks li.none,.docs li.none{color:var(--dim)}
+.docs li{display:inline-block;margin:0 8px 8px 0}
+.docs .docBtn{font-size:18px;padding:4px 10px}
+#notesRead{margin-top:12px;padding:12px 16px;background:rgba(236,228,204,.92);color:#2a2418;font:18px/1.3 "Courier New",monospace;text-shadow:none}
+#notesRead h3{color:#2a2418;margin:0 0 8px;font-size:20px}
+#notesRead p{margin:0 0 8px}
+#notesRead.hide{display:none}
+@media (max-width:700px){#doc{left:4%;right:4%;width:auto;top:14%;font-size:16px}}
+#toast.long{font-size:clamp(18px,2.6vw,30px);max-width:92vw;white-space:normal;text-align:center}

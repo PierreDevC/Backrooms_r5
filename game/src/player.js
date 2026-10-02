@@ -14,12 +14,12 @@ const TOUCH = { mx: 0, mz: 0 };
 
 function lightAt(x, z) { return baseLight(x, z, FX.flicker) * 0.667 * FX.lightScale; } // ~1 in a lit room, <0.1 in the dead zones
 function makeNoise(v) { PL.noise = Math.max(PL.noise, v); }
-function carpetWet(x, z) { return noise1(x * 0.35 + 3.1) + noise1(z * 0.35 - 8.7) > 0.7; }
+function carpetWet(x, z) { return noise1(x * 0.35 + 3.1) + noise1(z * 0.35 - 8.7) > 0.7 || (LVL === 0 && !!P0.off && inPlace0(P0.off, x, z)); }
 
 function resetPlayer() {
   Object.assign(PL, { x: cellCenter(LV.spawn.x), z: cellCenter(LV.spawn.y), vx: 0, vz: 0, crouch: false, ck: 0, sta: 1, exh: false, hp: 100, san: 100,
     batt: [100, 90, 75][G.diff], spare: [2, 1, 0][G.diff], water: [3, 1, 0][G.diff], flash: false, fk: 0, nv: false, zoomT: false, zk: 0,
-    noise: 0, dist: 0, lastHurt: -99, shake: 0, cell: -1, fear: 0, pitch: 0, lookAt: null, lookK: 0 });
+    noise: 0, load: false, dist: 0, lastHurt: -99, shake: 0, cell: -1, fear: 0, pitch: 0, lookAt: null, lookK: 0 });
   // face the most open direction
   let bd = 0, best = 0;
   for (let d = 0; d < 4; d++) { let n = 0, x = LV.spawn.x, y = LV.spawn.y; while (passable(x, y, d) && n < 8) { x += DX[d]; y += DY[d]; n++; } if (n > best) { best = n; bd = d; } }
@@ -72,7 +72,7 @@ function findInteract() {
   }
   return best;
 }
-function interact() { const it = PL.focus; if (it && it.ok()) it.act(); }
+function interact() { if (DOC.open) { docClose(); return; } const it = PL.focus; if (it && it.ok()) it.act(); }   // r6: E first closes an open document
 
 function hurt(dmg, src) {
   if (G.state !== 'play') return;
@@ -112,9 +112,9 @@ function updatePlayer(dt) {
   const il = Math.hypot(ix, iz); if (il > 1) { ix /= il; iz /= il; }
   const crouch = PL.crouch; // C toggles crouch (Ctrl removed in r4.4: Ctrl+W closed the browser tab)
   const runKey = K.has('ShiftLeft') || K.has('ShiftRight');
-  const wantRun = runKey && iz > 0.3 && !crouch && !PL.exh;
+  const wantRun = runKey && iz > 0.3 && !crouch && !PL.exh && !PL.load;   // r6: carrying Brandt's battery: no sprint
   if (runKey && PL.crouch && iz > 0.3) PL.crouch = false;
-  const sp = (crouch ? 1.25 : wantRun ? 4.4 : 2.35) * (PL.hp < 30 ? 0.86 : 1) * (PL.exh ? 0.85 : 1) * (PL.spdK ?? 1);
+  const sp = (crouch ? 1.25 : wantRun ? 4.4 : 2.35) * (PL.hp < 30 ? 0.86 : 1) * (PL.exh ? 0.85 : 1) * (PL.spdK ?? 1) * (PL.load ? 0.74 : 1);
   const sy = Math.sin(PL.yaw), cyw = Math.cos(PL.yaw);
   const tx = (sy * iz + cyw * ix) * sp, tz = (cyw * iz - sy * ix) * sp;
   const acc = il > 0.01 ? 8 : 11;

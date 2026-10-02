@@ -30,6 +30,7 @@
   <div id="prompt"></div>
   <div id="subs"></div>
   <div id="objective"></div>
+  <div id="doc" class="hide"><div id="docT"></div><div id="docB"></div><div id="docHint"></div></div>
   <div id="osdBL">
     <div class="meters">
       <div class="m"><label>VIT</label><div class="bar"><div id="hpBar"></div></div></div>
@@ -120,6 +121,7 @@
       <div><kbd>E</kbd> Interact / pick up</div><div><kbd>R</kbd> Swap battery</div>
       <div><kbd>Q</kbd> Drink almond water</div><div><kbd>RMB</kbd> hold / <kbd>Z</kbd> Zoom</div>
       <div><kbd>RMB</kbd>/<kbd>X</kbd> Latch door</div><div><kbd>Tab</kbd> Map snapshot (Level 9)</div>
+      <div><kbd>J</kbd> Field notes</div><div><kbd>E</kbd> Close a document</div>
         <div><kbd>Esc</kbd> Pause</div><div><kbd>M</kbd> Mute</div>
     </div>
     <h3>FIELD NOTES</h3>
@@ -160,12 +162,25 @@
     <h2>PAUSED</h2>
     <nav class="menu">
       <button class="mi primary" id="btnResume">▶ RESUME</button>
+      <button class="mi" id="btnPNotes">FIELD NOTES</button>
       <button class="mi" id="btnPBrief">FIELD BRIEFING</button>
       <button class="mi" id="btnPSettings">SETTINGS</button>
       <button class="mi" id="btnPControls">CONTROLS</button>
       <button class="mi" id="btnRestart">REWIND (RESTART)</button>
       <button class="mi" id="btnQuit">EJECT (MAIN MENU)</button>
     </nav>
+  </div>
+</div>
+
+<div id="notes" class="screen hide">
+  <div class="panel">
+    <div class="kicker">FIELD NOTES · <span id="notesLvl"></span></div>
+    <h2>NOTES</h2>
+    <h3>OBJECTIVES</h3><ul id="notesMain" class="tasks"></ul>
+    <h3>LEADS</h3><ul id="notesOpt" class="tasks"></ul>
+    <h3>DOCUMENTS</h3><ul id="notesDocs" class="docs"></ul>
+    <div id="notesRead" class="hide"></div>
+    <button class="mi" id="btnNotesBack">◀ BACK</button>
   </div>
 </div>
 

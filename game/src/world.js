@@ -75,7 +75,7 @@ function buildProps() {
   const B = new PropBatch(mat);
   const scrMat = actMat('screen', { frag: 'scr' }); scrMat.setVector4('aTint', new BABYLON.Vector4(1, 1, 1, 1));
   W.scrMat = scrMat;
-  const busy = new Set([cIdx(LV.spawn.x, LV.spawn.y), cIdx(LV.exit.x, LV.exit.y), ...LV.tapeCells.map(c => cIdx(c.x, c.y))]);
+  const busy = new Set([cIdx(LV.spawn.x, LV.spawn.y), cIdx(LV.exit.x, LV.exit.y), ...LV.tapeCells.map(c => cIdx(c.x, c.y)), ...(LV.placeCells || [])]);   // r6: places are furnished on their own
   const CARD = [0.52, 0.4, 0.24], CARD2 = [0.46, 0.35, 0.2], TAPEC = [0.62, 0.52, 0.34];
   const cornerSpot = (cx, cy) => { const sx = RNG() < 0.5 ? -1 : 1, sz = RNG() < 0.5 ? -1 : 1; return [cellCenter(cx) + sx * rnd(0.95, 1.2), cellCenter(cy) + sz * rnd(0.95, 1.2)]; };
   const CB = mdlOk('cbox') ? mdlDims('cbox') : [0.384, 0.342, 0.516];
@@ -256,7 +256,7 @@ function buildExit() {
   root.computeWorldMatrix(true);
   const front = BABYLON.Vector3.TransformCoordinates(V3(0, 0, 0.9), root.getWorldMatrix());
   W.exit = { root, hinge, led, white, x: front.x, z: front.z, open: 0, opening: false, signPos: BABYLON.Vector3.TransformCoordinates(V3(0, 2.45, 0.4), root.getWorldMatrix()), doorPos: BABYLON.Vector3.TransformCoordinates(V3(0, 1.2, 0.1), root.getWorldMatrix()) };
-  W.interact.push({ x: W.exit.doorPos.x, z: W.exit.doorPos.z, y: 1.2, r: 2.2, label: () => G.code.length < 4 ? 'KEYPAD — LOCKED' : 'ENTER CODE', ok: () => !W.exit.opening, act: () => useExit() });
+  W.interact.push({ x: W.exit.doorPos.x, z: W.exit.doorPos.z, y: 1.2, r: 2.2, label: () => exitLabel0(), ok: () => !W.exit.opening, act: () => useExit() });
 }
 
 // ----- atmosphere: dust motes & flashlight beams -----
@@ -308,7 +308,7 @@ async function buildWorld(progress, diff) {
   SCN.clearColor = new BABYLON.Color4(0, 0, 0, 1); SCN.skipPointerMovePicking = true; SCN.blockMaterialDirtyMechanism = false;
   CAM = new BABYLON.FreeCamera('cam', V3(10, 1.6, 10), SCN); CAM.inputs.clear(); CAM.minZ = 0.05; CAM.maxZ = 95; CAM.fov = 1.0;
   progress(0.08, 'MAPPING LEVEL 0…'); await nextFrame();
-  genLayout(); planLevel(); collectPieces();
+  genLayout(); planLevel(); planPlaces0(); collectPieces();
   progress(0.16, 'PRINTING WALLPAPER…'); await nextFrame();
   const wp = genWallpaper(SCN, 1024);
   progress(0.3, 'SOAKING CARPET…'); await nextFrame();
@@ -323,7 +323,7 @@ async function buildWorld(progress, diff) {
   const mats = { wall: envMat('wallMat', 'MAT_WALL', wp.albedo, wp.normal), floor: envMat('floorMat', 'MAT_FLOOR', cp.albedo, cp.normal), ceil: envMat('ceilMat', 'MAT_CEIL', ce.albedo, ce.normal), trim: envMat('trimMat', 'MAT_TRIM', wp.albedo, wp.normal), fixture: fm };
   buildGeometry(SCN, mats);
   progress(0.84, 'SCATTERING DEBRIS…'); await nextFrame();
-  buildProps(); buildTapeSites(); buildExit(); buildDust();
+  buildProps(); buildTapeSites(); buildExit(); buildPlaces0(); buildDust();
   SCN.setRenderingOrder(0, (a, b) => (a.getMesh()._sortD ?? 400) - (b.getMesh()._sortD ?? 400));
   progress(0.94, 'SPOOLING TAPE…'); await nextFrame();
 }
