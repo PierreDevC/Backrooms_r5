@@ -14176,15 +14176,21 @@ const TEX37 = {
   // glazed pool tile, 8 x 8 per 1.2 m (15 cm tiles): white-blue, hairline grout, faint wear
   // glazed square tile, 9 x 9 per 1.2 m (about 13 cm), cream with a green cast, dark thin grout (like the reference renders)
   ptile: (sc, S) => genTex9(sc, S, 1.2, (u, v, x, y, o) => {
-    const K = 9, tu = (u * K) % 1, tv = (v * K) % 1, ti = Math.floor(u * K), tj = Math.floor(v * K), e = Math.min(tu, 1 - tu, tv, 1 - tv), seam = e < 0.06;
-    const n = tfbm(u * 10, v * 10, 10, 3, 211), tone = (h2i(ti, tj, 212) - 0.5) * 0.03, b = 0.9 + n * 0.05 + tone, g = seam ? 0.36 : 1;
-    o[0] = b * 0.95 * g; o[1] = b * g; o[2] = b * 0.9 * g; o[3] = seam ? 0 : 0.5 + n * 0.2;
+    const K = 12, tu = (u * K) % 1, tv = (v * K) % 1, ti = Math.floor(u * K), tj = Math.floor(v * K), e = Math.min(tu, 1 - tu, tv, 1 - tv), seam = e < 0.035;
+    const n = tfbm(u * 10, v * 10, 10, 3, 211), tone = (h2i(ti, tj, 212) - 0.5) * 0.03, b = 0.9 + n * 0.05 + tone, g = seam ? 0.55 : 1;
+    o[0] = b * g; o[1] = b * 0.99 * g; o[2] = b * 0.93 * g; o[3] = seam ? 0 : 0.5 + n * 0.2;
   }),
   // dark-line tile for lane floors: same tile with a black lane stripe every 4 m (u runs along the lane)
   lane: (sc, S) => genTex9(sc, S, 0.9, (u, v, x, y, o) => {
     const tu = (u * 14) % 1, tv = (v * 14) % 1, seam = Math.min(tu, 1 - tu, tv, 1 - tv) < 0.07, n = tfbm(u * 10, v * 10, 10, 3, 221);
     const stripe = Math.abs(v - 0.5) < 0.05 ? 0.2 : 1, b = (0.88 + n * 0.05) * stripe;
     o[0] = b * 0.97 * (seam ? 0.3 : 1); o[1] = b * (seam ? 0.3 : 1); o[2] = b * 0.84 * (seam ? 0.3 : 1); o[3] = seam ? 0 : 0.5;
+  }),
+  // pale green-grey hospital lino: large soft check, not the yellow school floor
+  hlino: (sc, S) => genTex9(sc, S, 1.2, (u, v, x, y, o) => {
+    const K = 3, ti = Math.floor(u * K), tj = Math.floor(v * K), tu = (u * K) % 1, tv = (v * K) % 1, seam = Math.min(tu, 1 - tu, tv, 1 - tv) < 0.02, n = tfbm(u * 8, v * 8, 8, 3, 241);
+    const b = ((ti + tj) % 2 ? 0.86 : 0.74) + n * 0.05, g = seam ? 0.7 : 1;
+    o[0] = b * 0.88 * g; o[1] = b * 0.96 * g; o[2] = b * 0.9 * g; o[3] = 0.55 + n * 0.2;
   }),
   // wet stained concrete for the pump room and the tunnels
   wetc: (sc, S) => genTex9(sc, S, 1.4, (u, v, x, y, o) => {
@@ -14224,7 +14230,7 @@ function genLayout37() {
   const water = (r, x0, y0, x1, y1, fh, bas) => { for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) { const c = cIdx(x, y); if (LV.room[c] !== r.id) continue; LV.fh[c] = fh; LV.bas[c] = bas; LV.ch[c] = r.rel ? fh + r.h : r.h; } };
   LV.dry = {};   // named rooms the story code looks up
   const SIDE = {
-    pool: { m: 'ptw', c: [0.96, 1, 0.9], t: TRIM37.green, tp: 2 }, cab: { m: 'ptw', c: [1, 0.97, 0.86], t: TRIM37.wood, tp: 2 }, plant: { m: 'wetc', c: [0.9, 1, 0.98], t: TRIM37.steel, tp: 1 },
+    pool: { m: 'ptw', c: [1, 0.98, 0.92], t: TRIM37.green, tp: 2 }, cab: { m: 'ptw', c: [1, 0.97, 0.86], t: TRIM37.wood, tp: 2 }, plant: { m: 'wetc', c: [0.9, 1, 0.98], t: TRIM37.steel, tp: 1 },
     tun: { m: 'wetc', c: [0.55, 0.65, 0.66], t: TRIM37.dark, tp: 0 }, vest: { m: 'ptw', c: [0.94, 1, 0.9], t: TRIM37.green, tp: 2 },
   };
   // ================= THE HUB =================
@@ -14235,7 +14241,7 @@ function genLayout37() {
   for (let x = 33; x <= 36; x++) { const c = cIdx(x, 43); LV.fh[c] = -2.4; LV.bas[c] = BAS37.SH; }   // the pit runs to the south wall, where the corridor starts
   LV.dry.sh = SH;
   LV.pil37 = [];   // round tiled columns standing in the water
-  for (let y = 30; y <= 41; y += 4) for (let x = 29; x <= 40; x += 4) { if (x >= 30 && x <= 38 && y >= 37) continue; if (x >= 33 && x <= 37 && y >= 38) continue; LV.pil37.push({ x: cellCenter(x), z: cellCenter(y), r: 0.66, fh: -0.55, top: SH.h }); }
+  for (let y = 30; y <= 41; y += 4) for (let x = 29 + ((y - 30) / 4 % 2) * 2; x <= 40; x += 4) { if (x >= 30 && x <= 38 && y >= 37) continue; if (x >= 33 && x <= 37 && y >= 38) continue; LV.pil37.push({ x: cellCenter(x), z: cellCenter(y), r: 0.66, fh: -0.55, top: SH.h }); }
   // the vestibule between the Shallows and the Dive Well
   const GV = rect(room(Z37.VEST, R37Z.HUB, 'gatev', { h: 3.8, side: SIDE.vest, flr: { m: 'ptile', col: [0.9, 0.98, 0.88] }, cm: 'ptile', cc: [0.94, 1, 0.88] }), 34, 26, 36, 26, DECK37);
   way(35, 27, 3, 'arch', { w: 2.6, h: 3.0, from: [35, 27], sign: 'DEEP END' }); way(35, 26, 3, 'arch', { w: 2.6, h: 3.0, from: [35, 26] });
@@ -14274,7 +14280,7 @@ function genLayout37() {
   LV.dry.tw = TW;
   // the corridor under the Shallows' pit, to the hotel
   const HC = room(Z37.TUNNEL, R37Z.HOTEL, 'hcorr', { rel: true, h: 3.0, side: SIDE.tun, flr: { m: 'wetc', col: [0.6, 0.7, 0.7] }, cm: 'bconc', cc: [0.4, 0.46, 0.46] });
-  rect(HC, 34, 44, 35, 46, -2.4); for (const [x, y] of [[34, 44], [35, 44], [34, 45], [35, 45]]) LV.dark[cIdx(x, y)] = 1;
+  rect(HC, 34, 44, 35, 47, -2.4);
   setFh(34, 46, 35, 46, -1.6); setFh(34, 47, 35, 47, -0.8);   // (the hotel lobby is at y 48 and above)
   way(34, 43, 1, 'arch', { w: 2.0, h: 2.7, from: [34, 43], hcorr: true }); way(35, 43, 1, 'arch', { w: 2.0, h: 2.7, from: [35, 43] });
   LV.dry.hc = HC;
@@ -14439,14 +14445,15 @@ function planLights37() {
       F(cellCenter(x), cellCenter(y), { I: o.I ?? 0.5, rad: o.rad ?? 12, sc: o.sc ?? 4, state: st }); LV.panels.push({ x: cellCenter(x), z: cellCenter(y), y: ceil37(c), state: st, w: o.w ?? 1.1, l: o.l ?? 2.2 }); }
   };
   for (const [x, y, d] of SLITS37) { const [mx, mz] = edgeMid(x, y, d); F(mx - DX[d] * 1.4, mz - DY[d] * 1.4, { I: 0.8, rad: 12, sc: 3.4 }); }
-  grid(LV.dry.sh, 3, { I: 0.3, rad: 15, sc: 5, w: 1.2, l: 2.6 });
-  grid(LV.dry.well, 3, { I: 0.38, rad: 17, sc: 6, oy: 1, w: 1.2, l: 2.6 });
-  grid(LV.dry.lap, 3, { I: 0.38, rad: 14, sc: 5, ox: 1, oy: 1, w: 1.0, l: 2.2 });
+  grid(LV.dry.sh, 5, { I: 0.38, rad: 18, sc: 6, ox: 2, oy: 1, w: 1.4, l: 1.4 });
+  grid(LV.dry.well, 5, { I: 0.42, rad: 18, sc: 6, ox: 1, oy: 1, w: 1.4, l: 1.4 });
+  grid(LV.dry.lap, 4, { I: 0.4, rad: 15, sc: 5, ox: 1, oy: 1, w: 1.2, l: 1.2 });
   for (const r of LV.rooms) if (r.t === 'gatev' || r.t === 'lapv') for (const c of r.cells) F(cellCenter(c % N), cellCenter((c / N) | 0), { I: 0.45, rad: 7, sc: 2.2 });
   grid(LV.dry.cab, 2, { I: 0.5, rad: 8, sc: 3, w: 0.7, l: 1.3, flick: 0.12 });
-  grid(LV.dry.plant, 3, { I: 0.45, rad: 9, sc: 3, w: 0.5, l: 1.3, flick: 0.2 });
+  grid(LV.dry.plant, 3, { I: 0.7, rad: 10, sc: 3, w: 0.5, l: 1.3, flick: 0.08 });
   grid(LV.dry.booth, 2, { I: 0.45, rad: 7, sc: 2.5, w: 0.7, l: 1.3 });
-  for (const r of LV.rooms) if (r.t === 'tunnelH' || r.t === 'tunnelW' || r.t === 'hcorr') for (const c of r.cells) if (RNG() < 0.35) F(cellCenter(c % N), cellCenter((c / N) | 0), { I: 0.2, rad: 4.5, sc: 1.3, state: RNG() < 0.4 ? 2 : 1 });
+  for (const r of LV.rooms) if (r.t === 'hcorr') for (const c of r.cells) F(cellCenter(c % N), cellCenter((c / N) | 0), { I: 0.5, rad: 8, sc: 2.4, state: 1 });
+  for (const r of LV.rooms) if (r.t === 'tunnelH' || r.t === 'tunnelW') for (const c of r.cells) if (RNG() < 0.35) F(cellCenter(c % N), cellCenter((c / N) | 0), { I: 0.2, rad: 4.5, sc: 1.3, state: RNG() < 0.4 ? 2 : 1 });
   lightHotel37(F, grid); lightHospital37(F, grid); lightWorld37(F, grid);
   LV.sky = null;
 }
@@ -14533,11 +14540,11 @@ void main(){
   vec3 deep = vec3(0.03, 0.4, 0.26) * (0.5 + L*0.8), sky = vec3(0.72, 0.9, 0.7) * (0.4 + L*0.7);
   vec3 col = mix(deep, sky, fres*0.75 + 0.07);
   float sp = pow(max(0.0, sin(q.x*7.0 + t*2.1)*sin(q.y*6.3 - t*1.7)), 6.0)*L;
-  col += vec3(0.7, 0.95, 0.7)*sp*0.45;
+  float sp2 = pow(max(0.0, sin(q.x*13.0 - t*2.6 + sin(q.y*3.0 + t)*2.0)*sin(q.y*11.0 + t*2.2)), 10.0)*L; col += vec3(0.8, 1.0, 0.85)*(sp*0.5 + sp2*0.9);
   vec3 diff = vec3(0.0), spec = vec3(0.0);
   dynLights(p, n, vec3(0.0, 1.0, 0.0), V, 90.0, 1.0, diff, spec);
   col += spec*1.3 + diff*vec3(0.03, 0.1, 0.12);
-  float alpha = above ? mix(0.5, 0.93, fres) : 0.9;
+  float alpha = above ? mix(0.38, 0.92, fres) : 0.88;
   if(!above) col = mix(col, vec3(0.14, 0.6, 0.4)*(0.45 + L*0.7), 0.55);
   gl_FragColor = vec4(fogIt(col, p), alpha*wP.x);
 }`;
@@ -14650,7 +14657,7 @@ async function buildWorld37(progress) {
   T.wood = TEX9.wood(SCN, 512); T.conc = TEX9.conc(SCN, 512); T.block = TEX9.block(SCN, 512);
   progress(0.26, 'HANGING THE WALLPAPER…'); await nextFrame();
   for (const k of ['hwall', 'carpet', 'hceil', 'bconc', 'brick']) T[k] = TEX5[k](SCN, 512);
-  for (const k of ['lino', 'dceil']) T[k] = TEX18[k](SCN, 512);
+  T.lino = TEX37.hlino(SCN, 512); T.dceil = TEX18.dceil(SCN, 512);
   progress(0.4, 'LIGHTING THE ROOMS…'); await nextFrame();
   buildLightmap(SCN); buildCollision();
   progress(0.52, 'WARMING THE WATER…'); await nextFrame();
@@ -14694,9 +14701,10 @@ function plaque37(s, text) { const r = atWall5(s, 0, 0); r.position.y = LV.fh[cI
 function buildGhosts37() {
   if (!LV.ghosts || !LV.ghosts.length) return;
   const m = new BABYLON.StandardMaterial('ghost37', SCN); m.disableLighting = true; m.emissiveColor = new BABYLON.Color3(0.35, 0.62, 0.6); m.alpha = 0.28; m.backFaceCulling = false; m.specularColor = BABYLON.Color3.Black();
-  W37.ghosts = [];
+  W37.ghosts = []; const fm = new BABYLON.StandardMaterial('ghostf37', SCN); fm.disableLighting = true; fm.emissiveColor = new BABYLON.Color3(0.12, 0.3, 0.32); fm.specularColor = BABYLON.Color3.Black();
   for (const [x, y] of LV.ghosts) {
     const b = BABYLON.MeshBuilder.CreateBox('ghost37', { width: CELL, height: 5.0, depth: 0.05 }, SCN); b.material = m; b.position.set(cellCenter(x), floorY37(cellCenter(x), cellCenter(y)) + 2.5, y * CELL); b.isPickable = false; b.alphaIndex = 5; W37.ghosts.push(b);
+    for (const [w, h, px, py] of [[CELL, 0.12, 0, 0.1], [CELL, 0.12, 0, 4.95], [0.12, 5.0, -CELL / 2, 2.5], [0.12, 5.0, CELL / 2, 2.5]]) { const f = BABYLON.MeshBuilder.CreateBox('ghostf37', { width: w, height: h, depth: 0.12 }, SCN); f.material = fm; f.position.set(b.position.x + px, b.position.y - 2.5 + py, b.position.z); f.isPickable = false; W37.ghosts.push(f); }
   }
 }
 
@@ -14717,7 +14725,7 @@ function buildProps37() {
   // ceiling lights
   for (const p of LV.panels) { const r = propRoot(p.x, p.z, 0); r.position.y = p.y; r.computeWorldMatrix(true); (p.state === 2 ? BFl : BOn).add(r, 'Box', { width: p.w, height: 0.03, depth: p.l }, p.state ? [1, 0.98, 0.94] : [0.6, 0.6, 0.6], p.state ? 0.9 : 0, [0, -0.04, 0]); B.add(r, 'Box', { width: p.w + 0.08, height: 0.03, depth: p.l + 0.08 }, [0.8, 0.82, 0.82], 0, [0, -0.015, 0]); }
   furnishShallows37(B); furnishWell37(B); furnishLap37(B); furnishCabana37(B); furnishPlant37(B); furnishBooth37(B);
-  furnishHotel37(B); furnishHospital37(B); furnishWorld37(B);
+  furnishHotel37(B); furnishHospital37(B); furnishWorld37(B); furnishExtra37(B);
   W37.finishProps = () => {
     const keep = [], out = [...(B.finish('props37', keep) || []), ...(BOn.finish('lensOn37', keep) || []), ...(BFl.finish('lensFl37', keep) || [])];
     out.forEach(m => m._sortD = 300);
@@ -14733,7 +14741,7 @@ function pillar37(B, x, z, ceilY) {
 }
 function furnishShallows37(B) {
   const SH = LV.dry.sh, ceil = SH.h;
-  W37.cones = new PropBatch(coneMat('shafts37', [1, 0.94, 0.7, 0.07])); W37.cones.fast = false;
+  W37.cones = new PropBatch(coneMat('shafts37', [1, 0.9, 0.6, 0.2])); W37.cones.fast = false;
   for (const [x, y, d] of SLITS37) {
     const r = wallAt37(x, y, d, 0); r.position.y = DECK37; r.computeWorldMatrix(true);
     W37.BOn.add(r, 'Box', { width: 1.5, height: 4.6, depth: 0.04 }, [1, 0.99, 0.88], 1, [0, 2.6, 0.02]);   // the opening, blown out white
@@ -14873,6 +14881,58 @@ function furnishBooth37(B) {
 }
 // the Pump Room and booth interactions live in story37.js; the wings' furniture lives in wings37.js
 
+// ==== decor37.js ====
+// ---------- r8 · Level 37 decor pass (from the visual review): fuller rooms, signs, the theatre note ----------
+function furnishExtra37(B) {
+  const wood = COL37.wood, wood2 = COL37.wood2, steel = COL37.steel, white = COL37.white, cream = COL37.cream, SG = { bg: '#e9f6f8', fg: '#17607a', line: '#17607a' };
+  const stall = (r, curtain) => { for (const x of [-0.55, 0.55]) B.add(r, 'Box', { width: 0.04, height: 2.0, depth: 1.3 }, [0.78, 0.86, 0.84], 0, [x, 1.0, 0.65]); B.add(r, 'Box', { width: 1.14, height: 0.2, depth: 0.04 }, [0.78, 0.86, 0.84], 0, [0, 2.0, 0.05]); B.add(r, 'Box', { width: 1.0, height: 1.7, depth: 0.03 }, curtain, 0, [0.1, 1.05, 1.25]); B.add(r, 'Box', { width: 0.6, height: 0.04, depth: 0.3 }, wood2, 0, [0, 0.45, 0.5]); solidLocal(r, -0.6, 0, 0.6, 1.3); };
+  // Hotel: the pit corridor is signed, the lobby arches are wider, the court has more to look at
+  sign37('HOTEL  ▼', twin37(wallAt37(34, 43, 1, 1.8)), [0, 3.1, 0.03], 1.7, 0.5, { bg: '#241608', fg: '#e8c868', line: '#b08a3a', emis: 0.3 });
+  sign37('LUKEWARM HOTEL\nRECEPTION · POOL · ROOMS', twin37(wallAt37(34, 44, 3, 1.8)), [0, 2.5, 0.03], 2.4, 0.6, { bg: '#241608', fg: '#e8c868', line: '#b08a3a', emis: 0.3 });
+  for (const [x, z, ry] of [[31, 58.2, 0], [35, 58.2, 0], [41, 58.2, 0], [45, 58.2, 0], [31, 63.4, Math.PI], [45, 63.4, Math.PI]]) { const r = pr37(cc37(Math.floor(x)) + 0.4, z * CELL - 1.7, ry, 0); }   // placeholder anchors kept for tests that probe the court
+  for (const [x, y] of [[29, 57], [29, 60], [29, 63], [47, 57], [47, 63]]) { const r = pr37(cc37(x), cc37(y), 0, DECK37); B.add(r, 'Cylinder', { diameter: 0.04, height: 2.2, tessellation: 6 }, steel, 0, [0, 1.1, 0]); B.add(r, 'Cylinder', { diameter: 2.0, height: 0.04, tessellation: 12 }, pick([[0.9, 0.35, 0.3], [0.95, 0.9, 0.75], [0.3, 0.6, 0.7]]), 0, [0, 2.2, 0]); B.add(r, 'Cylinder', { diameter: 0.7, height: 0.04, tessellation: 12 }, white, 0, [0, 0.72, 0]); B.add(r, 'Cylinder', { diameter: 0.05, height: 0.7, tessellation: 6 }, steel, 0, [0, 0.35, 0]); addSolid(r.position.x - 0.35, r.position.z - 0.35, r.position.x + 0.35, r.position.z + 0.35, 'prop'); }
+  // Shallows: nested blind arches along the long walls (between the light slits) and a spiral stair, as in the reference renders
+  const niche = r => { const pale = [0.95, 0.94, 0.86], inner = [0.62, 0.7, 0.66]; for (const [R, col, th, dp] of [[1.2, pale, 0.2, 0.14], [0.92, inner, 0.14, 0.1]]) { const sp = 2.7; for (let i = 0; i < 10; i++) { const a = (i + 0.5) * Math.PI / 10; B.add(r, 'Box', { width: R * Math.PI / 10 * 1.15, height: th, depth: dp }, col, 0, [Math.cos(a) * R, sp + Math.sin(a) * R, dp / 2 + 0.01], [0, 0, a + Math.PI / 2]); }
+      for (const sx of [-1, 1]) B.add(r, 'Box', { width: th, height: sp, depth: dp }, col, 0, [sx * R, sp / 2, dp / 2 + 0.01]); }
+    B.add(r, 'Box', { width: 1.84, height: 2.7, depth: 0.03 }, [0.56, 0.64, 0.6], 0, [0, 1.35, 0.015]); B.add(r, 'Cylinder', { diameter: 1.84, height: 0.03, tessellation: 20 }, [0.56, 0.64, 0.6], 0, [0, 2.7, 0.015], [Math.PI / 2, 0, 0]); };
+  for (const y of [32, 36, 40]) niche(wallAt37(26, y, 2, 0, 0.01));
+  for (const y of [31, 34, 36]) niche(wallAt37(43, y, 0, 0, 0.01));
+  for (const x of [28, 32, 36, 40]) niche(wallAt37(x, 27, 3, 0, 0.01));
+  { const cx = cc37(41), cz = cc37(33), r = pr37(cx, cz, 0, -0.55), cream2 = [0.93, 0.92, 0.84];
+    B.add(r, 'Cylinder', { diameter: 0.3, height: 6.6, tessellation: 12 }, cream2, 0, [0, 3.3, 0]);
+    for (let i = 0; i < 18; i++) { const a = i * 0.38, y = 0.2 + i * 0.3; B.add(r, 'Box', { width: 1.25, height: 0.07, depth: 0.55 }, cream2, 0, [Math.sin(a) * 0.8, y, Math.cos(a) * 0.8], [0, a - Math.PI / 2, 0]);
+      B.add(r, 'Cylinder', { diameter: 0.035, height: 0.9, tessellation: 6 }, steel, 0, [Math.sin(a) * 1.4, y + 0.45, Math.cos(a) * 1.4]); }
+    for (let i = 0; i < 36; i++) { const a = i * 0.19, y = 0.9 + i * 0.15; B.add(r, 'Box', { width: 0.04, height: 0.04, depth: 0.22 }, steel, 0, [Math.sin(a) * 1.4, y, Math.cos(a) * 1.4], [0, a, 0]); }
+    B.add(r, 'Cylinder', { diameter: 3.1, height: 0.08, tessellation: 20 }, cream2, 0, [0, 5.6, 0]); addSolid(cx - 1.5, cz - 1.5, cx + 1.5, cz + 1.5, 'prop'); }
+  // Cabana: changing stalls, a palm, a rug under the camp
+  for (const y of [34, 36]) stall(wallAt37(25, y, 0, 0), pick([[0.3, 0.6, 0.65], [0.85, 0.8, 0.6], [0.6, 0.35, 0.35]]));
+  { const r = pr37(cc37(24), cc37(32) + 0.3, 0, DECK37); F37.palm(B, r); addSolid(r.position.x - 0.35, r.position.z - 0.35, r.position.x + 0.35, r.position.z + 0.35, 'prop'); }
+  { const r = pr37(cc37(22) + 0.3, cc37(35) + 0.9, 0.5, DECK37); B.add(r, 'Box', { width: 2.6, height: 0.015, depth: 3.2 }, [0.55, 0.3, 0.25], 0, [0, 0.01, 0]); }
+  // Booth: first aid, a ring on its hook, a clock and a timetable, the chair at the desk, a window onto the Well
+  { const r = wallAt37(45, 17, 0, 0); B.add(r, 'Box', { width: 0.6, height: 0.7, depth: 0.2 }, white, 0, [0, 1.5, 0.1]); B.add(r, 'Box', { width: 0.34, height: 0.1, depth: 0.01 }, [0.8, 0.1, 0.1], 0.3, [0, 1.5, 0.21]); B.add(r, 'Box', { width: 0.1, height: 0.34, depth: 0.01 }, [0.8, 0.1, 0.1], 0.3, [0, 1.5, 0.21]); }
+  { const r = wallAt37(45, 20, 0, 0); F37.ring(B, r, COL37.red); B.add(r, 'Cylinder', { diameter: 0.04, height: 0.2, tessellation: 6 }, steel, 0, [0, 1.6, 0.1], [Math.PI / 2, 0, 0]); }
+  { const r = wallAt37(42, 16, 3, 0.6); B.add(r, 'Cylinder', { diameter: 0.4, height: 0.04, tessellation: 20 }, white, 0, [0, 2.2, 0.03], [Math.PI / 2, 0, 0]); B.add(r, 'Box', { width: 0.015, height: 0.16, depth: 0.01 }, COL37.black, 0, [0, 2.26, 0.06]); B.add(r, 'Box', { width: 0.12, height: 0.015, depth: 0.01 }, COL37.black, 0, [0.05, 2.2, 0.06]); B.add(r, 'Box', { width: 0.9, height: 0.7, depth: 0.03 }, [0.9, 0.9, 0.82], 0, [0.9, 1.6, 0.02]); for (let i = 0; i < 7; i++) B.add(r, 'Box', { width: 0.7, height: 0.02, depth: 0.005 }, [0.2, 0.2, 0.25], 0, [0.9, 1.84 - i * 0.08, 0.04]); }
+  { const r = pr37(cc37(44) - 0.3, cc37(16) + 1.5, 3.3, DECK37); B.add(r, 'Cylinder', { diameter: 0.46, height: 0.06, tessellation: 12 }, [0.15, 0.15, 0.18], 0, [0, 0.5, 0]); B.add(r, 'Cylinder', { diameter: 0.05, height: 0.45, tessellation: 6 }, steel, 0, [0, 0.25, 0]); B.add(r, 'Box', { width: 0.44, height: 0.4, depth: 0.05 }, [0.15, 0.15, 0.18], 0, [0, 0.8, -0.2]); }
+  { const r = wallAt37(43, 21, 1, 0); B.add(r, 'Box', { width: 2.2, height: 1.0, depth: 0.05 }, [0.18, 0.55, 0.58], 0.5, [0, 1.6, 0.03]); for (const [w, h, x, y] of [[2.3, 0.08, 0, 2.14], [2.3, 0.08, 0, 1.06], [0.08, 1.1, -1.12, 1.6], [0.08, 1.1, 1.12, 1.6], [0.05, 1.0, 0, 1.6]]) B.add(r, 'Box', { width: w, height: h, depth: 0.1 }, wood2, 0, [x, y, 0.06]); }
+  // Hospital: benches and notice boards in the long corridor, trolleys and chairs in the rooms, curtain rails in the wards, and a note in the theatre
+  for (const x of [22, 26]) { const r = wallAt37(x, 6, 3, 0.3); F37.bench(B, r, { len: 1.8 }); solidLocal(r, -0.9, 0, 0.9, 0.5); }
+  { const r = wallAt37(24, 6, 3, 0.2); B.add(r, 'Box', { width: 1.4, height: 0.9, depth: 0.04 }, [0.55, 0.38, 0.2], 0, [0, 1.6, 0.03]); for (let i = 0; i < 5; i++) B.add(r, 'Box', { width: 0.22, height: 0.3, depth: 0.005 }, pick([white, cream]), 0, [-0.5 + i * 0.25, 1.6 + rnd(-0.12, 0.12), 0.06]); }
+  const trolley = (r) => { B.add(r, 'Box', { width: 0.9, height: 0.05, depth: 0.55 }, steel, 0, [0, 0.8, 0.3]); B.add(r, 'Box', { width: 0.9, height: 0.04, depth: 0.55 }, steel, 0, [0, 0.35, 0.3]); for (const [x, z] of [[-0.42, 0.06], [0.42, 0.06], [-0.42, 0.54], [0.42, 0.54]]) B.add(r, 'Cylinder', { diameter: 0.04, height: 0.8, tessellation: 6 }, COL37.chrome, 0, [x, 0.4, z]); B.add(r, 'Box', { width: 0.4, height: 0.12, depth: 0.3 }, [0.9, 0.92, 0.9], 0, [0, 0.88, 0.3]); solidLocal(r, -0.5, 0, 0.5, 0.65); };
+  for (const [x, y, d] of [[14, 10, 1], [18, 10, 1], [31, 10, 1], [36, 10, 1]]) trolley(wallAt37(x, y, d, 0.5));
+  for (const [x, y, d] of [[20, 9, 2], [28, 9, 0], [12, 8, 2], [37, 8, 0]]) { const r = wallAt37(x, y, d, 0); B.add(r, 'Box', { width: 0.45, height: 0.05, depth: 0.45 }, [0.3, 0.45, 0.5], 0, [0, 0.45, 0.4]); B.add(r, 'Box', { width: 0.45, height: 0.4, depth: 0.05 }, [0.3, 0.45, 0.5], 0, [0, 0.7, 0.2]); for (const [a, b] of [[-0.2, 0.2], [0.2, 0.2], [-0.2, 0.6], [0.2, 0.6]]) B.add(r, 'Cylinder', { diameter: 0.03, height: 0.45, tessellation: 6 }, steel, 0, [a, 0.22, b]); solidLocal(r, -0.3, 0.1, 0.3, 0.7); }
+  for (let i = 1; i <= 6; i++) { const w = LV.dry['ward' + i]; if (!w || !w.bedPos) continue; const r = pr37(w.bedPos.x, w.bedPos.z, 0, 0); B.add(r, 'Box', { width: 2.4, height: 0.03, depth: 0.03 }, steel, 0, [0, 2.3, 0.9]); B.add(r, 'Box', { width: 1.6, height: 1.6, depth: 0.02 }, [0.75, 0.88, 0.85], 0, [0, 1.5, 0.9]); }
+  { const r = pr37(39.5 * CELL + 0.0, cc37(8), 0, 0); B.add(r, 'Box', { width: 0.8, height: 0.08, depth: 1.2 }, steel, 0, [0, 0.82, 0]); B.add(r, 'Box', { width: 0.04, height: 0.8, depth: 0.04 }, steel, 0, [0, 0.4, 0]); B.add(r, 'Box', { width: 0.3, height: 0.01, depth: 0.22 }, [0.95, 0.95, 0.88], 0.3, [0.1, 0.87, 0.2]); W37.pos.theatreNote = { x: r.position.x, z: r.position.z + 1.2 }; }
+  // Water World: planters and a kiosk on the plaza, lamp posts, a sign over the wave pool
+  for (const [x, y] of [[57, 42], [69, 42], [57, 47], [69, 47], [63, 42]]) { const r = pr37(cc37(x), cc37(y), 0, 0); B.add(r, 'Cylinder', { diameter: 1.1, height: 0.5, tessellation: 14 }, [0.78, 0.8, 0.78], 0, [0, 0.25, 0]); B.add(r, 'Sphere', { diameter: 1.0, segments: 8 }, [0.2, 0.5, 0.25], 0, [0, 0.95, 0], null, [1, 1.3, 1]); addSolid(r.position.x - 0.55, r.position.z - 0.55, r.position.x + 0.55, r.position.z + 0.55, 'prop'); }
+  for (const [x, y] of [[60, 44], [66, 44]]) { const r = pr37(cc37(x), cc37(y), 0, 0); B.add(r, 'Cylinder', { diameter: 0.14, height: 3.6, tessellation: 8 }, [0.2, 0.25, 0.28], 0, [0, 1.8, 0]); B.add(r, 'Sphere', { diameter: 0.45, segments: 8 }, [1, 0.96, 0.8], 1.2, [0, 3.7, 0]); addSolid(r.position.x - 0.15, r.position.z - 0.15, r.position.x + 0.15, r.position.z + 0.15, 'prop'); }
+  sign37('THE DEEP\n3.0 M · NO LIFEGUARD', twin37(wallAt37(60, 66, 3, 0)), [0, 3.4, 0.03], 2.6, 0.7, { bg: '#e9f6f8', fg: '#17607a', line: '#17607a' });
+  sign37('GATE → PLAZA → AQUARIUM → WAVE POOL', twin37(wallAt37(66, 41, 1, 0)), [0, 4.2, 0.03], 3.4, 0.5, SG);
+}
+function theatreNote37() {
+  SFX.click(); readDoc('theatre37', 'THEATRE · ON THE TABLE', ['OPERATING LIST. One case. Booked for 23:47, 29 Sep.', 'PROCEDURE: none required.', 'SURGEON: —', 'NOTE: the patient will be fine. The patient has always been fine. We do this every night so that someone has done it.', '(a bottle of almond water is taped to the back of the form)'], { kind: 'note' });
+  if (!P37.hosp.theatre) { P37.hosp.theatre = true; PL.water++; SFX.pickup(); toast('ALMOND WATER +1', 2); }
+}
+
 // ==== wings37.js ====
 // ---------- r8 · Level 37: the three wings ----------
 // THE LUKEWARM HOTEL (Level 233): carpet and wallpaper under pool-warm air, a lobby that plays music to nobody, rooms numbered 201 to 204, a cafeteria with a pool in it,
@@ -14883,7 +14943,7 @@ function planHotel37(room, rect, way, setFh, water, SIDE) {
   const H = R37Z.HOTEL, wp = { m: 'hwall', c: [1, 0.96, 0.88], t: [0.42, 0.26, 0.14], tp: 2 }, cr = { m: 'carpet', col: [0.78, 0.5, 0.36] };
   const L = rect(room(Z37.HOTEL, H, 'lobby', { h: 4.3, side: wp, flr: cr, cm: 'hceil', cc: [1, 0.96, 0.9] }), 30, 48, 40, 54, 0);
   way(34, 47, 1, 'arch', { w: 2.0, h: 2.7, from: [34, 47] }); way(35, 47, 1, 'arch', { w: 2.0, h: 2.7, from: [35, 47] });
-  way(40, 51, 0, 'arch', { w: 2.6, h: 3.0, from: [40, 51], sign: 'CAFETERIA' }); way(35, 54, 1, 'arch', { w: 3.0, h: 3.0, from: [35, 54], sign: 'POOL' }); way(30, 51, 2, 'arch', { w: 2.2, h: 2.8, from: [30, 51], sign: 'ROOMS 201-204' });
+  way(40, 51, 0, 'arch', { w: 3.4, h: 3.6, from: [40, 51], sign: 'CAFETERIA' }); way(35, 54, 1, 'arch', { w: 3.4, h: 3.6, from: [35, 54], sign: 'POOL' }); way(30, 51, 2, 'arch', { w: 2.2, h: 2.8, from: [30, 51], sign: 'ROOMS 201-204' });
   LV.dry.lobby = L;
   const CF = room(Z37.CAFE, H, 'cafe', { h: 4.0, side: { m: 'hwall', c: [1, 0.98, 0.9], t: [0.5, 0.36, 0.22], tp: 2 }, flr: { m: 'wood', col: [0.95, 0.85, 0.7] }, cm: 'hceil', cc: [1, 0.97, 0.9] });
   rect(CF, 41, 48, 49, 55, 0); water(CF, 43, 50, 47, 53, -1.2, BAS37.CAFE); LV.dry.cafe = CF;
@@ -14903,7 +14963,7 @@ function planHospital37(room, rect, way, setFh, water, SIDE) {
   const ST = room(Z37.HOSP, H, 'hstair', { rel: true, h: 3.2, side: { m: 'wetc', c: [0.7, 0.8, 0.78], t: [0.4, 0.45, 0.45], tp: 1 }, flr: { m: 'wetc', col: [0.7, 0.8, 0.8] }, cm: 'kceil', cc: [0.9, 0.95, 0.93] });
   rect(ST, 24, 13, 24, 13, -4.4); rect(ST, 24, 12, 24, 12, -2.2);
   LV.bas[cIdx(24, 13)] = BAS37.WELL; LV.ch[cIdx(24, 13)] = 2.0; LV.ch[cIdx(24, 12)] = 3.6; LV.dark[cIdx(24, 13)] = 1;
-  way(24, 14, 1, 'arch', { w: 1.8, h: 2.3, from: [24, 14], tunnel: true });
+  way(24, 13, 1, 'arch', { w: 1.8, h: 2.3, from: [24, 13], tunnel: true });
   const A = rect(room(Z37.HOSP, H, 'admissions', { h: 3.4, side: wl, flr: fl, cm: 'kceil', cc: [0.96, 1, 0.98] }), 20, 7, 28, 11, 0);
   way(24, 12, 3, 'arch', { w: 2.0, h: 2.7, from: [24, 12] }); LV.dry.adm = A;
   const CO = rect(room(Z37.HOSP, H, 'hcorr', { h: 3.2, side: wl, flr: fl, cm: 'kceil', cc: [0.96, 1, 0.98] }), 12, 6, 38, 6, 0);
@@ -14933,12 +14993,12 @@ function planWorld37(room, rect, way, setFh, water, SIDE) {
   way(67, 65, 1, 'door', { dk: 'staff', plaque: 'POOL ACCESS', from: [67, 65] }); LV.dry.fin = FIN;
   LV.ghosts = [[58, 67, 0], [58, 68, 0], [58, 69, 0], [64, 67, 0], [64, 68, 0], [64, 69, 0]];   // glass-and-tile panels you can swim straight through
 }
-function lightHotel37(F, grid) { for (const k of ['lobby', 'cafe', 'court']) grid(LV.dry[k], 3, { I: 0.52, rad: 12, sc: 4, ox: 1, oy: 1, w: 0.9, l: 0.9 }); for (const k of ['corr37', 'r201', 'r202', 'r203', 'r204', 'vault']) grid(LV.dry[k], 2, { I: 0.4, rad: 6, sc: 2, w: 0.6, l: 0.6 }); }
+function lightHotel37(F, grid) { for (const k of ['lobby', 'cafe', 'court']) grid(LV.dry[k], 3, { I: 0.75, rad: 13, sc: 4, ox: 1, oy: 1, w: 0.9, l: 0.9 }); for (const k of ['corr37', 'r201', 'r202', 'r203', 'r204', 'vault']) grid(LV.dry[k], 2, { I: k === 'vault' ? 0.8 : 0.55, rad: 6, sc: 2, w: 0.6, l: 0.6 }); }
 function lightHospital37(F, grid) { for (const k of ['adm', 'hcorr', 'laundry', 'pharmacy', 'nurses', 'records', 'theatre']) grid(LV.dry[k], 2, { I: 0.5, rad: 8, sc: 3, w: 0.6, l: 1.2, flick: k === 'hcorr' ? 0.1 : 0 }); for (let i = 1; i <= 6; i++) grid(LV.dry['ward' + i], 2, { I: 0.38, rad: 5, sc: 2, w: 0.5, l: 1.0 }); }
 function lightWorld37(F, grid) {
-  grid(LV.dry.plaza, 3, { I: 0.7, rad: 14, sc: 5, ox: 1, w: 1.2, l: 1.2 }); grid(LV.dry.foyer, 3, { I: 0.55, rad: 11, sc: 4, ox: 1, w: 1.0, l: 1.0 }); grid(LV.dry.dome, 3, { I: 0.4, rad: 10, sc: 4, w: 0.8, l: 0.8, flick: 0.2 });
-  for (const c of LV.dry.scorr.cells) if ((c % N) % 3 === 0) F(cellCenter(c % N), cellCenter((c / N) | 0), { I: 0.3, rad: 6, sc: 2, state: RNG() < 0.3 ? 2 : 1 });
-  for (const k of ['gen', 'control', 'brk']) grid(LV.dry[k], 2, { I: 0.3, rad: 6, sc: 2, w: 0.5, l: 0.5, flick: 0.25 }); grid(LV.dry.fin, 3, { I: 0.5, rad: 11, sc: 4, w: 1.0, l: 2.0, flick: 0.15 });
+  grid(LV.dry.plaza, 3, { I: 0.7, rad: 14, sc: 5, ox: 1, w: 1.2, l: 1.2 }); grid(LV.dry.foyer, 3, { I: 0.55, rad: 11, sc: 4, ox: 1, w: 1.0, l: 1.0 }); for (const [lx, ly] of [[58, 54], [58, 59], [68, 54], [68, 59]]) F(cellCenter(lx), cellCenter(ly), { I: 0.8, rad: 9, sc: 3 }); grid(LV.dry.dome, 3, { I: 0.4, rad: 10, sc: 4, w: 0.8, l: 0.8, flick: 0.2 });
+  for (const c of LV.dry.scorr.cells) if ((c % N) % 3 === 0) F(cellCenter(c % N), cellCenter((c / N) | 0), { I: 0.45, rad: 7, sc: 2, state: RNG() < 0.2 ? 2 : 1 });
+  for (const k of ['gen', 'control', 'brk']) grid(LV.dry[k], 2, { I: 0.55, rad: 7, sc: 2, w: 0.5, l: 0.5, flick: 0.1 }); grid(LV.dry.fin, 3, { I: 0.5, rad: 11, sc: 4, w: 1.0, l: 2.0, flick: 0.15 });
 }
 
 // ================= furnishings =================
@@ -14990,9 +15050,9 @@ function furnishHospital37(B) {
   { const r = wallAt37(27, 9, 0, 0); B.add(r, 'Box', { width: 0.4, height: 1.2, depth: 0.3 }, [0.8, 0.84, 0.84], 0, [0, 0.9, 0.15]); B.add(r, 'Box', { width: 0.26, height: 0.12, depth: 0.02 }, [0.05, 0.3, 0.1], 0.9, [0, 1.25, 0.31]); solidLocal(r, -0.25, 0, 0.25, 0.4); W37.pos.ticket = localPt(r, 0, 1.0, 0.7); }
   { const r = wallAt37(24, 11, 1, 0, 0.05), k = twin37(r), S = dynTexPlane('hclock', 0.5, 0.5, 128, 128, k, [0, 2.6, 0.02], 0.5), c = S.ctx; c.fillStyle = '#f4f4ee'; c.fillRect(0, 0, 128, 128); c.strokeStyle = '#222'; c.lineWidth = 6; c.beginPath(); c.arc(64, 64, 58, 0, TAU); c.stroke(); c.beginPath(); c.moveTo(64, 64); c.lineTo(64, 24); c.stroke(); c.lineWidth = 4; c.beginPath(); c.moveTo(64, 64); c.lineTo(94, 80); c.stroke(); S.dt.update(); }
   for (let x = 13; x <= 37; x += 4) { const r = wallAt37(x, 6, 1, 0); B.add(r, 'Box', { width: 3.4, height: 0.06, depth: 0.08 }, [0.7, 0.78, 0.74], 0, [0, 0.9, 0.06]); }
-  for (const x of [15, 22, 31, 36]) { const r = pr37(cc37(x), 6 * CELL + 0.7, 0.05 * x, 0); B.add(r, 'Box', { width: 0.8, height: 0.12, depth: 1.9 }, [0.88, 0.9, 0.9], 0, [0, 0.8, 0]); B.add(r, 'Box', { width: 0.7, height: 0.1, depth: 0.5 }, [0.95, 0.95, 0.92], 0, [0, 0.92, -0.65]); for (const sx of [-0.36, 0.36]) for (const sz of [-0.8, 0.8]) B.add(r, 'Cylinder', { diameter: 0.14, height: 0.06, tessellation: 8 }, COL37.black, 0, [sx, 0.06, sz]); B.add(r, 'Box', { width: 0.04, height: 0.6, depth: 1.5 }, COL37.steel, 0, [0, 0.4, 0]); addSolid(r.position.x - 0.5, r.position.z - 1.1, r.position.x + 0.5, r.position.z + 1.1, 'prop'); }
+  for (const x of [14, 22, 31, 38]) { const r = pr37(cc37(x), 6 * CELL + 0.7, 0.05 * x, 0); B.add(r, 'Box', { width: 0.8, height: 0.12, depth: 1.9 }, [0.88, 0.9, 0.9], 0, [0, 0.8, 0]); B.add(r, 'Box', { width: 0.7, height: 0.1, depth: 0.5 }, [0.95, 0.95, 0.92], 0, [0, 0.92, -0.65]); for (const sx of [-0.36, 0.36]) for (const sz of [-0.8, 0.8]) B.add(r, 'Cylinder', { diameter: 0.14, height: 0.06, tessellation: 8 }, COL37.black, 0, [sx, 0.06, sz]); B.add(r, 'Box', { width: 0.04, height: 0.6, depth: 1.5 }, COL37.steel, 0, [0, 0.4, 0]); addSolid(r.position.x - 0.5, r.position.z - 1.1, r.position.x + 0.5, r.position.z + 1.1, 'prop'); }
   sign37('QUIET PLEASE\nPATIENTS RESTING', twin37(wallAt37(24, 6, 3, 0)), [0, 2.4, 0.03], 2.2, 0.6, { bg: '#e6f2ee', fg: '#2a5a4a', line: '#2a5a4a' });
-  for (let i = 1; i <= 6; i++) { const w = LV.dry['ward' + i], cx = w.cells[4] % N, cy = (w.cells[4] / N) | 0;
+  for (let i = 1; i <= 6; i++) { const w = LV.dry['ward' + i], xs = w.cells.map(c => c % N), ys = w.cells.map(c => (c / N) | 0), cx = (Math.min(...xs) + Math.max(...xs)) >> 1, cy = (Math.min(...ys) + Math.max(...ys)) >> 1;
     { const r = pr37(cc37(cx), cc37(cy) - 0.4, 0, 0); B.add(r, 'Box', { width: 1.0, height: 0.12, depth: 2.0 }, [0.85, 0.88, 0.88], 0, [0, 0.62, 0]); B.add(r, 'Box', { width: 0.95, height: 0.14, depth: 1.6 }, [0.92, 0.92, 0.9], 0, [0, 0.76, 0.2]); B.add(r, 'Box', { width: 0.7, height: 0.1, depth: 0.4 }, [0.97, 0.97, 0.94], 0, [0, 0.86, -0.65]); B.add(r, 'Box', { width: 1.0, height: 0.7, depth: 0.06 }, COL37.steel, 0, [0, 0.9, -1.05]); for (const sx of [-0.5, 0.5]) for (const sz of [-0.9, 0.9]) B.add(r, 'Cylinder', { diameter: 0.1, height: 0.3, tessellation: 8 }, COL37.black, 0, [sx, 0.15, sz]);
       addSolid(r.position.x - 0.6, r.position.z - 1.1, r.position.x + 0.6, r.position.z + 1.1, 'prop'); w.bedPos = { x: r.position.x, z: r.position.z }; }
     { const q = pr37(cc37(cx) + 1.4, cc37(cy) + 0.6, 0, 0); B.add(q, 'Cylinder', { diameter: 0.04, height: 1.9, tessellation: 6 }, COL37.chrome, 0, [0, 0.95, 0]); B.add(q, 'Cylinder', { diameter: 0.5, height: 0.04, tessellation: 12 }, COL37.chrome, 0, [0, 0.03, 0]); B.add(q, 'Box', { width: 0.12, height: 0.2, depth: 0.04 }, [0.8, 0.92, 0.96], 0.1, [0.1, 1.7, 0]); addSolid(q.position.x - 0.28, q.position.z - 0.28, q.position.x + 0.28, q.position.z + 0.28, 'prop'); w.dripPos = { x: q.position.x, z: q.position.z }; }
@@ -15032,7 +15092,7 @@ function furnishWorld37(B) {
   { const r = wallAt37(62, 65, 1, 0); B.add(r, 'Box', { width: 2.4, height: 0.05, depth: 0.8 }, COL37.wood2, 0, [0, 0.76, 0.45]); for (const x of [-1.1, 1.1]) B.add(r, 'Box', { width: 0.06, height: 0.74, depth: 0.7 }, COL37.wood, 0, [x, 0.37, 0.45]); solidLocal(r, -1.25, 0, 1.25, 0.9);
     B.add(r, 'Box', { width: 0.7, height: 0.56, depth: 0.6 }, [0.62, 0.6, 0.55], 0, [-0.6, 1.07, 0.4]); B.add(r, 'Box', { width: 0.54, height: 0.4, depth: 0.02 }, [0.05, 0.06, 0.08], 0.1, [-0.6, 1.09, 0.71]); B.add(r, 'Box', { width: 0.6, height: 0.1, depth: 0.5 }, [0.12, 0.12, 0.13], 0, [0.4, 0.84, 0.5]);
     W37.pos.ctrl = localPt(r, 0, 1.0, 1.0); W37.pos.ctrlNote = localPt(r, 0.9, 0.8, 0.8); }
-  { const r = wallAt37(67, 65, 1, 0); B.add(r, 'Box', { width: 0.9, height: 1.0, depth: 0.7 }, [0.42, 0.5, 0.55], 0, [0, 0.5, 0.35]); B.add(r, 'Cylinder', { diameter: 0.5, height: 0.1, tessellation: 12 }, [0.8, 0.8, 0.8], 0, [0, 1.05, 0.4]); solidLocal(r, -0.5, 0, 0.5, 0.75); W37.pos.breakTable = localPt(r, 0, 1.1, 1.0); }
+  { const r = wallAt37(68, 65, 1, 0); B.add(r, 'Box', { width: 0.9, height: 1.0, depth: 0.7 }, [0.42, 0.5, 0.55], 0, [0, 0.5, 0.35]); B.add(r, 'Cylinder', { diameter: 0.5, height: 0.1, tessellation: 12 }, [0.8, 0.8, 0.8], 0, [0, 1.05, 0.4]); solidLocal(r, -0.5, 0, 0.5, 0.75); W37.pos.breakTable = localPt(r, 0, 1.1, 1.0); }
   for (const [x, y] of [[53, 66], [61, 66], [69, 66]]) { const r = pr37(cc37(x), cc37(y) - 0.6, 0, DECK37); B.add(r, 'Box', { width: 0.7, height: 2.2, depth: 0.7 }, [0.92, 0.38, 0.2], 0, [0, 1.1, 0]); B.add(r, 'Box', { width: 1.2, height: 0.08, depth: 1.2 }, [0.92, 0.38, 0.2], 0, [0, 2.3, 0]); addSolid(r.position.x - 0.4, r.position.z - 0.4, r.position.x + 0.4, r.position.z + 0.4, 'prop'); }
   { const r = pr37(71 * CELL - 0.4, cc37(68), -Math.PI / 2, -3); B.add(r, 'Box', { width: 3.0, height: 2.4, depth: 0.5 }, [0.25, 0.3, 0.32], 0, [0, 1.2, 0.25]); for (let i = 0; i < 8; i++) B.add(r, 'Box', { width: 0.06, height: 2.0, depth: 0.06 }, [0.5, 0.52, 0.5], 0, [-1.2 + i * 0.34, 1.2, 0.55]); W37.pos.waveMachine = { x: 70 * CELL - 0.6, z: cc37(68) }; }
   for (let i = 0; i < 5; i++) { const n = tnode(null, cc37(54 + i * 3), 0, cc37(67 + (i % 3))), m = mkMerged(W37.propMat, P => { P('Torus', { diameter: 0.7, thickness: 0.18, tessellation: 16 }, i % 2 ? COL37.yellow : COL37.red, 0, [0, 0.08, 0]); }, 'buoy37'); m.parent = n; floater37(n, BAS37.WWF, 0); }
@@ -15110,7 +15170,7 @@ function target37() {
 function arrive37() {
   later(1.6, () => say(OUT9, 'Nine. Camera, there is water on your carrier. A lot of it.', { radio: true }));
   later(9, () => say(OUT9, 'Nine. Find a floor that isn\'t wet and stand on it.', { radio: true }));
-  if (flag('hale9') === 'saved') later(20, () => say(HALE_R, 'Hale. If this reaches the pool: walk or swim, but don\'t float. Whatever you do in warm water, do it on purpose.', { radio: true }));
+  if (flag('hale9') === 'saved') later(20, () => say(HALE_R, 'Hale. Nine says you\'re in water. Don\'t float. Keep walking, keep counting.', { radio: true }));
   later(26, () => toast('[C] DIVE · LOOK DOWN AND SWIM TO GO DEEPER · BREATHE AT THE SURFACE', 4));
 }
 
@@ -15194,14 +15254,14 @@ function talkAbara37() {
     if (!T.team) { T.team = true; A('Kowalczyk went up the stairs in the blue house and the stairs weren\'t there. Lund went after him. I stayed with the radio.'); A('The radio was a pool. I won\'t explain that any better.', 5.4); return; }
     if (!T.pell) {
       T.pell = true; A('There was a Camera before you. Pell. Tall. Hummed when he was thinking.'); A('He left his camcorder in the pit and my cassette went in after it. I was cleaning it. I\'d like tape four back.', 4.6);
-      A('Plant\'s through the west door. Key\'s under the kettle. Don\'t tell me it\'s a pump room, I know what it is.', 10);
+      A('Plant\'s through the west door. Key\'s under the kettle. I\'d go, but somebody has to be here when it boils.', 10);
       later(11, () => { P37.quest = true; setPhase37('dry'); toast('NEW OBJECTIVE · ABARA\'S CASSETTE', 2.8); }); return;
     }
   }
   if (P37.quest && !(P37.cam && P37.cass)) {
     const k = P37.drained ? 'drained' : P37.plant ? 'plant' : P37.kettleKey ? 'key' : 'ask';
-    if (k === 'ask') A('Kettle. Under it. It isn\'t a riddle.'); else if (k === 'key') A('West door, then. The wheel marked SHALLOWS. Hold it. It\'s a long three seconds.');
-    else if (k === 'plant') A('Gate three. Run it down and walk to the bottom. Don\'t swim, you\'ll lose the camcorder and I\'ll lose the tape.');
+    if (k === 'ask') A('Kettle. Under it. It isn\'t a riddle.'); else if (k === 'key') A('West door, then. The wheel marked SHALLOWS. Hold it.');
+    else if (k === 'plant') A('Gate three. Let it run down and walk to the bottom. Don\'t dive for it. It\'s one tape.');
     else A('The pit. South end. Mind the step.'); return;
   }
   if (P37.quest && P37.cam && P37.cass && !P37.ret) {
@@ -15211,30 +15271,29 @@ function talkAbara37() {
   }
   if (P37.ret && !P37.told2) {
     P37.told2 = true; A('Right. Three doors, none of them out.'); A('Pit corridor, south: a hotel. Down the well and along: a hospital. East end of the lane pool: a park.', 3.6);
-    A('Each one keeps something. You\'ll know it because somebody won\'t let you take it.', 9); A('The lifeguard\'s panel has three slots. I count them every morning. I\'m not saying anything by it.', 13.4); return;
+    A('Each one keeps one thing. Nobody gives it up for free.', 9); A('The lifeguard\'s panel has three slots. I count them every morning.', 13.4); return;
   }
   // later visits: what she says about what you have done
   const w = wingsDone37(), T = P37.topics;
   if (P37.keys.hotel && !T.hotel) { T.hotel = true; A('Hotel. Did the music follow you? It follows me.'); return; }
   if (P37.keys.hosp && !T.hosp) { T.hosp = true; hospAbara37(A); return; }
-  if (P37.keys.tape && !T.park) { T.park = true; A('You drank from the tanks? Nobody drinks from the tanks.'); A('I did once. It was very good. That was the problem with it.', 4); return; }
+  if (P37.keys.tape && !T.park) { T.park = true; A('You drank from the tanks? Nobody drinks from the tanks.'); A('I did once. Very good. I don\'t remember the afternoon.', 4); return; }
   if (w >= 1 && !T.stay) { T.stay = true; P37.staySeen = true; A('There\'s a second cot. I\'m not saying anything. It\'s there.'); return; }
   if (w >= 3) { A(pick(['You\'ll go up. I know. Leave the kettle on. I\'ll hear it from here.', 'Go on. Tell somebody the water was warm.'])); return; }
-  A(pick(['Drink something. You look like a drowned tape.', 'Hold the wheel longer than you think you need to.', 'The booth is on the north side of the deep end. The door sticks.', 'I haven\'t tried. I\'m only saying the slots are there.']));
+  A(pick(['Drink something. You look like a drowned tape.', 'The pumps complain. Let them.', 'The booth is on the north side of the deep end. The door sticks.', 'Blue towels are the clean ones. I did say.']));
 }
 function hospAbara37(A) {
   const f = RUN.f, dead = f.dead0 && f.dead0.length ? f.dead0 : [];
-  A('Anybody I know?');
-  A('Kowalczyk and Lund. On a roster. Porters, it says. Lund would have gone after him.', 3);
-  if (dead.length) A(`${dead[0].replace(/^[A-Z]\. /, '').split(' ')[0]}. That sounds like someone who'd want the shifts changed.`, 8.5);
-  else A('Nine would want that. I\'m not calling Nine.', 8.5);
+  A('Was there a roster? Kowalczyk and Lund would be on it.');
+  A('Don\'t tell me which ward.', 3.4);
+  if (dead.length) A('Anyone of yours on there? Don\'t answer that either.', 7);
 }
 const PELL37 = ['Is it on. Okay. Tape seven. I stopped counting days, the camcorder keeps its own.', 'Water\'s warm. That\'s my whole complaint. M.E.G. wants a map, so: pool, pool, large pool, pool with a diving board that isn\'t one.',
   'A woman here, relief team, says she\'s been here three hours. I\'ve been here since Tuesday. I\'m recording this so one of us is right.', 'Last one. Leaving the camera in the pit for the next person. If it\'s you: keep it rolling, but stand up now and then.', 'I sat down on the fourth. It was a good fourth.'];
 // ----- the booth -----
 function readGuardLog37() {
   P37.boothRead = true; SFX.click();
-  readDoc('guard37', 'LIFEGUARD LOG', ['06:00 Pool open.', '06:05 Pool open.', '06:10 No swimmers. Water 27. Water 27. Water 27.', 'The panel has three slots and a label under each: HOTEL, HOSPITAL, PARK. Somebody labelled them for me. Not me.', 'The video goes in the slot marked PARK. Do not play it with the Dive Well open. Ref: the incident.', 'If the level moves, go UP. The hatch is in the roof. It is not locked. Nothing here is locked. That\'s the thing about it.'], { kind: 'log' });
+  readDoc('guard37', 'LIFEGUARD LOG', ['06:00 Pool open.', '06:05 Pool open.', '06:10 No swimmers. Water 27. Water 27. Water 27.', 'The panel has three slots and a label under each: HOTEL, HOSPITAL, PARK. Somebody labelled them for me. Not me.', 'The video goes in the slot marked PARK. Do not play it with the Dive Well open. Ref: the incident.', 'If the water moves, go UP. The hatch is in the roof. It is not locked. Nothing here is locked.'], { kind: 'log' });
   tasks37();
 }
 const SLOTN37 = { hotel: 'THE ROOM 233 CARD', hosp: 'THE DISCHARGE WRISTBAND', tape: 'NEW_VIDEO.AVI' };
@@ -15355,7 +15414,7 @@ function endCard37() {
   }
   S.push('The hatch opens on a ceiling fan and an ordinary light. Water runs off the lens for a long time.');
   if (f.hale9 === 'saved') S.push('A radio in another room is saying Hale\'s name, then yours.');
-  if (f.dead0 && f.dead0.length) S.push(`On a shift you will never see, someone called ${f.dead0[0].replace(/^[A-Z]\. /, '')} is changing a bulb he was told to change.`);
+  if (f.dead0 && f.dead0.length) S.push(`On a night shift, somewhere, ${f.dead0[0].replace(/^[A-Z]\. /, '')} is changing a bulb.`);
   if (f.lost0 === 0) S.push('Nine reads the four names off the lobby board, and all four answer.');
   if (P37.keys.hotel) S.push('There is a brass key in your pocket that wasn\'t there when you went in. It says 233.');
   if (f.camera18) S.push('The camcorder is still running. You let it.'); else S.push('The tape runs out on the step.');
@@ -15395,6 +15454,7 @@ function buildWingStory37() {
   I({ x: P.recordsDesk.x, z: P.recordsDesk.z, y: 0.9, r: 1.8, label: () => P37.hosp.chart ? 'THE CHART · TAKEN' : 'TAKE THE CHART', ok: () => G.state === 'play', act: () => takeChart37() });
   I({ x: P.rosterSpot.x, z: P.rosterSpot.z, y: 0.9, r: 1.8, label: () => 'READ THE STAFF ROSTER', ok: () => G.state === 'play', act: () => roster37() });
   I({ x: P.formDesk.x, z: P.formDesk.z, y: 0.9, r: 1.8, label: () => P37.hosp.form ? 'THE FORM · TAKEN' : 'TAKE THE DISCHARGE FORM', ok: () => !P37.hosp.form && G.state === 'play', act: () => { P37.hosp.form = true; SFX.pickup(); toast('A DISCHARGE FORM · THREE STAMPS', 2.4); hospTasks37(); setPhase37(); } });
+  I({ x: P.theatreNote.x, z: P.theatreNote.z, y: 0.9, r: 1.9, label: () => P37.hosp.theatre ? 'THE THEATRE NOTE' : 'READ THE FORM ON THE TABLE', ok: () => G.state === 'play', act: () => theatreNote37() });
   // ===== water world =====
   I({ x: P.map.x, z: P.map.z, y: 1.5, r: 2.0, label: () => 'READ THE PARK MAP', ok: () => G.state === 'play', act: () => parkMap37() });
   for (const t of P.tanks) I({ x: t.x, z: t.z, y: 1.2, r: 2.2, label: () => t.taken ? t.name + ' · EMPTY' : 'DRINK FROM ' + t.name, ok: () => !t.taken && G.state === 'play', act: () => tank37(t) });
@@ -15408,7 +15468,7 @@ function buildWingStory37() {
 // ---------- the hotel ----------
 function guestBook37() {
   P37.hotel.book = true; SFX.click();
-  const f = RUN.f, L = ['TEAGUE, J. · lane 4 · 233 · departed: (blank)', 'PELL, A. · 204 · departed: (blank)', 'Party of one, M.E.G. (camera) · 204 · no luggage · brought own light', 'OKONKWO party of three · Tuesday · Tuesday · Tuesday'];
+  const f = RUN.f, L = ['TEAGUE, J. · lane 4 · 233 · departed: (blank)', 'PELL, P. · 204 · departed: (blank)', 'Party of one, M.E.G. (camera) · 204 · no luggage · brought own light', 'OKONKWO party of three · Tuesday · Tuesday · Tuesday'];
   if (f.lost0 > 0 || (f.dead0 && f.dead0.length)) L.splice(3, 0, 'Party of four, M.E.G. · asked for a room by the pool · told it was full');
   readDoc('guest37', 'GUEST BOOK', L, { kind: 'note' }); hotelTasks37();
 }
@@ -15424,7 +15484,7 @@ function stopwatch37() {
 }
 function talkTeague37() {
   const H = P37.hotel, N = AI37.teague;
-  if (H.timed) { swS37(pick(['Go on. Tell someone it was warm.', 'Lane four is yours if you want it. Nobody swims it.', 'I\'m not going up. I\'m going to do another forty.'])); return; }
+  if (H.timed) { swS37(pick(['Go on. I\'ve got forty more.', 'Lane four is yours if you want it. Nobody swims it.', 'I\'m not going anywhere. Another forty.'])); return; }
   if (!H.met) { H.met = true; swS37('Not yet. Forty lengths.'); swS37('Sorry. I\'m counting, and somebody is counting with me, and he\'s a stroke ahead.', { delay: 3.6 }); return; }
   if (!H.ask) { H.ask = true; swS37('Room 204. There\'s a stopwatch on the nightstand.'); swS37('I can\'t start without it. It\'s silly. It\'s a stopwatch.', { delay: 3.4 }); H.seen = true; hotelTasks37(); setPhase37(); return; }
   if (H.sw && !H.given) { H.given = true; swS37('That\'s his. It\'s dented where he dropped it at Regionals.'); swS37('Press the top when I touch the wall. Not before. Not after.', { delay: 4.4 }); toast('HOLD [E] TO TIME HER', 3); hotelTasks37(); return; }
@@ -15440,13 +15500,13 @@ function timeTeague37() {
   N.swimming = true; N.lapT = 0; swS37('Go.', { dur: 1.4 });
 }
 function takeCard37() {
-  P37.keys.hotel = true; SFX.pickup(); SFX5.jingle(P9({ x: PL.x, y: 1, z: PL.z })); PL.san = Math.max(0, PL.san - 8); FX.glitch = Math.max(FX.glitch, 0.8); toast('THE ROOM 233 CARD · IT WEIGHS MORE THAN A CARD', 3);
+  P37.keys.hotel = true; SFX.pickup(); SFX5.jingle(P9({ x: PL.x, y: 1, z: PL.z })); PL.san = Math.max(0, PL.san - 8); FX.glitch = Math.max(FX.glitch, 0.8); toast('THE ROOM 233 CARD', 3);
   readDoc('card233', 'ROOM 233 · THE LUKEWARM HOTEL', ['CHECK-OUT 11:00', 'Valid for: one night. Extensions at reception.', '(on the back, in a child\'s writing, in crayon) can we stay one more night'], { kind: 'note' });
-  later(1.2, () => { SFX.whisper(); say('', '…one more night…', { mode: 'whisper' }); }); hotelTasks37(); setPhase37(); cpSave('ROOM 233 CARD');
+  later(1.2, () => { SFX.whisper(); say('', '…ask at reception…', { mode: 'whisper' }); }); hotelTasks37(); setPhase37(); cpSave('ROOM 233 CARD');
 }
 function hotelTasks37() {
   const H = P37.hotel; if (!P37.told) return;
-  if (H.seen || H.book || H.met) task('swimmer', 'TEAGUE · SHE CAN\'T START WITHOUT HER FATHER\'S STOPWATCH', { quiet: true, sub: 'ROOM 204 · THE KEY IS IN THE RECEPTION DRAWER' });
+  if (H.seen || H.book || H.met) task('swimmer', 'TEAGUE · SHE CAN\'T START WITHOUT THE STOPWATCH', { quiet: true, sub: 'ROOM 204 · THE KEY IS IN THE RECEPTION DRAWER' });
   if (H.met || H.book) { task('rdrawer', 'THE ROOM 204 KEY · THE RECEPTION DRAWER', { quiet: true, opt: false }); if (H.drawer) taskDone('rdrawer', 'THE ROOM 204 KEY', true); }
   if (H.drawer) { task('stopw', 'THE STOPWATCH · ROOM 204', { quiet: true }); if (H.sw) taskDone('stopw', 'THE STOPWATCH', true); }
   if (H.sw) { task('timeher', 'TIME TEAGUE · FOUR LENGTHS', { quiet: true }); if (H.timed) taskDone('timeher', 'TEAGUE · 2:04.1', true); }
@@ -15470,11 +15530,11 @@ function takeChart37() {
   readDoc('chart37', 'CHART · CAMERA', ['ADMITTED 29 SEP 1996 · 23:47', 'STATUS: PENDING', 'ATTENDING: —', 'NOTES: brought own light. keeps recording. will not put it down.', '(this is not a complaint)'], { kind: 'log' }); hospTasks37(); setPhase37();
 }
 function roster37() {
-  P37.hosp.roster = true; SFX.click(); const f = RUN.f, L = ['KOWALCZYK · LUND · PORTERS · ON STAFF', 'PELL, A. · CAMERA · ON STAFF (NIGHTS)'];
+  P37.hosp.roster = true; SFX.click(); const f = RUN.f, L = ['KOWALCZYK · LUND · PORTERS · ON STAFF', 'PELL, P. · CAMERA · ON STAFF (NIGHTS)'];
   for (const n of f.dead0 || []) L.push(`${n.replace(/^[A-Z]\. /, '')} · ${pick(['SECURITY', 'MAINTENANCE', 'PORTER', 'LAUNDRY', 'NIGHT DESK'])} · ON STAFF`);
   if (f.pruitt5) L.push('PRUITT, E. · NIGHT PORTER · ON STAFF (SINCE 1951)'); if (f.lusk5) L.push('LUSK · SECURITY · ON STAFF (KEEPS HIS KEYS ON THE TABLE)');
   L.push('(at the bottom) CAMERA · PENDING'); readDoc('roster37', 'STAFF ROSTER · NIGHT SHIFT', L, { kind: 'log' });
-  if (!P37.hosp.rosterSaid) { P37.hosp.rosterSaid = true; later(2, () => toast('THEY ARE NOT GONE · THEY ARE ON SHIFT', 3.2)); }
+  if (!P37.hosp.rosterSaid) { P37.hosp.rosterSaid = true; later(2, () => toast('EVERY NAME IS MARKED ON STAFF', 3.2)); }
 }
 function staffLabel37(s) {
   const H = P37.hosp;
@@ -15492,7 +15552,7 @@ function talkStaff37(s) {
   if (s.key === 'ward3' && H.linen && !H.linenDone) { H.linenDone = true; H.linen = 'given'; say_('Thank you.'); say_('Cold in here?', 2.2); stampForm37(); return; }
   if (s.key === 'ward5' && H.iv && !H.ivDone) { H.ivDone = true; say_('Drip. Good.'); stampForm37(); return; }
   if (s.key === 'nurse1' && H.chart && !H.chartDone) { H.chartDone = true; say_('Chart. Then form. Then stamp.'); say_('Pending. They\'re always pending at first.', 3.2); stampForm37(); return; }
-  if (s.key === 'hall2' && !H.lanyard) { H.lanyard = true; SFX5.jingle(P9({ x: PL.x, y: 1, z: PL.z })); toast('A LANYARD · PHARMACY', 2.4); say_('Lanyard. Pharmacy. Bring it back.'); hospTasks37(); setPhase37(); return; }
+  if (s.key === 'hall2' && !H.lanyard) { H.lanyard = true; SFX5.jingle(P9({ x: PL.x, y: 1, z: PL.z })); toast('A LANYARD · PHARMACY', 2.4); say_('Lanyard. For the pharmacy.'); hospTasks37(); setPhase37(); return; }
   if (s.key === 'admit' && H.form && H.stamps >= 3 && !P37.keys.hosp) { dischargeDone37(); return; }
   const L = { admit: ['Name? ...Camera. Surname Camera. Take a seat.', 'Your number is one. We are on zero.'], laundry: ['Ward three has been waiting since breakfast. Linen\'s on the shelf. Don\'t count it, it moves.'], pharm: ['Pharmacy is locked. The lanyard is on the one in the hall. Not me.'], nurse1: ['Chart, form, stamp. In that order.'],
     records: ['Everyone\'s in here. Look under your own letter if you like. Most do. Nobody finds it.'], ward1: ['Shh.'], ward3: ['Cold in here?'], ward5: ['Drip.'], hall1: ['Excuse me.'], hall2: ['Mind the bed.'], theatre: ['Not today.'] }[s.key] || ['...'];
@@ -15500,7 +15560,7 @@ function talkStaff37(s) {
 }
 function dischargeDone37() {
   P37.keys.hosp = true; SFX37.stamp(P9({ x: PL.x, y: 1, z: PL.z })); SFX5.jingle(P9({ x: PL.x, y: 1, z: PL.z })); toast('THE DISCHARGE WRISTBAND', 3);
-  later(0.8, () => say('STAFF', 'Discharged.', { dur: 3, mode: 'whisper' })); later(3, () => say('STAFF', 'You\'ll want to leave the way you came. The water level is a formality.', { dur: 5, mode: 'whisper' }));
+  later(0.8, () => say('STAFF', 'Discharged.', { dur: 3, mode: 'whisper' })); later(3, () => say('STAFF', 'Leave the way you came. Mind the wet floor.', { dur: 5, mode: 'whisper' }));
   PL.san = Math.min(100, PL.san + 12); hospTasks37(); setPhase37(); cpSave('DISCHARGED');
 }
 function hospTasks37() {
@@ -15534,7 +15594,7 @@ function ctrlNote37() {
 }
 function breakNote37() { SFX.click(); readDoc('brk37', 'STAFF ROOM · NOTICES', ['SHIFT SWAPS: nobody wants Fridays.', 'Reminder: the Deep is not a ride.', 'Whoever keeps drawing on the whiteboard: it was funny once.', 'If you hear the PA say the park is open, it isn\'t. Do not go and check.'], { kind: 'board' }); }
 function takeVideo37() {
-  if (P37.keys.tape) return; P37.keys.tape = true; SFX.pickup(); toast('NEW_VIDEO.AVI · DO NOT PLAY IT IN FRONT OF THE POOL', 3.4); FX.glitch = 1.4; PL.shake = 0.8;
+  if (P37.keys.tape) return; P37.keys.tape = true; SFX.pickup(); toast('NEW_VIDEO.AVI · FROM THE SUMP', 3.4); FX.glitch = 1.4; PL.shake = 0.8;
   later(0.6, () => { SFX37.alarm({ x: PL.x, y: 2, z: PL.z, pl: { x: PL.x, z: PL.z } }); say('PA', 'The wave pool is now open.', { dur: 3.4 }); G37.waves = true; if (AI37.wwf) AI37.wwf.aggro(); });
   wwTasks37(); setPhase37(); cpSave('NEW_VIDEO.AVI');
 }
@@ -15699,7 +15759,7 @@ function resetG37() {
 }
 resetG37();
 DEATH_TXT.drown = ['DROWNED', 'The picture goes blue, then goes quiet. The date keeps counting.'];
-DEATH_TXT.fish = ['SOMETHING IN THE WATER', 'The last frames are a lens full of teeth and then nothing at all.'];
+DEATH_TXT.fish = ['SOMETHING IN THE WATER', 'The last frames are water and something fast. Then the lens goes dark.'];
 DEATH_TXT.drift = ['STILL RECORDING', 'The tape runs for hours more. Nobody is holding the camera.'];
 function carryFrom18() { return carryFrom9(); }
 function teardown37() {
@@ -15836,7 +15896,7 @@ function gameEvents37(dt) {
   if (G37.voiceT <= 0 && PL.san < 45) { G37.voiceT = rnd(20, 38); SFX.whisper(); say('', pick(W37_WHISPER), { dur: 4, mode: 'whisper' }); }
   if (G37.flood) floodTick37(dt);
 }
-const W37_WHISPER = ['…you can put it down for a minute…', '…the water is the same temperature as you…', '…count the tiles, it helps…', '…nobody is timing this…', '…you were going somewhere…', '…it\'s only water…'];
+const W37_WHISPER = ['…you can put it down for a minute…', '…the water is the same temperature as you…', '…count the tiles, it helps…', '…your tea\'s gone cold…', '…you were going somewhere…', '…it\'s only water…'];
 function drift37(dt, z) {
   const moving = PL.spd > 0.45, inWater = depth37(PL.x, PL.z) > 0.2 && !G37.under, k = [0.7, 1, 1.35][G.diff];
   if (G.state !== 'play') return;
@@ -15864,7 +15924,7 @@ function worldFX37(dt) {
   const t = FX.t, cp = CAM.position, live = G.state === 'play' || G.state === 'dead' || G.state === 'won', z = LV.zone[cell37(cp.x, cp.z)], under = FX.under || 0;
   FX.flicker = 0.9 + 0.1 * hash1(Math.floor(t * 30)); FX.lightScale = 1; FX.hurt = Math.max(0, FX.hurt - dt * 0.9); FX.glitch = Math.max(0, FX.glitch - dt * 1.3);
   const zl = zoneLook37(z), dark = LV.dark[cell37(cp.x, cp.z)];
-  FX.fogDen = lerp(dark ? 0.05 : zl.den, 0.17, under); const fc = zl.fog;
+  FX.fogDen = lerp(dark ? 0.05 : zl.den, 0.11, under); const fc = zl.fog;
   FX.fog[0] = lerp(fc[0], 0.03, under); FX.fog[1] = lerp(fc[1], 0.3, under); FX.fog[2] = lerp(fc[2], 0.2, under);
   FX.envA[0] = lerp(zl.amb[0], 0.04, under); FX.envA[1] = lerp(zl.amb[1], 0.14, under); FX.envA[2] = lerp(zl.amb[2], 0.18, under);
   if (live) FX.exposure = 0.82 * S.bright * lerp(1, clamp(0.3 / Math.max(PL.light, 0.01), 0.22, 1), FX.nv);
@@ -15881,15 +15941,15 @@ function worldFX37(dt) {
 // the look of each part of the level: fog colour/density and ambient light
 function zoneLook37(z) {
   switch (z) {
-    case Z37.POOL: return { fog: [0.5, 0.62, 0.52], den: 0.007, amb: [0.3, 0.34, 0.28] };
+    case Z37.POOL: return { fog: [0.74, 0.77, 0.72], den: 0.0045, amb: [0.3, 0.3, 0.28] };
     case Z37.CABANA: case Z37.BOOTH: case Z37.VEST: return { fog: [0.72, 0.78, 0.68], den: 0.01, amb: [0.36, 0.38, 0.32] };
-    case Z37.PLANT: return { fog: [0.4, 0.48, 0.48], den: 0.014, amb: [0.2, 0.23, 0.23] };
+    case Z37.PLANT: return { fog: [0.5, 0.58, 0.58], den: 0.011, amb: [0.32, 0.36, 0.36] };
     case Z37.TUNNEL: return { fog: [0.06, 0.13, 0.15], den: 0.045, amb: [0.07, 0.1, 0.11] };
-    case Z37.HOTEL: case Z37.CAFE: return { fog: [0.62, 0.55, 0.44], den: 0.014, amb: [0.28, 0.24, 0.18] };
+    case Z37.HOTEL: case Z37.CAFE: return { fog: [0.66, 0.58, 0.46], den: 0.01, amb: [0.42, 0.34, 0.25] };
     case Z37.HOSP: return { fog: [0.72, 0.8, 0.78], den: 0.012, amb: [0.28, 0.32, 0.31] };
     case Z37.PARK: return { fog: [0.74, 0.8, 0.84], den: 0.014, amb: [0.32, 0.35, 0.38] };
     case Z37.DOME: return { fog: [0.1, 0.32, 0.42], den: 0.024, amb: [0.1, 0.18, 0.22] };
-    case Z37.STAFF: return { fog: [0.24, 0.16, 0.09], den: 0.032, amb: [0.12, 0.08, 0.05] };
+    case Z37.STAFF: return { fog: [0.3, 0.22, 0.14], den: 0.02, amb: [0.24, 0.17, 0.11] };
     case Z37.WWF: return { fog: [0.07, 0.26, 0.32], den: 0.04, amb: [0.09, 0.15, 0.18] };
     default: return { fog: [0.7, 0.86, 0.88], den: 0.012, amb: [0.3, 0.34, 0.36] };
   }

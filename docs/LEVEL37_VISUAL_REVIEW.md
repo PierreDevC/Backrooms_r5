@@ -1,0 +1,41 @@
+# Level 37 visual and layout review (build copy review37.html, 960x540)
+Shots: SCR = /private/tmp/claude-501/-Volumes-crucial-Downloads-Backrooms-r5/e549f242-1f73-4657-828b-a9671490d7ac/scratchpad/qa37v/ (montages m1..m15.png; singles named below). Coordinates are grid cells (x,y), CELL 3.6 m; yaw 0 looks +z (south).
+Method: ~95 scripted views of every room, plus the LV37() graph. Zero runtime errors. No z-fighting or texture stretching seen. All 42 rooms are connected through arches/doors; no unreachable room.
+
+## Routes and signage (pass)
+- Hotel: Shallows pit (33-36,39-43, floor -2.4) -> hcorr (34-35,44-46) -> arches (34/35,47) -> lobby (30-40,48-54). Lobby exits CAFETERIA (40,51), POOL (35,54), ROOMS 201-204 (30,51) point the right way (k_lobby_*).
+- Hospital: Dive Well channel (30,19) -> tunnelH (24-29,19; 24,14-18) -> hstair (24,12-13) -> Admissions (20-28,7-11) -> corridor y6.
+- Water World: Lap arch (65,34) -> tunnelW (66-69,34; 69,35-40) -> plaza (56-70,41-48) -> foyer -> dome -> staff corridor y61 -> rooms y62-65 -> wave pool via STAFF ROOM door (67,65).
+- Signs: DEEP END, LAP POOL, CAFETERIA, POOL, ROOMS 201-204, WATER WORLD, AQUARIUM, STAFF ONLY all agree with geometry. Gaps: nothing signs the way to the Cabana, Plant, booth or the pit/hotel corridor; the pit has no sign at all.
+
+## BLOCKER
+1. Pit corridor to the hotel is pitch black. hcorr (34-35,44-46), SCR/h_hcorr.png. Normal view is black; night vision (d_hcorrNV.png) is only noise at the floor of the pit. This is the only road to quest wing 1 and nothing tells the player to light it.
+   Fix: level37.js (hcorr room / dark[] flag and lighting list near line 244) - add one dim emissive lamp (I ~0.25) at each end, drop LV.dark for (34..35,44), and give the corridor floor a coloured arrow strip or a sign "HOTEL" over the (34,43) arch.
+2. Reference look is missing from the hub: no sun shafts, no light slits, no real arches in the Shallows. Shallows/Court/Well all read as a flat office-style ceiling with a grid of fluorescent panels (h_sh_spawnS, h_gatev, k_court_a, d_tower_E). Cone shafts exist (hub37.js 33-34, shafts37, alpha 0.07) but are invisible; the six SLITS37 are only lights, not white slit geometry (d_slitsW). Hub walls are flat tile planes with no semicircular or nested arches except the Dive Well gate (h_well_in.png is right - use it as template). No spiral stair anywhere.
+   Fix: hub37.js - raise shaft alpha to ~0.18 and the tint warmer (1,0.9,0.6); add emissive white slit quads (0.5 x 4 m, emissive 2.0) at SLITS37 positions; level37.js - give Shallows h:7.4 a vaulted/skylit ceiling (cm 'ptile' is fine but remove the fluorescent grid via lightHub: use 1 panel per 4 cells); add arch recesses along the Shallows long walls x=26 and x=43 (reuse the nested-arch builder used for the Well gate).
+
+## MAJOR
+3. Grout too heavy, tile too big in several rooms. Hub tile reads about 25-30 cm with thick black grout (h_well_in, h_well_deck, k_court_b, d_slitsE). Target is small cream-sage tile with thin grout. Fix: textures37.js tile generator: raise tiles per metre (9 -> 14 per 1.2 m) and lower grout alpha to ~0.5 and width to 1 px at 512; also set UV scale so walls and floors use the same density (floor tile looks different from wall tile in k_court_c).
+4. Water is an opaque flat teal; wavy cracked floor lines are visible only under the surface. Standing in the Shallows (h_sh_E, h_sh_W) the water plane has no highlights and fog is a uniform yellow-green haze, so the hall looks washed-out. Underwater (h_lapdeep, d_well_bottom, d_pit_under) visibility is a few metres of single-colour teal; floor tile visible, but no sun caustics from above and the Dive Well bottom (d_well_bottom) is a featureless fog.
+   Fix: world37.js water37 fragment - add a specular/fresnel term and moving caustic bright lines; lower under-water fog density by ~35% and add a vertical light gradient (brighter toward the surface).
+5. Lighting balance. Shallows/Court/Well: overexposed, desaturated yellow-green; hotel (k_lobby_*, k2_*) brown and dark with strong vignette; vault (k2_vaultB) nearly black; Plant (h_plant_in) grey-black; staff rooms gen/control/brk (w_gen, w_control, w_staff) almost unreadable red-brown with only a ceiling bulb in view. Fix: lightHotel37 I 0.52 -> 0.7 and add a lamp in the vault; lightWorld37 staff rooms I 0.3 -> 0.5, make flick optional; Shallows I down about 15% and warm only the slit light.
+6. Hospital lino is a loud saturated yellow-grey check (p_hcorr_E, p2_laundry) that looks like a different game from the Poolrooms; rooms are almost bare. Wards: one bed, one IV stand; laundry/pharmacy/nurses/records show one shelf each on the far wall and large empty floors with a single ceiling panel (p2_*). Theatre (39-40,3-10) is a 2x8 empty corridor with one table, a dead end with no reward (p2_theatre). Fix: wings37.js - desaturate fl colour [0.88,0.94,0.9] with a pale grey/white check, add a trolley, curtain rail and two chairs per room, and put the quest item or a patient note in the theatre.
+7. Booth (42-45,16-21) is empty on the walls seen (h_booth.png): bare tile wall, one brown door, wood floor. The three-slot panel and monitor must be on the other walls, check they are visible from the door at (41,18). Fix: hub37.js - add window to the Well, a console and a chair in view of the door.
+8. Cabana (20-25,31-38) is a 6x8 hall with six lockers, one vending machine and one bench (h_cab_in/W): reads empty and tall at eye height. Abara stands in the middle. Fix: hub37.js - add partitions (changing stalls), towel rack, a table with the kettle, pegboard notices.
+
+## MINOR
+9. Hotel lobby arches are tiny against 4.3 m walls and 11x7 cells (k_lobby_W). Widen the POOL and CAFETERIA arches (wings37.js way(40,51..), way(35,54..)) to w 3.4, h 3.6.
+10. Hotel guest rooms 201-204 are 2x2 cells with bed and nightstand only; room 201-204 doors and plaques fine (k2_r201B). Vault wallpaper is the same as the hotel; the plan says dark blue-grey, but light does not show it.
+11. Water World plaza (56-70,41-48) is 9 m tall, grey concrete floor, almost no furniture except two benches and a fountain (w_plaza, w_plazaB); looks like the wrong level. The dome (56-70,53-60) is fully dark teal with no visible tanks from the entrance (w_dome): tanks are at x57-60 and x66-69, add a glow from them.
+12. Wave pool (52-70,66-70): ghost panels read as flat white boards in the water (w_wave, w_waveB). Fix: give them frames and a tint, and add a sign naming the deep end.
+13. Props that are hard to find: only one booth light in view; Teague court is the longest empty room (court 28-48,55-66: only 10 loungers and 3 palms, k_court_a).
+14. Long empty corridors: hospital corridor 12-38 at y6 (27 cells, about 97 m) with only a bed per 4-5 cells; staff corridor at y61 is dark with pipes. Add a bench, trolley, notice board or a mid-corridor junction light.
+15. Hub rooms are scaled for walking but the Shallows only has 5 x 3 pillar rows; pillar spacing 4 cells looks regular like a car park. Offset alternate rows by 1 cell.
+
+## Not tested
+Flashlight in the pit, tower climb animation, full night-shot staff silhouettes, any audio, performance (frame rate not measured), touch.
+
+
+## Status after the fix pass (r8, same branch)
+Blockers 1 and 2 and majors 3-8 plus minors 9-15 were addressed: lit and signed hotel corridor (and its missing row-47 cell), thinner/smaller tile, cream (less green) walls and fog, fewer ceiling panels in the hub, visible sun shafts, nested blind arches along the Shallows walls, a spiral stair, brighter hotel/vault/plant/staff rooms, desaturated hospital lino with props, a theatre note (and a bottle), booth and cabana furnishing, plaza planters and lamps, dome tank glow, framed ghost panels, wider hotel arches, staggered pillars, more water glints.
+The review's reachability claim was graph-based. A solid-aware flood fill (qa37/s37_reach.js) found real blockers that are now fixed: the pit corridor never joined the hotel lobby (row 47 had no room), the hospital stair arch was on the wrong edge, beds/gurneys sat in front of wards 2 and 6, and the break-room table sat in the wave-pool door. All 42 rooms and every quest target are now reachable.

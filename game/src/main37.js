@@ -8,7 +8,7 @@ function resetG37() {
 }
 resetG37();
 DEATH_TXT.drown = ['DROWNED', 'The picture goes blue, then goes quiet. The date keeps counting.'];
-DEATH_TXT.fish = ['SOMETHING IN THE WATER', 'The last frames are a lens full of teeth and then nothing at all.'];
+DEATH_TXT.fish = ['SOMETHING IN THE WATER', 'The last frames are water and something fast. Then the lens goes dark.'];
 DEATH_TXT.drift = ['STILL RECORDING', 'The tape runs for hours more. Nobody is holding the camera.'];
 function carryFrom18() { return carryFrom9(); }
 function teardown37() {
@@ -145,7 +145,7 @@ function gameEvents37(dt) {
   if (G37.voiceT <= 0 && PL.san < 45) { G37.voiceT = rnd(20, 38); SFX.whisper(); say('', pick(W37_WHISPER), { dur: 4, mode: 'whisper' }); }
   if (G37.flood) floodTick37(dt);
 }
-const W37_WHISPER = ['…you can put it down for a minute…', '…the water is the same temperature as you…', '…count the tiles, it helps…', '…nobody is timing this…', '…you were going somewhere…', '…it\'s only water…'];
+const W37_WHISPER = ['…you can put it down for a minute…', '…the water is the same temperature as you…', '…count the tiles, it helps…', '…your tea\'s gone cold…', '…you were going somewhere…', '…it\'s only water…'];
 function drift37(dt, z) {
   const moving = PL.spd > 0.45, inWater = depth37(PL.x, PL.z) > 0.2 && !G37.under, k = [0.7, 1, 1.35][G.diff];
   if (G.state !== 'play') return;
@@ -173,7 +173,7 @@ function worldFX37(dt) {
   const t = FX.t, cp = CAM.position, live = G.state === 'play' || G.state === 'dead' || G.state === 'won', z = LV.zone[cell37(cp.x, cp.z)], under = FX.under || 0;
   FX.flicker = 0.9 + 0.1 * hash1(Math.floor(t * 30)); FX.lightScale = 1; FX.hurt = Math.max(0, FX.hurt - dt * 0.9); FX.glitch = Math.max(0, FX.glitch - dt * 1.3);
   const zl = zoneLook37(z), dark = LV.dark[cell37(cp.x, cp.z)];
-  FX.fogDen = lerp(dark ? 0.05 : zl.den, 0.17, under); const fc = zl.fog;
+  FX.fogDen = lerp(dark ? 0.05 : zl.den, 0.11, under); const fc = zl.fog;
   FX.fog[0] = lerp(fc[0], 0.03, under); FX.fog[1] = lerp(fc[1], 0.3, under); FX.fog[2] = lerp(fc[2], 0.2, under);
   FX.envA[0] = lerp(zl.amb[0], 0.04, under); FX.envA[1] = lerp(zl.amb[1], 0.14, under); FX.envA[2] = lerp(zl.amb[2], 0.18, under);
   if (live) FX.exposure = 0.82 * S.bright * lerp(1, clamp(0.3 / Math.max(PL.light, 0.01), 0.22, 1), FX.nv);
@@ -190,15 +190,15 @@ function worldFX37(dt) {
 // the look of each part of the level: fog colour/density and ambient light
 function zoneLook37(z) {
   switch (z) {
-    case Z37.POOL: return { fog: [0.5, 0.62, 0.52], den: 0.007, amb: [0.3, 0.34, 0.28] };
+    case Z37.POOL: return { fog: [0.74, 0.77, 0.72], den: 0.0045, amb: [0.3, 0.3, 0.28] };
     case Z37.CABANA: case Z37.BOOTH: case Z37.VEST: return { fog: [0.72, 0.78, 0.68], den: 0.01, amb: [0.36, 0.38, 0.32] };
-    case Z37.PLANT: return { fog: [0.4, 0.48, 0.48], den: 0.014, amb: [0.2, 0.23, 0.23] };
+    case Z37.PLANT: return { fog: [0.5, 0.58, 0.58], den: 0.011, amb: [0.32, 0.36, 0.36] };
     case Z37.TUNNEL: return { fog: [0.06, 0.13, 0.15], den: 0.045, amb: [0.07, 0.1, 0.11] };
-    case Z37.HOTEL: case Z37.CAFE: return { fog: [0.62, 0.55, 0.44], den: 0.014, amb: [0.28, 0.24, 0.18] };
+    case Z37.HOTEL: case Z37.CAFE: return { fog: [0.66, 0.58, 0.46], den: 0.01, amb: [0.42, 0.34, 0.25] };
     case Z37.HOSP: return { fog: [0.72, 0.8, 0.78], den: 0.012, amb: [0.28, 0.32, 0.31] };
     case Z37.PARK: return { fog: [0.74, 0.8, 0.84], den: 0.014, amb: [0.32, 0.35, 0.38] };
     case Z37.DOME: return { fog: [0.1, 0.32, 0.42], den: 0.024, amb: [0.1, 0.18, 0.22] };
-    case Z37.STAFF: return { fog: [0.24, 0.16, 0.09], den: 0.032, amb: [0.12, 0.08, 0.05] };
+    case Z37.STAFF: return { fog: [0.3, 0.22, 0.14], den: 0.02, amb: [0.24, 0.17, 0.11] };
     case Z37.WWF: return { fog: [0.07, 0.26, 0.32], den: 0.04, amb: [0.09, 0.15, 0.18] };
     default: return { fog: [0.7, 0.86, 0.88], den: 0.012, amb: [0.3, 0.34, 0.36] };
   }

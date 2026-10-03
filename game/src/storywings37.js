@@ -22,6 +22,7 @@ function buildWingStory37() {
   I({ x: P.recordsDesk.x, z: P.recordsDesk.z, y: 0.9, r: 1.8, label: () => P37.hosp.chart ? 'THE CHART · TAKEN' : 'TAKE THE CHART', ok: () => G.state === 'play', act: () => takeChart37() });
   I({ x: P.rosterSpot.x, z: P.rosterSpot.z, y: 0.9, r: 1.8, label: () => 'READ THE STAFF ROSTER', ok: () => G.state === 'play', act: () => roster37() });
   I({ x: P.formDesk.x, z: P.formDesk.z, y: 0.9, r: 1.8, label: () => P37.hosp.form ? 'THE FORM · TAKEN' : 'TAKE THE DISCHARGE FORM', ok: () => !P37.hosp.form && G.state === 'play', act: () => { P37.hosp.form = true; SFX.pickup(); toast('A DISCHARGE FORM · THREE STAMPS', 2.4); hospTasks37(); setPhase37(); } });
+  I({ x: P.theatreNote.x, z: P.theatreNote.z, y: 0.9, r: 1.9, label: () => P37.hosp.theatre ? 'THE THEATRE NOTE' : 'READ THE FORM ON THE TABLE', ok: () => G.state === 'play', act: () => theatreNote37() });
   // ===== water world =====
   I({ x: P.map.x, z: P.map.z, y: 1.5, r: 2.0, label: () => 'READ THE PARK MAP', ok: () => G.state === 'play', act: () => parkMap37() });
   for (const t of P.tanks) I({ x: t.x, z: t.z, y: 1.2, r: 2.2, label: () => t.taken ? t.name + ' · EMPTY' : 'DRINK FROM ' + t.name, ok: () => !t.taken && G.state === 'play', act: () => tank37(t) });
@@ -35,7 +36,7 @@ function buildWingStory37() {
 // ---------- the hotel ----------
 function guestBook37() {
   P37.hotel.book = true; SFX.click();
-  const f = RUN.f, L = ['TEAGUE, J. · lane 4 · 233 · departed: (blank)', 'PELL, A. · 204 · departed: (blank)', 'Party of one, M.E.G. (camera) · 204 · no luggage · brought own light', 'OKONKWO party of three · Tuesday · Tuesday · Tuesday'];
+  const f = RUN.f, L = ['TEAGUE, J. · lane 4 · 233 · departed: (blank)', 'PELL, P. · 204 · departed: (blank)', 'Party of one, M.E.G. (camera) · 204 · no luggage · brought own light', 'OKONKWO party of three · Tuesday · Tuesday · Tuesday'];
   if (f.lost0 > 0 || (f.dead0 && f.dead0.length)) L.splice(3, 0, 'Party of four, M.E.G. · asked for a room by the pool · told it was full');
   readDoc('guest37', 'GUEST BOOK', L, { kind: 'note' }); hotelTasks37();
 }
@@ -51,7 +52,7 @@ function stopwatch37() {
 }
 function talkTeague37() {
   const H = P37.hotel, N = AI37.teague;
-  if (H.timed) { swS37(pick(['Go on. Tell someone it was warm.', 'Lane four is yours if you want it. Nobody swims it.', 'I\'m not going up. I\'m going to do another forty.'])); return; }
+  if (H.timed) { swS37(pick(['Go on. I\'ve got forty more.', 'Lane four is yours if you want it. Nobody swims it.', 'I\'m not going anywhere. Another forty.'])); return; }
   if (!H.met) { H.met = true; swS37('Not yet. Forty lengths.'); swS37('Sorry. I\'m counting, and somebody is counting with me, and he\'s a stroke ahead.', { delay: 3.6 }); return; }
   if (!H.ask) { H.ask = true; swS37('Room 204. There\'s a stopwatch on the nightstand.'); swS37('I can\'t start without it. It\'s silly. It\'s a stopwatch.', { delay: 3.4 }); H.seen = true; hotelTasks37(); setPhase37(); return; }
   if (H.sw && !H.given) { H.given = true; swS37('That\'s his. It\'s dented where he dropped it at Regionals.'); swS37('Press the top when I touch the wall. Not before. Not after.', { delay: 4.4 }); toast('HOLD [E] TO TIME HER', 3); hotelTasks37(); return; }
@@ -67,13 +68,13 @@ function timeTeague37() {
   N.swimming = true; N.lapT = 0; swS37('Go.', { dur: 1.4 });
 }
 function takeCard37() {
-  P37.keys.hotel = true; SFX.pickup(); SFX5.jingle(P9({ x: PL.x, y: 1, z: PL.z })); PL.san = Math.max(0, PL.san - 8); FX.glitch = Math.max(FX.glitch, 0.8); toast('THE ROOM 233 CARD · IT WEIGHS MORE THAN A CARD', 3);
+  P37.keys.hotel = true; SFX.pickup(); SFX5.jingle(P9({ x: PL.x, y: 1, z: PL.z })); PL.san = Math.max(0, PL.san - 8); FX.glitch = Math.max(FX.glitch, 0.8); toast('THE ROOM 233 CARD', 3);
   readDoc('card233', 'ROOM 233 · THE LUKEWARM HOTEL', ['CHECK-OUT 11:00', 'Valid for: one night. Extensions at reception.', '(on the back, in a child\'s writing, in crayon) can we stay one more night'], { kind: 'note' });
-  later(1.2, () => { SFX.whisper(); say('', '…one more night…', { mode: 'whisper' }); }); hotelTasks37(); setPhase37(); cpSave('ROOM 233 CARD');
+  later(1.2, () => { SFX.whisper(); say('', '…ask at reception…', { mode: 'whisper' }); }); hotelTasks37(); setPhase37(); cpSave('ROOM 233 CARD');
 }
 function hotelTasks37() {
   const H = P37.hotel; if (!P37.told) return;
-  if (H.seen || H.book || H.met) task('swimmer', 'TEAGUE · SHE CAN\'T START WITHOUT HER FATHER\'S STOPWATCH', { quiet: true, sub: 'ROOM 204 · THE KEY IS IN THE RECEPTION DRAWER' });
+  if (H.seen || H.book || H.met) task('swimmer', 'TEAGUE · SHE CAN\'T START WITHOUT THE STOPWATCH', { quiet: true, sub: 'ROOM 204 · THE KEY IS IN THE RECEPTION DRAWER' });
   if (H.met || H.book) { task('rdrawer', 'THE ROOM 204 KEY · THE RECEPTION DRAWER', { quiet: true, opt: false }); if (H.drawer) taskDone('rdrawer', 'THE ROOM 204 KEY', true); }
   if (H.drawer) { task('stopw', 'THE STOPWATCH · ROOM 204', { quiet: true }); if (H.sw) taskDone('stopw', 'THE STOPWATCH', true); }
   if (H.sw) { task('timeher', 'TIME TEAGUE · FOUR LENGTHS', { quiet: true }); if (H.timed) taskDone('timeher', 'TEAGUE · 2:04.1', true); }
@@ -97,11 +98,11 @@ function takeChart37() {
   readDoc('chart37', 'CHART · CAMERA', ['ADMITTED 29 SEP 1996 · 23:47', 'STATUS: PENDING', 'ATTENDING: —', 'NOTES: brought own light. keeps recording. will not put it down.', '(this is not a complaint)'], { kind: 'log' }); hospTasks37(); setPhase37();
 }
 function roster37() {
-  P37.hosp.roster = true; SFX.click(); const f = RUN.f, L = ['KOWALCZYK · LUND · PORTERS · ON STAFF', 'PELL, A. · CAMERA · ON STAFF (NIGHTS)'];
+  P37.hosp.roster = true; SFX.click(); const f = RUN.f, L = ['KOWALCZYK · LUND · PORTERS · ON STAFF', 'PELL, P. · CAMERA · ON STAFF (NIGHTS)'];
   for (const n of f.dead0 || []) L.push(`${n.replace(/^[A-Z]\. /, '')} · ${pick(['SECURITY', 'MAINTENANCE', 'PORTER', 'LAUNDRY', 'NIGHT DESK'])} · ON STAFF`);
   if (f.pruitt5) L.push('PRUITT, E. · NIGHT PORTER · ON STAFF (SINCE 1951)'); if (f.lusk5) L.push('LUSK · SECURITY · ON STAFF (KEEPS HIS KEYS ON THE TABLE)');
   L.push('(at the bottom) CAMERA · PENDING'); readDoc('roster37', 'STAFF ROSTER · NIGHT SHIFT', L, { kind: 'log' });
-  if (!P37.hosp.rosterSaid) { P37.hosp.rosterSaid = true; later(2, () => toast('THEY ARE NOT GONE · THEY ARE ON SHIFT', 3.2)); }
+  if (!P37.hosp.rosterSaid) { P37.hosp.rosterSaid = true; later(2, () => toast('EVERY NAME IS MARKED ON STAFF', 3.2)); }
 }
 function staffLabel37(s) {
   const H = P37.hosp;
@@ -119,7 +120,7 @@ function talkStaff37(s) {
   if (s.key === 'ward3' && H.linen && !H.linenDone) { H.linenDone = true; H.linen = 'given'; say_('Thank you.'); say_('Cold in here?', 2.2); stampForm37(); return; }
   if (s.key === 'ward5' && H.iv && !H.ivDone) { H.ivDone = true; say_('Drip. Good.'); stampForm37(); return; }
   if (s.key === 'nurse1' && H.chart && !H.chartDone) { H.chartDone = true; say_('Chart. Then form. Then stamp.'); say_('Pending. They\'re always pending at first.', 3.2); stampForm37(); return; }
-  if (s.key === 'hall2' && !H.lanyard) { H.lanyard = true; SFX5.jingle(P9({ x: PL.x, y: 1, z: PL.z })); toast('A LANYARD · PHARMACY', 2.4); say_('Lanyard. Pharmacy. Bring it back.'); hospTasks37(); setPhase37(); return; }
+  if (s.key === 'hall2' && !H.lanyard) { H.lanyard = true; SFX5.jingle(P9({ x: PL.x, y: 1, z: PL.z })); toast('A LANYARD · PHARMACY', 2.4); say_('Lanyard. For the pharmacy.'); hospTasks37(); setPhase37(); return; }
   if (s.key === 'admit' && H.form && H.stamps >= 3 && !P37.keys.hosp) { dischargeDone37(); return; }
   const L = { admit: ['Name? ...Camera. Surname Camera. Take a seat.', 'Your number is one. We are on zero.'], laundry: ['Ward three has been waiting since breakfast. Linen\'s on the shelf. Don\'t count it, it moves.'], pharm: ['Pharmacy is locked. The lanyard is on the one in the hall. Not me.'], nurse1: ['Chart, form, stamp. In that order.'],
     records: ['Everyone\'s in here. Look under your own letter if you like. Most do. Nobody finds it.'], ward1: ['Shh.'], ward3: ['Cold in here?'], ward5: ['Drip.'], hall1: ['Excuse me.'], hall2: ['Mind the bed.'], theatre: ['Not today.'] }[s.key] || ['...'];
@@ -127,7 +128,7 @@ function talkStaff37(s) {
 }
 function dischargeDone37() {
   P37.keys.hosp = true; SFX37.stamp(P9({ x: PL.x, y: 1, z: PL.z })); SFX5.jingle(P9({ x: PL.x, y: 1, z: PL.z })); toast('THE DISCHARGE WRISTBAND', 3);
-  later(0.8, () => say('STAFF', 'Discharged.', { dur: 3, mode: 'whisper' })); later(3, () => say('STAFF', 'You\'ll want to leave the way you came. The water level is a formality.', { dur: 5, mode: 'whisper' }));
+  later(0.8, () => say('STAFF', 'Discharged.', { dur: 3, mode: 'whisper' })); later(3, () => say('STAFF', 'Leave the way you came. Mind the wet floor.', { dur: 5, mode: 'whisper' }));
   PL.san = Math.min(100, PL.san + 12); hospTasks37(); setPhase37(); cpSave('DISCHARGED');
 }
 function hospTasks37() {
@@ -161,7 +162,7 @@ function ctrlNote37() {
 }
 function breakNote37() { SFX.click(); readDoc('brk37', 'STAFF ROOM · NOTICES', ['SHIFT SWAPS: nobody wants Fridays.', 'Reminder: the Deep is not a ride.', 'Whoever keeps drawing on the whiteboard: it was funny once.', 'If you hear the PA say the park is open, it isn\'t. Do not go and check.'], { kind: 'board' }); }
 function takeVideo37() {
-  if (P37.keys.tape) return; P37.keys.tape = true; SFX.pickup(); toast('NEW_VIDEO.AVI · DO NOT PLAY IT IN FRONT OF THE POOL', 3.4); FX.glitch = 1.4; PL.shake = 0.8;
+  if (P37.keys.tape) return; P37.keys.tape = true; SFX.pickup(); toast('NEW_VIDEO.AVI · FROM THE SUMP', 3.4); FX.glitch = 1.4; PL.shake = 0.8;
   later(0.6, () => { SFX37.alarm({ x: PL.x, y: 2, z: PL.z, pl: { x: PL.x, z: PL.z } }); say('PA', 'The wave pool is now open.', { dur: 3.4 }); G37.waves = true; if (AI37.wwf) AI37.wwf.aggro(); });
   wwTasks37(); setPhase37(); cpSave('NEW_VIDEO.AVI');
 }

@@ -14,7 +14,7 @@ function buildProps37() {
   // ceiling lights
   for (const p of LV.panels) { const r = propRoot(p.x, p.z, 0); r.position.y = p.y; r.computeWorldMatrix(true); (p.state === 2 ? BFl : BOn).add(r, 'Box', { width: p.w, height: 0.03, depth: p.l }, p.state ? [1, 0.98, 0.94] : [0.6, 0.6, 0.6], p.state ? 0.9 : 0, [0, -0.04, 0]); B.add(r, 'Box', { width: p.w + 0.08, height: 0.03, depth: p.l + 0.08 }, [0.8, 0.82, 0.82], 0, [0, -0.015, 0]); }
   furnishShallows37(B); furnishWell37(B); furnishLap37(B); furnishCabana37(B); furnishPlant37(B); furnishBooth37(B);
-  furnishHotel37(B); furnishHospital37(B); furnishWorld37(B);
+  furnishHotel37(B); furnishHospital37(B); furnishWorld37(B); furnishExtra37(B);
   W37.finishProps = () => {
     const keep = [], out = [...(B.finish('props37', keep) || []), ...(BOn.finish('lensOn37', keep) || []), ...(BFl.finish('lensFl37', keep) || [])];
     out.forEach(m => m._sortD = 300);
@@ -30,7 +30,7 @@ function pillar37(B, x, z, ceilY) {
 }
 function furnishShallows37(B) {
   const SH = LV.dry.sh, ceil = SH.h;
-  W37.cones = new PropBatch(coneMat('shafts37', [1, 0.94, 0.7, 0.07])); W37.cones.fast = false;
+  W37.cones = new PropBatch(coneMat('shafts37', [1, 0.9, 0.6, 0.2])); W37.cones.fast = false;
   for (const [x, y, d] of SLITS37) {
     const r = wallAt37(x, y, d, 0); r.position.y = DECK37; r.computeWorldMatrix(true);
     W37.BOn.add(r, 'Box', { width: 1.5, height: 4.6, depth: 0.04 }, [1, 0.99, 0.88], 1, [0, 2.6, 0.02]);   // the opening, blown out white

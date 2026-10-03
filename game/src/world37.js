@@ -22,11 +22,11 @@ void main(){
   vec3 deep = vec3(0.03, 0.4, 0.26) * (0.5 + L*0.8), sky = vec3(0.72, 0.9, 0.7) * (0.4 + L*0.7);
   vec3 col = mix(deep, sky, fres*0.75 + 0.07);
   float sp = pow(max(0.0, sin(q.x*7.0 + t*2.1)*sin(q.y*6.3 - t*1.7)), 6.0)*L;
-  col += vec3(0.7, 0.95, 0.7)*sp*0.45;
+  float sp2 = pow(max(0.0, sin(q.x*13.0 - t*2.6 + sin(q.y*3.0 + t)*2.0)*sin(q.y*11.0 + t*2.2)), 10.0)*L; col += vec3(0.8, 1.0, 0.85)*(sp*0.5 + sp2*0.9);
   vec3 diff = vec3(0.0), spec = vec3(0.0);
   dynLights(p, n, vec3(0.0, 1.0, 0.0), V, 90.0, 1.0, diff, spec);
   col += spec*1.3 + diff*vec3(0.03, 0.1, 0.12);
-  float alpha = above ? mix(0.5, 0.93, fres) : 0.9;
+  float alpha = above ? mix(0.38, 0.92, fres) : 0.88;
   if(!above) col = mix(col, vec3(0.14, 0.6, 0.4)*(0.45 + L*0.7), 0.55);
   gl_FragColor = vec4(fogIt(col, p), alpha*wP.x);
 }`;
@@ -139,7 +139,7 @@ async function buildWorld37(progress) {
   T.wood = TEX9.wood(SCN, 512); T.conc = TEX9.conc(SCN, 512); T.block = TEX9.block(SCN, 512);
   progress(0.26, 'HANGING THE WALLPAPER…'); await nextFrame();
   for (const k of ['hwall', 'carpet', 'hceil', 'bconc', 'brick']) T[k] = TEX5[k](SCN, 512);
-  for (const k of ['lino', 'dceil']) T[k] = TEX18[k](SCN, 512);
+  T.lino = TEX37.hlino(SCN, 512); T.dceil = TEX18.dceil(SCN, 512);
   progress(0.4, 'LIGHTING THE ROOMS…'); await nextFrame();
   buildLightmap(SCN); buildCollision();
   progress(0.52, 'WARMING THE WATER…'); await nextFrame();
@@ -183,8 +183,9 @@ function plaque37(s, text) { const r = atWall5(s, 0, 0); r.position.y = LV.fh[cI
 function buildGhosts37() {
   if (!LV.ghosts || !LV.ghosts.length) return;
   const m = new BABYLON.StandardMaterial('ghost37', SCN); m.disableLighting = true; m.emissiveColor = new BABYLON.Color3(0.35, 0.62, 0.6); m.alpha = 0.28; m.backFaceCulling = false; m.specularColor = BABYLON.Color3.Black();
-  W37.ghosts = [];
+  W37.ghosts = []; const fm = new BABYLON.StandardMaterial('ghostf37', SCN); fm.disableLighting = true; fm.emissiveColor = new BABYLON.Color3(0.12, 0.3, 0.32); fm.specularColor = BABYLON.Color3.Black();
   for (const [x, y] of LV.ghosts) {
     const b = BABYLON.MeshBuilder.CreateBox('ghost37', { width: CELL, height: 5.0, depth: 0.05 }, SCN); b.material = m; b.position.set(cellCenter(x), floorY37(cellCenter(x), cellCenter(y)) + 2.5, y * CELL); b.isPickable = false; b.alphaIndex = 5; W37.ghosts.push(b);
+    for (const [w, h, px, py] of [[CELL, 0.12, 0, 0.1], [CELL, 0.12, 0, 4.95], [0.12, 5.0, -CELL / 2, 2.5], [0.12, 5.0, CELL / 2, 2.5]]) { const f = BABYLON.MeshBuilder.CreateBox('ghostf37', { width: w, height: h, depth: 0.12 }, SCN); f.material = fm; f.position.set(b.position.x + px, b.position.y - 2.5 + py, b.position.z); f.isPickable = false; W37.ghosts.push(f); }
   }
 }

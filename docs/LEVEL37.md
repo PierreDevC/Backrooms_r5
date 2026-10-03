@@ -40,10 +40,14 @@ Voice sheets (proposed, not saved to the skill):
 - The video NEW_VIDEO.AVI starts the Deep (flood) when played in the booth.
 - The hatch in the Dive Well roof is the exit; nothing in the level is truly locked.
 
+- (dialogue audit) Abara's team Kowalczyk and Lund (Level 9 blue house, hospital roster porters); cassette marked S.A.; Pell is P. Pell; crayon note on the 233 card; Okonkwo party in the guest book; "the incident" at the wave pool. See docs/LEVEL37_DIALOGUE_AUDIT.md.
+
 ## Open questions
 - Is the ending "STILL WATER" (sit with Abara) wanted as a canonical bad-ish ending, or should it only exist as an easter egg?
 - Voice acting: all Level 37 lines are subtitles/radio-style only.
 - Fish balance (13 damage per bite every ~2.2 s on Normal) has not had a human difficulty pass.
 
 ## Verified
+Room reachability: `qa37/s37_reach.js` (solid-aware flood fill, doors open): all rooms and quest targets reachable. Visual review: docs/LEVEL37_VISUAL_REVIEW.md (fix pass noted at the end).
+
 Headless scripted playthroughs `qa37/*` (see QA.md): full objective chain, flood, hatch win, stay ending, fish attack, Teague timing, death/retry. Regression suites pass (levels, l18_name, l18_story, s18_final, l5_state, l0_story, l5_story, s18_smoke/more, cp9, cpl). Night-shot staff silhouettes, gate wheel spin and ghost panes are in. No human playthrough, performance, audio, touch or difficulty review.

@@ -27,7 +27,7 @@ function genLayout37() {
   const water = (r, x0, y0, x1, y1, fh, bas) => { for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) { const c = cIdx(x, y); if (LV.room[c] !== r.id) continue; LV.fh[c] = fh; LV.bas[c] = bas; LV.ch[c] = r.rel ? fh + r.h : r.h; } };
   LV.dry = {};   // named rooms the story code looks up
   const SIDE = {
-    pool: { m: 'ptw', c: [0.96, 1, 0.9], t: TRIM37.green, tp: 2 }, cab: { m: 'ptw', c: [1, 0.97, 0.86], t: TRIM37.wood, tp: 2 }, plant: { m: 'wetc', c: [0.9, 1, 0.98], t: TRIM37.steel, tp: 1 },
+    pool: { m: 'ptw', c: [1, 0.98, 0.92], t: TRIM37.green, tp: 2 }, cab: { m: 'ptw', c: [1, 0.97, 0.86], t: TRIM37.wood, tp: 2 }, plant: { m: 'wetc', c: [0.9, 1, 0.98], t: TRIM37.steel, tp: 1 },
     tun: { m: 'wetc', c: [0.55, 0.65, 0.66], t: TRIM37.dark, tp: 0 }, vest: { m: 'ptw', c: [0.94, 1, 0.9], t: TRIM37.green, tp: 2 },
   };
   // ================= THE HUB =================
@@ -38,7 +38,7 @@ function genLayout37() {
   for (let x = 33; x <= 36; x++) { const c = cIdx(x, 43); LV.fh[c] = -2.4; LV.bas[c] = BAS37.SH; }   // the pit runs to the south wall, where the corridor starts
   LV.dry.sh = SH;
   LV.pil37 = [];   // round tiled columns standing in the water
-  for (let y = 30; y <= 41; y += 4) for (let x = 29; x <= 40; x += 4) { if (x >= 30 && x <= 38 && y >= 37) continue; if (x >= 33 && x <= 37 && y >= 38) continue; LV.pil37.push({ x: cellCenter(x), z: cellCenter(y), r: 0.66, fh: -0.55, top: SH.h }); }
+  for (let y = 30; y <= 41; y += 4) for (let x = 29 + ((y - 30) / 4 % 2) * 2; x <= 40; x += 4) { if (x >= 30 && x <= 38 && y >= 37) continue; if (x >= 33 && x <= 37 && y >= 38) continue; LV.pil37.push({ x: cellCenter(x), z: cellCenter(y), r: 0.66, fh: -0.55, top: SH.h }); }
   // the vestibule between the Shallows and the Dive Well
   const GV = rect(room(Z37.VEST, R37Z.HUB, 'gatev', { h: 3.8, side: SIDE.vest, flr: { m: 'ptile', col: [0.9, 0.98, 0.88] }, cm: 'ptile', cc: [0.94, 1, 0.88] }), 34, 26, 36, 26, DECK37);
   way(35, 27, 3, 'arch', { w: 2.6, h: 3.0, from: [35, 27], sign: 'DEEP END' }); way(35, 26, 3, 'arch', { w: 2.6, h: 3.0, from: [35, 26] });
@@ -77,7 +77,7 @@ function genLayout37() {
   LV.dry.tw = TW;
   // the corridor under the Shallows' pit, to the hotel
   const HC = room(Z37.TUNNEL, R37Z.HOTEL, 'hcorr', { rel: true, h: 3.0, side: SIDE.tun, flr: { m: 'wetc', col: [0.6, 0.7, 0.7] }, cm: 'bconc', cc: [0.4, 0.46, 0.46] });
-  rect(HC, 34, 44, 35, 46, -2.4); for (const [x, y] of [[34, 44], [35, 44], [34, 45], [35, 45]]) LV.dark[cIdx(x, y)] = 1;
+  rect(HC, 34, 44, 35, 47, -2.4);
   setFh(34, 46, 35, 46, -1.6); setFh(34, 47, 35, 47, -0.8);   // (the hotel lobby is at y 48 and above)
   way(34, 43, 1, 'arch', { w: 2.0, h: 2.7, from: [34, 43], hcorr: true }); way(35, 43, 1, 'arch', { w: 2.0, h: 2.7, from: [35, 43] });
   LV.dry.hc = HC;
@@ -242,14 +242,15 @@ function planLights37() {
       F(cellCenter(x), cellCenter(y), { I: o.I ?? 0.5, rad: o.rad ?? 12, sc: o.sc ?? 4, state: st }); LV.panels.push({ x: cellCenter(x), z: cellCenter(y), y: ceil37(c), state: st, w: o.w ?? 1.1, l: o.l ?? 2.2 }); }
   };
   for (const [x, y, d] of SLITS37) { const [mx, mz] = edgeMid(x, y, d); F(mx - DX[d] * 1.4, mz - DY[d] * 1.4, { I: 0.8, rad: 12, sc: 3.4 }); }
-  grid(LV.dry.sh, 3, { I: 0.3, rad: 15, sc: 5, w: 1.2, l: 2.6 });
-  grid(LV.dry.well, 3, { I: 0.38, rad: 17, sc: 6, oy: 1, w: 1.2, l: 2.6 });
-  grid(LV.dry.lap, 3, { I: 0.38, rad: 14, sc: 5, ox: 1, oy: 1, w: 1.0, l: 2.2 });
+  grid(LV.dry.sh, 5, { I: 0.38, rad: 18, sc: 6, ox: 2, oy: 1, w: 1.4, l: 1.4 });
+  grid(LV.dry.well, 5, { I: 0.42, rad: 18, sc: 6, ox: 1, oy: 1, w: 1.4, l: 1.4 });
+  grid(LV.dry.lap, 4, { I: 0.4, rad: 15, sc: 5, ox: 1, oy: 1, w: 1.2, l: 1.2 });
   for (const r of LV.rooms) if (r.t === 'gatev' || r.t === 'lapv') for (const c of r.cells) F(cellCenter(c % N), cellCenter((c / N) | 0), { I: 0.45, rad: 7, sc: 2.2 });
   grid(LV.dry.cab, 2, { I: 0.5, rad: 8, sc: 3, w: 0.7, l: 1.3, flick: 0.12 });
-  grid(LV.dry.plant, 3, { I: 0.45, rad: 9, sc: 3, w: 0.5, l: 1.3, flick: 0.2 });
+  grid(LV.dry.plant, 3, { I: 0.7, rad: 10, sc: 3, w: 0.5, l: 1.3, flick: 0.08 });
   grid(LV.dry.booth, 2, { I: 0.45, rad: 7, sc: 2.5, w: 0.7, l: 1.3 });
-  for (const r of LV.rooms) if (r.t === 'tunnelH' || r.t === 'tunnelW' || r.t === 'hcorr') for (const c of r.cells) if (RNG() < 0.35) F(cellCenter(c % N), cellCenter((c / N) | 0), { I: 0.2, rad: 4.5, sc: 1.3, state: RNG() < 0.4 ? 2 : 1 });
+  for (const r of LV.rooms) if (r.t === 'hcorr') for (const c of r.cells) F(cellCenter(c % N), cellCenter((c / N) | 0), { I: 0.5, rad: 8, sc: 2.4, state: 1 });
+  for (const r of LV.rooms) if (r.t === 'tunnelH' || r.t === 'tunnelW') for (const c of r.cells) if (RNG() < 0.35) F(cellCenter(c % N), cellCenter((c / N) | 0), { I: 0.2, rad: 4.5, sc: 1.3, state: RNG() < 0.4 ? 2 : 1 });
   lightHotel37(F, grid); lightHospital37(F, grid); lightWorld37(F, grid);
   LV.sky = null;
 }

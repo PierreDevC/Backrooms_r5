@@ -67,7 +67,7 @@ function target37() {
 function arrive37() {
   later(1.6, () => say(OUT9, 'Nine. Camera, there is water on your carrier. A lot of it.', { radio: true }));
   later(9, () => say(OUT9, 'Nine. Find a floor that isn\'t wet and stand on it.', { radio: true }));
-  if (flag('hale9') === 'saved') later(20, () => say(HALE_R, 'Hale. If this reaches the pool: walk or swim, but don\'t float. Whatever you do in warm water, do it on purpose.', { radio: true }));
+  if (flag('hale9') === 'saved') later(20, () => say(HALE_R, 'Hale. Nine says you\'re in water. Don\'t float. Keep walking, keep counting.', { radio: true }));
   later(26, () => toast('[C] DIVE · LOOK DOWN AND SWIM TO GO DEEPER · BREATHE AT THE SURFACE', 4));
 }
 
@@ -151,14 +151,14 @@ function talkAbara37() {
     if (!T.team) { T.team = true; A('Kowalczyk went up the stairs in the blue house and the stairs weren\'t there. Lund went after him. I stayed with the radio.'); A('The radio was a pool. I won\'t explain that any better.', 5.4); return; }
     if (!T.pell) {
       T.pell = true; A('There was a Camera before you. Pell. Tall. Hummed when he was thinking.'); A('He left his camcorder in the pit and my cassette went in after it. I was cleaning it. I\'d like tape four back.', 4.6);
-      A('Plant\'s through the west door. Key\'s under the kettle. Don\'t tell me it\'s a pump room, I know what it is.', 10);
+      A('Plant\'s through the west door. Key\'s under the kettle. I\'d go, but somebody has to be here when it boils.', 10);
       later(11, () => { P37.quest = true; setPhase37('dry'); toast('NEW OBJECTIVE · ABARA\'S CASSETTE', 2.8); }); return;
     }
   }
   if (P37.quest && !(P37.cam && P37.cass)) {
     const k = P37.drained ? 'drained' : P37.plant ? 'plant' : P37.kettleKey ? 'key' : 'ask';
-    if (k === 'ask') A('Kettle. Under it. It isn\'t a riddle.'); else if (k === 'key') A('West door, then. The wheel marked SHALLOWS. Hold it. It\'s a long three seconds.');
-    else if (k === 'plant') A('Gate three. Run it down and walk to the bottom. Don\'t swim, you\'ll lose the camcorder and I\'ll lose the tape.');
+    if (k === 'ask') A('Kettle. Under it. It isn\'t a riddle.'); else if (k === 'key') A('West door, then. The wheel marked SHALLOWS. Hold it.');
+    else if (k === 'plant') A('Gate three. Let it run down and walk to the bottom. Don\'t dive for it. It\'s one tape.');
     else A('The pit. South end. Mind the step.'); return;
   }
   if (P37.quest && P37.cam && P37.cass && !P37.ret) {
@@ -168,30 +168,29 @@ function talkAbara37() {
   }
   if (P37.ret && !P37.told2) {
     P37.told2 = true; A('Right. Three doors, none of them out.'); A('Pit corridor, south: a hotel. Down the well and along: a hospital. East end of the lane pool: a park.', 3.6);
-    A('Each one keeps something. You\'ll know it because somebody won\'t let you take it.', 9); A('The lifeguard\'s panel has three slots. I count them every morning. I\'m not saying anything by it.', 13.4); return;
+    A('Each one keeps one thing. Nobody gives it up for free.', 9); A('The lifeguard\'s panel has three slots. I count them every morning.', 13.4); return;
   }
   // later visits: what she says about what you have done
   const w = wingsDone37(), T = P37.topics;
   if (P37.keys.hotel && !T.hotel) { T.hotel = true; A('Hotel. Did the music follow you? It follows me.'); return; }
   if (P37.keys.hosp && !T.hosp) { T.hosp = true; hospAbara37(A); return; }
-  if (P37.keys.tape && !T.park) { T.park = true; A('You drank from the tanks? Nobody drinks from the tanks.'); A('I did once. It was very good. That was the problem with it.', 4); return; }
+  if (P37.keys.tape && !T.park) { T.park = true; A('You drank from the tanks? Nobody drinks from the tanks.'); A('I did once. Very good. I don\'t remember the afternoon.', 4); return; }
   if (w >= 1 && !T.stay) { T.stay = true; P37.staySeen = true; A('There\'s a second cot. I\'m not saying anything. It\'s there.'); return; }
   if (w >= 3) { A(pick(['You\'ll go up. I know. Leave the kettle on. I\'ll hear it from here.', 'Go on. Tell somebody the water was warm.'])); return; }
-  A(pick(['Drink something. You look like a drowned tape.', 'Hold the wheel longer than you think you need to.', 'The booth is on the north side of the deep end. The door sticks.', 'I haven\'t tried. I\'m only saying the slots are there.']));
+  A(pick(['Drink something. You look like a drowned tape.', 'The pumps complain. Let them.', 'The booth is on the north side of the deep end. The door sticks.', 'Blue towels are the clean ones. I did say.']));
 }
 function hospAbara37(A) {
   const f = RUN.f, dead = f.dead0 && f.dead0.length ? f.dead0 : [];
-  A('Anybody I know?');
-  A('Kowalczyk and Lund. On a roster. Porters, it says. Lund would have gone after him.', 3);
-  if (dead.length) A(`${dead[0].replace(/^[A-Z]\. /, '').split(' ')[0]}. That sounds like someone who'd want the shifts changed.`, 8.5);
-  else A('Nine would want that. I\'m not calling Nine.', 8.5);
+  A('Was there a roster? Kowalczyk and Lund would be on it.');
+  A('Don\'t tell me which ward.', 3.4);
+  if (dead.length) A('Anyone of yours on there? Don\'t answer that either.', 7);
 }
 const PELL37 = ['Is it on. Okay. Tape seven. I stopped counting days, the camcorder keeps its own.', 'Water\'s warm. That\'s my whole complaint. M.E.G. wants a map, so: pool, pool, large pool, pool with a diving board that isn\'t one.',
   'A woman here, relief team, says she\'s been here three hours. I\'ve been here since Tuesday. I\'m recording this so one of us is right.', 'Last one. Leaving the camera in the pit for the next person. If it\'s you: keep it rolling, but stand up now and then.', 'I sat down on the fourth. It was a good fourth.'];
 // ----- the booth -----
 function readGuardLog37() {
   P37.boothRead = true; SFX.click();
-  readDoc('guard37', 'LIFEGUARD LOG', ['06:00 Pool open.', '06:05 Pool open.', '06:10 No swimmers. Water 27. Water 27. Water 27.', 'The panel has three slots and a label under each: HOTEL, HOSPITAL, PARK. Somebody labelled them for me. Not me.', 'The video goes in the slot marked PARK. Do not play it with the Dive Well open. Ref: the incident.', 'If the level moves, go UP. The hatch is in the roof. It is not locked. Nothing here is locked. That\'s the thing about it.'], { kind: 'log' });
+  readDoc('guard37', 'LIFEGUARD LOG', ['06:00 Pool open.', '06:05 Pool open.', '06:10 No swimmers. Water 27. Water 27. Water 27.', 'The panel has three slots and a label under each: HOTEL, HOSPITAL, PARK. Somebody labelled them for me. Not me.', 'The video goes in the slot marked PARK. Do not play it with the Dive Well open. Ref: the incident.', 'If the water moves, go UP. The hatch is in the roof. It is not locked. Nothing here is locked.'], { kind: 'log' });
   tasks37();
 }
 const SLOTN37 = { hotel: 'THE ROOM 233 CARD', hosp: 'THE DISCHARGE WRISTBAND', tape: 'NEW_VIDEO.AVI' };
@@ -312,7 +311,7 @@ function endCard37() {
   }
   S.push('The hatch opens on a ceiling fan and an ordinary light. Water runs off the lens for a long time.');
   if (f.hale9 === 'saved') S.push('A radio in another room is saying Hale\'s name, then yours.');
-  if (f.dead0 && f.dead0.length) S.push(`On a shift you will never see, someone called ${f.dead0[0].replace(/^[A-Z]\. /, '')} is changing a bulb he was told to change.`);
+  if (f.dead0 && f.dead0.length) S.push(`On a night shift, somewhere, ${f.dead0[0].replace(/^[A-Z]\. /, '')} is changing a bulb.`);
   if (f.lost0 === 0) S.push('Nine reads the four names off the lobby board, and all four answer.');
   if (P37.keys.hotel) S.push('There is a brass key in your pocket that wasn\'t there when you went in. It says 233.');
   if (f.camera18) S.push('The camcorder is still running. You let it.'); else S.push('The tape runs out on the step.');
