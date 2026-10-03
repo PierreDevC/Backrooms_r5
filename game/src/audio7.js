@@ -20,6 +20,17 @@ const SFX7 = {
   buoy(pos) { shot((d, t) => { tone(d, t, 1.8, 'triangle', 420, 415, 0.1, 0.003); tone(d, t, 2.2, 'sine', 630, 625, 0.04, 0.003); return 2.4; }, pos, 1.8); },
   bell(pos) { shot((d, t) => { tone(d, t, 3.2, 'sine', 330, 328, 0.2, 0.002); tone(d, t, 3.2, 'sine', 640, 636, 0.1, 0.002); tone(d, t, 2.4, 'sine', 990, 980, 0.05, 0.002); return 3.6; }, pos, 2.4); },
 };
+// low background music: slow pads over a drifting minor progression, a sparse bell line; brighter at dawn, thinner and more uneasy in the storm
+const MUZ7 = { night: [[45, [0, 3, 7, 10, 14]], [41, [0, 4, 7, 11]], [38, [0, 3, 7, 10]], [40, [0, 3, 7, 12]]], storm: [[45, [0, 3, 6, 10]], [41, [0, 3, 6, 9]], [43, [0, 1, 7, 10]], [40, [0, 3, 7, 10]]], dawn: [[48, [0, 4, 7, 11, 14]], [41, [0, 4, 7, 11]], [43, [0, 4, 7, 10]], [45, [0, 3, 7, 10]]] };
+function music7(dt, st, dn, under, inside) {
+  GS7.muT = (GS7.muT || 0) - dt; if (GS7.muT > 0 || !AU.ctx || AU.ctx.state !== 'running' || G.state !== 'play') return;
+  GS7.muT = 2.6; const b = GS7.muB = ((GS7.muB ?? -1) + 1), set = MUZ7[dn > 0.5 ? 'dawn' : st > 0.4 ? 'storm' : 'night'], ch = set[Math.floor(b / 4) % set.length], mf = m => 440 * Math.pow(2, (m - 69) / 12), vol = 0.5 * (under ? 0.55 : inside ? 0.8 : 1);
+  shot((d, t) => { const lp = AU.ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 1100 + dn * 900; lp.connect(d);
+    if (b % 4 === 0) ch[1].forEach((iv, i) => { tone(lp, t + i * 0.12, 10.4, 'sine', mf(ch[0] + 12 + iv), mf(ch[0] + 12 + iv), 0.034 * vol, 1.8); tone(lp, t + i * 0.12, 10.4, 'triangle', mf(ch[0] + iv) * 1.003, mf(ch[0] + iv) * 1.003, 0.014 * vol, 2.4); });
+    if (b % 2 === 0) tone(lp, t, 5.0, 'sine', mf(ch[0] - 12), mf(ch[0] - 12), 0.05 * vol, 1.2);
+    if (RNG() < 0.5) { const n = ch[0] + 24 + ch[1][Math.floor(RNG() * ch[1].length)]; tone(lp, t + rnd(0.3, 1.6), 2.6, 'sine', mf(n), mf(n), 0.03 * vol, 0.01); tone(lp, t + rnd(0.3, 1.6), 1.6, 'sine', mf(n + 12), mf(n + 12), 0.008 * vol, 0.01); }
+    return 3; }, null, 1);
+}
 function audio7(dt, z, under) {
   under = under > 0.5;   // FX.under is a smoothed 0..1 and never quite reaches 0: treat it as a flag or the water-muffle never lifts
   const C = AU.ctx, now = C.currentTime, mute = AU.muted, live = G.state === 'play' || G.state === 'intro' || G.state === 'won';
@@ -27,7 +38,8 @@ function audio7(dt, z, under) {
   if (!GS7.amb) { const s = loopSrc(AU.brown), l = C.createBiquadFilter(); l.type = 'lowpass'; l.frequency.value = 400; const g = C.createGain(); g.gain.value = 0; const lfo = C.createOscillator(); lfo.frequency.value = 0.12; const lg = C.createGain(); lg.gain.value = 0.4; lfo.connect(lg).connect(g.gain); lfo.start(); s.connect(l).connect(g).connect(AU.duckB); GS7.amb = { g, l, src: s }; }
   if (!GS7.hum) { const g = C.createGain(); g.gain.value = 0; const o = C.createOscillator(); o.type = 'sawtooth'; o.frequency.value = 50; const o2 = C.createOscillator(); o2.frequency.value = 50.6; const f = C.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 200; o.connect(f); o2.connect(f); f.connect(g).connect(AU.duckB); o.start(); o2.start(); GS7.hum = { g, f, src: { stop() { try { o.stop(); o2.stop(); } catch (e) {} } } }; }
   const v = live ? 1 : 0, inside = LV.rooms[LV.room[cell7(PL.x, PL.z)]] && !LV.rooms[LV.room[cell7(PL.x, PL.z)]].open, st = GS7.storm * (1 - GS7.dawn * 0.9);
-  GS7.amb.g.gain.setTargetAtTime(mute ? 0 : (under ? 0.16 : (0.07 + st * 0.2) * (inside ? 0.35 : 1)) * v, now, 0.5);
+  GS7.amb.g.gain.setTargetAtTime(mute ? 0 : (under ? 0.1 : (0.03 + st * 0.16) * (inside ? 0.35 : 1)) * v, now, 0.5);
+  if (!mute) music7(dt, st, GS7.dawn, under, inside);
   GS7.amb.l.frequency.setTargetAtTime(under ? 230 : 380 + st * 900, now, 0.3);
   const gen = PS7.gen ? 1 : 0, near = z === ZS7.GEN ? 1 : z === ZS7.RIG || z === ZS7.QUART ? 0.35 : z === ZS7.AIR ? 0.5 : 0.04;
   GS7.hum.g.gain.setTargetAtTime(mute ? 0 : gen * near * 0.07 * v * (under ? 0.2 : 1), now, 0.6);
