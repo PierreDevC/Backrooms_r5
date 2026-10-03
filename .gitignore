@@ -3,3 +3,6 @@
 node_modules/
 __pycache__/
 *.pyc
+
+# single-file release archives exceed GitHub's 100 MB limit; the split volume zips are tracked instead
+releases/*/Backrooms_Release_and_Handoff_*.zip
