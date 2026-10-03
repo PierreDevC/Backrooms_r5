@@ -32,6 +32,18 @@ function muzak37(dt, near, pos) {
     if (RNG() < 0.55) tone(lp, t + 0.3, 0.8, 'sine', mf(ch[0] + 24 + ch[1][Math.floor(RNG() * 4)] + (RNG() < 0.3 ? 2 : 0)), mf(ch[0] + 24), 0.04 * near, 0.01);
     return 4; }, pos, 1);
 }
+// low background music for the pools: slow major-seventh pads that never quite resolve, a soft chime line; hushed in the tunnels, further back near the hotel's own muzak
+const BGM37 = [[48, [0, 4, 7, 11, 14]], [53, [0, 4, 7, 11]], [50, [0, 4, 7, 9, 14]], [55, [0, 4, 7, 11]], [45, [0, 3, 7, 10, 14]], [53, [0, 4, 7, 12]]];
+function music37(dt, z, under) {
+  G37.bgT = (G37.bgT || 0) - dt; if (G37.bgT > 0 || !AU.ctx || AU.ctx.state !== 'running' || G.state !== 'play') return;
+  G37.bgT = 2.8; const b = G37.bgB = ((G37.bgB ?? -1) + 1), ch = BGM37[Math.floor(b / 4) % BGM37.length], mf = m => 440 * Math.pow(2, (m - 69) / 12);
+  const hotel = z === Z37.HOTEL || z === Z37.CAFE, tunnel = z === Z37.TUNNEL || z === Z37.WWF || z === Z37.DOME, vol = 0.5 * (under ? 0.55 : tunnel ? 0.6 : hotel ? 0.4 : 1);
+  shot((d, t) => { const lp = AU.ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 1500; lp.connect(d);
+    if (b % 4 === 0) ch[1].forEach((iv, i) => { tone(lp, t + i * 0.15, 11, 'sine', mf(ch[0] + 12 + iv), mf(ch[0] + 12 + iv), 0.03 * vol, 2.2); tone(lp, t + i * 0.15, 11, 'triangle', mf(ch[0] + iv) * 1.002, mf(ch[0] + iv) * 1.002, 0.012 * vol, 2.6); });
+    if (b % 2 === 0) tone(lp, t, 5.5, 'sine', mf(ch[0] - 12), mf(ch[0] - 12), 0.045 * vol, 1.4);
+    if (RNG() < 0.55) { const n = ch[0] + 24 + ch[1][Math.floor(RNG() * ch[1].length)]; tone(lp, t + rnd(0.3, 1.8), 2.8, 'sine', mf(n), mf(n), 0.028 * vol, 0.01); tone(lp, t + rnd(0.3, 1.8), 1.8, 'sine', mf(n + 12), mf(n + 12), 0.007 * vol, 0.01); }
+    return 3; }, null, 1);
+}
 function audio37(dt, z, under) {
   under = under > 0.5;   // FX.under is a smoothed 0..1 and never quite reaches 0: treat it as a flag or the water-muffle never lifts
   const C = AU.ctx, now = C.currentTime, mute = AU.muted, live = G.state === 'play' || G.state === 'intro' || G.state === 'won';
@@ -39,9 +51,10 @@ function audio37(dt, z, under) {
   if (!G37.amb) { const s = loopSrc(AU.brown), l = C.createBiquadFilter(); l.type = 'lowpass'; l.frequency.value = 520; const g = C.createGain(); g.gain.value = 0; const lfo = C.createOscillator(); lfo.frequency.value = 0.21; const lg = C.createGain(); lg.gain.value = 0.35; lfo.connect(lg).connect(g.gain); lfo.start(); s.connect(l).connect(g).connect(AU.duckB); G37.amb = { g, l, src: s }; }
   if (!G37.hum) { const g = C.createGain(); g.gain.value = 0; const o = C.createOscillator(); o.type = 'sawtooth'; o.frequency.value = 50; const o2 = C.createOscillator(); o2.frequency.value = 100.4; const f = C.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 260; o.connect(f); o2.connect(f); f.connect(g).connect(AU.duckB); o.start(); o2.start(); G37.hum = { g, o, o2, src: { stop() { try { o.stop(); o2.stop(); } catch (e) {} } } }; }
   const pool = z === Z37.POOL, wet = under ? 1 : 0, v = live ? 1 : 0;
-  G37.amb.g.gain.setTargetAtTime(mute ? 0 : (under ? 0.2 : pool ? 0.09 : z === Z37.TUNNEL || z === Z37.WWF || z === Z37.DOME ? 0.07 : 0.025) * v, now, 0.5);
+  G37.amb.g.gain.setTargetAtTime(mute ? 0 : (under ? 0.1 : pool ? 0.035 : z === Z37.TUNNEL || z === Z37.WWF || z === Z37.DOME ? 0.045 : 0.012) * v, now, 0.5);
+  if (!mute) music37(dt, z, under);
   G37.amb.l.frequency.setTargetAtTime(under ? 260 : pool ? 620 : 420, now, 0.3);
-  G37.hum.g.gain.setTargetAtTime(mute ? 0 : (z === Z37.PLANT || z === Z37.STAFF ? 0.07 : pool || z === Z37.HOSP ? 0.012 : 0.004) * v * (under ? 0.4 : 1), now, 0.6);
+  G37.hum.g.gain.setTargetAtTime(mute ? 0 : (z === Z37.PLANT || z === Z37.STAFF ? 0.04 : pool || z === Z37.HOSP ? 0.004 : 0.0015) * v * (under ? 0.4 : 1), now, 0.6);
   AU.humG.gain.setTargetAtTime(0, now, 0.2);
   AU.tenG.gain.setTargetAtTime(mute ? 0 : clamp(G.chase * 0.5 + PL.fear * 0.14, 0, 0.6) * v, now, 0.5); AU.tenF.frequency.setTargetAtTime(280 + G.chase * 1500, now, 0.5);
   // the hotel lobby's music, heard from further away than you'd think
