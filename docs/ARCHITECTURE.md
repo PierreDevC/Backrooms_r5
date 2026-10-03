@@ -52,3 +52,10 @@ Room geometry, anchors and memory text are in docs/LEVEL18.md and source. Stalki
 
 ## r6 story layer
 `story.js` (after brief.js): run flags, per-level tasks and FIELD NOTES, document overlay, hold actions, `twin()`. `places0.js` (after world.js), `places9.js` (after story9.js), `places5.js` (after story5.js), `places18.js` (after story18.js): each level's added places, routes, documents and beats, hooked into the existing layout / build / events / objective / target functions (see HANDOFF.md). Design and lines: docs/STORY.md.
+
+## Route guidance (r10.2, `game/src/nav.js`)
+- Walk grid: `NAV.res` 0.4 m over the whole level, from `LV.solids` inflated by 0.22 m. Values: 0 free, 1 wall/prop, 2 a door you can open (W9.doors, unlocked), 3 a locked door or a gate (`NAV_GATES` tags). A wider copy (0.36 m, walls and props only) is used for the straight-line checks so the waypoint never sits on a corner.
+- `navField` is Dijkstra with integer costs (5 straight, 7 diagonal, no corner cutting, 12 for a link) on a ring of buckets, seeded from every node within 1.6 m of the objective on its own side of any wall (the prop the objective sits on is ignored). Pass A: doors open, locks shut. Pass B: locks open too (the route leads to the lock). Otherwise: the reachable node nearest the objective.
+- Links (`navMakeLinks`): Level 7 ladders (both ways), Level 37 tower (base to top, top off the open edge), Level 18 slides, Level 5 portal doors (`PORT5.list`, through each vestibule's inner door) and the service stairs, Level 9 house stairs and the outpost/lab stairs.
+- `navGuide(tg)`: recomputes the field when the objective moves more than 1.2 m (a walking target at most every 1.2 s) or the grid signature changes; the mark points at the farthest route node within 12 m in a clear straight line, or at a link entry.
+- Floor arrows: `guideTick` tracks the route distance to the objective; after `GUIDE_AFTER[G.diff]` seconds with no 4 m of progress it shows up to 14 chevrons (`guideArr` shader, 0.9 m ground quads) along `NAV.last`, then waits half the time before it may show again. Heights from `LV.fh` / water surface (37, 2, 7) or `phys9` (Level 9 upstairs).

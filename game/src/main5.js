@@ -33,7 +33,8 @@ function obj5() {
   }
   return '';
 }
-function setPhase5(p) { if (p) G5.phase = p; objective(obj5()); tasks5(); }
+const PH5 = ['arrive', 'keys', 'staff', 'stairs', 'valves', 'fire', 'exit'];   // phases only move forward
+function setPhase5(p) { if (p && PH5.indexOf(p) >= PH5.indexOf(G5.phase)) G5.phase = p; objective(obj5()); tasks5(); }
 
 // ----- story actions -----
 function takeKey5(k) {
@@ -365,15 +366,15 @@ function target5() {
       const e = left.find(k => k.id === 'E');
       if (e && (reg === R5.E2 || left.length === 1)) {   // the east key: through the wrong door, once you know the corridor loops
         if (reg === R5.E2) return e;
-        const A = LV.warps[0].a; return G5.loopHint || G5.noteRead ? { x: A.cx + DX[A.vd] * CELL * 0.5, z: A.cz + DY[A.vd] * CELL * 0.5 } : { x: 30 * CELL, z: cellCenter(LOOP5.z) };
+        return G5.loopHint || G5.noteRead ? e : { x: 30 * CELL, z: cellCenter(LOOP5.z) };   // once you know: the key itself; the route goes through the vestibule's inner door
       }
       return near(left.filter(k => k.id !== 'E'));
     }
     case 'staff': { const d = W5.svDoor; return d ? { x: d.mx, z: d.mz } : null; }
-    case 'stairs': return inBoil ? null : stairs;
-    case 'valves': return inBoil ? near(W5.valves.filter(v => !v.turned)) : stairs;
+    case 'stairs': return near(W5.valves.filter(v => !v.turned)) || stairs;   // the route goes down the service stairs on its own
+    case 'valves': return near(W5.valves.filter(v => !v.turned)) || stairs;
     case 'fire': return targetState5();
-    case 'exit': return inBoil ? W5.exit : stairs;
+    case 'exit': return W5.exit || stairs;
   }
   return null;
 }

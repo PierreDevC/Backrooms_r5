@@ -26,7 +26,7 @@ function obj37() {
   if (G37.flood) return G37.hatchReady ? 'OPEN THE HATCH' : 'SWIM UP · THE HATCH IS AT THE TOP';
   switch (G37.phase) {
     case 'arrive': return 'FIND DRY GROUND · THE CABANA, WEST OF THE SHALLOWS';
-    case 'dry': return P37.ret ? 'ABARA · THE CABANA' : P37.cam && P37.cass ? 'BRING THEM BACK TO ABARA · THE CABANA' : P37.quest ? (P37.cam || P37.cass ? 'THE PIT · ONE MORE THING DOWN THERE' : P37.plant ? (P37.drained ? 'FIND THE CASSETTE AND THE CAMCORDER · THE PIT' : 'DRAIN THE SHALLOWS · THE PUMP ROOM') : 'THE PLANT KEY · UNDER THE KETTLE') : 'TALK TO ABARA';
+    case 'dry': return P37.ret ? 'ABARA · THE CABANA' : P37.cam && P37.cass ? 'BRING THEM BACK TO ABARA · THE CABANA' : P37.quest ? (P37.cam || P37.cass ? (P37.cam ? 'THE PIT · THE CASSETTE, TAPE FOUR' : 'THE PIT · PELL\'S CAMCORDER') : P37.plant ? (P37.drained ? 'FIND THE CASSETTE AND THE CAMCORDER · THE PIT' : 'DRAIN THE SHALLOWS · THE PUMP ROOM') : 'THE PLANT KEY · UNDER THE KETTLE') : 'TALK TO ABARA';
     case 'wings': { const w = wingsDone37(); return w >= 3 ? 'THE LIFEGUARD BOOTH · SEAT ALL THREE IN THE PANEL' : `THE THREE WINGS · ${w}/3 · EACH KEEPS ONE THING`; }
     case 'finale': return 'THE LIFEGUARD BOOTH · THE PANEL HAS THREE SLOTS';
   }

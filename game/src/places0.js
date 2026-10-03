@@ -488,9 +488,10 @@ function setObj0() {
 function target0() {
   if (!G.exitOn && !(P0.carry && P0.power === 0)) return null;
   if (P0.carry || P0.power || !P0.rooms.length) return W.exit;
-  const s = P0.sub && !P0.power ? { x: P0.sub.cx, z: P0.sub.cz } : null, c = P0.camp && W.p0 && W.p0.battery.isEnabled() ? { x: P0.camp.cx, z: P0.camp.cz } : null;
-  if (s && c) return dist2(PL.x, PL.z, s.x, s.z) < dist2(PL.x, PL.z, c.x, c.z) ? s : c;
-  return s || c || W.exit;
+  const s = P0.sub && !P0.power ? { x: P0.sub.cx, z: P0.sub.cz } : null, c = W.p0 && W.p0.battery && W.p0.battery.isEnabled() && W.p0.batIt ? { x: W.p0.batIt.x, z: W.p0.batIt.z } : null;   // the battery itself (where Brandt left it, or where you put it down)
+  const sb = () => { if (!s || !W.p0) return s; if (dist2(PL.x, PL.z, s.x, s.z) > 9) return s; const b = W.p0.breakers.filter((it, i) => !P0.breakers[i]).sort((a, q) => dist2(PL.x, PL.z, a.x, a.z) - dist2(PL.x, PL.z, q.x, q.z))[0]; return b || s; };   // inside the substation: the next breaker
+  if (s && c) return dist2(PL.x, PL.z, s.x, s.z) < dist2(PL.x, PL.z, c.x, c.z) ? sb() : c;
+  return sb() || c || W.exit;
 }
 function places0Start() {   // a new attempt on the same layout: put every story prop back
   resetP0(); PL.load = false;

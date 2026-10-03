@@ -434,9 +434,7 @@ function objState5() {
 function targetState5() {
   const S = LV.st5; if (!S) return null;
   const pc = cIdx(cellOf(PL.x), cellOf(PL.z));
-  if (boilZ5(LV.zone[pc])) return { x: cellCenter(LV.arrive5.x), z: LV.arrive5.y * CELL + 0.4 };
-  if (!inSt5(pc) && LV.zone[pc] !== Z5.VEST) { const a = S.va; return { x: a.cx + DX[a.vd] * CELL * 0.5, z: a.cz + DY[a.vd] * CELL * 0.5 }; }
-  if (LV.zone[pc] === Z5.VEST) return null;
+  // the thing to do on the State Floor itself: the route leads up the stairs and through the ballroom vestibule's inner door to it
   if (!ST5.sec) { const d = W5.st.secDoor; return ST5.keys || P5.master ? (d ? { x: d.mx, z: d.mz } : null) : ST5.book ? { x: S.t9.x, z: S.t9.z } : S.stand; }
   if (!ST5.fireKey) return W5.st.case;
   const r = S.panelR; return { x: r.position.x, z: r.position.z };

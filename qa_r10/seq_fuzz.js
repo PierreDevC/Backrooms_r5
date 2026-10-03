@@ -18,12 +18,13 @@ module.exports = async (page) => {
     const step = s => { for (let i = 0; i < s * 20 && B.G.state === 'play'; i++) { keep(); B.simStep(0.05); } };
     const lab = it => { try { return String(it.label()); } catch (e) { return '?'; } };
     const okI = it => { try { return !it.ok || it.ok(); } catch (e) { return false; } };
-    const go = it => { B.PL.x = it.x + 0.01; B.PL.z = it.z + 0.01; B.PL.cell = -1; B.simStep(0.05); };
+    const go = it => { if (Math.hypot(it.x - B.PL.x, it.z - B.PL.z) > 2.2) { B.PL.x = it.x + 0.01; B.PL.z = it.z + 0.01; B.PL.cell = -1; } B.simStep(0.05); };
     const doIt = (it, why) => { go(it); if (!okI(it)) return false; const l = lab(it); try { it.act(); } catch (e) { issues.push('THROW ' + l + ' ' + e.message); } step(/HOLD|SHUT|PRY|CALL|SPLICE|LIGHT|FILL|PRIM|CONNECT|TURN|DIG|CRANK|OPEN THE/.test(l) ? 6 : 1.2); log.push(why + ' ' + l + ' | ' + document.getElementById('objective').textContent); return true; };
     // phase 1: random order
     for (let i = 0; i < FUZZ && B.G.state === 'play'; i++) {
-      const av = B.W.interact.filter(it => okI(it) && !END.test(lab(it)) && !it.it && !it.door);
+      const av = B.W.interact.filter(it => okI(it) && !END.test(lab(it)) && !it.it);
       if (!av.length) break; doIt(av[Math.floor(rnd() * av.length)], 'F'); step(rnd() * 3);
+      if (L === 0 && rnd() < 0.25) { B.PL.x += (rnd() - 0.5) * 30; B.PL.z += (rnd() - 0.5) * 30; B.PL.cell = -1; B.simStep(0.05); if (B.dropBattery0()) log.push('F put the battery down'); }
       if (rnd() < 0.12 && B.G.state === 'play') { B.die('test'); B.simStep(0.05); B.cpRetry(); for (let k = 0; k < 40; k++) B.simStep(0.05); log.push('F died + retry · ' + B.G.state); if (B.G.state !== 'play') { issues.push('retry left state ' + B.G.state); break; } }
       if (B.ERRS.n) { issues.push('ERR after fuzz ' + B.ERRS.last); break; }
     }
@@ -32,23 +33,57 @@ module.exports = async (page) => {
     const oracle = near => {
       if (L === 2 && !B.PP2.power && B.PP2.step >= 3 && near.some(it => /THROW BREAKER/.test(lab(it)))) { if (!B.PP2.tapped) return false; for (const k of B.PP2.order) { const it = B.W.interact.find(i => lab(i) === 'THROW BREAKER ' + k); if (it) doIt(it, 'O'); } return true; }
       if (L === 7 && !B.PS7.safeOpen && near.some(it => /TURN DIAL/.test(lab(it)))) { const want = [4, 2, 7]; for (let i = 0; i < 3; i++) { const it = B.W.interact.find(q => new RegExp('TURN DIAL ' + (i + 1)).test(lab(q))); let g = 0; while (it && B.PS7.dial[i] !== want[i] && g++ < 12) { B.PL.x = it.x; B.PL.z = it.z; it.act(); } } log.push('O safe ' + B.PS7.dial.join('')); return true; }
+      if (L === 9) { const T = B.W9.terms.find(t => t.active && !t.done && Math.hypot(t.x - B.PL.x, t.z - B.PL.z) < 3.4); if (T) { T.prog = T.need; if (B.HACK9) B.HACK9.on = false; step(1.5); if (!T.done && B.finishDownload) B.finishDownload(T); log.push('O transfer ' + T.done); return true; } }
+      if (L === 18 && B.M18 && !B.M18.played && near.some(it => /AGAIN|FLOOR PIANO/.test(lab(it)))) { if (!B.M18.song) return false; for (const i of [0, 0, 4, 4, 5, 5, 4]) B.pianoNote18(i); step(1); log.push('O song ' + B.M18.played); return true; }
       return false;
     };
+    // crossing a link the way a player would: the ladder / slide / tower interact, or walking into the stair or through the portal door
+    const links = { real: 0, fake: 0 };
+    const cross = (e, b) => {
+      const bx = B.navX(b), bz = B.navZ(b), arrived = () => Math.hypot(B.PL.x - bx, B.PL.z - bz) < 3.5;
+      const it = B.W.interact.find(i => okI(i) && Math.hypot(i.x - B.PL.x, i.z - B.PL.z) < 2.4 && /CLIMB|SLIDE|LADDER/.test(lab(i)));
+      if (it) { try { it.act(); } catch (er) {} step(3); if (arrived()) return true; }
+      for (const d of B.W.interact) if (d.door && Math.hypot(d.x - B.PL.x, d.z - B.PL.z) < 2.6 && /^OPEN DOOR|UNLATCH|OPEN THE INNER DOOR/.test(lab(d)) && okI(d)) { try { d.act(); } catch (er) {} }
+      step(1.2);
+      for (const yaw of [0, Math.PI / 2, Math.PI, -Math.PI / 2]) {
+        const x0 = B.PL.x, z0 = B.PL.z; B.PL.yaw = yaw; B.K.add('KeyW'); for (let i = 0; i < 24 && !arrived(); i++) { keep(); B.simStep(0.05); } B.K.delete('KeyW'); step(1.5);
+        if (arrived()) return true; B.PL.x = x0; B.PL.z = z0; B.PL.cell = -1; B.simStep(0.05);
+      }
+      return false;
+    };
+    // walk the compass route (as nav_walk does): toward the mark, through openable doors, across links
+    const walk = (tg, maxT = 90, R = 1.6) => { const NAV = B.NAV, n = () => NAV.n; let t = 0, last = 1e9, still = 0;
+      for (; t < maxT && B.G.state === 'play'; t += 0.1) {
+        NAV.wpT = 0; const w = B.navGuide(tg); if (!w) return 'noroute';
+        if (Math.hypot(tg.x - B.PL.x, tg.z - B.PL.z) < R) return 'there';
+        const P = NAV.last; if (P && P.link !== undefined) { const e = P[P.length - 1]; if (Math.hypot(B.navX(e) - B.PL.x, B.navZ(e) - B.PL.z) < 1.0) { const b = NAV.linkA.get(e)[0]; if (!cross(e, b)) { links.fake++; B.PL.x = B.navX(b); B.PL.z = B.navZ(b); B.PL.cell = -1; step(0.3); } else links.real++; NAV.wpT = 0; continue; } }
+        for (const q of B.W.interact) if (q.door && Math.hypot(q.x - B.PL.x, q.z - B.PL.z) < 1.8 && /^OPEN DOOR|UNLATCH/.test(lab(q)) && okI(q)) { try { q.act(); } catch (er) {} }   // a player opens the door in front of them
+        const dx = w.x - B.PL.x, dz = w.z - B.PL.z, d = Math.hypot(dx, dz) || 1, sp = Math.min(d, 0.4), p = { x: B.PL.x + dx / d * sp, z: B.PL.z + dz / d * sp };
+        B.collideNav(p, 0.28); B.PL.x = p.x; B.PL.z = p.z; B.PL.cell = -1; keep(); B.simStep(0.1);
+        const m = NAV.metres; if (m >= last - 0.05) { if ((still += 0.1) > 8) return m < 0.6 ? 'there' : 'stalled ' + m.toFixed(1) + ' at ' + [B.PL.x.toFixed(1), B.PL.z.toFixed(1)] + ' tg ' + [tg.x.toFixed(1), tg.z.toFixed(1)] + ' wp ' + (w ? [w.x.toFixed(1), w.z.toFixed(1)] : '-') + ' pass ' + NAV.pass + ' obj ' + document.getElementById('objective').textContent; } else { still = 0; last = m; }
+      }
+      return 'timeout m ' + B.NAV.metres.toFixed(1) + ' at ' + [B.PL.x.toFixed(1), B.PL.z.toFixed(1)] + ' tg ' + [tg.x.toFixed(1), tg.z.toFixed(1)] + ' obj ' + document.getElementById('objective').textContent; };
+    const walks = [];
     // phase 2: follow the marker
     let stuck = 0, lastKey = '', n = 0;
     for (; n < 140 && B.G.state === 'play'; n++) {
-      const tg = tgtF(); if (!tg) { step(3); if (++stuck > 12) { issues.push('NO TARGET for 36 s'); break; } continue; }
+      let tg = tgtF(); if (!tg && L === 0) { const s = B.W.tapes.find(t => !t.taken); if (s) tg = { x: s.x, z: s.z }; }
+      if (!tg) { step(3); if (++stuck > 12) { issues.push('NO TARGET for 36 s'); break; } continue; }
       const near = B.W.interact.filter(it => Math.hypot(it.x - tg.x, it.z - tg.z) < 2.8 && !it.it).sort((a, b) => Math.hypot(a.x - tg.x, a.z - tg.z) - Math.hypot(b.x - tg.x, b.z - tg.z));
-      const DOC = /^READ|^STUDY|^LOOK|FIELD RADIO|PICK UP THE PAGE|^THE TIME CLOCK|^THE CLOCK|NOTICE|^EXAMINE/;
+      const DOC = /^READ|^STUDY|^LOOK|STOP LOOKING|FIELD RADIO|PICK UP THE PAGE|^THE TIME CLOCK|^THE CLOCK|NOTICE|^EXAMINE/;
       if (oracle(near)) { step(1); continue; }
-      const dd = it => Math.hypot(it.x - tg.x, it.z - tg.z) + (DOC.test(lab(it)) ? 0.4 : 0), act = near.filter(it => okI(it)).sort((a, b) => dd(a) - dd(b))[0];
+      const dd = it => Math.hypot(it.x - tg.x, it.z - tg.z) + (DOC.test(lab(it)) ? 0.4 : 0), act = near.filter(it => okI(it) && !/LOOK OUTSIDE|STOP LOOKING|^OPEN DOOR|^CLOSE DOOR/.test(lab(it))).sort((a, b) => dd(a) - dd(b))[0];
       const key = Math.round(tg.x) + ',' + Math.round(tg.z) + ':' + (act ? lab(act) : '-');
       if (key === lastKey) { stuck++; step(2 + stuck * 2); } else stuck = 0; lastKey = key;
-      if (stuck > 10) { issues.push('STUCK at marker ' + key + ' near: ' + near.map(lab).join(' / ') + (L === 7 ? ' · ' + JSON.stringify(B.PS7) : '') + (L === 37 ? ' · flood ' + JSON.stringify([B.G37.flood, B.G37.hatchReady, B.G37.onTower, +(B.LVs().basins[2] || {}).y]) : '')); break; }
-      if (act) doIt(act, 'S'); else { B.PL.x = tg.x; B.PL.z = tg.z; B.PL.cell = -1; step(2); log.push('S (walk to marker) ' + key); }
+      if (stuck > 10) { issues.push('STUCK at marker ' + key + ' near: ' + near.map(lab).join(' / ') + (L === 9 ? ' · ' + JSON.stringify(tg) + ' phase ' + B.G9.phase + ' PL ' + [B.PL.x.toFixed(1), B.PL.z.toFixed(1)] + ' bld ' + B.LVs().bld[Math.floor(B.PL.z / 3.6) * B.Nn() + Math.floor(B.PL.x / 3.6)] + ' raw ' + JSON.stringify(B.target9raw && B.target9raw()) : '') + (L === 5 ? ' · phase ' + B.G5.phase + ' tg ' + JSON.stringify(tg) + ' keys ' + JSON.stringify(B.W5.keys.map(k => [k.id, k.taken, +k.x.toFixed(1), +k.z.toFixed(1)])) + ' PL ' + [B.PL.x.toFixed(1), B.PL.z.toFixed(1)] : '') + (L === 7 ? ' · ' + JSON.stringify(B.PS7) : '') + (L === 37 ? ' · flood ' + JSON.stringify([B.G37.flood, B.G37.hatchReady, B.G37.onTower, +(B.LVs().basins[2] || {}).y]) : '')); break; }
+      if (L === 9 && Math.hypot(tg.x - 25.5 * 3.6, tg.z - 20.3 * 3.6) < 0.5 && Math.hypot(B.PL.x - tg.x, B.PL.z - tg.z) < 2) { B.PL.x = (47 + 2.5) * 3.6; B.PL.z = 2.65; B.PL.cell = -1; step(1.5); log.push('O stairs to the lab'); continue; }
+      if (L === 9 && tg.fl) { const hs = B.LVs().houses.find(h => h.stair && Math.hypot((tg.fl > 0 ? h.stair.gGoal : h.stair.uGoal).x - tg.x, (tg.fl > 0 ? h.stair.gGoal : h.stair.uGoal).z - tg.z) < 0.5); if (hs) { const a = tg.fl > 0 ? hs.stair.uArr : hs.stair.gArr; B.PL.x = a.x; B.PL.z = a.z; B.PL.cell = -1; step(1.5); log.push('O stairs ' + (tg.fl > 0 ? 'up' : 'down')); continue; } }
+      if (act && Math.hypot(act.x - B.PL.x, act.z - B.PL.z) > 2.2) { const res = walk({ x: act.x, z: act.z }); walks.push(res); }
+      if (act) doIt(act, 'S'); else { const res = walk(tg, 90, 0.5); walks.push(res); if (res !== 'there') { B.PL.x = tg.x; B.PL.z = tg.z; B.PL.cell = -1; } step(1); log.push('S (walk to marker) ' + key); }
       if (B.ERRS.n) { issues.push('ERR ' + B.ERRS.last); break; }
     }
-    return { L, SEED, FUZZ, fuzzState, state: B.G.state, steps: n, issues, errs: B.ERRS.n, tail: log.slice(-30) };
+    const wk = { links }; for (const w of walks) { const k = w.split(' ')[0]; wk[k] = (wk[k] || 0) + 1; }
+    return { L, SEED, FUZZ, fuzzState, walks: wk, badWalks: walks.filter(w => w !== 'there').slice(0, 6), state: B.G.state, steps: n, issues, errs: B.ERRS.n, tail: log.slice(-30) };
   }, { L, SEED, FUZZ });
   console.log('SEQ ' + JSON.stringify(r));
 };

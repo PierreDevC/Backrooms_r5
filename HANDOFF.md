@@ -1,5 +1,8 @@
 # The Backrooms: Found Footage — Coding-Agent Handoff (r7.2)
 
+## r10.2 (branch agent/claude): route guidance and sequence-break fixes
+`nav.js` (built before ui.js): `navGuide(target)` turns any level's objective point into the next route waypoint for the compass mark; `guideTick` paints floor arrows after GUIDE_AFTER seconds without progress. The walk grid is rebuilt when a solid's `off` changes, a door locks/unlocks or `LV.navVer` bumps. Per-level teleports are listed in `navMakeLinks()`: add new ladders/stairs/portals there. Target functions may now return the real destination (the route finds ladders and stairs); don't stop a marker at a doorway. Phases in Levels 2 and 37 only move forward (`PH2`, `PH37`). Tests: `qa_r10/nav_walk.js`, `qa_r10/seq_fuzz.js` (BR_NAV_LEVEL, BR_SEED, BR_FUZZ).
+
 ## r10 (branch agent/claude): Level 7 Thalassophobia — read docs/LEVEL7.md
 Level 2 THE LIFT → goLevel7(carryFrom2()). Files: textures7, level7, audio7, world7, props7, props7b, story7, ai7, main7, voicebank7 (suffix 7; state objects GS7/WS7/PS7/ZS7/AIS7/BAS7). It reuses Level 37 functions (waterPhys37, buildGeometry37, buildWater37, Fish37, side37 helpers, F37 props). Compass north is +z. Tests: qa7/s7_*.js.
 

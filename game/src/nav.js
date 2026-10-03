@@ -4,7 +4,7 @@
 // route the player can see in a straight line, so it leads round walls and down the corridor that actually gets there.
 // If the objective is behind a locked door or gate, the route leads to that door; if it can't be reached at all, to the nearest place that can.
 const NAV = { res: 0.4, n: 0, blk: null, scn: null, lvl: -1, sig: '', links: null, linkB: null, linkA: null, F: null, pass: 'A', key: '', tgt: null, rebuildT: 0, calcT: 0, wp: null, wpT: 0, metres: -1, last: null };
-const NAV_R = 0.22;   // clearance used for the walk grid (the player's own radius is 0.28; a little lenient so narrow doorways still connect)
+const NAV_R = 0.22, NAV_RW = 0.36;   // clearance used for the walk grid (the player's own radius is 0.28; a little lenient so narrow doorways still connect)
 const NAVD = [[1, 0, 5], [-1, 0, 5], [0, 1, 5], [0, -1, 5], [1, 1, 7], [1, -1, 7], [-1, 1, 7], [-1, -1, 7]], NAV_LINK = 12;
 function navOn() { return [0, 9, 5, 18, 37, 2, 7].includes(LVL) && !!LV.solids; }
 // what each solid is to the walker: 1 wall/prop, 2 a door you can open, 3 a door or gate that is locked for now
@@ -13,7 +13,7 @@ function navDoorMap() {
   for (const d of W9.doors) if (d.solid !== undefined && d.solid >= 0) m.set(d.solid, d);
   return m;
 }
-const NAV_GATES = new Set(['gate', 'liftgate', 'cage', 'cell', 'elev', 'sluice', 'stair']);
+const NAV_GATES = new Set(['gate', 'liftgate', 'cage', 'cell', 'elev', 'sluice']);
 function navSig() {
   const S = LV.solids; let h = S.length * 7919;
   for (let i = 0; i < S.length; i++) if (S[i].off) h = (h * 31 + i + 1) | 0;
@@ -22,7 +22,7 @@ function navSig() {
   return LVL + ':' + h + ':' + (LV.navVer || 0);
 }
 function navBuild() {
-  const res = NAV.res, n = Math.ceil(LEVEL / res), blk = new Uint8Array(n * n), dm = navDoorMap();
+  const res = NAV.res, n = Math.ceil(LEVEL / res), blk = new Uint8Array(n * n), wide = new Uint8Array(n * n), dm = navDoorMap();
   for (let i = 0; i < n; i++) { blk[i] = blk[(n - 1) * n + i] = blk[i * n] = blk[i * n + n - 1] = 1; }
   const S = LV.solids;
   for (let si = 0; si < S.length; si++) {
@@ -34,8 +34,12 @@ function navBuild() {
     for (let j = j0; j <= j1; j++) { const z = (j + 0.5) * res, cz = clamp(z, s.z0, s.z1); for (let i = i0; i <= i1; i++) {
       const x = (i + 0.5) * res, cx = clamp(x, s.x0, s.x1); if ((x - cx) ** 2 + (z - cz) ** 2 >= NAV_R * NAV_R) continue;
       const k = j * n + i, o = blk[k]; if (o === 1 || v === 1) blk[k] = 1; else if (o === 0 || v > o) blk[k] = v; } }
+    if (v === 1) {   // the wide grid: a body-and-a-bit clearance, for the straight-line checks that pick the waypoint (so it never aims you into a corner)
+      const R2 = NAV_RW, a0 = Math.max(0, Math.floor((s.x0 - R2) / res - 0.5)), a1 = Math.min(n - 1, Math.ceil((s.x1 + R2) / res - 0.5)), b0 = Math.max(0, Math.floor((s.z0 - R2) / res - 0.5)), b1 = Math.min(n - 1, Math.ceil((s.z1 + R2) / res - 0.5));
+      for (let j = b0; j <= b1; j++) { const z = (j + 0.5) * res, cz = clamp(z, s.z0, s.z1); for (let i = a0; i <= a1; i++) { const x = (i + 0.5) * res, cx = clamp(x, s.x0, s.x1); if ((x - cx) ** 2 + (z - cz) ** 2 < R2 * R2) wide[j * n + i] = 1; } }
+    }
   }
-  Object.assign(NAV, { n, blk, lvl: LVL, scn: SCN, F: null, key: '' });
+  Object.assign(NAV, { n, blk, wide, lvl: LVL, scn: SCN, F: null, key: '' });
   navMakeLinks();
 }
 // per-level links: standing at a takes you to b (a fade, a climb, a slide, a portal)
@@ -47,7 +51,7 @@ function navMakeLinks() {
     if (LVL === 18 && W18.slides) for (const S of W18.slides) { const t = SLIDE_TO18[S.to] && SLIDE_TO18[S.to](); if (t) add(S.x, S.z, t.x, t.z); }
     if (LVL === 5) {
       if (typeof PORT5 !== 'undefined') for (const P of PORT5.list) { const v = P.v, X = P.X, b = X.map(X.ax + v.fx * 0.9, X.az + v.fz * 0.9); add(X.ax - v.fx * 0.8, X.az - v.fz * 0.8, b[0], b[1]); }
-      const s = LV.svStair, a = LV.arrive5; if (s && a) { add(cellCenter(s.x), s.y * CELL + 1.8, cellCenter(a.x), a.y * CELL + 2.5); add(cellCenter(a.x), a.y * CELL + 1.2, cellCenter(s.x), s.y * CELL - 0.8); }
+      const s = LV.svStair, a = LV.arrive5; if (s && a) { add(cellCenter(s.x), s.y * CELL + 1.0, cellCenter(a.x), a.y * CELL + 2.5); add(cellCenter(a.x), a.y * CELL + 2.0, cellCenter(s.x), s.y * CELL - 0.8); }   // the trigger bands in front of the stair blocks
     }
     if (LVL === 9) {
       for (const h of LV.houses || []) if (h.stair) { const s = h.stair, mid = r => [(r.x0 + r.x1) / 2, (r.z0 + r.z1) / 2], g = mid(s.gTrig), u = mid(s.uTrig); add(g[0], g[1], s.uArr.x, s.uArr.z); add(u[0], u[1], s.gArr.x, s.gArr.z); }
@@ -77,13 +81,13 @@ function navSnap(x, z, pass, r = 4) {
 }
 // Dijkstra on small integer costs (5 straight, 7 diagonal, links 12) with a ring of buckets
 function navField(seeds, pass, rev = false) {
-  const n = NAV.n, N2 = n * n, D = new Int32Array(N2).fill(-1), blk = NAV.blk, RING = 16, lim = pass === 'A' ? 2 : 3;
+  const n = NAV.n, N2 = n * n, D = new Int32Array(N2).fill(-1), blk = NAV.blk, RING = 24, lim = pass === 'A' ? 2 : 3;
   const free = new Uint8Array(N2); for (let k = 0; k < N2; k++) { const v = blk[k]; free[k] = v === 0 || v === 2 || (v === 3 && lim === 3) ? 1 : 0; }
   const B = Array.from({ length: RING }, () => new Int32Array(1024)), BL = new Int32Array(RING);
   const push = (b, k) => { let a = B[b]; if (BL[b] >= a.length) { const g = new Int32Array(a.length * 2); g.set(a); B[b] = a = g; } a[BL[b]++] = k; };
   let pending = 0;
   for (const k of seeds) if (k >= 0 && D[k] < 0) { D[k] = 0; push(0, k); pending++; }
-  const LK = rev ? NAV.linkA : NAV.linkB, OFF = [1, -1, n, -n], DG = [n + 1, n - 1, -n + 1, -n - 1], DGa = [1, -1, 1, -1], DGb = [n, n, -n, -n];
+  const W = NAV.wide, LK = rev ? NAV.linkA : NAV.linkB, OFF = [1, -1, n, -n], DG = [n + 1, n - 1, -n + 1, -n - 1], DGa = [1, -1, 1, -1], DGb = [n, n, -n, -n];
   const cur = new Int32Array(0); let work = new Int32Array(1024);
   for (let d = 0; pending > 0; d++) {
     const b = d % RING, cnt = BL[b]; if (!cnt) continue;
@@ -93,11 +97,11 @@ function navField(seeds, pass, rev = false) {
       const i = k % n;
       for (let o = 0; o < 4; o++) {   // straight
         if ((o === 0 && i === n - 1) || (o === 1 && i === 0)) continue;
-        const nk = k + OFF[o]; if (nk < 0 || nk >= N2 || !free[nk]) continue; const nd = d + 5; const dv = D[nk]; if (dv >= 0 && dv <= nd) continue; D[nk] = nd; push(nd % RING, nk); pending++;
+        const nk = k + OFF[o]; if (nk < 0 || nk >= N2 || !free[nk]) continue; const nd = d + 5 + (W && W[nk] ? 4 : 0); const dv = D[nk]; if (dv >= 0 && dv <= nd) continue; D[nk] = nd; push(nd % RING, nk); pending++;
       }
       for (let o = 0; o < 4; o++) {   // diagonal, no corner cutting
         if ((DGa[o] === 1 && i === n - 1) || (DGa[o] === -1 && i === 0)) continue;
-        const nk = k + DG[o]; if (nk < 0 || nk >= N2 || !free[nk] || !free[k + DGa[o]] || !free[k + DGb[o]]) continue; const nd = d + 7; const dv = D[nk]; if (dv >= 0 && dv <= nd) continue; D[nk] = nd; push(nd % RING, nk); pending++;
+        const nk = k + DG[o]; if (nk < 0 || nk >= N2 || !free[nk] || !free[k + DGa[o]] || !free[k + DGb[o]]) continue; const nd = d + 7 + (W && W[nk] ? 5 : 0); const dv = D[nk]; if (dv >= 0 && dv <= nd) continue; D[nk] = nd; push(nd % RING, nk); pending++;
       }
       if (LK) { const ls = LK.get(k); if (ls) for (const a of ls) { const nd = d + NAV_LINK; if (D[a] >= 0 && D[a] <= nd) continue; D[a] = nd; push(nd % RING, a); pending++; } }
     }
@@ -107,13 +111,16 @@ function navField(seeds, pass, rev = false) {
 // straight walkable line between two nodes (no wall, no locked door, no corner cut)
 function navLine(a, b, pass) {
   const ax = navX(a), az = navZ(a), bx = navX(b), bz = navZ(b), d = Math.hypot(bx - ax, bz - az), m = Math.ceil(d / (NAV.res * 0.5));
-  for (let s = 1; s < m; s++) { const t = s / m; if (!navFree(navIdx(ax + (bx - ax) * t, az + (bz - az) * t), pass)) return false; }
+  for (let s = 1; s < m; s++) { const t = s / m, k = navIdx(ax + (bx - ax) * t, az + (bz - az) * t); if (!navFree(k, pass)) return false; if (NAV.wide && NAV.wide[k] && d * t > 0.25 && d * (1 - t) > 0.25) return false; }
   return true;
 }
-// is node k on the target's own side of any wall? (the first 0.45 m from the target are ignored: it is usually mounted on that wall)
-function navReach(x, z, k) {
-  const bx = navX(k), bz = navZ(k), d = Math.hypot(bx - x, bz - z), m = Math.ceil(d / (NAV.res * 0.5));
-  for (let s = 1; s < m; s++) { const t = s / m; if (d * t < 0.45) continue; if (NAV.blk[navIdx(x + (bx - x) * t, z + (bz - z) * t)] === 1) return false; }
+// is node k on the target's own side of any wall? The first 0.45 m from the target are ignored (it is usually mounted on a wall), and so is
+// the prop the target sits on (a card on a table): leaving that prop is fine, crossing anything after it is not
+function navReach(x, z, k, own) {
+  const bx = navX(k), bz = navZ(k), d = Math.hypot(bx - x, bz - z), m = Math.ceil(d / (NAV.res * 0.5)); let left = false;
+  for (let s = 1; s < m; s++) { const t = s / m, px = x + (bx - x) * t, pz = z + (bz - z) * t;
+    if (!left && (d * t < 0.45 || (own && own.some(o => px > o.x0 - NAV_R && px < o.x1 + NAV_R && pz > o.z0 - NAV_R && pz < o.z1 + NAV_R)))) continue;
+    left = true; if (NAV.blk[navIdx(px, pz)] === 1) return false; }
   return true;
 }
 // (re)compute the field toward a target point
@@ -125,8 +132,9 @@ function navTarget(tg) {
   if (NAV.F && !moved && NAV.key === NAV.sig) return;
   if (NAV.F && moved && NAV.tgt && Math.hypot(tg.x - NAV.tgt.x, tg.z - NAV.tgt.z) < 6 && now - NAV.calcT < 1.2 && NAV.key === NAV.sig) return;   // a slowly moving target (someone walking): not every frame
   NAV.tgt = { x: tg.x, z: tg.z }; NAV.calcT = now; NAV.key = NAV.sig;
+  const own = LV.solids.filter(o => !o.off && o.tag === 'prop' && tg.x > o.x0 - 0.05 && tg.x < o.x1 + 0.05 && tg.z > o.z0 - 0.05 && tg.z < o.z1 + 0.05);   // the prop the target sits on
   const seedsFor = pass => { const out = [], c = navIdx(tg.x, tg.z), r = Math.ceil(1.6 / NAV.res), n = NAV.n, i0 = c % n, j0 = (c / n) | 0;
-    for (let j = j0 - r; j <= j0 + r; j++) for (let i = i0 - r; i <= i0 + r; i++) { if (i < 0 || j < 0 || i >= n || j >= n) continue; const k = j * n + i; if ((i - i0) ** 2 + (j - j0) ** 2 <= r * r && navFree(k, pass) && navReach(tg.x, tg.z, k)) out.push(k); }
+    for (let j = j0 - r; j <= j0 + r; j++) for (let i = i0 - r; i <= i0 + r; i++) { if (i < 0 || j < 0 || i >= n || j >= n) continue; const k = j * n + i; if ((i - i0) ** 2 + (j - j0) ** 2 <= r * r && navFree(k, pass) && navReach(tg.x, tg.z, k, own)) out.push(k); }
     if (!out.length) { const s = navSnap(tg.x, tg.z, pass, 10); if (s >= 0) out.push(s); } return out; };
   const pk = navSnap(PL.x, PL.z, 'B', 4);
   let F = navField(seedsFor('A'), 'A'), pass = 'A';
@@ -157,11 +165,12 @@ function navGuide(tg) {
   if (!tg || !navOn() || G.state !== 'play') return tg;
   try {
     navTarget(tg);
+    if (FX.t - NAV.calcT > 1) { const pk = navSnap(PL.x, PL.z, 'B', 4); if (pk >= 0 && NAV.F[pk] < 0) { NAV.F = null; navTarget(tg); } }   // you went somewhere the old route didn't cover (a ladder, a fall, a teleport)
     if ((NAV.wpT -= 1) > 0 && NAV.wp) return NAV.wp;
     NAV.wpT = 6;
     const P = navPath(); if (!P || P.length < 2) { NAV.wp = tg; NAV.metres = P ? 0 : -1; return tg; }
     const F = NAV.F, p0 = P[0]; NAV.metres = F[p0] / 5 * NAV.res; NAV.last = P;
-    if (P.link === undefined && NAV.metres < 2.2) { NAV.wp = tg; return tg; }
+    if (P.link === undefined && NAV.metres < 2.2 && navLine(p0, navIdx(tg.x, tg.z), 'B')) { NAV.wp = tg; return tg; }
     let pick = P[Math.min(P.length - 1, 2)];
     for (let s = P.length - 1; s >= 1; s--) { const k = P[s]; if (Math.hypot(navX(k) - PL.x, navZ(k) - PL.z) > 12) continue; if (navLine(p0, k, NAV.pass)) { pick = k; break; } }
     NAV.wp = Object.assign({}, tg, { x: navX(pick), z: navZ(pick), route: true });
@@ -211,7 +220,7 @@ function guideShow() {
 }
 function guideHide() { for (const A of GUIDE.arrows) { A.on = false; A.g.setEnabled(false); } }
 function guideTick(dt, tg) {
-  if (GUIDE.scn !== SCN) { GUIDE.arrows = []; GUIDE.scn = null; GUIDE.idle = 0; GUIDE.best = 1e9; GUIDE.tkey = ''; }
+  if (GUIDE.lvScn !== SCN) { GUIDE.lvScn = SCN; GUIDE.arrows = []; GUIDE.scn = null; GUIDE.idle = 0; GUIDE.best = 1e9; GUIDE.tkey = ''; GUIDE.shownT = -99; }   // a new level
   for (const A of GUIDE.arrows) if (A.on) {
     const t = FX.t - A.t0, k = t < 0 ? 0 : t < 0.6 ? t / 0.6 : t > A.life - 2 ? Math.max(0, (A.life - t) / 2) : 1, pulse = 0.75 + 0.25 * Math.sin(FX.t * 3 - A.t0 * 6);
     A.m.setVector4('col', new BABYLON.Vector4(1, 0.86, 0.45, 0.62 * k * pulse)); if (t > A.life) { A.on = false; A.g.setEnabled(false); }

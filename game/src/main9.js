@@ -493,17 +493,18 @@ function target9() {
 }
 function target9raw() {
   const lab = inLab9(), comp = !lab && PL.x > BX * CELL && PL.x < (BX + 9) * CELL && PL.z > BX * CELL && PL.z < (BX + 9) * CELL;
-  const toLab = () => lab ? null : comp ? { x: 25.5 * CELL, z: 20.3 * CELL } : W9.gate;
+  const toLab = () => lab ? null : comp || G9.gateOpen ? { x: 25.5 * CELL, z: 20.3 * CELL } : W9.gate;   // once the gate is open, straight on to the stairs down (the route goes through the gate)
   const up = { x: (LAB_X + 2.5) * CELL, z: 0.9 };
-  const near = arr => { let b = null, bd = 1e9; for (const o of arr) { const d = dist2(o.x, o.z, PL.x, PL.z); if (d < bd) { bd = d; b = o; } } return b; };
-  if (spareRoute9()) return lab ? (W9.elev ? { x: W9.elev.rx, z: W9.elev.rz } : null) : toLab();
+  const pp = phys9(PL.x, PL.z), near = arr => { let b = null, bd = 1e9; for (const o of arr) { const q = phys9(o.x, o.z), d = dist2(q[0], q[1], pp[0], pp[1]) + Math.abs(q[2] - pp[2]) * 2; if (d < bd) { bd = d; b = o; } } return b; };   // upstairs rooms live off-map: compare where things really are
+  const elevT = () => !W9.elev ? null : W9.elev.want ? { x: (LAB_X + 5) * CELL + 1.05, z: W9.elev.zc } : { x: W9.elev.rx, z: W9.elev.rz };   // once it is called, into the car
+  if (spareRoute9()) return lab ? elevT() : toLab();
   switch (G9.phase) {
     case 'arrive': return W9.kiosk;
     case 'data': return G9.mapSeen ? near(W9.terms.filter(T => !T.done)) : W9.kiosk;
     case 'gate': return toLab();
     case 'lab': return lab ? W9.crowbar : toLab();
     case 'cans': {
-      const left = W9.lockers.filter(L => L.st !== 'empty');
+      const left = G9.cans >= 4 ? [] : W9.lockers.filter(L => L.st !== 'empty');   // five lockers, four needed: with four in hand the rack is next
       if (G9.carry > 0 && (lab || !left.length)) return lab ? W9.rack : toLab();
       if (!left.length) return lab ? W9.rack : toLab();
       return lab ? up : near(left);
@@ -511,7 +512,7 @@ function target9raw() {
     case 'prime': return lab ? W9.release : toLab();
     case 'release': case 'trapped': return lab ? W9.panel : toLab();
     case 'hale': return AI9.hale;
-    case 'done': return W9.elev ? { x: W9.elev.rx, z: W9.elev.rz } : null;
+    case 'done': return lab ? elevT() : toLab();
   }
   return null;
 }
@@ -523,4 +524,4 @@ function hudObj9() {
 function hudItems9() { const a = []; if (P9S.rota) a.push(watchTimer9()); if (G9.crowbar) a.push('CROWBAR'); if (G9.keycard) a.push('KEYCARD'); if (G9.mapSeen) a.push('MAP'); return a.join(' · ') || 'LEVEL 9'; }
 
 // ----- start (after every module has initialised) -----
-if (/[?&]debug/.test(location.search)) window.__BR = { LVs: () => LV, collideNav, NAV, GUIDE, navGuide, navPath, navTarget, navBuild, guideShow, navFloorY, CP, cpRetry, cpSave, cpAvail, cpPorch9, ERRS, frameErr, inRun, hasAlt, startLevelPick, openLevels, G9, W9, AI9, hearLimit9, noiseAt9, hear9, physD9, cellPt, cIdx, cellOf, cellCenter, floorOf, updateHUD, BRIEF, openBrief, closeBrief, briefStep, startIntro9, brief9Seen, briefSlides, LV9: () => LV, goLevel9, worldFX9, restartGame, teardownScene, openGate, startDownload, finishDownload, takeCrowbar, useLocker, installCans, releaseSubject, pullLever, releaseCure, takeKeycard, useElevator, win9, spawnWatch, studyMap9, toggleMap9, setDoor, latchDoor, radio9, target9, raiseCage, Hale, HINT, G, PL, AI, FX, W, LV, CAM: () => CAM, SCN: () => SCN, ENG: () => ENG, startBlackout, takeTape, spawnHowler, lightAt, useExit, hurt, startGame, beginPlay, baseLight, S, DBG, los, pauseGame, die, win, showEnd, simStep, K, useExit, SFX, AU, SUBS, say, playVoice, playS, VO_TXT, ABANK_G };
+if (/[?&]debug/.test(location.search)) window.__BR = { angDiff, updateHUD, Nn: () => N, target9raw, houseOf9, LVs: () => LV, collideNav, navSnap, navX, navZ, NAV, GUIDE, navGuide, navPath, navTarget, navBuild, guideShow, navFloorY, CP, cpRetry, cpSave, cpAvail, cpPorch9, ERRS, frameErr, inRun, hasAlt, startLevelPick, openLevels, G9, W9, AI9, hearLimit9, noiseAt9, hear9, physD9, cellPt, cIdx, cellOf, cellCenter, floorOf, updateHUD, BRIEF, openBrief, closeBrief, briefStep, startIntro9, brief9Seen, briefSlides, LV9: () => LV, goLevel9, worldFX9, restartGame, teardownScene, openGate, startDownload, finishDownload, takeCrowbar, useLocker, installCans, releaseSubject, pullLever, releaseCure, takeKeycard, useElevator, win9, spawnWatch, studyMap9, toggleMap9, setDoor, latchDoor, radio9, target9, raiseCage, Hale, HINT, G, PL, AI, FX, W, LV, CAM: () => CAM, SCN: () => SCN, ENG: () => ENG, startBlackout, takeTape, spawnHowler, lightAt, useExit, hurt, startGame, beginPlay, baseLight, S, DBG, los, pauseGame, die, win, showEnd, simStep, K, useExit, SFX, AU, SUBS, say, playVoice, playS, VO_TXT, ABANK_G };
