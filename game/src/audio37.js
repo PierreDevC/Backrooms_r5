@@ -33,8 +33,9 @@ function muzak37(dt, near, pos) {
     return 4; }, pos, 1);
 }
 function audio37(dt, z, under) {
+  under = under > 0.5;   // FX.under is a smoothed 0..1 and never quite reaches 0: treat it as a flag or the water-muffle never lifts
   const C = AU.ctx, now = C.currentTime, mute = AU.muted, live = G.state === 'play' || G.state === 'intro' || G.state === 'won';
-  if (AU.uw) AU.uw.frequency.setTargetAtTime(under ? 420 : 22000, now, 0.05);
+  if (AU.uw) AU.uw.frequency.setTargetAtTime(under > 0.5 ? 420 : 22000, now, 0.05);
   if (!G37.amb) { const s = loopSrc(AU.brown), l = C.createBiquadFilter(); l.type = 'lowpass'; l.frequency.value = 520; const g = C.createGain(); g.gain.value = 0; const lfo = C.createOscillator(); lfo.frequency.value = 0.21; const lg = C.createGain(); lg.gain.value = 0.35; lfo.connect(lg).connect(g.gain); lfo.start(); s.connect(l).connect(g).connect(AU.duckB); G37.amb = { g, l, src: s }; }
   if (!G37.hum) { const g = C.createGain(); g.gain.value = 0; const o = C.createOscillator(); o.type = 'sawtooth'; o.frequency.value = 50; const o2 = C.createOscillator(); o2.frequency.value = 100.4; const f = C.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 260; o.connect(f); o2.connect(f); f.connect(g).connect(AU.duckB); o.start(); o2.start(); G37.hum = { g, o, o2, src: { stop() { try { o.stop(); o2.stop(); } catch (e) {} } } }; }
   const pool = z === Z37.POOL, wet = under ? 1 : 0, v = live ? 1 : 0;

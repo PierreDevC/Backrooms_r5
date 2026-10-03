@@ -21,8 +21,9 @@ const SFX7 = {
   bell(pos) { shot((d, t) => { tone(d, t, 3.2, 'sine', 330, 328, 0.2, 0.002); tone(d, t, 3.2, 'sine', 640, 636, 0.1, 0.002); tone(d, t, 2.4, 'sine', 990, 980, 0.05, 0.002); return 3.6; }, pos, 2.4); },
 };
 function audio7(dt, z, under) {
+  under = under > 0.5;   // FX.under is a smoothed 0..1 and never quite reaches 0: treat it as a flag or the water-muffle never lifts
   const C = AU.ctx, now = C.currentTime, mute = AU.muted, live = G.state === 'play' || G.state === 'intro' || G.state === 'won';
-  if (AU.uw) AU.uw.frequency.setTargetAtTime(under ? 380 : 22000, now, 0.05);
+  if (AU.uw) AU.uw.frequency.setTargetAtTime(under > 0.5 ? 380 : 22000, now, 0.05);
   if (!GS7.amb) { const s = loopSrc(AU.brown), l = C.createBiquadFilter(); l.type = 'lowpass'; l.frequency.value = 400; const g = C.createGain(); g.gain.value = 0; const lfo = C.createOscillator(); lfo.frequency.value = 0.12; const lg = C.createGain(); lg.gain.value = 0.4; lfo.connect(lg).connect(g.gain); lfo.start(); s.connect(l).connect(g).connect(AU.duckB); GS7.amb = { g, l, src: s }; }
   if (!GS7.hum) { const g = C.createGain(); g.gain.value = 0; const o = C.createOscillator(); o.type = 'sawtooth'; o.frequency.value = 50; const o2 = C.createOscillator(); o2.frequency.value = 50.6; const f = C.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 200; o.connect(f); o2.connect(f); f.connect(g).connect(AU.duckB); o.start(); o2.start(); GS7.hum = { g, f, src: { stop() { try { o.stop(); o2.stop(); } catch (e) {} } } }; }
   const v = live ? 1 : 0, inside = LV.rooms[LV.room[cell7(PL.x, PL.z)]] && !LV.rooms[LV.room[cell7(PL.x, PL.z)]].open, st = GS7.storm * (1 - GS7.dawn * 0.9);
