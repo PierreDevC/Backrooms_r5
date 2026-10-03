@@ -23,7 +23,9 @@ function obj7() {
   if (!PS7.gen) return 'START THE GENERATOR · THE GREY HOUSE, EAST SIDE OF THE DECK';
   if (!PS7.air) return 'OPEN THE AIR VALVE · THE HOUSE AT THE NORTH-EAST CORNER';
   if (!PS7.fenMet) return 'HABITAT ORCA-2 · THE SEABED NORTH OF THE RIG';
-  if (partsDone7() < 3) return `THE LAMP PARTS · ${partsDone7()}/3 · FUEL · MOTOR · CABLE`;
+  const have = (PS7.fuel ? 1 : 0) + (PS7.motor ? 1 : 0) + (PS7.cable ? 1 : 0);   // carried or spliced, seated or not
+  if (have < 3) return `THE LAMP PARTS · ${have}/3 · FUEL · MOTOR · CABLE`;
+  if (partsDone7() < 3) return `THE LAMP ROOM · SEAT THE PARTS · ${partsDone7()}/3`;
   return 'THE LAMP ROOM · THE LADDER IN CAPE SORREL';
 }
 function tasks7() {
@@ -49,14 +51,14 @@ function target7() {
 function target7_() {
   const P = WS7.pos;
   if (PS7.lit) return PS7.key ? P.boatBoard : AIS7.kell;
-  if (!PS7.met) return WS7.ladders.find(l => l.id === 'rS') ? { x: WS7.ladders.find(l => l.id === 'rS').wx, z: WS7.ladders.find(l => l.id === 'rS').wz } : AIS7.kell;
+  if (!PS7.met) return AIS7.kell;   // the route finder takes you up the nearest ladder
   const onDeck = LV.room[cell7(PL.x, PL.z)] >= 0 && LV.dry.rig.cells.includes(cell7(PL.x, PL.z));
   if (!PS7.gen) return P.gen;
   if (!PS7.air) return P.airValve;
   if (!PS7.fenMet) return P.fen;
   if (!PS7.fuel) return PS7.can ? P.fuelValve : P.jerrycan;
   if (!PS7.motor) return PS7.safeOpen ? P.motor : (PS7.logs.fen && PS7.logs.mate && PS7.logs.tide ? P.safe : (!PS7.logs.mate ? P.mateLog : !PS7.logs.tide ? P.tide : P.safe));
-  if (!PS7.clamp) return AIS7.wren;
+  if (!PS7.clamp) return PS7.wrenMet ? P.clamp : AIS7.wren;   // she points you at it; the clamp itself is on the cottage bench
   if (!PS7.cable) return P.junction;
   return P.lampPanel;
 }
@@ -210,7 +212,7 @@ function hint7() {
 function talkKell7() {
   const A = (t, d = 0) => later(d, () => sayK7(t)), T = PS7.topics;
   if (!PS7.met) {
-    PS7.met = true; A('Mind the door. The wind takes it.'); A('Kell. Radio. Meridian has had one man on it for eleven days. That is a count, not a complaint.', 3.6); A('You came off a raft. I watched the light on it for an hour before it got here.', 9.4);
+    PS7.met = true; setPhase7(); A('Mind the door. The wind takes it.'); A('Kell. Radio. Meridian has had one man on it for eleven days. That is a count, not a complaint.', 3.6); A('You came off a raft. I watched the light on it for an hour before it got here.', 9.4);
     later(12, () => { setPhase7('rig'); cpSave('THE RIG'); }); return;
   }
   if (PS7.lit && !PS7.key) { PS7.key = true; SFX37.splashSoft(); A('The lamp. I saw it from the shack. I haven\'t seen that colour since I came.'); A('Here. The boat key. She\'s fuelled. I did that the first day, in case.', 4.6); A('Or don\'t go. I\'ve got the radio.', 9); later(6, () => { toast('THE MARLIN KEY', 2.4); tasks7(); setPhase7(); }); return; }

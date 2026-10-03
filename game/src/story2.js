@@ -13,7 +13,9 @@ function sayBenny2(t, o = {}) { say('BENNY', t, Object.assign({ pos: WP2.pos.ben
 const regsDone2 = () => (PP2.regs.w ? 1 : 0) + (PP2.regs.n ? 1 : 0) + (PP2.regs.e ? 1 : 0);
 
 // ----- objectives -----
-function setPhase2(p) { if (p) GP2.phase = p; objective(obj2()); tasks2(); }
+// phases only move forward (a delayed call from an earlier conversation must not undo a later one)
+const PH2 = ['arrive', 'office', 'regs'];
+function setPhase2(p) { if (p && PH2.indexOf(p) >= PH2.indexOf(GP2.phase)) GP2.phase = p; objective(obj2()); tasks2(); }
 function obj2() {
   if (PP2.liftOpen) return 'RIDE THE LIFT UP';
   if (PP2.liftReady) return 'THE GAMMA LIFT · NORTH-EAST OF THE SWITCHYARD';
@@ -41,6 +43,7 @@ function tasks2() {
 }
 function target2() {
   const P = WP2.pos;
+  if (PP2.liftOpen) return P.liftCar;
   if (PP2.liftReady) return P.liftPanel;
   if (!PP2.phoneMet) return WP2.phones.find(p => p.key === 'sump');
   if (!PP2.met) return IDA_P();
@@ -89,12 +92,12 @@ function hint2() {
   return 'The lift. Go on.';
 }
 // ----- Ida, in person -----
-function idaLabel2() { if (PP2.idcard && !PP2.idGiven && PP2.met) return 'SHOW IDA THE ID CARD'; return 'TALK TO IDA'; }
+function idaLabel2() { if (PP2.idcard && !PP2.idGiven && PP2.met && PP2.step >= 3) return 'SHOW IDA THE ID CARD'; return 'TALK TO IDA'; }
 function idaFront2() { sayIda2('Don\'t come round the front.'); later(3.2, () => { if (AIP2.ida && AIP2.ida.d < 2.2) sayIda2('I said don\'t.'); }); }
 function talkIda2() {
   const A = (t, d = 0) => later(d, () => sayIda2(t));
   if (!PP2.met) {
-    PP2.met = true; PP2.phoneMet = true; GP2.phase = 'office'; PP2.step = 1;
+    PP2.met = true; PP2.phoneMet = true; PP2.step = 1; setPhase2('office');
     A('Stop at the cot. I\'m working.'); A('Ida. Night engineer. I\'ve been on nights a long time.', 3.2); A('You\'ll want the lift. Everyone wants the lift.', 7.4);
     later(9, () => { setPhase2('office'); cpSave('THE BOILER OFFICE'); }); return;
   }
@@ -104,7 +107,7 @@ function talkIda2() {
   }
   if (PP2.step === 2) {
     PP2.step = 3; A('Shut each one. All the way. I\'ll see it on the gauges.'); A('When the pipes knock three times, get in a shelter. Green lamp. The steam doesn\'t care what you\'re doing.', 3.8);
-    later(10, () => { PP2.surgesOn = true; GP2.surgeT = 50; setPhase2('regs'); cpSave('THE REGULATORS'); toast('NEW OBJECTIVE · THREE REGULATORS', 2.8); }); return;
+    later(10, () => { PP2.surgesOn = regsDone2() < 3; GP2.surgeT = 50; setPhase2('regs'); cpSave('THE REGULATORS'); toast('NEW OBJECTIVE · THREE REGULATORS', 2.8); }); return;
   }
   if (PP2.idcard && !PP2.idGiven) {
     PP2.idGiven = true; SFX.click(); A('Where did you find that.'); A('Keep it.', 3.4); A('No. Take it up with you. Somebody up there should have it.', 5.6); later(7, () => tasks2()); return;
@@ -146,14 +149,16 @@ function useReg2(k, it) {
 }
 // ----- the Switchyard: the foreman taps the order, you throw the breakers -----
 function watchForeman2() {
-  if (PP2.power) return; const P = WP2.pos.tapPipe, o = PP2.order; PP2.tapped = true; tasks2();
+  if (PP2.power) return; if (PP2.step < 3) { foremanNo2(); return; } const P = WP2.pos.tapPipe, o = PP2.order; PP2.tapped = true; tasks2();
   let t = 0.6; const dots = o.map(n => '·'.repeat(n));
   for (let i = 0; i < 4; i++) { const n = o[i]; later(t, () => SFX2.tap({ x: P.x, y: 1.4, z: P.z, pl: { x: PL.x, z: PL.z } }, n)); t += n * 0.3 + 1.0; }
   say('THE FOREMAN', dots.join('    '), { dur: t + 1.5 });
   later(t + 0.6, () => { if (!PP2.forTip) { PP2.forTip = true; toast('THE BREAKERS ARE NUMBERED 1 TO 4', 2.6); } });
 }
+// before Ida has sent you, the crew won't let you near the bank (the order, the power and the phone call all assume she has)
+function foremanNo2() { SFX2.lever(P9(WP2.pos.bank)); toast('THE FOREMAN PUTS HIS HAND FLAT ON THE BANK', 2.4); }
 function pullBreaker2(b) {
-  if (PP2.power || b.up) return;
+  if (PP2.power || b.up) return; if (PP2.step < 3) { foremanNo2(); return; }
   const want = PP2.order[PP2.pulled.length];
   if (b.i + 1 === want) { b.up = true; b.pivot.rotation.x = -0.7; PP2.pulled.push(want); SFX2.lever(P9(b)); if (PP2.pulled.length === 4) powerOn2(); return; }
   SFX2.spark(P9(b)); SFX2.lever(P9(b)); PL.hp -= 4; FX.hurt = 0.4; PL.shake = 0.4; toast('THE BANK TRIPS · ALL FOUR DROP', 2.4);

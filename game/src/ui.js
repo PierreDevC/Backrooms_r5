@@ -77,7 +77,8 @@ function updateHUD(dt) {
   const w = $('compass').clientWidth, hd = ((PL.yaw * 180 / Math.PI) % 360 + 360) % 360;
   $('compassStrip').style.transform = `translateX(${(w / 2 - (hd + 360) * CPX).toFixed(1)}px)`;
   const mk = $('compassMark');
-  const tg = LVL === 7 ? target7() : LVL === 2 ? target2() : LVL === 37 ? target37() : LVL === 18 ? target18() : LVL === 5 ? target5() : LVL === 9 ? target9() : target0();
+  const tg0 = LVL === 7 ? target7() : LVL === 2 ? target2() : LVL === 37 ? target37() : LVL === 18 ? target18() : LVL === 5 ? target5() : LVL === 9 ? target9() : target0();
+  const tg = navGuide(tg0); guideTick(dt, tg0);   // r10.2: the mark follows the walkable route, not the straight line
   if (tg) {
     const a = angDiff(PL.yaw, Math.atan2(tg.x - PL.x, tg.z - PL.z)) * 180 / Math.PI;
     mk.classList.toggle('hide', Math.abs(a) > 70); mk.style.left = (w / 2 + a * CPX).toFixed(1) + 'px';

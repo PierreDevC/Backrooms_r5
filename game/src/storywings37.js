@@ -182,13 +182,18 @@ function wwEvents37(dt, z) {
 function wingTarget37() {
   const P = W37.pos, pc = cell37(PL.x, PL.z), z = LV.zone[pc], H = P37.hotel, S = P37.hosp, W = P37.ww;
   const inHotel = LV.reg[pc] === R37Z.HOTEL && z !== Z37.TUNNEL, inHosp = LV.reg[pc] === R37Z.HOSP && z === Z37.HOSP, inWW = LV.reg[pc] === R37Z.WW && z !== Z37.TUNNEL;
-  const hotelNext = () => { if (H.timed && !P37.keys.hotel) return P.vaultTable; if (H.timed) return null; if (H.sw) return AI37.teague; if (H.drawer) return P.nightstand; if (H.ask) return P.drawer; return AI37.teague || P.desk; };
+  const tq = () => AI37.teague ? (AI37.teague.inter || AI37.teague) : P.desk;   // where you speak to her (the end of lane four), not where she is swimming
+  const hotelNext = () => { if (H.timed && !P37.keys.hotel) return P.vaultTable; if (H.timed) return null; if (H.sw) return tq(); if (H.drawer) return P.nightstand; if (H.ask) return P.drawer; return tq(); };
   const hospNext = () => { if (S.stamps >= 3 && S.form) return staff37('admit'); if (!S.form) return P.formDesk; if (!S.linen) return P.linen; if (!S.linenDone) return staff37('ward3'); if (!S.lanyard) return staff37('hall2'); if (!S.iv) return P.drip; if (!S.ivDone) return staff37('ward5'); if (!S.chart) return P.recordsDesk; return staff37('nurse1'); };
   const wwNext = () => { if (!W.gen) return P.genSw; if (!W.note) return P.ctrl; return P.tapeSpot; };
   if (inHotel && !P37.keys.hotel) return hotelNext(); if (inHosp && !P37.keys.hosp) return hospNext(); if (inWW && !P37.keys.tape) return wwNext();
   // otherwise: the nearest wing still to do
   const ent = { hotel: { x: cc37(34.5), z: 43.2 * CELL }, hosp: { x: 30.6 * CELL, z: cc37(19) }, park: { x: 65 * CELL - 0.5, z: cc37(34) } };
   if (wingsDone37() >= 3) return P.panel || P.deskB;
+  // at a wing's door the marker moves on to the first thing inside (it used to stay on the doorway)
+  const at = e => dist2(PL.x, PL.z, e.x, e.z) < 6;
+  if (!P37.keys.hotel && (at(ent.hotel) || (P37.keys.hosp && P37.keys.tape))) { const t = hotelNext(); if (t) return t; }
+  if (!P37.keys.hosp && at(ent.hosp)) return hospNext(); if (!P37.keys.tape && at(ent.park)) return wwNext();
   if (!P37.keys.hotel) return ent.hotel; if (!P37.keys.hosp) return ent.hosp; return ent.park;
 }
 if (/[?&]debug/.test(location.search)) addEventListener('load', () => Object.assign(window.__BR || (window.__BR = {}), { talkTeague37, talkStaff37, staffLabel37, wingTarget37, timeTeague37 }));

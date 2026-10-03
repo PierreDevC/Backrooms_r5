@@ -19,13 +19,15 @@ const near37 = (p, r = 3) => p && dist2(PL.x, PL.z, p.x, p.z) < r;
 function sayAb37(t, o = {}) { const N = AI37.abara; say('ABARA', t, Object.assign({ pos: N ? { x: N.x, z: N.z } : null, dur: 4.2 }, o)); }
 
 // ----- phases and objectives -----
-function setPhase37(p) { if (p) G37.phase = p; objective(obj37()); tasks37(); }
+// phases only move forward: a delayed setPhase37 from an earlier conversation must not drag the objective back
+const PH37 = ['arrive', 'dry', 'wings', 'finale'];
+function setPhase37(p) { if (p && PH37.indexOf(p) >= PH37.indexOf(G37.phase)) G37.phase = p; objective(obj37()); tasks37(); }
 function obj37() {
   if (G37.flood) return G37.hatchReady ? 'OPEN THE HATCH' : 'SWIM UP · THE HATCH IS AT THE TOP';
   switch (G37.phase) {
     case 'arrive': return 'FIND DRY GROUND · THE CABANA, WEST OF THE SHALLOWS';
-    case 'dry': return P37.quest ? (P37.plant ? (P37.drained ? 'FIND THE CASSETTE AND THE CAMCORDER · THE PIT' : 'DRAIN THE SHALLOWS · THE PUMP ROOM') : 'THE PLANT KEY · UNDER THE KETTLE') : 'TALK TO ABARA';
-    case 'wings': { const w = wingsDone37(); return `THE THREE WINGS · ${w}/3 · EACH KEEPS ONE THING`; }
+    case 'dry': return P37.ret ? 'ABARA · THE CABANA' : P37.cam && P37.cass ? 'BRING THEM BACK TO ABARA · THE CABANA' : P37.quest ? (P37.cam || P37.cass ? 'THE PIT · ONE MORE THING DOWN THERE' : P37.plant ? (P37.drained ? 'FIND THE CASSETTE AND THE CAMCORDER · THE PIT' : 'DRAIN THE SHALLOWS · THE PUMP ROOM') : 'THE PLANT KEY · UNDER THE KETTLE') : 'TALK TO ABARA';
+    case 'wings': { const w = wingsDone37(); return w >= 3 ? 'THE LIFEGUARD BOOTH · SEAT ALL THREE IN THE PANEL' : `THE THREE WINGS · ${w}/3 · EACH KEEPS ONE THING`; }
     case 'finale': return 'THE LIFEGUARD BOOTH · THE PANEL HAS THREE SLOTS';
   }
   return '';
@@ -52,7 +54,8 @@ function target37() {
   if (G37.flood) return G37.hatchReady ? W37.hatch : { x: W37.hatch.x, z: W37.hatch.z };
   if (G37.phase === 'arrive') return { x: cc37(24), z: cc37(35) };
   if (G37.phase === 'dry') {
-    if (!P37.met || !P37.quest) return AI37.abara;
+    if (!P37.met || !P37.quest || (P37.cam && P37.cass && !P37.ret)) return AI37.abara;
+    if ((P37.cam || P37.cass || P37.drained) && W37.pit) return !P37.cam ? { x: W37.pit.px, z: W37.pit.pz } : !P37.cass ? { x: W37.pit.px + 0.8, z: W37.pit.pz + 0.4 } : AI37.abara;
     if (!P37.kettleKey) return P.kettle;
     if (!P37.plant) return { x: 20 * CELL - 0.8, z: cc37(34) };
     if (!P37.drained) { const g = W37.gates[0]; return g; }
@@ -141,10 +144,11 @@ function pitCheck37() {
 function talkAbara37() {
   const N = AI37.abara, A = (t, d = 0) => later(d, () => sayAb37(t));
   if (!P37.met) {
-    P37.met = true; P37.intro = 1; G37.phase = 'dry'; A('Don\'t drip on the cot.'); A('Towels are on the rack. The blue ones are clean.', 3.4); A('Camera, right? I know the harness. You\'re the third I\'ve seen come through that door.', 7); A('Abara. Relief team. Nobody has been relieved.', 12);
+    P37.met = true; P37.intro = 1; setPhase37('dry'); A('Don\'t drip on the cot.'); A('Towels are on the rack. The blue ones are clean.', 3.4); A('Camera, right? I know the harness. You\'re the third I\'ve seen come through that door.', 7); A('Abara. Relief team. Nobody has been relieved.', 12);
     later(15, () => { setPhase37('dry'); cpSave('THE CABANA'); });
     later(24, () => say(OUT9, 'Nine. Somebody just told you not to drip on a cot. That was not one of ours.', { radio: true })); return;
   }
+  if (!P37.quest && P37.cam && P37.cass) P37.quest = true;   // you went down for them before she asked: she just takes them
   if (!P37.quest) {   // before she has asked for anything
     const T = P37.topics;
     if (!T.water) { T.water = true; A('Don\'t drink it. Sit in it all you like. That\'s the trouble.'); A('Three weeks by my watch. My watch says three hours. I don\'t trust either number.', 4); return; }
@@ -164,7 +168,7 @@ function talkAbara37() {
   if (P37.quest && P37.cam && P37.cass && !P37.ret) {
     P37.ret = true; SFX.pickup(); A('That\'s four. That\'s definitely four.'); A('He had a tape in there too? Put it on the table. I\'ll listen later. Not now.', 4.6);
     later(8, () => { tasks37(); P37.tapeRead = true; readDoc('pell37', 'TAPE SEVEN · P. PELL', PELL37, { kind: 'log' }); try { playVoice(['v37_pell'], { mode: 'tape', delay: 0.4 }); } catch (e) {} });
-    later(9, () => { P37.told = true; setPhase37('wings'); cpSave('THREE WINGS'); }); return;
+    later(9, () => { P37.told = true; setPhase37(P37.panel.hotel && P37.panel.hosp && P37.panel.tape ? 'finale' : 'wings'); cpSave('THREE WINGS'); }); return;
   }
   if (P37.ret && !P37.told2) {
     P37.told2 = true; A('Right. Three doors, none of them out.'); A('Pit corridor, south: a hotel. Down the well and along: a hospital. East end of the lane pool: a park.', 3.6);
