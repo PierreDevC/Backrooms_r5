@@ -1,0 +1,26 @@
+warning: [.WebGL-0x1140043c600]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+warning: [.WebGL-0x1140043c600]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+warning: [.WebGL-0x1140043c600]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+warning: [.WebGL-0x1140043c600]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)
+QA load ms 828
+QA PASS piano instructions appear before stepping on a key
+QA PASS the clue locates the birthday card without revealing the undiscovered tune
+QA PASS the note display starts empty
+QA PASS the actual poster is reachable through the normal interaction focus
+QA PASS readable lesson explains repeated notes, replay controls and where to find the tune
+QA PASS lesson and mechanical clues are retained in FIELD NOTES
+QA PASS the piano overlay hides while reading a document
+QA PASS birthday card supplies the tune and the repeated-note clue
+QA PASS learned tune stays visible at the piano as labelled colour chips
+QA PASS stepping onto RED registers one visible note
+QA PASS looking down offers an explicit replay prompt
+QA PASS the clue panel includes the platform-specific replay control
+QA PASS keyboard E repeats the note without moving
+QA PASS stepping off and back onto the same key repeats it
+QA PASS checkpoint clears the unfinished performance and retains learned clues
+QA PASS a wrong tune remains visible and explains how to retry
+QA PASS active subtitles and toasts do not cover the piano clues
+QA PASS correct tune opens the box and the overlay retires after collecting its key
+QA PASS piano clues fit the viewport without horizontal overflow
+QA PASS scene teardown clears the piano overlay with no recovered errors
+QA PAGE CLOSE

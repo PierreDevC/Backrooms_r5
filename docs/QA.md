@@ -1,4 +1,28 @@
-# QA — r7 · 2026-10-02 (branch story-r6)
+# QA — r7.2 · 2026-10-02
+
+## Current r7.2 validation
+Headless Chromium/Playwright on macOS arm64/SwiftShader. All twelve reg71.py suites passed after the gameplay changes: howler, l0_story, checkpoints, cp9, l9_story, l5_state, l18_name, piano_clues, l18_final, levels, levels_mobile, transitions. Logs: qa_r7/logs/r7_2/<suite>/run.log. Final layout polish was followed by focused piano/howler/levels_mobile reruns and portrait/landscape piano tests; broad suite results precede CSS-only final polish.
+
+- `qa_r7/l18_piano_clues.js`: 20 assertions at 960×540. Pre-key instructions; card location without tune leak; empty note display; normal poster focus; actual E read/close; saved lesson/task rules; hidden overlay during reading; birthday card mechanics; learned seven-chip melody; automatic notes and explicit/platform-labelled replay prompt; actual E repeats; off/on repeats; checkpoint clears partial notes but retains knowledge; wrong seven-note retry feedback; no panel/subtitle/toast overlap; successful box/key; viewport fit; teardown without recovered errors.
+- 390×844 and 844×390 with `BR_QA_TOUCH=1`: same 20 assertions, using actual Playwright taps on the game's USE control. Evidence: qa_r7/logs/r7_2_touch_portrait and r7_2_touch_landscape. Emulated touch is not physical-device testing.
+- Inspected readable lesson and all three feedback screenshots (r7_2_piano_lesson.png, r7_2_piano_feedback.png). Labels are words as well as colours. Portrait transient text stacks below the clue panel; short landscape uses separate columns and reduced type. The lesson document is scrollable. Lesson/target/feedback fit the tested viewports without horizontal overflow.
+- Syntax, deterministic build and strict log audit: docs/release-validation.log. No new third-party assets, VO or changed note sounds; existing optional-asset fallbacks remain intact. The r7.1 fallback results below are historical, not a new r7.2 fallback retest.
+
+Human discovery/readability, puzzle difficulty, real-GPU FPS and physical touch play remain pending. Debug-assisted state setup does not demonstrate that an unassisted player finds every clue. No accessibility audit or screen-reader support is claimed.
+
+## Historical r7.1 validation
+Headless Chromium/Playwright, macOS arm64, SwiftShader, 960×540; mobile-layout suite also exercises phone-sized viewports. Debug-assisted setup/progression, not evidence of human difficulty or performance. The blocked Google Fonts route now supplies empty CSS, so current logs have no intentional failed-resource exception. Historical logs below retain their original interpretation.
+
+- `qa_r7/l0_howler.js`: 15 assertions pass. Normal startup; no Crawler; all six clips decode; 120–180 s call timer and busy deferral; entity coordinates and wall/attenuation settings; safe missing/suspended/undecoded audio; seven-second chase cooldown; moving panner; checkpoint progress/timers/source cleanup; detailed camera beacon/interaction; teardown without recovered errors.
+- `python3 qa_r7/reg71.py`: all 11 suites pass: howler, l0_story, checkpoints, cp9, l9_story, l5_state, l18_name, l18_final, levels, levels_mobile, transitions. Logs in `qa_r7/logs/r7_1/<suite>/run.log`. The checkpoint suites' JSON was inspected: progress retained, safe reset states and `errs: 0`.
+- `--query noassets`, `--query noskin`, `--query nomodels` with suite `howler`: all 15 assertions pass in each mode; logs in corresponding `qa_r7/logs/r7_1_<mode>/`. One initial nomodels run exposed a test assumption: the entity moved between timer ticks. The assertion now compares to the entity position at emission, not its earlier position.
+- Front/rear camcorder screenshots inspected in `qa_r7/logs/r7_1/howler/`; lens, body, battery/viewfinder and tripod visible. Fourth briefing image replaced by a fresh in-game Howler capture, retaining the old image as history.
+- `qa18/run18.js` fails on QA FAIL, PAGEERROR, browser console errors and recovered frame errors; title timeout is no longer ignored. Intentional fault-injection tests must explicitly scope `BR_QA_ALLOW_ERROR`; do not suppress ordinary failures.
+- Syntax, exact source/bundle assembly, release hashes and manifest: `docs/release-validation.log` and `MANIFEST.sha256`. Dependencies: Node, Playwright and `CHROMIUM` executable; set `NODE_PATH` if Playwright is not installed in this checkout. `BR_QA_OUT` isolates screenshots; `BR_QA_QUERY` adds URL fallback switches.
+
+Human headphone review is still needed for gain, positional clarity and subjective scare quality. The six-clip preview is `audio_preview/Howler_r7_1.html` (start quietly); in-game walls, distance and master gain change the mix. Real-GPU FPS, real-time full journey and actual touch gameplay remain untested. No new voice acting is claimed.
+
+## Historical r7 validation
 
 ## Environment and scope
 Same as r6: headless Chromium for Testing (Playwright, SwiftShader) on macOS arm64, 960×540, debug state calls and simStep; the single net::ERR_FAILED per log is the blocked font. These checks prove logic and wiring, not feel, pacing or frame rate. No human, real-GPU, audio or touch test of the r7 content.

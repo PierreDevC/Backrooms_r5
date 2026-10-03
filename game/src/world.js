@@ -203,12 +203,60 @@ function buildTapeSites() {
     const x = cellCenter(c.x) + rnd(-0.6, 0.6), z = cellCenter(c.y) + rnd(-0.6, 0.6);
     const mat = actMat('site' + i, { spec: 0.6, shin: 40, emis: 1, wrap: 0.3 });
     const root = tnode(null, x, 0, z); root.rotation.y = rnd(0, TAU);
-    const DK = [0.12, 0.12, 0.13];
-    for (let k = 0; k < 3; k++) { const a = k / 3 * TAU; part('Cylinder', { diameter: 0.022, height: 1.35, tessellation: 6 }, root, mat, [0.25, 0.25, 0.26], 0, [Math.sin(a) * 0.22, 0.64, Math.cos(a) * 0.22 + 0.9], [Math.cos(a) * -0.17, 0, Math.sin(a) * 0.17]); }
-    part('Box', { width: 0.11, height: 0.13, depth: 0.24 }, root, mat, DK, 0, [0, 1.36, 0.9]);
-    part('Cylinder', { diameter: 0.07, height: 0.09, tessellation: 14 }, root, mat, [0.05, 0.05, 0.05], 0, [0, 1.37, 0.77], [Math.PI / 2, 0, 0]);
-    part('Box', { width: 0.07, height: 0.05, depth: 0.08 }, root, mat, DK, 0, [0.07, 1.42, 0.98]);
-    part('Sphere', { diameter: 0.018, segments: 6 }, root, mat, [1, 0.08, 0.04], 1, [0.035, 1.44, 0.83]);
+    // r7: a proper 1990s shoulder-mount VHS camcorder on a field tripod (front = local -z; the red tally LED stays at (0.035, 1.44, 0.83))
+    { const BK = [0.1, 0.1, 0.11], BK2 = [0.06, 0.06, 0.065], GR = [0.34, 0.35, 0.37], SIL = [0.55, 0.56, 0.58], RB = [0.03, 0.03, 0.03], X = Math.PI / 2;
+      for (let k = 0; k < 3; k++) { const a = k / 3 * TAU, fx = Math.sin(a) * 0.43, fz = Math.cos(a) * 0.43 + 0.9;
+        const leg = part('Cylinder', { diameter: 0.024, height: Math.hypot(0.43, 1.24), tessellation: 8 }, root, mat, SIL, 0, [fx / 2, 0.64, (fz + 0.9) / 2]);
+        leg.rotationQuaternion = BABYLON.Quaternion.RotationAxis(V3(-Math.cos(a), 0, Math.sin(a)), Math.atan2(0.43, 1.24));
+        part('Sphere', { diameter: 0.045, segments: 6 }, root, mat, RB, 0, [fx, 0.02, fz]);   // rubber feet
+        const lock = part('Cylinder', { diameter: 0.033, height: 0.12, tessellation: 8 }, root, mat, BK, 0, [fx * 0.75, 0.33, 0.9 + (fz - 0.9) * 0.75]);
+        lock.rotationQuaternion = leg.rotationQuaternion.clone();
+        part('Box', { width: 0.04, height: 0.04, depth: 0.04 }, root, mat, GR, 0, [fx * 0.25, 0.95, 0.9 + (fz - 0.9) * 0.25]); }
+      part('Cylinder', { diameter: 0.03, height: 0.2, tessellation: 8 }, root, mat, GR, 0, [0, 1.17, 0.9]);               // centre column
+      part('Cylinder', { diameter: 0.09, height: 0.05, tessellation: 14 }, root, mat, BK2, 0, [0, 1.25, 0.9]);          // fluid head
+      part('Cylinder', { diameter: 0.012, height: 0.42, tessellation: 6 }, root, mat, BK, 0, [-0.12, 1.15, 1.08], [-0.75, 0, 0.5]);   // pan handle
+      part('Sphere', { diameter: 0.03, segments: 6 }, root, mat, RB, 0, [-0.22, 1.0, 1.25]);
+      part('Box', { width: 0.075, height: 0.012, depth: 0.14 }, root, mat, SIL, 0, [0, 1.285, 0.92]);                    // quick-release plate
+      // the body
+      part('Box', { width: 0.105, height: 0.115, depth: 0.2 }, root, mat, BK, 0, [0, 1.355, 0.93]);
+      part('Box', { width: 0.095, height: 0.03, depth: 0.19 }, root, mat, BK2, 0, [0, 1.425, 0.93]);                     // top deck
+      part('Box', { width: 0.108, height: 0.012, depth: 0.2 }, root, mat, GR, 0, [0, 1.33, 0.93]);                        // trim line
+      part('Box', { width: 0.12, height: 0.16, depth: 0.012 }, root, mat, BK2, 0, [0, 1.35, 1.03]);                       // rear bulkhead
+      part('Box', { width: 0.075, height: 0.1, depth: 0.055 }, root, mat, [0.09, 0.09, 0.1], 0, [0, 1.35, 1.065]);       // battery pack
+      for (let i = 0; i < 4; i++) part('Box', { width: 0.07, height: 0.003, depth: 0.056 }, root, mat, [0.2, 0.2, 0.21], 0, [0, 1.32 + i * 0.022, 1.066]);
+      part('Box', { width: 0.03, height: 0.008, depth: 0.01 }, root, mat, [0.9, 0.7, 0.1], 0.1, [0, 1.395, 1.093]);       // battery release
+      // lens assembly: barrel, focus and zoom rings, hood, coated glass
+      part('Cylinder', { diameter: 0.07, height: 0.1, tessellation: 18 }, root, mat, BK, 0, [0, 1.375, 0.78], [X, 0, 0]);
+      part('Cylinder', { diameter: 0.08, height: 0.026, tessellation: 20 }, root, mat, GR, 0, [0, 1.375, 0.75], [X, 0, 0]);
+      for (let i = 0; i < 10; i++) { const a = i / 10 * TAU; part('Box', { width: 0.006, height: 0.006, depth: 0.026 }, root, mat, RB, 0, [Math.sin(a) * 0.04, 1.375 + Math.cos(a) * 0.04, 0.75]); }   // grip ribs
+      part('Cylinder', { diameter: 0.076, height: 0.022, tessellation: 20 }, root, mat, [0.08, 0.08, 0.085], 0, [0, 1.375, 0.72], [X, 0, 0]);
+      part('Cylinder', { diameter: 0.088, height: 0.035, tessellation: 20 }, root, mat, BK2, 0, [0, 1.375, 0.685], [X, 0, 0]);   // hood
+      part('Cylinder', { diameter: 0.058, height: 0.004, tessellation: 20 }, root, mat, [0.04, 0.07, 0.16], 0.12, [0, 1.375, 0.667], [X, 0, 0]);   // front element
+      part('Cylinder', { diameter: 0.03, height: 0.003, tessellation: 14 }, root, mat, [0.35, 0.18, 0.5], 0.25, [0, 1.375, 0.6655], [X, 0, 0]);   // purple coating
+      part('Box', { width: 0.01, height: 0.006, depth: 0.012 }, root, mat, [0.9, 0.9, 0.95], 0.2, [0.015, 1.39, 0.665]);    // glint
+      // viewfinder on a slide rail (left of the lens), eyecup to the rear
+      part('Box', { width: 0.04, height: 0.045, depth: 0.1 }, root, mat, BK2, 0, [-0.05, 1.44, 0.98]);
+      part('Cylinder', { diameter: 0.038, height: 0.025, tessellation: 12 }, root, mat, RB, 0, [-0.05, 1.44, 1.045], [X, 0, 0]);
+      part('Box', { width: 0.012, height: 0.01, depth: 0.1 }, root, mat, SIL, 0, [-0.05, 1.41, 0.95]);
+      // carry handle, microphone with foam windscreen, accessory light shoe
+      for (const z of [0.88, 1.0]) part('Box', { width: 0.012, height: 0.03, depth: 0.014 }, root, mat, BK2, 0, [0.03, 1.46, z]);
+      part('Box', { width: 0.014, height: 0.012, depth: 0.14 }, root, mat, BK2, 0, [0.03, 1.478, 0.94]);
+      part('Cylinder', { diameter: 0.03, height: 0.085, tessellation: 10 }, root, mat, [0.05, 0.05, 0.05], 0, [-0.01, 1.462, 0.8], [X, 0, 0]);
+      part('Box', { width: 0.045, height: 0.008, depth: 0.045 }, root, mat, SIL, 0, [0.03, 1.443, 0.86]);
+      // right side (tape door, window, buttons) and left side (hand strap)
+      part('Box', { width: 0.006, height: 0.085, depth: 0.12 }, root, mat, GR, 0, [0.055, 1.355, 0.93]);
+      part('Box', { width: 0.007, height: 0.03, depth: 0.05 }, root, mat, [0.03, 0.04, 0.05], 0.05, [0.056, 1.365, 0.94]);
+      part('Cylinder', { diameter: 0.012, height: 0.008, tessellation: 8 }, root, mat, SIL, 0, [0.058, 1.32, 0.86], [0, 0, X]);
+      for (let i = 0; i < 4; i++) part('Box', { width: 0.007, height: 0.009, depth: 0.014 }, root, mat, [0.7 - i * 0.03, 0.7, 0.7], 0, [0.058, 1.325, 0.9 + i * 0.022]);
+      part('Box', { width: 0.014, height: 0.08, depth: 0.15 }, root, mat, [0.07, 0.065, 0.06], 0, [-0.058, 1.35, 0.93]);       // padded grip strap
+      part('Box', { width: 0.016, height: 0.02, depth: 0.03 }, root, mat, SIL, 0, [-0.058, 1.4, 0.87]);
+      // brand plate, record button, the tally LED
+      part('Box', { width: 0.04, height: 0.01, depth: 0.004 }, root, mat, SIL, 0.1, [-0.015, 1.395, 0.826]);
+      part('Cylinder', { diameter: 0.014, height: 0.006, tessellation: 10 }, root, mat, [0.55, 0.05, 0.04], 0.15, [0.035, 1.438, 0.9]);
+      part('Sphere', { diameter: 0.012, segments: 6 }, root, mat, [1, 0.08, 0.04], 1, [0.035, 1.44, 0.83]);
+      // a cable to the deck dangling off the back
+      for (let i = 0; i < 5; i++) part('Cylinder', { diameter: 0.007, height: 0.08, tessellation: 5 }, root, mat, RB, 0, [0.02, 1.3 - i * 0.04, 1.1 + Math.sin(i * 0.9) * 0.03], [0.2 * i, 0, 0]);
+    }
     const tape = tnode(root, rnd(-0.3, 0.3), 0, rnd(0.1, 0.4)); tape.rotation.y = rnd(0, TAU);
     part('Box', { width: 0.19, height: 0.026, depth: 0.105 }, tape, mat, [0.04, 0.04, 0.04], 0, [0, 0.013, 0]);
     part('Box', { width: 0.12, height: 0.002, depth: 0.06 }, tape, mat, [0.9, 0.88, 0.8], 0, [0, 0.027, 0.01]);

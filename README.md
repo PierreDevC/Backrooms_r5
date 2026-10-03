@@ -1,6 +1,16 @@
-# The Backrooms: Found Footage — r7
+# The Backrooms: Found Footage — r7.2
 
 A Babylon.js found-footage survival-horror game, delivered as one HTML file.
+
+## r7.2 · 2026-10-02
+Level 18's MUSIC room now teaches its floor piano: read the classroom lesson, find the birthday card off the dark east walk, step off between colours and step off/back on for repeated notes. Looking down also offers **PLAY [COLOUR] AGAIN** with **E** or touch **USE**. The nearby panel shows the discovered melody and your last seven notes, with wrong-tune and open-toy-box feedback. Clues stay in FIELD NOTES; checkpoint retry clears only the unfinished performance.
+
+Twelve regression suites pass, with focused desktop and emulated-touch portrait/landscape checks. Human playtesting remains pending; see `docs/QA.md`. Release packet: `releases/r7.2/`, generated with `python3 tools/package_release.py --version r7.2`. Earlier releases are preserved.
+
+## r7.1 · 2026-10-02
+Level 0 no longer spawns the look-away Crawler. Howlers now have three positional territorial calls (120–180 seconds per wandering entity) and three harsher chase screams, with wall muffling and moving sound sources. Random ambient bangs are removed. Tape-site camcorders have detailed VHS bodies, lens assemblies and properly joined tripods. Smilers and Mimics are unchanged.
+
+Eleven regression suites and all three optional-asset modes pass; see `docs/QA.md`. Human headphone, real-GPU and actual touch checks remain pending. Start the six-clip preview at low volume: `audio_preview/Howler_r7_1.html`. Sources/licences: `docs/CREDITS.md`. Historical release packet: `releases/r7.1/` (generated with `python3 tools/package_release.py --version r7.1`).
 
 ## Journey
 r6 adds places, a second route through each level's key step, documents, optional leads and an ending assembled from your choices. Press **J** (or pause → FIELD NOTES) for objectives, leads and every document you've found. Story design: `docs/STORY.md`.

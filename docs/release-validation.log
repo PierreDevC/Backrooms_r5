@@ -1,7 +1,16 @@
-r5 · 2026-10-01
+r7.2 · 2026-10-02
 PASS extracted JavaScript node --check (tools/check_bundle.py)
-PASS byte-identical rebuild from packaged game/src
-PASS asset round trip: game/tools/unpack_assets.py then game/tools/build_assets.py reproduce game/src/assetpack.js byte for byte
-HTML bytes 12838015
-HTML sha256 660fa1944a4779b36adb096ec9861ad1f18be4e18466b8f79486aa18da3bfdaf
+PASS byte-identical HTML rebuild; existing 53-module order and only main18 boot retained
+PASS all 12 regression suites after piano gameplay changes; logs qa_r7/logs/r7_2/<suite>/run.log
+PASS final UI-focused piano/howler/levels_mobile reruns; short-screen CSS-only final tweak rechecked in landscape
+PASS 20 piano assertions each at desktop 960x540 and emulated touch 390x844 / 844x390
+PASS actual keyboard E and touch USE read/close/replay inputs; checkpoint retains knowledge and resets partial notes
+PASS all 14 current logs audited for failed assertions, PAGEERROR, recovered errors and unhandled rejections
+PASS readable lesson and three feedback screenshots visually inspected; clues do not overlap active subtitles/toasts
+PASS no new collision solids, RNG draws, third-party assets or audio clips; tune matching/timing unchanged
+PASS git diff --check, JS suite syntax and Python tooling syntax
+HTML bytes 16761137
+HTML sha256 30fb6c7cc98c02f771e5d2d9eb0ecc77a4618debb73476ef08727093a1879b67
+Human discovery/readability, real-time difficulty, actual touch hardware and real-GPU FPS remain pending.
+Earlier Howler human-listening limits and fallback evidence remain in docs/history/release-validation_r7_1.log.
 Manifest written after this log; verify with tools/verify_manifest.py.

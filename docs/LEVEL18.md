@@ -20,6 +20,13 @@ Pinning restores 6 sanity per picture. Drawings can be pinned in batches; carrie
 | YOUR BIRTHDAY | off the east void walk at (36,13), cells 37–38 × 12–14 | cake with candles (MAKE A WISH: +12 sanity), party hats, presents, balloons, HAPPY BIRTHDAY banner, the birthday card with the song |
 | THE FIELD TRIP | off the east void walk at (36,22), cells 37 × 20–24 (optional) | school-bus seats, sky in the windows, the driver's seat, a lunchbox (note from Mom, almond water, +15 sanity) |
 
+## Floor piano clues (r7.2)
+- The MUSIC room's enlarged PLAY OUR SONG poster is readable with E/touch USE and retained in FIELD NOTES. It explains stepping on a colour, stepping off/back on for a repeat and using the bare floor to move between colours without unintended notes. Its lesson points to the birthday card in the party room off the dark east walk; reading it activates the existing piano/card leads.
+- The birthday card gives RED · RED · BLUE · BLUE · PURPLE · PURPLE · BLUE, names MUSIC and repeats the movement rules. The nearby piano panel reveals the target melody only after the card is read (or the tune is solved), not on first arrival.
+- Looking down at the current key offers PLAY [COLOUR] AGAIN: E on desktop or USE on touch. No jumping or beat matching is required. Stepping off/back on works too.
+- Labelled colour chips show the last seven notes. A wrong seven-note attempt says to start again at the first colour; seven correct new notes replace the old rolling window. Success opens the toy box and tells the player to collect the cubby key; the panel retires once the key is taken.
+- Checkpoint retry resets the partial note sequence and tile latch, retaining the card, readable lesson, solved tune and inventory progress. The panel is local to MUSIC, hidden while reading, and cleared on scene teardown.
+
 ## Dino
 Small green plush with stitched belly, feet, tail and button eyes. Leads from hall to Sunshine Room, opens class door and sits on rug. Hugs restore 30 sanity (45-second cooldown); first hug brings one almond water. Nearby Dino restores sanity. On completion it guides you toward HOME.
 

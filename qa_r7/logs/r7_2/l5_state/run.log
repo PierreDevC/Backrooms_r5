@@ -1,0 +1,30 @@
+warning: [.WebGL-0x1240043c600]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+warning: [.WebGL-0x1240043c600]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+warning: [.WebGL-0x1240043c600]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+warning: [.WebGL-0x1240043c600]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)
+QA load ms 841
+QA l5 state start {"state":"play","st":true,"warps":3,"ports":6,"fem":2,"gold":3,"labels":["OPEN THE INNER DOOR","OPEN THE INNER DOOR","OPEN THE INNER DOOR","OPEN THE INNER DOOR","OPEN THE INNER DOOR","OPEN THE INNER DOOR","READ THE RESERVATIONS","TAKE THE OFFICER'S KEYS · TABLE 9","TAKE THE MOTHEX","READ THE NOTE · PEST CONTROL","WATCH THE MONITORS","READ THE SECURITY LOG","FIRE LOCK PANEL · NO KEY","BREAK THE GLASS · FIRE KEY","LEAVE ALMOND WATER IN THE BOWL","LEAVE ALMOND WATER IN THE BOWL"],"voidOk":true}
+QA PASS State Floor built; three vestibule pairs, six portal doors, each inner door backs onto nothing
+QA PASS two females (East Room, far boiler hall) and the Gold Room males
+QA PASS State Floor interactables: 16
+QA portals {"res":[{"ok":true,"on":true,"cell":[28,7],"want":[28,7]},{"ok":true,"on":true,"cell":[9,5],"want":[9,5]},{"ok":true,"on":true,"cell":[16,24],"want":[16,24]},{"ok":true,"on":true,"cell":[9,16],"want":[9,16]},{"ok":true,"on":true,"cell":[23,21],"want":[23,21]},{"ok":true,"on":true,"cell":[19,19],"want":[19,19]}],"errs":0}
+QA PASS the open inner door renders the twin side (portal camera on) for every door
+QA PASS every inner door carries you out of the twin's real door, facing its corridor
+QA fire {"phase":"fire","obj":"GET INTO THE SECURITY OFFICE","exitOn":false,"toast":"FIRE LOCK ENGAGED · RESET AT SECURITY","task":true,"st":"play"}
+QA PASS all valves vented, but the exit is fire-locked: objective sends you to the State Floor
+QA l5 state story {"lock0":"LOCKED · SECURITY","book":true,"obj1":"FIND THE OFFICER'S KEYS · TABLE 9, THE GOLD ROOM","circling":3,"spray":true,"pest":true,"n0":6,"dead":true,"n1":5,"y":0.1,"keys":true,"unlock":{"l":"UNLOCK · THE OFFICER'S KEYS","open":1,"sec":true},"cctv":true,"panel0":true,"obj2":"TAKE THE FIRE KEY · THE EAST ROOM","fk":true,"femAlive":true,"femSt":"angry","acid":0,"hp":68,"glass":true,"fkey":true,"hp2":68,"bowl":true,"fed":true,"fst":"calm","after":0,"turn":true,"reset":true,"phase":"exit","exitOn":true,"obj3":"REACH THE EMERGENCY EXIT","tasks":["staff✓","keys✓","boil✓","fire5✓","offkey5✓","spray5✓","bowl5","firekey5✓","exit5"],"win":"won"}
+QA PASS security office is locked at first
+QA PASS the reservation book points at table 9
+QA PASS Gold Room males circle the chandeliers
+QA PASS Mothex: one pump kills a male; it drops to the floor
+QA PASS the officer's keys open security
+QA PASS the panel needs the fire key; objective sends you to the East Room
+QA PASS Mothex does not kill a female; it makes her angry
+QA PASS an angry female spits acid
+QA PASS the fire key comes out of the case
+QA PASS almond water in her bowl: she is calm for good, even when sprayed
+QA PASS turning the fire key resets the lock; the exit opens
+QA PASS the exit lets you out
+QA errs {"n":0,"seen":{},"last":""}
+QA PASS no recovered frame errors
+QA PAGE CLOSE

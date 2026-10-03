@@ -55,9 +55,10 @@ function cpFarPt(minD) {   // a reachable cell far from the respawn point, out o
   const c = farCell(minD, 99); return c >= 0 ? cellPt(c) : null;
 }
 function cpRespawn0() {
+  stopAudioLive(AI.howlers);
   for (const h of AI.howlers) {
     const p = cpFarPt(10); if (p) h.place(p.x, p.z, rnd(0, TAU));
-    Object.assign(h, { st: 'wander', stT: 0, lost: 0, blind: 8, lk: null, wt: null, prey: null, pause: 0, seen: false, atkCd: 2 });
+    Object.assign(h, { st: 'wander', stT: 0, lost: 0, blind: 8, lk: null, wt: null, prey: null, pause: 0, seen: false, atkCd: 2, callT: rnd(120, 180), seeCd: 0 });
   }
   const cr = AI.crawler; if (cr && cr.active) { cr.dorm = 0; cr.respawn(); }
   for (const s of AI.smilers) { if (s.present) s.relocate(false); s.st = 'lurk'; }
@@ -97,6 +98,7 @@ function cpRespawn5() {
 }
 function cpRespawn18() {
   G18.slide = null; G18.digging = false; PL.spdK = 1;
+  M18.seq.length = 0; M18.tile = -1;
   for (const f of AI18.fog) f.goAway(rnd(14, 22));
 }
 // ----- crash safety (r4.4): one bad frame must never stop the render loop -----

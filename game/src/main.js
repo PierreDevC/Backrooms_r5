@@ -138,9 +138,8 @@ function takeTape(site) {
   later(0.6, () => toast(`CODE DIGIT ${n}: ${dig}`, 3));
   setObj0();
   cpSave(`TAPE ${n}/4`);
-  if (n === 1) later(18, () => { AI.crawler.activate(); radioLine('crawl'); });
   if (n === 2) {
-    if (G.diff >= 1 || AI.howlers.length < 1) later(6, () => { const h = spawnHowler(10); SFX.howl({ x: h.x, y: 2.2, z: h.z, pl: { x: PL.x, z: PL.z } }); radioLine('more'); });
+    if (G.diff >= 1 || AI.howlers.length < 1) later(6, () => { const h = spawnHowler(10); SFX.howlCall(h.pos(2.2), h); radioLine('more'); });
     else later(6, () => radioLine('circ'));
   }
   if (n === 3) later(3.5, startBlackout);
@@ -215,6 +214,9 @@ function resumeGame() {
   hideScreens(); G.state = 'play'; if (AU.ctx) AU.ctx.resume(); lockPointer(); K.clear();
 }
 function teardownScene() {
+  stopAudioLive();
+  $('pianoHint').classList.add('hide');
+  document.body.classList.remove('pianoactive'); document.body.style.removeProperty('--pianoBottom');
   for (const a of AI.all) for (const v of [a.growl, a.whine]) if (v) { try { v.g.disconnect(); if (v.src) v.src.stop(); } catch (e) {} }
   if (hiss) { try { hiss.g.disconnect(); } catch (e) {} hiss = null; }
   if (HINT.beacon) { try { HINT.beacon.g.disconnect(); } catch (e) {} HINT.beacon = null; } HINT.stage = 0; HINT.site = null;
@@ -306,11 +308,9 @@ function worldFX(dt) {
 }
 function gameEvents(dt) {
   tapeHints(dt); places0Events(dt);
-  if (G.diff === 2 && G.time > 80 && AI.crawler && !AI.crawler.active) AI.crawler.activate();
   G.radioT -= dt;
   if (G.radioT <= 0) { G.radioT = rnd(55, 95); const a = AI.exps.filter(e => e.alive && e.d > 12); if (a.length) { const e = pick(a), k = Math.floor(RNG() * 2); say(e.name, VO_TXT.chat[e.i][k], { radio: true, vo: `e${e.i}_chat${k}` }); } }
-  G.ambT = (G.ambT ?? rnd(18, 30)) - dt;   // distant building noises
-  if (G.ambT <= 0) { G.ambT = rnd(22, 48); const a = RNG() * 6.283, r = rnd(18, 32); SFX.far({ x: PL.x + Math.sin(a) * r, y: 1.6, z: PL.z + Math.cos(a) * r }); }
+  // r7: the random far-off bangs and groans are gone: the loud sounds in this level now come from the Howlers (ai.js: territorial call, scream on sight)
   G.hallT -= dt;
   if (PL.san < 40 && G.hallT <= 0) {
     G.hallT = rnd(7, 18) * (PL.san / 40 + 0.35); const k = RNG();

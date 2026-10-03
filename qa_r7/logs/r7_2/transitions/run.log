@@ -1,0 +1,9 @@
+warning: [.WebGL-0x13c0043c600]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+warning: [.WebGL-0x13c0043c600]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+warning: [.WebGL-0x13c0043c600]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+warning: [.WebGL-0x13c0043c600]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)
+QA load ms 915
+QA L0 {"st":"play","tapes":"TAPES 0/4","code":"CODE _ _ _ _","sig":true,"meshes":652}
+QA L9 {"st":"play","houses":32,"enter":19,"obj":"FIND THE M.E.G. OUTPOST · NORTH-EAST","tapes":"DATA 0/3","body":"lvl9","meshes":1622}
+QA L9->L5 {"st":"play","body":"lvl5","phase":"arrive","from":{"hp":63,"san":99.50500000000002,"batt":90,"spare":3,"water":1,"time":1.65,"dist":0,"lost":0,"tapes":4},"hp":76,"spare":3,"obj":"FIND THE HOUSEKEEPING KEYS · 0/3","l5btn":"1"}
+QA PAGE CLOSE

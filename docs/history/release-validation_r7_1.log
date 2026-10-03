@@ -1,0 +1,17 @@
+r7.1 · 2026-10-02
+PASS extracted JavaScript node --check (tools/check_bundle.py)
+PASS byte-identical HTML rebuild; 53 modules; audiobank/howlerbank first, main18 last
+PASS 11 regression suites; logs qa_r7/logs/r7_1/<suite>/run.log
+PASS Level 0 15 assertions in default/noassets/noskin/nomodels modes
+PASS all 14 current suite logs audited for failed assertions, PAGEERROR, recovered errors and unhandled rejections
+PASS checkpoint JSON inspected: saved progress retained, enemy reset states, errs 0
+PASS shared QA runner returns exit 1 for separately injected QA FAIL and PAGEERROR self-checks
+PASS camcorder front/rear screenshots visually inspected
+PASS six Howler WAVs decode: mono PCM16, 32000 Hz; calls 6.4/6.0/5.6 s, screams 3.4/3.6/3.2 s
+PASS corrected offline audio builder regenerates the bank; final generated bank rechecked with Level 0 QA
+PASS 16 rubberduck source clips byte-match the original CC0 archive; all four source licence pages checked
+PASS git diff --check and JavaScript/Python tooling syntax
+HTML bytes 16756232
+HTML sha256 8e5b72c029606124f47820d9de27fc1b36062b1abbb9b04fe601fd8fe875c17f
+Human headphone listening, real-time difficulty/pacing, real-GPU FPS and actual touch play remain pending.
+Manifest written after this log; verify with tools/verify_manifest.py.

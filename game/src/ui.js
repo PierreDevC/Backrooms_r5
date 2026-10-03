@@ -94,6 +94,7 @@ function updateHUD(dt) {
   if (LVL === 0 && HINT.stage >= 1 && HINT.site) { sd.classList.remove('hide'); sd.style.transform = `rotate(${(angDiff(PL.yaw, HINT.dir) * 180 / Math.PI).toFixed(0)}deg)`; }
   else sd.classList.add('hide');
   HUD.t -= dt; if (HUD.t > 0) return; HUD.t = 0.1;
+  pianoHUD18();
   hset('tc', fmtTC(G.time));
   const clk = 23 * 3600 + 47 * 60 + 3 + G.time, hh = Math.floor(clk / 3600) % 24, h12 = ((hh + 11) % 12) + 1;
   hset('clock', `${h12}:${String(Math.floor(clk / 60) % 60).padStart(2, '0')}:${String(Math.floor(clk) % 60).padStart(2, '0')} ${hh >= 12 ? 'PM' : 'AM'}`);

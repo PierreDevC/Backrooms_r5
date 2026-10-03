@@ -1,0 +1,43 @@
+{
+  "version": "r7.1",
+  "date": "2026-10-02",
+  "files": 567,
+  "artifacts": {
+    "Backrooms_Release_and_Handoff_2026-10-02_r7.1.zip": {
+      "bytes": 90157199,
+      "sha256": "08b34ad679a51c6e4614da0ffc7177d2341be99fe7b027ee616e58521f03e6d8"
+    },
+    "Backrooms_r7.1_volume_01_of_05.zip": {
+      "bytes": 18238761,
+      "sha256": "c81df14988182da95a0e110622c209a8ebfefa9cd79e0ad9481e4fc4cf70b7b1"
+    },
+    "Backrooms_r7.1_volume_02_of_05.zip": {
+      "bytes": 17523098,
+      "sha256": "3f1a883293fad46bbad3e94b3fc54e1b2278555a905b3c7be0fc87d17bf815f7"
+    },
+    "Backrooms_r7.1_volume_03_of_05.zip": {
+      "bytes": 19067050,
+      "sha256": "8e2f809e70981e3e076a77a1a8ebefc0f9a230806393d844163831300db5053e"
+    },
+    "Backrooms_r7.1_volume_04_of_05.zip": {
+      "bytes": 19677154,
+      "sha256": "3937fe2d0cc3851a502ade7b8c5af35c7875337076997369ad2dabb97fb95e29"
+    },
+    "Backrooms_r7.1_volume_05_of_05.zip": {
+      "bytes": 15651224,
+      "sha256": "6ca63d68de8a4dca92699530b7702301c68711d85820a66a14a111e6d50b6fb6"
+    },
+    "The_Backrooms_Found_Footage_r7.1.html": {
+      "bytes": 16756232,
+      "sha256": "8e5b72c029606124f47820d9de27fc1b36062b1abbb9b04fe601fd8fe875c17f"
+    },
+    "HANDOFF_2026-10-02_r7.1.md": {
+      "bytes": 26983,
+      "sha256": "6f76d098c787bcb6344a4628a7bfd255cce94d43bfb163ab405b408090f2bce8"
+    },
+    "RELEASE_README.md": {
+      "bytes": 599,
+      "sha256": "7d206d1601d557963216645afcd02c7c1bddcd0b88a349911bcd8de095812b51"
+    }
+  }
+}

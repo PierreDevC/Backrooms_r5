@@ -1,0 +1,30 @@
+warning: [.WebGL-0x1240043c600]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+warning: [.WebGL-0x1240043c600]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+warning: [.WebGL-0x1240043c600]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+warning: [.WebGL-0x1240043c600]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)
+QA load ms 827
+QA l9 start {"state":"play","roles":["1121 PINE ROAD","1177 MAPLE STREET","1109 ASH COURT"],"haleMaple":true,"streets":"OAK DRIVE|PINE ROAD|ASH COURT|MAPLE STREET","subs":"","subs2":"Nine. Is that you? The camera? You came through the wrong door.","lockers":5,"reliefLocker":true,"pages":3,"safe":true,"tasks":["outpost"]}
+QA PASS three story houses chosen
+QA PASS the Hales live on Maple Street
+QA PASS arrival radio remembers the Level 0 call
+QA PASS an extra canister locker in the blue house
+QA PASS three Hale notes and a wall safe
+QA PASS Outpost Nine points at the blue house after the map
+QA l9 watch {"seen":true,"rota":true,"minutes":true,"hud":"WATCH 0:44 · MAP"}
+QA PASS Watch house: rota and minutes; HUD times the next patrol
+QA l9 relief {"seen":true,"rec":true,"page":true,"abara":true,"relief":true,"pages":[false,false,true]}
+QA PASS blue house: Abara's tape and the torn page
+QA l9 lab {"lab":true,"card":"CURE DR. HALE: CROWBAR, FOUR CANISTERS, LURE, CAGE, MIST — OR OPEN HIS SAFE AT 1177 MAPLE STREET","maple":true,"known":true,"safeTask":"OPEN HALE'S WALL SAFE · 1177 MAPLE STREET","obj":"FIND THE CROWBAR IN THE LAB"}
+QA PASS lab reached; Outpost Nine gives Hale's address
+QA PASS the lab notes give the safe combination
+QA l9 safe {"seen":true,"photo":true,"label":"DIAL 1177","open":true,"label2":"TAKE THE SPARE KEYCARD","spare":true,"keycard":true,"obj":"TAKE THE SERVICE ELEVATOR — OR CURE DR. HALE","cp":"SPARE KEYCARD","journal":"DR. HALE'S NOTES · ALL THREE"}
+QA PASS Hale house: photographs
+QA PASS safe dials open and gives the spare keycard
+QA PASS objective offers the elevator or the cure; checkpoint saved
+QA l9 leave {"subs":"He's still down in that cell. Your call. / You're leaving him down there. Copy. Go.","state":"won"}
+QA PASS elevator with the spare card
+QA l9 flags {"nine0":true,"lost0":1,"abara9":true,"hale9":"left","journal9":3,"rota9":true}
+QA PASS Level 9 choices carried (Hale left behind)
+QA errs {"n":0,"seen":{},"last":""}
+QA PASS no recovered frame errors
+QA PAGE CLOSE

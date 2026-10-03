@@ -1,4 +1,40 @@
-# Story — r6 + r7 (story-r6 branch)
+# Story — r6 + r7 + r7.1 + r7.2
+
+## r7.2 Level 18 piano clue pass
+Brief: MUSIC room floor piano and the existing birthday card, classroom-sign/document and objective-UI channels. Must-know: where the melody is, how to repeat a note, and how to avoid accidental notes while changing keys. The sign teaches an activity; the UI repeats mechanical facts and records input, without a new speaker or explanation of the preschool. Written/reviewed with backrooms-dialogue; all new lines are text-only.
+
+| Key | Speaker | Channel | Line | Trigger and notes |
+|---|---|---|---|---|
+| pianoLesson18.header | classroom poster | sign/document | PLAY OUR SONG! / PLAY OUR SONG AND THE TOY BOX OPENS / and the toy box opens | Existing MUSIC poster, enlarged; document title OUR FLOOR PIANO. |
+| pianoLesson18.step | classroom poster | sign/document/task | Step onto a colour to play a note. | Poster, readable lesson, FIELD NOTES task sub. |
+| pianoLesson18.repeat | classroom poster | sign/document/task | To play it twice, step off and back on. | Same channels. |
+| pianoLesson18.move | classroom poster | sign/document/task | Walk on the bare floor between colours. | Same channels. |
+| pianoLesson18.card | classroom poster | sign/document | The tune is on your birthday card. | Poster and readable lesson. |
+| pianoLesson18.route | classroom poster | document | Find it in the party room off the dark east walk. | Lesson is retained in FIELD NOTES. |
+| pianoLesson18.use | classroom poster | document | You can also look down at a key and use it to play that colour again. | Readable lesson; platform-specific control appears in UI. |
+| card18.piano | birthday card | document | play it on the floor piano in MUSIC. step off between colours. step off and back on to play a colour twice. | Added after the unchanged RED · RED · BLUE · BLUE · PURPLE · PURPLE · BLUE tune. |
+| piano18.read | UI | prompt | READ THE FLOOR PIANO LESSON | Actual poster focus; shortened READ LESSON in compact panel. |
+| piano18.replay | UI | prompt | PLAY [COLOUR] AGAIN | Replaces HOP; current key, E on desktop or USE on touch. |
+| piano18.labels | UI | HUD | FLOOR PIANO / YOUR CARD / YOU PLAYED / TOY BOX | Compact panel; full colour-name chips retain RED/ORANGE/YELLOW/GREEN/BLUE/PURPLE/PINK/WHITE labels. |
+| piano18.how | UI | HUD | Step on a colour. Step off to repeat. Move between colours on the bare floor. | Local to the piano before key pickup. |
+| piano18.where | UI | HUD | Find your birthday card in the party room off the dark east walk. | Before the card is read; replaces undiscovered target notes. |
+| piano18.empty | UI | HUD | No notes yet. | Empty rolling input window. |
+| piano18.unknown | UI | HUD | Read the card to learn the tune. | Card not discovered. |
+| piano18.ready | UI | HUD | Take your time. There is no beat to match. | Learned melody, fewer than seven notes. |
+| piano18.wrong | UI | HUD | Wrong tune. Start again at the first colour. | Seven notes do not match; seven new correct notes replace them. |
+| piano18.open | UI | HUD | The toy box is open. Take the cubby key. | Tune solved; panel hides on key pickup. |
+
+Branches: unknown card → route clue; known card → exact target melody; wrong attempt → retry feedback; solved → cubby-key direction. Existing M18.song/played/key/seen.chest and TASKS document storage reused; no new RUN flags. **New canon: None.** No blocking open questions. Existing sound clips and voice/subtitle parity are unchanged.
+
+## r7.1 Level 0 guidance and canon
+User-requested enemy change: the look-away Crawler no longer appears in Level 0. The Howler, Smiler, Mimic and existing narrative branches/flags remain. Howler territorial calls belong to actual entities; a harsher scream accompanies chase entry. No new narrative flags or spoken lines were added. Existing dormant Crawler audio/code is retained but not triggered.
+
+Reviewed through the backrooms-dialogue skill, UI/tutorial channel:
+- `brief.js`, entity slide: **Listen.** Howlers call from wherever they are. A sharper scream means one has started chasing you.
+- `template.html`, controls: **Listen for the Howler.** Its calls come from its position. A sharper scream means it has started chasing you.
+- Fourth slide alt: **A Howler inside Level 0.** Fresh gameplay capture replaces the removed-enemy collage. Earlier source image remains archived, unused.
+
+The previous Crawler-specific tutorial entries and tape-one Crawler radio trigger are removed. Existing voice clips/subtitles elsewhere remain paired; no new VO is claimed.
 
 Written with the `backrooms-dialogue` skill (`.claude/skills/backrooms-dialogue/`, imported from the Notion page "Backrooms Game — Dialogue & Story Writing"). Every line below is **text only** (subtitle + the existing radio/whisper sound). No new voice clips were recorded; see "Voicing" at the end.
 

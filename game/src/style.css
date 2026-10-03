@@ -51,6 +51,20 @@ button,select,input{font-family:var(--vcr)}
 #focus i:nth-child(4){right:0;bottom:0;border-right-width:2px;border-bottom-width:2px}
 #prompt{position:absolute;left:50%;top:calc(50% + 46px);transform:translateX(-50%);font-size:26px;white-space:nowrap;opacity:0;transition:opacity .15s}
 #prompt.show{opacity:1}
+#pianoHint{position:absolute;left:6%;top:21%;width:min(430px,43vw);padding:10px 12px;background:rgba(10,18,22,.86);border:1px solid rgba(244,241,230,.5);font-size:15px;line-height:1.25;letter-spacing:0;text-shadow:none}
+#pianoHint strong{font-size:17px;color:var(--amber)}
+#pianoHint .pianoHead{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+#pianoAction{font-size:12px;color:var(--amber)}
+#pianoHow{margin-top:4px}
+#pianoHint .pianoLabel{margin-top:7px;font-size:12px;color:var(--dim)}
+#pianoHint .pianoNotes{display:flex;flex-wrap:wrap;gap:3px;min-height:20px;font-size:13px}
+#pianoHint .pianoNotes span{border-bottom:3px solid;padding:1px 3px;color:#fff}
+#pianoStatus{margin-top:7px;color:#fff6c8}
+body.lvl18.pianoactive #prompt{display:none}
+body.lvl18.pianoactive #toast{left:74%;width:38vw;top:24%;font-size:18px}
+body.lvl18.pianoactive #subs{left:74%;width:38vw;bottom:25%;font-size:18px}
+@media (max-width:700px){#pianoHint{width:88%;font-size:13px;top:23%}body.lvl18.pianoactive #toast{left:50%;width:88vw;top:var(--pianoBottom);font-size:14px}body.lvl18.pianoactive #subs{left:50%;width:88vw;top:calc(var(--pianoBottom) + 52px);bottom:auto;font-size:14px}}
+@media (max-height:500px){#pianoHint{width:43vw;top:19%;font-size:12px;padding:5px 9px;line-height:1.15}#pianoHint strong{font-size:13px}#pianoHint .pianoLabel{margin-top:2px;font-size:10px}#pianoHint .pianoNotes{font-size:11px;min-height:16px}#pianoStatus{margin-top:2px}body.lvl18.pianoactive #toast{top:21%;font-size:14px}body.lvl18.pianoactive #subs{top:34%;bottom:auto;font-size:13px}body.lvl18.pianoactive #cpNote{display:none}}
 #subs{position:absolute;left:50%;bottom:25%;transform:translateX(-50%);width:min(820px,66vw);text-align:center;font-size:27px;line-height:1.15;color:#fff6c8}
 #subs div{display:inline-block;background:rgba(0,0,0,.55);padding:3px 10px;margin:3px 0}
 #subs .who{color:var(--amber)}

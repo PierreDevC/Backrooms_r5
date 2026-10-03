@@ -152,14 +152,15 @@ function setGain(v, g, tc = 0.25) { if (v && AU.ctx) v.g.gain.setTargetAtTime(AU
 class Howler extends Agent {
   constructor(i) {
     super(buildEntity(), 0.34); mergeRig(this.rig);
-    Object.assign(this, { i, st: 'wander', percT: 0, howlCd: 10, atkCd: 0, lost: 0, blind: 0, lk: null, wt: null, pause: 0, seen: false,
+    Object.assign(this, { i, st: 'wander', percT: 0, howlCd: 10, atkCd: 0, lost: 0, blind: 0, lk: null, wt: null, pause: 0, seen: false, callT: rnd(120, 180), seeCd: 0, calls: 0,
       tw: { y: 0, x: 0, z: 0 }, twT: 0, hy: 0, hx: 0, hz: 0, lean: 0, sph: 0, prey: null, shadowR: 0.6 });
   }
   startChase() {
     this.st = 'chase'; this.stT = 0; this.lost = 0;
-    if (this.howlCd <= 0) { SFX.howl(this.pos(2.3)); this.howlCd = 15; }
-    if (FX.t - (G.lastSting ?? -99) > 25) { SFX.sting(); G.lastSting = FX.t; }
-    FX.glitch = Math.max(FX.glitch, 0.7);
+    if (this.seeCd <= 0) {   // r7: the scream when it sees you: a distorted shriek from the thing itself, not a stock sting
+      this.seeCd = 7; SFX.howlSee(this.pos(2.2), this); PL.shake = Math.max(PL.shake, 0.7); PL.fear = 1;
+      FX.glitch = Math.max(FX.glitch, 1.8); FX.hurt = Math.max(FX.hurt, 0.25);
+    } else FX.glitch = Math.max(FX.glitch, 0.7);
   }
   attack() {
     this.atkCd = 3; SFX.jumpscare(); SFX.screech(this.pos(2.1), false);
@@ -171,7 +172,13 @@ class Howler extends Agent {
   }
   update(dt) {
     const d = this.d, t = FX.t, play = G.state === 'play';
-    this.stT += dt; this.howlCd -= dt; this.atkCd -= dt; this.blind -= dt; this.percT -= dt;
+    this.stT += dt; this.howlCd -= dt; this.atkCd -= dt; this.blind -= dt; this.percT -= dt; this.seeCd -= dt;
+    // r7: its territorial call, every 2-3 minutes, from wherever it is on the map (near or across the level)
+    if (play) this.callT -= dt;
+    if (this.callT <= 0 && play) {
+      if (this.st === 'wander') { this.callT = rnd(120, 180); this.calls++; this.pause = Math.max(this.pause, 2.8); SFX.howlCall(this.pos(2.4), this); FX.glitch = Math.max(FX.glitch, d < 25 ? 0.5 : 0.15); PL.fear = Math.max(PL.fear, clamp(1 - d / 60, 0, 0.6)); }
+      else this.callT = 6;
+    }
     const chaseSpd = [3.2, 3.85, 4.35][G.diff];
     if (this.percT <= 0) {
       this.percT = 0.18; this.seen = false;
@@ -203,7 +210,7 @@ class Howler extends Agent {
           let c = -1;
           if (drawn) { const cs = []; for (let k = 0; k < N * N; k++) { const f = PL.field[k]; if (f >= 2 && f <= 6) cs.push(k); } if (cs.length) c = pick(cs); }
           if (c < 0) c = randCell(this.x, this.z, 3, 12);
-          this.wt = c >= 0 ? cellPt(c) : { x: this.x, z: this.z }; this.stT = 0; this.pause = RNG() < 0.4 ? rnd(2, 6) : 0;
+          this.wt = c >= 0 ? cellPt(c) : { x: this.x, z: this.z }; this.stT = 0; this.pause = Math.max(this.pause, RNG() < 0.4 ? rnd(2, 6) : 0);
         }
         if (this.pause > 0) { this.pause -= dt; this.spd = damp(this.spd, 0, 6, dt); } else this.navTo(this.wt.x, this.wt.z, 1.3, dt);
         break;
@@ -590,7 +597,7 @@ function initAI() {
   });
   const nh = [1, 1, 2][G.diff];
   for (let i = 0; i < nh; i++) spawnHowler(i ? 12 : 14);
-  AI.crawler = new Crawler(); AI.all.push(AI.crawler);
+  AI.crawler = null;   // r7: the Crawler (the one that only moves when you look away) is gone from Level 0
   const ns = Math.min(LV.darkCenters.length, [1, 2, 3][G.diff]);
   for (let i = 0; i < ns; i++) { const s = new Smiler(LV.darkCenters[i], i); AI.smilers.push(s); AI.all.push(s); }
   if (G.diff >= 1) { AI.mimic = new Mimic(); AI.all.push(AI.mimic); }

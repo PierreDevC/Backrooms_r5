@@ -1,0 +1,19 @@
+warning: [.WebGL-0x1240043c600]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+warning: [.WebGL-0x1240043c600]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+warning: [.WebGL-0x1240043c600]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+warning: [.WebGL-0x1240043c600]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)
+QA load ms 817
+QA PASS L0 -> L9
+QA PASS L9 -> L5
+QA PASS L5 keys/valves -> L18
+QA PASS desktop hint fits
+log: QA BEAM {"burn":1.2000000000000004,"st":"fade","hp":100}
+QA PASS beam repels before contact
+QA PASS Forgotten normal hit 34
+log: QA SAFE {"bright":1,"moved":0}
+QA PASS class sanctuary
+log: QA FOCUS TAKE THE DRAWING
+QA PASS bedside drawing interaction reachable
+QA PASS closet opens after memory
+QA PASS mobile ending no horizontal overflow
+QA PAGE CLOSE

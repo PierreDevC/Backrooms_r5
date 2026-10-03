@@ -228,7 +228,7 @@ function playS(k, o = {}) {
   if (o.pos) {
     const f = C.createBiquadFilter(), pl = o.pos.pl || PL, oc = los(o.pos.x, o.pos.z, pl.x, pl.z) ? 0 : 1; f.type = 'lowpass'; f.frequency.value = oc ? (o.occF || 800) : 18000;
     const p = mkPanner(o.ref || 1.6, o.roll || 1.2); setAPos(p, o.pos.x, o.pos.y ?? 1.2, o.pos.z); out.connect(f).connect(p); nodes.push(f, p);
-    if (o.follow) AU.live.push({ p, f, obj: o.follow, y: o.pos.y ?? 1.55, end: t0 + dur + 0.2, occl: oc });
+    if (o.follow) AU.live.push({ p, f, src: s, obj: o.follow, y: o.pos.y ?? 1.55, end: t0 + dur + 0.2, occl: oc, occF: o.occF || 700 });
   } else if (o.pan !== undefined && C.createStereoPanner) { const sp = C.createStereoPanner(); sp.pan.value = o.pan; out.connect(sp).connect(o.dest || AU.bus); nodes.push(sp); }
   else out.connect(o.dest || AU.bus);
   s.start(t0); s.onended = () => nodes.forEach(n => { try { n.disconnect(); } catch (e) {} });
@@ -238,7 +238,14 @@ function updateAudioLive() {
   if (!AU.ctx || !AU.live.length) return; const now = AU.ctx.currentTime;
   for (let i = AU.live.length - 1; i >= 0; i--) {
     const v = AU.live[i]; if (now > v.end) { AU.live.splice(i, 1); continue; }
-    setAPos(v.p, v.obj.x, v.y, v.obj.z); v.occl = lerp(v.occl, los(v.obj.x, v.obj.z, PL.x, PL.z) ? 0 : 1, 0.15); v.f.frequency.value = lerp(18000, 700, v.occl);
+    setAPos(v.p, v.obj.x, v.y, v.obj.z); v.occl = lerp(v.occl, los(v.obj.x, v.obj.z, PL.x, PL.z) ? 0 : 1, 0.15); v.f.frequency.value = lerp(18000, v.occF, v.occl);
+  }
+}
+function stopAudioLive(owners) {
+  for (let index = AU.live.length - 1; index >= 0; index--) {
+    const voice = AU.live[index]; if (owners && !owners.includes(voice.obj)) continue;
+    try { voice.src.stop(); } catch (error) {}
+    voice.p.disconnect(); voice.f.disconnect(); AU.live.splice(index, 1);
   }
 }
 const VCHAIN = {
@@ -287,6 +294,9 @@ const SMP = {
   step(kind, wet) { return playS(bpick(wet ? 'wstep' : 'step'), { vol: [0.45, 0.8, 1.2][kind], rate: rr(0.93, 1.07) }); },
   heavyStep(pos) { return playS(bpick('hstep'), { pos, ref: 2.2, roll: 1.1, rate: rr(0.9, 1.05) }); },
   howl(pos) { return playS(bpick('howl'), { pos, ref: 3.5, roll: 0.9, rate: rr(0.93, 1.03) }); },
+  // r7: the Howler's voice. The call carries across the level (gentle rolloff, 1.5x gain); the scream on sight is the loudest thing in the game.
+  howlCall(pos, follow) { return playS(bpick('hcall'), { pos, follow, ref: 16, roll: 0.42, vol: 1.5, rate: rr(0.94, 1.04), occF: 1100 }); },
+  howlSee(pos, follow) { return playS(bpick('hsee'), { pos, follow, ref: 10, roll: 0.5, vol: 1.8, rate: rr(0.96, 1.03), occF: 2600 }); },
   screech(pos, hi) { return playS(hi ? 'scrHi' : 'scrLo', { pos, ref: 2.5, roll: 1, rate: rr(0.95, 1.05) }); },
   clicks(pos) { return playS(bpick('click'), { pos, ref: 1.6, roll: 1.2, rate: rr(0.9, 1.15) }); },
   crack(pos) { return playS(bpick('crack'), { pos, ref: 1.8, roll: 1.1, rate: rr(0.9, 1.1) }); },
@@ -306,4 +316,5 @@ const SMP = {
   far(pos) { return playS(bpick(['farSlam', 'farGroan', 'farKnock'][Math.floor(Math.random() * 3)]), { pos, ref: 8, roll: 0.7 }); },
 };
 SFX.search = () => SFX.pickup(); SFX.far = () => 0;
+SFX.howlCall = pos => SFX.howl(pos); SFX.howlSee = pos => SFX.howl(pos);
 for (const k of Object.keys(SMP)) { const synth = SFX[k]; SFX[k] = (...a) => SMP[k](...a) || synth(...a); }

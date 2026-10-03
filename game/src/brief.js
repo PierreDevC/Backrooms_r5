@@ -29,11 +29,11 @@ function briefSlides0() {
         <li>${bn(4)}<span><b>Battery.</b> The flashlight (${bk('F', 'LIGHT')}) and night shot (${bk('N', 'NV')}) drain it. ${bk('R', 'BATT')} swaps in a spare.</span></li>
         <li>${bn(5)}<span><b>Almond water.</b> Drink with ${bk('Q', 'DRINK')} for +45 sanity and +20 vitality. Pick bottles up and search bodies for more.</span></li>
       </ol>` },
-    { t: 'THE THINGS IN THE WALLS', alt: 'Four recorded sightings: the Howler, the Smiler, the Crawler and an explorer in a hazmat suit.',
+    { t: 'THE THINGS IN THE WALLS', alt: 'A Howler inside Level 0.',
       body: `<ol class="bList ent">
         <li><span><b>Howler.</b> Hunts by sound and sight. Walk or crouch (${bk('C', 'CRCH')}), and sprint only to escape.</span></li>
         <li><span><b>Smiler.</b> Lives where the lights are dead. Keep your beam on it and it backs off.</span></li>
-        <li><span><b>Crawler.</b> Only moves when nobody is looking. Keep watching it.</span></li>
+        <li><span><b>Listen.</b> Howlers call from wherever they are. A sharper scream means one has started chasing you.</span></li>
         <li><span><b>Explorers.</b> Survivors in hazmat suits may help, but not everything in a suit is human. Listen to the voice.</span></li>
       </ol><p class="bNote">${IS_TOUCH ? 'The pause button opens the menu.' : '<kbd>Esc</kbd> pauses. The full control list is under CONTROLS.'}</p>` }
   ];

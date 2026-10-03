@@ -14,6 +14,8 @@ const PIANO18 = [['RED', '#e2483c', [0.86, 0.2, 0.15]], ['ORANGE', '#f08a24', [0
   ['BLUE', '#2f7fd0', [0.18, 0.44, 0.86]], ['PURPLE', '#8a5cc8', [0.54, 0.36, 0.78]], ['PINK', '#e05a9a', [0.93, 0.48, 0.66]], ['WHITE', '#f4f4f0', [0.94, 0.94, 0.9]]];
 const PNOTE18 = [261.6, 293.7, 329.6, 349.2, 392.0, 440.0, 493.9, 523.3];
 const SONG18 = [0, 0, 4, 4, 5, 5, 4];   // twinkle, twinkle, little star (C C G G A A G)
+const PIANO_LESSON18 = ['Step onto a colour to play a note.', 'To play it twice, step off and back on.', 'Walk on the bare floor between colours.',
+  'The tune is on your birthday card.', 'Find it in the party room off the dark east walk.'];
 const box18 = k => { const q = MEM18[k]; return { X0: q.x0 * CELL, Z0: q.y0 * CELL, X1: (q.x1 + 1) * CELL, Z1: (q.y1 + 1) * CELL }; };
 
 // ----- layout (genLayout18, after the art room, before the fake doors) -----
@@ -55,8 +57,11 @@ function furnishMusic18(B) {
   }
   B.add(propRoot(cx, (z0 + z1) / 2, 0), 'Box', { width: 8 * tw + 0.12, height: 0.01, depth: z1 - z0 + 0.12 }, [0.12, 0.12, 0.14], 0, [0, 0.004, 0]);
   { const r = atWall5({ x: 17, y: 17, d: 3 }, 0, 0), k = twin(r);   // the poster over the piano
-    M18.poster = paperPlane18('song18', 1.6, 0.9, 384, 216, k, [0, 1.75, 0.012], 0.55, (c, w, h) => { paper18(c, w, h, '#fbf8ef'); crayonText18(c, 'PLAY OUR SONG!', w / 2, 36, 34, '#e2483c', -0.03);
-      for (let i = 0; i < 8; i++) crayonCircle18(c, 30 + i * 46, 120, 16, PIANO18[i][1], 4, PIANO18[i][1]); crayonText18(c, 'and the toy box opens', w / 2, 190, 22, '#2f7fd0', 0.02); }); }
+    M18.lessonAt = localPt(r, 0, 1.75, 0.06);
+    M18.poster = paperPlane18('song18', 2.2, 1.2, 640, 352, k, [0, 1.75, 0.012], 0.55, (c, w, h) => { paper18(c, w, h, '#fbf8ef'); crayonText18(c, 'PLAY OUR SONG!', w / 2, 36, 34, '#e2483c', -0.03);
+      for (let line = 0; line < 4; line++) crayonText18(c, PIANO_LESSON18[line], w / 2, 78 + line * 32, 23, '#34464a', 0);
+      for (let i = 0; i < 8; i++) { crayonCircle18(c, 50 + i * 77, 222, 13, PIANO18[i][1], 3, PIANO18[i][1]); crayonText18(c, PIANO18[i][0], 50 + i * 77, 253, 14, '#34464a', 0); }
+      crayonText18(c, 'and the toy box opens', w / 2, 310, 23, '#2f7fd0', 0.02); }); }
   // the toy chest (locked) against the east wall: its lid lifts when the song is played
   { const r = atWall5({ x: 18, y: 18, d: 0 }, 0, 0), RD = [0.72, 0.2, 0.16];
     B.add(r, 'Box', { width: 1.1, height: 0.55, depth: 0.6 }, RD, 0, [0, 0.29, 0.32]); for (const s of [-1, 1]) B.add(r, 'Box', { width: 0.06, height: 0.5, depth: 0.62 }, COL18.yel, 0, [s * 0.45, 0.29, 0.32]);
@@ -147,7 +152,8 @@ function furnishBus18(B) {
 // ----- story objects (end of buildPlaces18) -----
 function buildMem18() {
   if (LV.music) {
-    W.interact.push({ get x() { return PL.x + Math.sin(PL.yaw) * 0.35; }, get z() { return PL.z + Math.cos(PL.yaw) * 0.35; }, y: 0.25, r: 1.0, label: () => M18.tile >= 0 ? `HOP · ${PIANO18[M18.tile][0]}` : '', ok: () => M18.tile >= 0 && G.state === 'play', act: () => pianoNote18(M18.tile) });
+    W.interact.push({ get x() { return PL.x + Math.sin(PL.yaw) * 0.35; }, get z() { return PL.z + Math.cos(PL.yaw) * 0.35; }, y: 0.25, r: 1.0, label: () => M18.tile >= 0 ? `PLAY ${PIANO18[M18.tile][0]} AGAIN` : '', ok: () => M18.tile >= 0 && G.state === 'play', act: () => pianoNote18(M18.tile) });
+    const lesson = M18.lessonAt; W.interact.push({ x: lesson.x, z: lesson.z, y: lesson.y, r: 2.2, label: () => 'READ THE FLOOR PIANO LESSON', ok: () => G.state === 'play', act: () => readPianoLesson18() });
     const C = M18.chest; W.interact.push({ x: C.x, z: C.z, y: 0.6, r: 1.8, label: () => M18.played ? 'TAKE THE CUBBY KEY' : 'THE TOY BOX · IT WON\'T OPEN', ok: () => G.state === 'play' && !M18.key, act: () => chest18() });
   }
   if (LV.cubby) { const k = M18.myCubby, p = localPt(k.r, k.x, k.y + 0.22, 0.8); M18.cubbyAt = { x: p.x, z: p.z };
@@ -159,6 +165,27 @@ function buildMem18() {
   if (LV.bus) { const L = M18.lunchAt; W.interact.push({ x: L.x, z: L.z, y: 0.7, r: 1.8, label: () => M18.lunch ? 'THE LUNCHBOX · EMPTY NOW' : 'OPEN THE LUNCHBOX', ok: () => G.state === 'play', act: () => lunch18() }); }
 }
 // ----- the floor piano -----
+function readPianoLesson18() {
+  M18.seen.chest = true;
+  readDoc('pianoLesson18', 'OUR FLOOR PIANO', ['PLAY OUR SONG AND THE TOY BOX OPENS', ...PIANO_LESSON18,
+    'You can also look down at a key and use it to play that colour again.'], { kind: 'board' });
+  memTasks18(); setPhase18();
+}
+function pianoHUD18() {
+  const panel = $('pianoHint'), tiles = M18.tiles;
+  const near = LVL === 18 && G.state === 'play' && !DOC.open && !M18.key && tiles && LV.zone[cell18(PL.x, PL.z)] === Z18.MUSIC &&
+    PL.x > tiles[0].x0 - 1.5 && PL.x < tiles[7].x1 + 1.5 && PL.z > tiles[0].z0 - 1 && PL.z < tiles[0].z1 + 3;
+  panel.classList.toggle('hide', !near); document.body.classList.toggle('pianoactive', !!near); if (!near) return;
+  const notes = sequence => sequence.map(index => `<span style="border-color:${PIANO18[index][1]}">${PIANO18[index][0]}</span>`).join('');
+  const action = PL.focus && PL.focus.label(), label = action === 'READ THE FLOOR PIANO LESSON' ? 'READ LESSON' : action && /TOY BOX|CUBBY KEY/.test(action) ? 'TOY BOX' : action;
+  hset('pianoAction', label ? (IS_TOUCH ? 'USE · ' : '[E] ') + label : '');
+  hset('pianoHow', 'Step on a colour. Step off to repeat. Move between colours on the bare floor.');
+  hset('pianoGoal', M18.song || M18.played ? notes(SONG18) : 'Find your birthday card in the party room off the dark east walk.', 'innerHTML');
+  hset('pianoPlayed', M18.played ? notes(SONG18) : M18.seq.length ? notes(M18.seq) : 'No notes yet.', 'innerHTML');
+  hset('pianoStatus', M18.played ? 'The toy box is open. Take the cubby key.' : !M18.song ? 'Read the card to learn the tune.' :
+    M18.seq.length === SONG18.length ? 'Wrong tune. Start again at the first colour.' : 'Take your time. There is no beat to match.');
+  document.body.style.setProperty('--pianoBottom', (panel.getBoundingClientRect().bottom + 10).toFixed(0) + 'px');
+}
 function pianoNote18(i, auto) {
   const T = M18.tiles[i]; T.lit = 1; SFX18.note(i); makeNoise(0.06);
   if (M18.played) return;
@@ -178,7 +205,8 @@ function chest18() {
 function card18() {
   SFX18.paper(); for (let k = 0; k < SONG18.length; k++) later(0.45 + k * 0.38, () => SFX18.note(SONG18[k], 0.5));
   const first = !M18.song; M18.song = true;
-  readDoc('card18', 'A BIRTHDAY CARD', ['HAPPY BIRTHDAY FROM THE SUNSHINE ROOM', 'your song, so you dont forget it:', SONG18.map(i => PIANO18[i][0]).join(' · '), 'you cried when we sang. then you laughed. then cake.', 'love, everybody (and dino)'], { kind: 'board' });
+  readDoc('card18', 'A BIRTHDAY CARD', ['HAPPY BIRTHDAY FROM THE SUNSHINE ROOM', 'your song, so you dont forget it:', SONG18.map(i => PIANO18[i][0]).join(' · '),
+    'play it on the floor piano in MUSIC. step off between colours. step off and back on to play a colour twice.', 'you cried when we sang. then you laughed. then cake.', 'love, everybody (and dino)'], { kind: 'board' });
   if (first) { taskDone('song18', 'THE SONG · FROM YOUR BIRTHDAY CARD', true); memTasks18(); setPhase18(); cpSave('YOUR BIRTHDAY'); }
 }
 function wish18() {
@@ -216,7 +244,7 @@ function memTasks18() {
   task('name18', 'YOUR NAME FOR THE DOOR', { quiet: G18.phase !== 'name', sub: 'A DOOR WITH NO NAME ON IT GOES TO ANYBODY\'S HOUSE' });
   task('nametag18', 'YOUR NAME TAG · YOUR CUBBY (CUBBIES)', { quiet: true });
   if (M18.seen.cubby || M18.seen.chest || M18.song || M18.key) task('ckey18', 'THE CUBBY KEY · THE TOY BOX, MUSIC ROOM', { quiet: true });
-  if (M18.seen.chest || M18.song) { task('piano18', 'PLAY OUR SONG ON THE FLOOR PIANO', { quiet: true }); task('song18', 'THE SONG · YOUR BIRTHDAY, OFF THE DARK EAST OF THE PLAYLAND', { quiet: true }); }
+  if (M18.seen.chest || M18.song) { task('piano18', 'PLAY OUR SONG ON THE FLOOR PIANO', { quiet: true, sub: PIANO_LESSON18.slice(0, 3).join(' ') }); task('song18', 'THE SONG · YOUR BIRTHDAY, OFF THE DARK EAST OF THE PLAYLAND', { quiet: true }); }
   if (M18.song) taskDone('song18', 'THE SONG · FROM YOUR BIRTHDAY CARD', true);
   if (M18.played) taskDone('piano18', 'OUR SONG · PLAYED', true);
   if (M18.key) taskDone('ckey18', 'THE CUBBY KEY', true);
