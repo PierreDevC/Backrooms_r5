@@ -1,0 +1,97 @@
+"""Level 2 (Pipe Dreams) voice pipeline: same synthesis, treatment and ASR check as gen_vo37.py, different speakers and extraction.
+
+  VO37_VOICES=/path/to/voices  VO37_ESPEAK=/path/to/espeak-ng-data  python3 gen_vo2.py [--list] [--no-asr] [--only substring]
+
+Voices (CC0 / public domain): Ida kathleen-low, Benny mike-medium, M.E.G. Outpost 9 bryce-medium, Dr. Hale john-medium, whispers ljspeech-high.
+"""
+import os, re, sys, json, base64
+import gen_vo37 as V
+from gen_vo37 import read, balanced, strings
+V.OUT_JS = os.path.join(V.SRC, 'voicebank2.js')
+V.VOICES.update({'IDA': 'en_US-kathleen-low', 'BENNY': 'en_US-mike-medium'})
+V.LS.update({'IDA': 1.08, 'BENNY': 0.96})
+PREFIX = 'v2_'
+
+def body_of(src, name):
+    i = src.index('function ' + name); j = src.index('{', i); d = 0
+    for k in range(j, len(src)):
+        if src[k] == '{': d += 1
+        elif src[k] == '}':
+            d -= 1
+            if d == 0: return src[j:k + 1]
+    return ''
+def extract():
+    lines = []
+    def add(sp, texts):
+        for t in texts:
+            if t and (sp, t) not in lines: lines.append((sp, t))
+    s2, m2 = read('story2.js'), read('main2.js')
+    def calls(src, pat, sp, skip_args=0):
+        for m in re.finditer(pat, src):
+            i = src.index('(', m.start()); j = balanced(src, i); body = src[i + 1:j - 1]
+            if skip_args:
+                k = 0; d = 0
+                for n, c in enumerate(body):
+                    if c in '([{': d += 1
+                    elif c in ')]}': d -= 1
+                    elif c == ',' and d == 0: k = n + 1; break
+                body = body[k:]
+            body = re.split(r",\s*(?:\d+(?:\.\d+)?|\{[^{}]*\}|Object\.assign\(.*\))\s*$", body)[0]
+            add(sp, strings(body))
+    calls(s2, r"\bsayIda2\((?!hint2|l,)", 'IDA'); calls(body_of(s2, 'talkIda2'), r"(?<![A-Za-z0-9_])A\(", 'IDA')
+    calls(s2, r"\bsayBenny2\(", 'BENNY')
+    calls(s2, r"\bringPhone2\(", 'IDA', 1)
+    m = re.search(r"const L = \{ w: (.*?)\}\[k\];", s2, re.S); add('IDA', strings(m.group(1)) if m else [])
+    m = re.search(r"L\.push\('((?:[^'\\]|\\.)*)'\)", s2); add('IDA', [V.unq(m.group(1))] if m else [])
+    add('IDA', strings(body_of(s2, 'hint2')))
+    calls(s2, r"say\(OUT9,", 'OUTPOST9', 1); calls(s2, r"say\(HALE_R,", 'HALE', 1)
+    calls(m2, r"say\('',", 'WHISPER', 1)
+    m = re.search(r"const W2_WHISPER = \[(.*?)\];", m2, re.S); add('WHISPER', strings(m.group(1)) if m else [])
+    return lines
+
+def main():
+    V.extract = extract; V.pell_lines = lambda: []
+    V.key = lambda sp, t: PREFIX + __import__('hashlib').sha1((sp + '|' + t).encode()).hexdigest()[:8]
+    # reuse gen_vo37.main, minus Pell's tape, writing VOX2 instead of VOX37
+    src = open(V.__file__).read()
+    args = sys.argv[1:]
+    items = [(V.key(sp, t), sp, t, V.spoken(t, sp)) for sp, t in extract()]
+    if '--list' in args:
+        for k, sp, t, sx in items: print(f'{k} {sp:9} {t!r}\n{"":23}-> {sx!r}')
+        return
+    only = args[args.index('--only') + 1] if '--only' in args else None
+    from faster_whisper import WhisperModel
+    asr = None if '--no-asr' in args else WhisperModel('base.en', device='cpu', compute_type='int8')
+    import numpy as np
+    from scipy.signal import resample_poly
+    def wer(ref, hyp):
+        n = lambda s: re.sub(r"[^a-z0-9' ]", ' ', s.lower()).split(); r, h = n(ref), n(hyp)
+        d = np.zeros((len(r) + 1, len(h) + 1), int); d[:, 0] = range(len(r) + 1); d[0, :] = range(len(h) + 1)
+        for i in range(1, len(r) + 1):
+            for j in range(1, len(h) + 1): d[i, j] = min(d[i - 1, j] + 1, d[i, j - 1] + 1, d[i - 1, j - 1] + (r[i - 1] != h[j - 1]))
+        return d[-1, -1] / max(1, len(r))
+    def heard(a):
+        w = resample_poly(a, 16000, V.SR).astype(np.float32); segs, _ = asr.transcribe(w, beam_size=3, language='en'); return ' '.join(s.text.strip() for s in segs)
+    bank = {}
+    if only and os.path.exists(V.OUT_JS):
+        mm = re.search(r'Object\.assign\(ABANK, (\{.*?\})\);\nconst VOX2', open(V.OUT_JS, encoding='utf-8').read(), re.S)
+        if mm: bank = {k: v for k, v in json.loads(mm.group(1)).items() if k in {i[0] for i in items}}
+    bad = []
+    for i, (k, sp, t, sx) in enumerate(items):
+        if only and only not in t and only not in k: continue
+        best = None
+        for j, (dls, ns) in enumerate([(0, 0.667), (0.05, 0.6), (-0.04, 0.667), (0.08, 0.5), (0, 0.8)]):
+            a = V.make(sp, sx, 9000 + i * 31 + j, (V.LS[sp] + dls), ns)
+            w = wer(sx, heard(a)) if asr and sp != 'WHISPER' else 0.0
+            if best is None or w < best[0]: best = (w, a)
+            if w <= 0.06: break
+        w, a = best; bank[k] = base64.b64encode(V.encode(a)).decode(); print(k, sp, round(len(a) / V.SR, 2), 'wer', round(w, 2), flush=True)
+        if w > 0.15: bad.append((k, round(w, 2), sx))
+    keyed = {t: k for k, sp, t, sx in items if k in bank}
+    js = '// ---------- r9 · Level 2 voice bank (generated by audio_pipeline/gen_vo2.py: Piper TTS, CC0 / public-domain models; see docs/CREDITS.md) ----------\n'
+    js += 'Object.assign(ABANK, ' + json.dumps(bank, separators=(',', ':')) + ');\n'
+    js += 'const VOX2 = ' + json.dumps(keyed, ensure_ascii=False, separators=(',', ':')) + ';\n'
+    js += 'const VOXSP2 = ' + json.dumps({k: sp for k, sp, t, sx in items if k in bank}, separators=(',', ':')) + ';\n'
+    open(V.OUT_JS, 'w', encoding='utf-8').write(js)
+    print('clips', len(bank), 'js bytes', len(js), 'above 0.15 WER:', bad)
+if __name__ == '__main__': main()

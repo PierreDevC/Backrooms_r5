@@ -225,7 +225,7 @@ function showEnd37(won) {
   $('endTitle').textContent = title; $('endText').textContent = text;
   const st = [['TIME ON TAPE', fmtTC(G.time)], ['DISTANCE', Math.round(PL.dist) + ' M'], ['LEVEL', '37 · SUBLIMITY'], ['DIFFICULTY', DIFFS[G.diff]], ['WINGS', wingsDone37() + '/3']];
   $('endStats').innerHTML = st.map(([a, b]) => `<div><span>${a}</span><b>${b}</b></div>`).join('');
-  $('btnAgain').textContent = won ? '▶ PLAY AGAIN (LEVEL 0)' : '▶ RETRY LEVEL 37'; show('end');
+  $('btnAgain').textContent = won ? (G37.ending === 'surface' ? '▶ CONTINUE · LEVEL 2' : '▶ PLAY AGAIN (LEVEL 0)') : '▶ RETRY LEVEL 37'; show('end');
 }
 function hudObj37() { return G37.flood ? 'THE WATER IS RISING' : `WINGS ${wingsDone37()}/3`; }
 function hudItems37() { const a = []; if (P37.keys.hotel) a.push('ROOM KEY'); if (P37.keys.hosp) a.push('DISCHARGE'); if (P37.keys.tape) a.push('VIDEO'); return a.join(' · ') || 'EMPTY HANDS'; }

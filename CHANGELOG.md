@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## r9 — 2026-10-03 · Level 2 "Pipe Dreams" (branch agent/claude)
+- New level after Level 37 (the SURFACED ending now offers CONTINUE · LEVEL 2; also in the level picker). 48x48 hot maintenance tunnels: the Spine, the Boiler Office and Boiler Hall, the Low Galleries (standing hot water, red bulbs, the Gamma Team's store), the Switchyard (Facelings on shift), the Long Pipe (a metre-wide main the whole way, the Hound), the Gamma Lift.
+- Systems: HEAT meter (hot zones, cold stores, shelters), pressure SURGES (three knocks and a klaxon, then steam floods every tunnel that isn't a shelter), pipe phones (Ida rings the nearest one; any phone gives a hint), regulators (hold to shut), a breaker puzzle the foreman taps out, a jammed door and a crowbar, a freight lift.
+- People and things: Ida (back to the door, will not let you round the front), Benny (shut in the valve room), Facelings (look away from your light), the Hound (stare it down with a steady light; run and it comes).
+- Two endings (THE LIFT, ON SHIFT), three deaths (SCALDED, HEATSTROKE, THE HOUND). 62 voiced lines (Piper, CC0/PD voices, ASR-checked).
+- docs/LEVEL2.md, qa2/ tests. No human playthrough, audio, touch, performance or difficulty review. Notion sync pending.
+
 ## r8 — 2026-10-02 · Level 37 "Sublimity" (branch agent/claude, not merged)
 - New level after Level 18 (Level 18 win chains to it): a 72x72 Poolrooms complex built to the user's reference renders (cream-sage tile with dark grout, round tiled columns, round and nested arches, light slits with sun shafts, emerald water with grout/caustic overlays). Hub (Shallows, Dive Well with ten-metre tower, Lap pool, Cabana, Plant, lifeguard booth) plus three wings: Lukewarm Hotel, Wellborn Hospital, Water World.
 - Swimming/diving/breath physics, per-basin draining and flooding, the Scape drift meter, underwater audio.

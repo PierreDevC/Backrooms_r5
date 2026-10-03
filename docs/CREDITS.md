@@ -81,3 +81,6 @@ Raw downloads (ambientCG zips, Poly Haven glTF folders, Quaternius zips) are not
 
 ## r8 · Level 37 voice lines
 Generated with Piper TTS (audio_pipeline/gen_vo37.py) and checked with faster-whisper (base.en). Voice models, all CC0 or public domain, same policy as Level 0: en_GB-cori-high (Abara, public domain, LibriVox), en_US-kristin-medium (Teague, public domain, LibriVox), en_US-bryce-medium (M.E.G. Outpost 9) and en_US-john-medium (Dr. Hale) as in Level 9, en_US-ljspeech-high (PA and the Scape whispers, public domain), en_US-kathleen-low (Staff, CC0) and en_US-joe-medium (Pell's tape, CC0). Treatments (room, PA filter, whisper, tape) are procedural (audio_pipeline/dsp.py). The text-to-clip lookup is in game/src/voicebank37.js. Synthetic speech: no human voice acting.
+
+## r9 · Level 2 voice lines
+Same pipeline as Level 37 (audio_pipeline/gen_vo2.py, Piper TTS, faster-whisper check). Models, CC0 or public domain: en_US-kathleen-low (Ida, CC0), en_US-mike-medium (Benny, CC0), en_US-bryce-medium (Outpost 9) and en_US-john-medium (Dr. Hale) as in Level 9, en_US-ljspeech-high (whispers, public domain). Synthetic speech, no human voice acting. All Level 2 sound effects are synthesized in game/src/audio2.js; textures are procedural (textures2.js) plus the existing ambientCG/Poly Haven assets.

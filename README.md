@@ -19,6 +19,8 @@ r6 adds places, a second route through each level's key step, documents, optiona
 2. Level 9: download data by playing PACKET STACK on each terminal (A/D move, W turn, S drop), get into the lab, then get an administrator keycard: cure Dr. Hale, or open the wall safe in his house on Maple Street. The blue house and the block captain's house have their own stories. Wretches inside houses are blind and hunt by sound: watch the NOISE meter and crouch. A short LEVEL 9 BRIEFING with screenshots plays on first arrival (pause → FIELD BRIEFING to see it again).
 3. Level 5: unlock the staff door with three housekeeping keys or the night manager's master key (the guest who never checked out wants a drink), vent three boiler valves, reset the exit's fire lock on the **State Floor** (through the ballroom's portal door: Cross Hall, East Room, Gold Room, kitchen, security) and escape the hotel. Vestibule inner doors open onto the far side of the hotel. **Mothex** ([G]) kills the small moths; the big females only calm down for almond water.
 4. **Level 18 — Nostalgic Memories:** follow the Plush Dino through a preschool; recover four childhood drawings, pin them on MY MEMORIES, colour in the door with crayons from the art room, put your name on it (your cubby, the music room's floor piano, your birthday card in the dark), and leave through the door you drew.
+5. **Level 37 — Sublimity:** a Poolrooms complex. Abara at the Cabana wants her cassette from the pit; drain the Shallows from the pump room; three wings (the Lukewarm Hotel, Wellborn Hospital, Water World) each keep one thing for the lifeguard panel; play the video, the Dive Well floods, swim up to the hatch. Or sit down with Abara.
+6. **Level 2 — Pipe Dreams:** hot maintenance tunnels. Ida, the night engineer, talks you in on the pipe phones; shut three regulators (the Low Galleries, the Switchyard's breakers and Facelings, the Long Pipe and its Hound), get into a steam shelter when the pipes knock three times, and ride the Gamma Lift up. Or punch in.
 
 ## Play and build
 Open `game/The_Backrooms_Found_Footage.html` in a modern WebGL browser. Internet is needed for Babylon.js CDN; fonts are optional. Download the HTML to play if your host blocks pointer lock/WebGL in embeds.
@@ -27,7 +29,7 @@ Open `game/The_Backrooms_Found_Footage.html` in a modern WebGL browser. Internet
 cd game && python3 build.py
 python3 -m http.server 8000 --bind 127.0.0.1
 ```
-Visit `http://localhost:8000/The_Backrooms_Found_Footage.html`. Append `?debug&level=18` to test the new level directly. `?level=9` and `?level=5` are also supported. In the title menu, SELECT LEVEL starts Level 0, Level 9, Level 5 or Level 18 directly.
+Visit `http://localhost:8000/The_Backrooms_Found_Footage.html`. Append `?debug&level=2` (or `level=37`, `level=18`, `level=9`, `level=5`) to start a level directly. In the title menu, SELECT LEVEL starts any of the six.
 
 WASD/arrows move · mouse look · Shift sprint · C crouch (toggle) · F flashlight · N night vision · Z or hold right mouse zoom · E/Enter interact · Q almond water · R battery · Esc/P pause · M mute. Level 5: G sprays Mothex. Level 9: right-click a door (or X) to latch it (the deadbolt turns), Tab map, LOOK OUTSIDE at any window, V to look through a door's peephole. Touch controls appear on phones.
 

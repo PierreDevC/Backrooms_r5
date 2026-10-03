@@ -1,5 +1,8 @@
 # The Backrooms: Found Footage — Coding-Agent Handoff (r7.2)
 
+## r9 (branch agent/claude): Level 2 Pipe Dreams — read docs/LEVEL2.md
+Level 37 SURFACED → goLevel2(carryFrom37()). Files: textures2, level2, audio2, world2, props2, story2, ai2, main2, voicebank2 (suffix 2; state objects GP2/WP2/PP2/ZP2/AIP2 avoid collisions with older short names). Tests: qa2/s2_*.js.
+
 ## r8 (branch agent/claude, unmerged): Level 37 Sublimity — read docs/LEVEL37.md
 Level 18 win → goLevel37. Build files: textures37, level37, audio37, world37, hub37, wings37, story37, storywings37, ai37, main37 (suffix 37). Tests: qa37/s37_story.js, s37_npc.js, s37_views.js via qa18/run18.js. User merges to main.
 

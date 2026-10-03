@@ -43,7 +43,7 @@ function cpRetry() {
   G.cause = ''; G.chase = 0;
   Object.assign(FX, { hurt: 0, fadeW: 0, fadeB: 1, glitch: 2 });
   DEATH.shown = false; DEATH.t = 0;
-  try { if (LVL === 9) cpRespawn9(); else if (LVL === 5) cpRespawn5(); else if (LVL === 18) cpRespawn18(); else if (LVL === 37) cpRespawn37(); else cpRespawn0(); } catch (e) { frameErr('cp', e); }
+  try { if (LVL === 9) cpRespawn9(); else if (LVL === 5) cpRespawn5(); else if (LVL === 18) cpRespawn18(); else if (LVL === 37) cpRespawn37(); else if (LVL === 2) cpRespawn2(); else cpRespawn0(); } catch (e) { frameErr('cp', e); }
   CAM.position.set(PL.x, 1.62, PL.z); CAM.rotation.set(0, PL.yaw, 0);
   G.state = 'play'; CP.fadeT = 1.2;
   $('osd').classList.remove('hide'); if (IS_TOUCH) $('touch').classList.remove('hide');

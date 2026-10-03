@@ -176,3 +176,6 @@ Final visual correction connected the enemy neck/shoulders without changing its 
 
 ## r8 Level 37
 `node qa18/run18.js "$PWD/game/The_Backrooms_Found_Footage.html" "$PWD/qa37/s37_story.js" 960 540` runs the full objective chain (Abara, plant, pit, three wings, panel, flood, hatch win). `s37_npc.js` times Teague and checks fish bites; `s37_views.js` screenshots every wing. Headless only; no human review.
+
+## r9 Level 2
+`node qa18/run18.js "$PWD/game/The_Backrooms_Found_Footage.html" "$PWD/qa2/s2_story.js" 960 540` plays the whole chain (phone, Ida, three regulators, breakers, Benny, ID card, lift). `s2_systems.js` covers surges in the open and in a shelter, heat, the Hound (chase and stare-down) and the ON SHIFT ending; `s2_death.js` death and retry; `s2_reach.js` reachability; `s2_views.js` screenshots (set V2=sump,spine,... to choose). Headless only.

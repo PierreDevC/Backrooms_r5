@@ -14,7 +14,7 @@ const TOUCH = { mx: 0, mz: 0 };
 
 function lightAt(x, z) { return baseLight(x, z, FX.flicker) * 0.667 * FX.lightScale; } // ~1 in a lit room, <0.1 in the dead zones
 function makeNoise(v) { PL.noise = Math.max(PL.noise, v); }
-function carpetWet(x, z) { if (LVL === 37) return depth37(x, z) > 0.04; return noise1(x * 0.35 + 3.1) + noise1(z * 0.35 - 8.7) > 0.7 || (LVL === 0 && !!P0.off && inPlace0(P0.off, x, z)); }
+function carpetWet(x, z) { if (LVL === 37) return depth37(x, z) > 0.04; if (LVL === 2) return !!LV.wet2[cell2(x, z)]; return noise1(x * 0.35 + 3.1) + noise1(z * 0.35 - 8.7) > 0.7 || (LVL === 0 && !!P0.off && inPlace0(P0.off, x, z)); }
 
 function resetPlayer() {
   Object.assign(PL, { x: cellCenter(LV.spawn.x), z: cellCenter(LV.spawn.y), vx: 0, vz: 0, crouch: false, ck: 0, sta: 1, exh: false, hp: 100, san: 100,
@@ -49,7 +49,7 @@ function swapBattery() {
 function drinkWater() {
   if (PL.water <= 0) { SFX.click(); toast('NO ALMOND WATER'); return; }
   if (PL.san > 97 && PL.hp > 97) { toast('YOU FEEL FINE'); return; }
-  PL.water--; PL.san = Math.min(100, PL.san + 45); PL.hp = Math.min(100, PL.hp + 20); SFX.drink(); makeNoise(0.15); toast('ALMOND WATER — SANITY RESTORED');
+  PL.water--; PL.san = Math.min(100, PL.san + 45); PL.hp = Math.min(100, PL.hp + 20); SFX.drink(); makeNoise(0.15); if (LVL === 2) GP2.heat = Math.max(0, GP2.heat - 0.45); toast('ALMOND WATER — SANITY RESTORED');
 }
 function takeItem(it) {
   it.taken = true; it.root.setEnabled(false); SFX.pickup();
