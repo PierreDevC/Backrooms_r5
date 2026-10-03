@@ -163,7 +163,7 @@ function talkAbara37() {
   }
   if (P37.quest && P37.cam && P37.cass && !P37.ret) {
     P37.ret = true; SFX.pickup(); A('That\'s four. That\'s definitely four.'); A('He had a tape in there too? Put it on the table. I\'ll listen later. Not now.', 4.6);
-    later(8, () => { tasks37(); P37.tapeRead = true; readDoc('pell37', 'TAPE SEVEN · P. PELL', PELL37, { kind: 'log' }); });
+    later(8, () => { tasks37(); P37.tapeRead = true; readDoc('pell37', 'TAPE SEVEN · P. PELL', PELL37, { kind: 'log' }); try { playVoice(['v37_pell'], { mode: 'tape', delay: 0.4 }); } catch (e) {} });
     later(9, () => { P37.told = true; setPhase37('wings'); cpSave('THREE WINGS'); }); return;
   }
   if (P37.ret && !P37.told2) {
@@ -177,7 +177,7 @@ function talkAbara37() {
   if (P37.keys.tape && !T.park) { T.park = true; A('You drank from the tanks? Nobody drinks from the tanks.'); A('I did once. Very good. I don\'t remember the afternoon.', 4); return; }
   if (w >= 1 && !T.stay) { T.stay = true; P37.staySeen = true; A('There\'s a second cot. I\'m not saying anything. It\'s there.'); return; }
   if (w >= 3) { A(pick(['You\'ll go up. I know. Leave the kettle on. I\'ll hear it from here.', 'Go on. Tell somebody the water was warm.'])); return; }
-  A(pick(['Drink something. You look like a drowned tape.', 'The pumps complain. Let them.', 'The booth is on the north side of the deep end. The door sticks.', 'Blue towels are the clean ones. I did say.']));
+  A(pick(['Drink something. You look like a drowned tape.', 'The pumps are complaining. Let them.', 'The booth is on the north side of the deep end. The door sticks.', 'Blue towels are the clean ones. I did say.']));
 }
 function hospAbara37(A) {
   const f = RUN.f, dead = f.dead0 && f.dead0.length ? f.dead0 : [];
@@ -233,7 +233,7 @@ function hatch37(it) {
   if (holdBusy(it)) return; SFX37.creak(P9(W37.hatch)); holdStart(it, 2.4, () => { win37('surface'); }, { r: 3, cancel: 'YOU LET GO OF THE HATCH', noise: 0.1 });
 }
 function stay37() {
-  P37.stay = true; sayAb37('Good. Shoes off.', { dur: 2.6 }); later(2.6, () => win37('stay'));
+  P37.stay = true; sayAb37('Good. Take your shoes off.', { dur: 2.6 }); later(2.6, () => win37('stay'));
 }
 // ----- the television in the booth -----
 function drawTv37(playing) {
@@ -325,3 +325,6 @@ function cpRespawnFlood37() {
   drawTv37(false);
 }
 if (/[?&]debug/.test(location.search)) addEventListener('load', () => Object.assign(window.__BR || (window.__BR = {}), { P37, talkAbara37, kettle37, gate37, readPlantLog37, takePellCam37, takeCassette37, panel37, startFlood37, floodTick37, hatch37, stay37, endCard37, doorLabel37, useDoor37, wingsDone37, obj37, panelLabel37, resetP37, tasks37 }));
+
+// r8: Level 37 voice. A line whose text is in the voice bank (voicebank37.js) plays its clip with the subtitle; others stay subtitle-only.
+{ const say37raw = say; say = function (who, text, o = {}) { if (LVL === 37 && !o.vo && typeof VOX37 !== 'undefined' && VOX37[text]) o = Object.assign({}, o, { vo: VOX37[text] }); return say37raw(who, text, o); }; }

@@ -180,7 +180,7 @@ function b64buf(str) { const s = atob(str), u = new Uint8Array(s.length); for (l
 function loadBank() {
   if (typeof ABANK === 'undefined' || AU.bankN) return;
   const C = AU.ctx, pri = k => /^(intro|rin|rout|tape|step|fl_|pick|breath)/.test(k) ? 0 : /^e\d_|^mim|^wh/.test(k) ? 2 : 1;
-  const keys = Object.keys(ABANK).filter(k => ABANK[k]).sort((a, b) => pri(a) - pri(b));
+  const keys = Object.keys(ABANK).filter(k => ABANK[k] && !/^v37_/.test(k)).sort((a, b) => pri(a) - pri(b));
   AU.bankN = keys.length; AU.bankDone = 0; let qi = 0;
   const one = () => {
     if (qi >= keys.length) return; const k = keys[qi++]; let fired = false;

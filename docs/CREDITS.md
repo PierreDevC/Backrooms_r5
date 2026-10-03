@@ -78,3 +78,6 @@ Source: https://polyhaven.com (1k glTF). Simplified offline by `tools/mdl/conver
 
 ## Not redistributed
 Raw downloads (ambientCG zips, Poly Haven glTF folders, Quaternius zips) are not in this packet; only the processed, game-ready files are, embedded in `game/src/assetpack.js` (`python3 tools/unpack_assets.py` writes them back out to `game/assets/`). Re-download from the links above to re-run the converters.
+
+## r8 · Level 37 voice lines
+Generated with Piper TTS (audio_pipeline/gen_vo37.py) and checked with faster-whisper (base.en). Voice models, all CC0 or public domain, same policy as Level 0: en_GB-cori-high (Abara, public domain, LibriVox), en_US-kristin-medium (Teague, public domain, LibriVox), en_US-bryce-medium (M.E.G. Outpost 9) and en_US-john-medium (Dr. Hale) as in Level 9, en_US-ljspeech-high (PA and the Scape whispers, public domain), en_US-kathleen-low (Staff, CC0) and en_US-joe-medium (Pell's tape, CC0). Treatments (room, PA filter, whisper, tape) are procedural (audio_pipeline/dsp.py). The text-to-clip lookup is in game/src/voicebank37.js. Synthetic speech: no human voice acting.

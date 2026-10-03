@@ -21,6 +21,9 @@ Run-flag payoffs: `dead0` (names of Level 0 explorers who died, on the hospital 
 ## Systems
 Per-cell floor heights, per-basin water levels that animate, wading/swimming/diving (look down to dive, crouch to sink, breath meter, surface to breathe), tower with ladder lift and a ten-metre fall, the Scape (stand still in water → drift meter → carried to the Shallows with the clock moved on), wet footsteps, underwater lowpass, light slits with cone shafts, caustics and grout overlay on the water.
 
+## Voice
+Level 37's say() lines are voiced: `audio_pipeline/gen_vo37.py` extracts every line from story37.js/storywings37.js/main37.js, makes a spoken form, synthesises it with Piper (CC0/public-domain models: Abara cori-high, Teague kristin, Outpost 9 bryce, Hale john, PA ljspeech with a PA filter, Staff kathleen whisper, Scape whispers ljspeech, Pell's tape joe), checks it with faster-whisper and writes `game/src/voicebank37.js` (113 mp3 clips, about 2 MB). A wrapper at the end of story37.js attaches a clip when a line's text is in the bank, so subtitles are unchanged and unvoiced lines still work. Clips decode when the level starts (`loadVoice37`). Notes/logs/signs stay text. To change a line: edit the source, then `VO37_VOICES=<dir> VO37_ESPEAK=<dir> python3 gen_vo37.py --only "<text>"`. Synthetic speech, no human voice acting; nobody has listened to the clips yet.
+
 ## Dialogue ledger (written with the backrooms-dialogue skill; text only, nothing voiced)
 Speakers: ABARA, TEAGUE, STAFF (whispered), PA (park/hospital/hotel), M.E.G. OUTPOST 9 (radio), DR. HALE (only if saved in Level 9), notes/logs (plant log, lifeguard log, cabana board, guest book, housekeeping card, room 233 card, whiteboard, chart, roster, park map, control-room note, staff-room notices, Pell's tape seven). All strings are in `story37.js` and `storywings37.js`.
 

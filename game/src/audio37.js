@@ -53,3 +53,16 @@ function wlights37(dt) {
   if (G37.flood && W37.hatch) setSlot(4, { x: W37.hatch.x, y: W37.hatch.y - 0.4, z: W37.hatch.z }, 0.9 * (0.6 + 0.4 * Math.sin(t * 7)), null, 0, [1, 0.2, 0.1], 12, false, 0.4); else clearSlot(4);
   clearSlot(5);
 }
+
+// r8: Level 37 voice clips are decoded only when the level starts (they are skipped by loadBank)
+function loadVoice37() {
+  if (AU.v37 || !AU.ctx || typeof ABANK === 'undefined') return; AU.v37 = true;
+  const keys = Object.keys(ABANK).filter(k => /^v37_/.test(k) && ABANK[k]); let qi = 0;
+  const one = () => {
+    if (qi >= keys.length) return; const k = keys[qi++]; let fired = false;
+    const done = b => { if (fired) return; fired = true; if (b) AU.buf[k] = b; ABANK[k] = null; one(); };
+    try { const p = AU.ctx.decodeAudioData(b64buf(ABANK[k]), done, () => done(null)); if (p && p.catch) p.catch(() => done(null)); } catch (e) { done(null); }
+  };
+  for (let i = 0; i < 3; i++) one();
+}
+if (/[?&]debug/.test(location.search)) addEventListener('load', () => Object.assign(window.__BR || (window.__BR = {}), { audioInit, loadVoice37, playVoice }));

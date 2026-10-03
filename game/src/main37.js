@@ -18,6 +18,7 @@ function teardown37() {
 async function goLevel37(from) {
   const f = Object.assign({ hp: 100, san: 100, batt: [100, 90, 75][G.diff], spare: [2, 1, 1][G.diff], water: [3, 1, 1][G.diff], time: 0, dist: 0, lost: 0, tapes: 4 }, from || G37.from || {});
   G37.from = Object.assign({}, f);
+  try { loadVoice37(); } catch (e) {}
   G.state = 'loading'; show('loading'); $('osd').classList.add('hide'); $('touch').classList.add('hide'); $('blue').classList.add('hide');
   $('loadOsd').textContent = '▶ LEVEL 37 · SUBLIMITY'; $('loadFill').style.width = '0%';
   if (AU.ctx && AU.ctx.state === 'suspended') AU.ctx.resume();

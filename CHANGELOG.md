@@ -4,6 +4,7 @@
 - New level after Level 18 (Level 18 win chains to it): a 72x72 Poolrooms complex built to the user's reference renders (cream-sage tile with dark grout, round tiled columns, round and nested arches, light slits with sun shafts, emerald water with grout/caustic overlays). Hub (Shallows, Dive Well with ten-metre tower, Lap pool, Cabana, Plant, lifeguard booth) plus three wings: Lukewarm Hotel, Wellborn Hospital, Water World.
 - Swimming/diving/breath physics, per-basin draining and flooding, the Scape drift meter, underwater audio.
 - Story: Abara, Teague, the Staff (night shot only), Pell's tape, notes/logs/PA; three wing quests, panel, flood and two endings (SURFACED, STILL WATER). Fish creature in the wave pool and the flooded well. Run flags from Levels 0/9/5/18 feed the hospital roster and the ending card. Level 0 now records `dead0`.
+- Level 37 voice lines: 113 Piper clips (public-domain/CC0 voices), per-speaker treatments, ASR-checked; Pell's tape plays as a tape recording. audio_pipeline/gen_vo37.py, game/src/voicebank37.js, docs/CREDITS.md.
 - docs/LEVEL37.md; qa37/ (story chain, NPC/fish, wing views). No human playthrough, audio, touch, performance or difficulty review. Notion sync pending.
 
 ## r7.2 — 2026-10-02 · Level 18 floor-piano clues
