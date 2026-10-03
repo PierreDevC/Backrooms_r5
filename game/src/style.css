@@ -243,6 +243,7 @@ body.lvl18 #toast{width:min(780px,80vw);white-space:normal;font-size:clamp(18px,
 #levels .back{margin-top:12px}
 @media (max-width:560px){.lvPick{flex-direction:column;align-items:flex-start;gap:0}.lvPick span{text-align:left;font-size:.7em}.lvNote{font-size:15px}}
 /* ---------- Level 9 noise meter ---------- */
+#breath37{display:flex;align-items:center;gap:8px;font-size:18px;color:#9fe8ee}#breath37 .nz{position:relative;width:132px;height:12px;border:1px solid rgba(159,232,238,.8);padding:1px}#breath37 #breathFill{display:block;height:100%;width:100%;background:#8fe0e8}#breath37.low #breathFill{background:#ff6a50}#breath37.low{color:#ff8a70}
 #noise9{display:flex;align-items:center;gap:8px;font-size:18px;color:var(--dim)}
 #noise9 .nz{position:relative;width:132px;height:12px;border:1px solid rgba(244,241,230,.7);padding:1px}
 #nzFill{display:block;height:100%;width:0;background:var(--osd);-webkit-mask:repeating-linear-gradient(90deg,#000 0 5px,transparent 5px 7px);mask:repeating-linear-gradient(90deg,#000 0 5px,transparent 5px 7px);transition:width .08s linear}

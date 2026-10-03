@@ -5,7 +5,8 @@ function audioInit(vol) {
   const C = new (window.AudioContext || window.webkitAudioContext)(); AU.ctx = C;
   AU.master = C.createGain(); AU.master.gain.value = vol;
   const comp = C.createDynamicsCompressor(); comp.threshold.value = -16; comp.ratio.value = 5; comp.attack.value = 0.004; comp.release.value = 0.2;
-  AU.master.connect(comp).connect(C.destination);
+  AU.uw = C.createBiquadFilter(); AU.uw.type = 'lowpass'; AU.uw.frequency.value = 22000; AU.uw.Q.value = 0.5;   // r8: Level 37 closes this when your head goes under
+  AU.master.connect(AU.uw).connect(comp).connect(C.destination);
   AU.verb = C.createConvolver(); AU.verb.buffer = makeIR(C, 1.9);
   AU.verbIn = C.createGain(); AU.verbIn.gain.value = 0.32; AU.verbIn.connect(AU.verb).connect(AU.master);
   AU.bus = C.createGain(); AU.bus.connect(AU.master); AU.bus.connect(AU.verbIn);

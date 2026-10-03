@@ -252,6 +252,7 @@ body.lvl18 #toast{width:min(780px,80vw);white-space:normal;font-size:clamp(18px,
 #levels .back{margin-top:12px}
 @media (max-width:560px){.lvPick{flex-direction:column;align-items:flex-start;gap:0}.lvPick span{text-align:left;font-size:.7em}.lvNote{font-size:15px}}
 /* ---------- Level 9 noise meter ---------- */
+#breath37{display:flex;align-items:center;gap:8px;font-size:18px;color:#9fe8ee}#breath37 .nz{position:relative;width:132px;height:12px;border:1px solid rgba(159,232,238,.8);padding:1px}#breath37 #breathFill{display:block;height:100%;width:100%;background:#8fe0e8}#breath37.low #breathFill{background:#ff6a50}#breath37.low{color:#ff8a70}
 #noise9{display:flex;align-items:center;gap:8px;font-size:18px;color:var(--dim)}
 #noise9 .nz{position:relative;width:132px;height:12px;border:1px solid rgba(244,241,230,.7);padding:1px}
 #nzFill{display:block;height:100%;width:0;background:var(--osd);-webkit-mask:repeating-linear-gradient(90deg,#000 0 5px,transparent 5px 7px);mask:repeating-linear-gradient(90deg,#000 0 5px,transparent 5px 7px);transition:width .08s linear}
@@ -337,6 +338,7 @@ body.hacking #toast,body.peeping #toast{top:9%}body.hacking #subs,body.peeping #
     <div id="clock">11:47:03 PM</div>
   </div>
   <div id="osdBR">
+    <div id="breath37" class="hide"><span>BREATH</span><div class="nz"><i id="breathFill"></i></div></div>
     <div id="noise9" class="hide"><span>NOISE</span><div class="nz"><i id="nzFill"></i><b id="nzMark" class="hide"></b></div><span id="nzTxt">SILENT</span></div>
     <div id="signal"><span id="sigLbl">TAPE SIGNAL</span><i id="sigDir" class="hide">▲</i><div class="sig"><b></b><b></b><b></b><b></b><b></b></div></div>
     <div id="inv">WATER ×0</div>
@@ -387,6 +389,7 @@ body.hacking #toast,body.peeping #toast{top:9%}body.hacking #subs,body.peeping #
       <button class="mi lvPick" data-level="9"><b>▶ LEVEL 9</b><span>DARKENED SUBURBS</span></button>
       <button class="mi lvPick" data-level="5"><b>▶ LEVEL 5</b><span>THE HOTEL</span></button>
       <button class="mi lvPick" data-level="18"><b>▶ LEVEL 18</b><span>NOSTALGIC MEMORIES</span></button>
+      <button class="mi lvPick" data-level="37"><b>▶ LEVEL 37</b><span>SUBLIMITY</span></button>
     </nav>
     <p class="lvNote">FRESH SUPPLIES · DIFFICULTY: <span id="lvDiff">NORMAL</span></p>
     <button class="mi back">◀ BACK</button>
@@ -3800,7 +3803,8 @@ function audioInit(vol) {
   const C = new (window.AudioContext || window.webkitAudioContext)(); AU.ctx = C;
   AU.master = C.createGain(); AU.master.gain.value = vol;
   const comp = C.createDynamicsCompressor(); comp.threshold.value = -16; comp.ratio.value = 5; comp.attack.value = 0.004; comp.release.value = 0.2;
-  AU.master.connect(comp).connect(C.destination);
+  AU.uw = C.createBiquadFilter(); AU.uw.type = 'lowpass'; AU.uw.frequency.value = 22000; AU.uw.Q.value = 0.5;   // r8: Level 37 closes this when your head goes under
+  AU.master.connect(AU.uw).connect(comp).connect(C.destination);
   AU.verb = C.createConvolver(); AU.verb.buffer = makeIR(C, 1.9);
   AU.verbIn = C.createGain(); AU.verbIn.gain.value = 0.32; AU.verbIn.connect(AU.verb).connect(AU.master);
   AU.bus = C.createGain(); AU.bus.connect(AU.master); AU.bus.connect(AU.verbIn);
@@ -10287,7 +10291,7 @@ const TOUCH = { mx: 0, mz: 0 };
 
 function lightAt(x, z) { return baseLight(x, z, FX.flicker) * 0.667 * FX.lightScale; } // ~1 in a lit room, <0.1 in the dead zones
 function makeNoise(v) { PL.noise = Math.max(PL.noise, v); }
-function carpetWet(x, z) { return noise1(x * 0.35 + 3.1) + noise1(z * 0.35 - 8.7) > 0.7 || (LVL === 0 && !!P0.off && inPlace0(P0.off, x, z)); }
+function carpetWet(x, z) { if (LVL === 37) return depth37(x, z) > 0.04; return noise1(x * 0.35 + 3.1) + noise1(z * 0.35 - 8.7) > 0.7 || (LVL === 0 && !!P0.off && inPlace0(P0.off, x, z)); }
 
 function resetPlayer() {
   Object.assign(PL, { x: cellCenter(LV.spawn.x), z: cellCenter(LV.spawn.y), vx: 0, vz: 0, crouch: false, ck: 0, sta: 1, exh: false, hp: 100, san: 100,
@@ -12560,7 +12564,7 @@ function cpAvail() { return !!(CP.on && CP.on.lvl === LVL && cpEnabled()); }
 function cpTick(dt) {
   if (CP.noteT > 0 && (CP.noteT -= dt) <= 0) { const n = $('cpNote'); if (n) n.classList.remove('show'); }
   if (CP.fadeT > 0) {   // fade up from black after a retry (a stair / slide fade that starts meanwhile keeps its own darkness)
-    CP.fadeT = Math.max(0, CP.fadeT - dt); const k = smooth(0, 1.2, CP.fadeT), busy = (LVL === 9 && G9.tp) || (LVL === 5 && G5.tp) || (LVL === 18 && G18.slide);
+    CP.fadeT = Math.max(0, CP.fadeT - dt); const k = smooth(0, 1.2, CP.fadeT), busy = (LVL === 9 && G9.tp) || (LVL === 5 && G5.tp) || (LVL === 18 && G18.slide) || (LVL === 37 && G37.climb);
     if (G.state === 'play') FX.fadeB = busy ? Math.max(FX.fadeB, k) : k;
   }
 }
@@ -12588,7 +12592,7 @@ function cpRetry() {
   G.cause = ''; G.chase = 0;
   Object.assign(FX, { hurt: 0, fadeW: 0, fadeB: 1, glitch: 2 });
   DEATH.shown = false; DEATH.t = 0;
-  try { if (LVL === 9) cpRespawn9(); else if (LVL === 5) cpRespawn5(); else if (LVL === 18) cpRespawn18(); else cpRespawn0(); } catch (e) { frameErr('cp', e); }
+  try { if (LVL === 9) cpRespawn9(); else if (LVL === 5) cpRespawn5(); else if (LVL === 18) cpRespawn18(); else if (LVL === 37) cpRespawn37(); else cpRespawn0(); } catch (e) { frameErr('cp', e); }
   CAM.position.set(PL.x, 1.62, PL.z); CAM.rotation.set(0, PL.yaw, 0);
   G.state = 'play'; CP.fadeT = 1.2;
   $('osd').classList.remove('hide'); if (IS_TOUCH) $('touch').classList.remove('hide');
@@ -12641,6 +12645,7 @@ function cpRespawn5() {
   }
   for (const a of FEM5.acid) a.mesh.dispose(); FEM5.acid.length = 0;
 }
+function cpRespawn37() { G37.climb = null; G37.falling = false; G37.onTower = false; G37.vy = 0; G37.ey = floorY37(PL.x, PL.z) + 1.62; G37.breath = 1; G37.drift = 0; if (W37.tower) for (const i of [...W37.tower.edge, W37.tower.gap]) LV.solids[i].off = false; }
 function cpRespawn18() {
   G18.slide = null; G18.digging = false; PL.spdK = 1;
   M18.seq.length = 0; M18.tile = -1;
@@ -12702,7 +12707,7 @@ function buildCompass() {
 const HUD = { t: 0, last: {}, foeOn: false, foes: [] };
 // red pulsing blips on the compass for nearby threats (edge arrows when they're behind you)
 function foeHUD9(w) {
-  const box = $('compassFoes'), list = G.state === 'play' ? (LVL === 18 ? foes18() : LVL === 5 ? foes5() : foes9()) : [];
+  const box = $('compassFoes'), list = G.state === 'play' ? (LVL === 37 ? foes37() : LVL === 18 ? foes18() : LVL === 5 ? foes5() : foes9()) : [];
   HUD.foeOn = true;
   while (HUD.foes.length < 3) { const e = document.createElement('div'); e.className = 'foe hide'; e.innerHTML = '<b></b><i></i>'; box.appendChild(e); HUD.foes.push({ e, k: '' }); }
   HUD.foes.forEach((F, i) => {
@@ -12736,14 +12741,14 @@ function updateHUD(dt) {
   const w = $('compass').clientWidth, hd = ((PL.yaw * 180 / Math.PI) % 360 + 360) % 360;
   $('compassStrip').style.transform = `translateX(${(w / 2 - (hd + 360) * CPX).toFixed(1)}px)`;
   const mk = $('compassMark');
-  const tg = LVL === 18 ? target18() : LVL === 5 ? target5() : LVL === 9 ? target9() : target0();
+  const tg = LVL === 37 ? target37() : LVL === 18 ? target18() : LVL === 5 ? target5() : LVL === 9 ? target9() : target0();
   if (tg) {
     const a = angDiff(PL.yaw, Math.atan2(tg.x - PL.x, tg.z - PL.z)) * 180 / Math.PI;
     mk.classList.toggle('hide', Math.abs(a) > 70); mk.style.left = (w / 2 + a * CPX).toFixed(1) + 'px';
     hset('compassMark', tg.fl > 0 ? '▼<i>UPSTAIRS</i>' : tg.fl < 0 ? '▼<i>DOWNSTAIRS</i>' : '▼', 'innerHTML');
   } else mk.classList.add('hide');
   noiseHUD9();
-  if (LVL === 18 || LVL === 9 || LVL === 5) foeHUD9(w); else if (HUD.foeOn) { HUD.foeOn = false; $('compassFoes').innerHTML = ''; }
+  if (LVL === 37 || LVL === 18 || LVL === 9 || LVL === 5) foeHUD9(w); else if (HUD.foeOn) { HUD.foeOn = false; $('compassFoes').innerHTML = ''; }
   const tk = $('compassTape');
   if (LVL === 0 && HINT.stage >= 3 && HINT.site) {
     const a = angDiff(PL.yaw, HINT.dir) * 180 / Math.PI;
@@ -12764,8 +12769,8 @@ function updateHUD(dt) {
   hset('battPct', Math.ceil(PL.batt) + '%');
   hset('spare', 'SPARE ×' + PL.spare);
   hset('inv', 'WATER ×' + PL.water);
-  hset('tapes', LVL === 18 ? hudObj18() : LVL === 5 ? hudObj5() : LVL === 9 ? hudObj9() : `TAPES ${G.tapes}/4`);
-  hset('code', LVL === 18 ? hudItems18() : LVL === 5 ? hudItems5() : LVL === 9 ? hudItems9() : 'CODE ' + [0, 1, 2, 3].map(i => G.code[i] ?? '_').join(' '));
+  hset('tapes', LVL === 37 ? hudObj37() : LVL === 18 ? hudObj18() : LVL === 5 ? hudObj5() : LVL === 9 ? hudObj9() : `TAPES ${G.tapes}/4`);
+  hset('code', LVL === 37 ? hudItems37() : LVL === 18 ? hudItems18() : LVL === 5 ? hudItems5() : LVL === 9 ? hudItems9() : 'CODE ' + [0, 1, 2, 3].map(i => G.code[i] ?? '_').join(' '));
   $('signal').classList.toggle('hide', LVL !== 0);
   $('nvTag').classList.toggle('hide', !PL.nv);
   $('zoomTag').classList.toggle('hide', PL.zk < 0.1); hset('zoomTag', `ZOOM ${lerp(1, 2.4, PL.zk).toFixed(1)}×`);
@@ -12793,7 +12798,7 @@ function openLevels() {
 }
 function startLevelPick(n) {   // level select: 0 → normal tape start (briefing on first play), 9/5/18 → fresh run (Level 9 shows its field briefing on first visit)
   if (G.state !== 'title') return;
-  if (n === 9) startLevel9Menu(); else if (n === 5) startLevel5Menu(); else if (n === 18) startLevel18Menu(); else startGame();
+  if (n === 9) startLevel9Menu(); else if (n === 5) startLevel5Menu(); else if (n === 18) startLevel18Menu(); else if (n === 37) startLevel37Menu(); else startGame();
 }
 function hideScreens() { for (const s of SCREENS) $(s).classList.add('hide'); }
 const DIFFS = ['EASY', 'NORMAL', 'NIGHTMARE'];
@@ -13049,7 +13054,7 @@ function wonCam(dt) {
   if (DEATH.t > 2.4 && !DEATH.shown) { DEATH.shown = true; flags0(); goLevel9(carryFromL0()); }
 }
 function showEnd(won) {
-  if (LVL === 18) showEnd18(won); else if (LVL === 5) showEnd5(won); else if (LVL === 9) showEnd9(won); else showEnd0(won);
+  if (LVL === 37) showEnd37(won); else if (LVL === 18) showEnd18(won); else if (LVL === 5) showEnd5(won); else if (LVL === 9) showEnd9(won); else showEnd0(won);
   cpEndUI(won);   // Easy / Normal: offer the last checkpoint
 }
 function showEnd0(won) {
@@ -13080,7 +13085,7 @@ function teardownScene() {
   for (const a of AI.all) for (const v of [a.growl, a.whine]) if (v) { try { v.g.disconnect(); if (v.src) v.src.stop(); } catch (e) {} }
   if (hiss) { try { hiss.g.disconnect(); } catch (e) {} hiss = null; }
   if (HINT.beacon) { try { HINT.beacon.g.disconnect(); } catch (e) {} HINT.beacon = null; } HINT.stage = 0; HINT.site = null;
-  teardown9(); teardown5(); teardown18();
+  teardown9(); teardown5(); teardown18(); teardown37();
   Object.assign(AI, { all: [], howlers: [], smilers: [], exps: [], crawler: null, mimic: null });
   for (const k of ['interact', 'items', 'tapes', 'tvs', 'dead', 'beams']) W[k] = [];
   W.exit = null; TIMERS.length = 0; SUBS.q.length = 0; SUBS.cur = null; $('subs').innerHTML = ''; $('toast').classList.remove('show');
@@ -13091,6 +13096,7 @@ function teardownScene() {
   $('noise9').classList.add('hide'); HUD.nzOn = false; HUD.nzMk = null;
 }
 async function restartGame(play) {
+  if (LVL === 37 && play && !G37.endWon) { lockPointer(); return goLevel37(G37.from); }
   if (LVL === 18 && play && !G18.endWon) { lockPointer(); return goLevel18(G18.from); }
   if (LVL === 5 && play && !G5.endWon) { lockPointer(); return goLevel5(G5.from); }
   if (LVL === 9 && play && !G9.endWon) { lockPointer(); return goLevel9(G9.from); }
@@ -13098,7 +13104,7 @@ async function restartGame(play) {
   G.state = 'loading'; show('loading'); $('osd').classList.add('hide'); $('touch').classList.add('hide');
   if (AU.ctx && AU.ctx.state === 'suspended') AU.ctx.resume();
   teardownScene();
-  if (LVL !== 0) { LVL = 0; setDims(34, 512); document.body.classList.remove('lvl9', 'lvl5', 'lvl18'); }
+  if (LVL !== 0) { LVL = 0; setDims(34, 512); document.body.classList.remove('lvl9', 'lvl5', 'lvl18', 'lvl37'); }
   Object.assign(FX, { envA: [0.02, 0.018, 0.013, 0], envS: [0, 0, 0, 0] });
   $('loadOsd').textContent = '▶ LOADING TAPE'; $('btnAgain').textContent = '▶ PLAY AGAIN';
   await buildScene();
@@ -13192,13 +13198,13 @@ function frameSim(dt) {
   FX.t += dt; runTimers();
   switch (G.state) {
     case 'title': titleCam(dt); break;
-    case 'intro': LVL === 18 ? introCam18(dt) : LVL === 5 ? introCam5(dt) : LVL === 9 ? introCam9(dt) : introCam(dt); break;
-    case 'play': G.time += dt; updatePlayer(dt); if (LVL === 18) { updateAI18(dt); playerCamera(dt); gameEvents18(dt); } else if (LVL === 5) { updateAI5(dt); playerCamera(dt); gameEvents5(dt); } else if (LVL === 9) { updateAI9(dt); playerCamera(dt); gameEvents9(dt); } else { updateAI(dt); playerCamera(dt); gameEvents(dt); } break;
-    case 'dead': LVL === 18 ? updateAI18(dt) : LVL === 5 ? updateAI5(dt) : LVL === 9 ? updateAI9(dt) : updateAI(dt); deathCam(dt); break;
-    case 'won': LVL === 18 ? wonCam18(dt) : LVL === 5 ? wonCam5(dt) : LVL === 9 ? wonCam9(dt) : wonCam(dt); break;
+    case 'intro': LVL === 37 ? introCam37(dt) : LVL === 18 ? introCam18(dt) : LVL === 5 ? introCam5(dt) : LVL === 9 ? introCam9(dt) : introCam(dt); break;
+    case 'play': G.time += dt; updatePlayer(dt); if (LVL === 37) { updateAI37(dt); playerCamera(dt); gameEvents37(dt); } else if (LVL === 18) { updateAI18(dt); playerCamera(dt); gameEvents18(dt); } else if (LVL === 5) { updateAI5(dt); playerCamera(dt); gameEvents5(dt); } else if (LVL === 9) { updateAI9(dt); playerCamera(dt); gameEvents9(dt); } else { updateAI(dt); playerCamera(dt); gameEvents(dt); } break;
+    case 'dead': LVL === 37 ? updateAI37(dt) : LVL === 18 ? updateAI18(dt) : LVL === 5 ? updateAI5(dt) : LVL === 9 ? updateAI9(dt) : updateAI(dt); deathCam(dt); break;
+    case 'won': LVL === 37 ? wonCam37(dt) : LVL === 18 ? wonCam18(dt) : LVL === 5 ? wonCam5(dt) : LVL === 9 ? wonCam9(dt) : wonCam(dt); break;
   }
   if (G.state !== 'loading') {
-    try { LVL === 18 ? worldFX18(dt) : LVL === 5 ? worldFX5(dt) : LVL === 9 ? worldFX9(dt) : worldFX(dt); } catch (e) { frameErr('world', e); }   // kept apart so the HUD still updates
+    try { LVL === 37 ? worldFX37(dt) : LVL === 18 ? worldFX18(dt) : LVL === 5 ? worldFX5(dt) : LVL === 9 ? worldFX9(dt) : worldFX(dt); } catch (e) { frameErr('world', e); }   // kept apart so the HUD still updates
     cpTick(dt); holdTick(dt); docTick(dt);
     if (G.state === 'play' || G.state === 'dead') updateHUD(dt);
     updateSubs(dt);
@@ -13207,12 +13213,12 @@ function frameSim(dt) {
 function simStep(dt) {
   FX.t += dt; runTimers();
   switch (G.state) {
-    case 'intro': LVL === 18 ? introCam18(dt) : LVL === 5 ? introCam5(dt) : LVL === 9 ? introCam9(dt) : introCam(dt); break;
-    case 'play': G.time += dt; updatePlayer(dt); if (LVL === 18) { updateAI18(dt); playerCamera(dt); gameEvents18(dt); } else if (LVL === 5) { updateAI5(dt); playerCamera(dt); gameEvents5(dt); } else if (LVL === 9) { updateAI9(dt); playerCamera(dt); gameEvents9(dt); } else { updateAI(dt); playerCamera(dt); gameEvents(dt); } break;
-    case 'dead': LVL === 18 ? updateAI18(dt) : LVL === 5 ? updateAI5(dt) : LVL === 9 ? updateAI9(dt) : updateAI(dt); deathCam(dt); break;
-    case 'won': LVL === 18 ? wonCam18(dt) : LVL === 5 ? wonCam5(dt) : LVL === 9 ? wonCam9(dt) : wonCam(dt); break;
+    case 'intro': LVL === 37 ? introCam37(dt) : LVL === 18 ? introCam18(dt) : LVL === 5 ? introCam5(dt) : LVL === 9 ? introCam9(dt) : introCam(dt); break;
+    case 'play': G.time += dt; updatePlayer(dt); if (LVL === 37) { updateAI37(dt); playerCamera(dt); gameEvents37(dt); } else if (LVL === 18) { updateAI18(dt); playerCamera(dt); gameEvents18(dt); } else if (LVL === 5) { updateAI5(dt); playerCamera(dt); gameEvents5(dt); } else if (LVL === 9) { updateAI9(dt); playerCamera(dt); gameEvents9(dt); } else { updateAI(dt); playerCamera(dt); gameEvents(dt); } break;
+    case 'dead': LVL === 37 ? updateAI37(dt) : LVL === 18 ? updateAI18(dt) : LVL === 5 ? updateAI5(dt) : LVL === 9 ? updateAI9(dt) : updateAI(dt); deathCam(dt); break;
+    case 'won': LVL === 37 ? wonCam37(dt) : LVL === 18 ? wonCam18(dt) : LVL === 5 ? wonCam5(dt) : LVL === 9 ? wonCam9(dt) : wonCam(dt); break;
   }
-  LVL === 18 ? worldFX18(dt) : LVL === 5 ? worldFX5(dt) : LVL === 9 ? worldFX9(dt) : worldFX(dt); cpTick(dt); holdTick(dt); docTick(dt); updateSubs(dt);
+  LVL === 37 ? worldFX37(dt) : LVL === 18 ? worldFX18(dt) : LVL === 5 ? worldFX5(dt) : LVL === 9 ? worldFX9(dt) : worldFX(dt); cpTick(dt); holdTick(dt); docTick(dt); updateSubs(dt);
 }
 async function buildScene() {
   const prog = (p, m) => { $('loadFill').style.width = (p * 100).toFixed(0) + '%'; $('loadMsg').textContent = m; };
@@ -13239,6 +13245,7 @@ async function boot() {
     ENG.runRenderLoop(frame);
     G.state = 'title'; show('title'); titleL9();
     if (/[?&]level=9/.test(location.search)) { G.state = 'title'; goLevel9(null); }
+    else if (/[?&]level=37/.test(location.search)) { G.state = 'title'; goLevel37(null); }
     else if (/[?&]level=18/.test(location.search)) { G.state = 'title'; goLevel18(null); }
     else if (/[?&]level=5/.test(location.search)) { G.state = 'title'; goLevel5(null); }
   } catch (e) {
@@ -14162,6 +14169,913 @@ function hudItems5() { const a = []; if (G5.keys) a.push('KEYS ×' + G5.keys); i
 if (/[?&]debug/.test(location.search)) Object.assign(window.__BR || (window.__BR = {}), { G5, W5, AI5, LV5: () => LV, goLevel5, worldFX5, gameEvents5, target5, win5, takeKey5, unlockStaff5, startValve5, finishValve5, useExit5, closeElev5, stareHit5, radio5, Moth, spawnMoth5, wakeBoiler5, startTp5, snapDoor5, foes5, readNote5, ringBell5, callElev5, cellCenter, CELL5: () => CELL, Z5, R5, BEV5, LOOP5, setPhase5, updatePlayer, playerCamera });
 
 
+// ==== textures37.js ====
+// ---------- r8 · Level 37 procedural textures: pool tile, lane-line tile, caustic-wet concrete ----------
+const TEX37 = {
+  // glazed pool tile, 8 x 8 per 1.2 m (15 cm tiles): white-blue, hairline grout, faint wear
+  ptile: (sc, S) => genTex9(sc, S, 0.9, (u, v, x, y, o) => {
+    const tu = (u * 8) % 1, tv = (v * 8) % 1, ti = Math.floor(u * 8), tj = Math.floor(v * 8), seam = Math.min(tu, 1 - tu, tv, 1 - tv) < 0.045;
+    const n = tfbm(u * 10, v * 10, 10, 3, 211), tone = (h2i(ti, tj, 212) - 0.5) * 0.035, gl = 0.5 - Math.hypot(tu - 0.35, tv - 0.3) * 0.5;
+    const b = 0.9 + n * 0.05 + tone + Math.max(0, gl) * 0.04;
+    const g = seam ? 0.62 : 1;
+    o[0] = b * 0.93 * g; o[1] = b * 0.99 * g; o[2] = b * g; o[3] = seam ? 0 : 0.55 + n * 0.2;
+  }),
+  // dark-line tile for lane floors: same tile with a black lane stripe every 4 m (u runs along the lane)
+  lane: (sc, S) => genTex9(sc, S, 0.9, (u, v, x, y, o) => {
+    const tu = (u * 8) % 1, tv = (v * 8) % 1, seam = Math.min(tu, 1 - tu, tv, 1 - tv) < 0.045, n = tfbm(u * 10, v * 10, 10, 3, 221);
+    const stripe = Math.abs(v - 0.5) < 0.05 ? 0.18 : 1, b = (0.88 + n * 0.05) * stripe;
+    o[0] = b * 0.9 * (seam ? 0.62 : 1); o[1] = b * 0.97 * (seam ? 0.62 : 1); o[2] = b * (seam ? 0.62 : 1); o[3] = seam ? 0 : 0.5;
+  }),
+  // wet stained concrete for the pump room and the tunnels
+  wetc: (sc, S) => genTex9(sc, S, 1.4, (u, v, x, y, o) => {
+    const n = tfbm(u * 6, v * 6, 6, 4, 231), st = tfbm(u * 3 + 2, v * 3, 3, 3, 232), line = Math.min((u * 3) % 1, (v * 3) % 1) < 0.012;
+    const b = (0.5 + n * 0.22) * (1 - Math.max(0, st - 0.55) * 0.6) * (line ? 0.7 : 1);
+    o[0] = b * 0.92; o[1] = b; o[2] = b * 0.98; o[3] = 0.4 + n * 0.5 - (line ? 0.3 : 0);
+  }),
+};
+
+// ==== level37.js ====
+// ---------- r8 · Level 37 · Sublimity (the Poolrooms): layout, wall pieces, geometry, lights ----------
+// A Scape: the hub is a drowned-looking pool complex (the Shallows, the Lap Pool, the Dive Well, the Cabana, the Pump Room); three
+// wings hang off it the way the wiki's exits do: the Lukewarm Hotel (Level 233, by a dim corridor), Wellborn Hospital (Level 130, by
+// submersion) and Water World (Level 43, by a dark enclosed tunnel). Floors have their own heights and water is a per-basin plane whose
+// level the Pump Room can change, so everything the player touches (depth, breath, wading) is computed from LV.fh and the basin levels.
+const Z37 = { VOID: 0, POOL: 1, CABANA: 2, PLANT: 3, TUNNEL: 4, HOTEL: 5, CAFE: 6, HOSP: 7, PARK: 8, DOME: 9, STAFF: 10, BOOTH: 11, VEST: 12, WWF: 13 };
+const R37Z = { HUB: 0, HOTEL: 1, HOSP: 2, WW: 3 };
+const L37_N = 72, L37_LMR = 1152, DECK37 = 0.14;
+const BAS37 = { SH: 0, LAP: 1, WELL: 2, CAFE: 3, HPOOL: 4, WWP: 5, WWF: 6 };
+const cell37 = (x, z) => cIdx(cellOf(x), cellOf(z));
+const TRIM37 = { white: [0.92, 0.94, 0.94], teal: [0.35, 0.62, 0.66], steel: [0.55, 0.57, 0.58], wood: [0.5, 0.36, 0.22], brass: [0.7, 0.55, 0.26], green: [0.45, 0.62, 0.52], dark: [0.1, 0.1, 0.11] };
+
+function genLayout37() {
+  const n = N;
+  LV.zone = new Uint8Array(n * n); LV.room = new Int16Array(n * n).fill(-1); LV.reg = new Int8Array(n * n).fill(-1); LV.dark = new Uint8Array(n * n);
+  LV.fh = new Float32Array(n * n); LV.bas = new Int8Array(n * n).fill(-1); LV.ch = new Float32Array(n * n);
+  LV.hE = new Uint8Array((n + 1) * n); LV.vE = new Uint8Array(n * (n + 1));
+  LV.rooms = []; LV.ek = new Map(); LV.navVer = 0; LV.warps = []; LV.halls = []; LV.pillars = []; LV.darkCenters = [];
+  LV.basins = Object.keys(BAS37).map(k => ({ id: BAS37[k], name: k, y: 0, tgt: 0, cells: [] }));
+  const room = (zone, reg, t, o = {}) => { const r = Object.assign({ id: LV.rooms.length, zone, reg, t, cells: [], h: 3.2, fh: 0 }, o); LV.rooms.push(r); return r; };
+  const put = (r, x, y, fh = r.fh) => { const c = cIdx(x, y); LV.room[c] = r.id; LV.zone[c] = r.zone; LV.reg[c] = r.reg; LV.fh[c] = fh; LV.ch[c] = r.rel ? fh + r.h : r.h; r.cells.push(c); };
+  const rect = (r, x0, y0, x1, y1, fh) => { for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) put(r, x, y, fh); return r; };
+  const way = (x, y, d, kind, o = {}) => { const e = Object.assign({ x, y, d, kind }, o); LV.ek.set(eKey(x, y, d), e); return e; };
+  const setFh = (x0, y0, x1, y1, fh, bas, ch) => { for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) { const c = cIdx(x, y); if (LV.room[c] < 0) continue; const r = LV.rooms[LV.room[c]]; LV.fh[c] = fh; LV.ch[c] = ch !== undefined ? ch : r.rel ? fh + r.h : r.h; if (bas !== undefined) LV.bas[c] = bas; } };
+  const water = (r, x0, y0, x1, y1, fh, bas) => { for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) { const c = cIdx(x, y); if (LV.room[c] !== r.id) continue; LV.fh[c] = fh; LV.bas[c] = bas; LV.ch[c] = r.rel ? fh + r.h : r.h; } };
+  LV.dry = {};   // named rooms the story code looks up
+  const SIDE = {
+    pool: { m: 'ptile', c: [0.95, 1, 1], t: TRIM37.teal, tp: 2 }, cab: { m: 'ptile', c: [1, 0.96, 0.88], t: TRIM37.wood, tp: 2 }, plant: { m: 'wetc', c: [0.9, 1, 0.98], t: TRIM37.steel, tp: 1 },
+    tun: { m: 'wetc', c: [0.55, 0.65, 0.66], t: TRIM37.dark, tp: 0 }, vest: { m: 'ptile', c: [0.9, 0.98, 0.98], t: TRIM37.teal, tp: 2 },
+  };
+  // ================= THE HUB =================
+  // THE SHALLOWS: a great tiled hall, knee-deep, pillars standing in the water, a pit at the south end that drops to the corridor below
+  const SH = room(Z37.POOL, R37Z.HUB, 'shallows', { h: 7.4, side: SIDE.pool, flr: { m: 'ptile', col: [0.92, 0.99, 1] }, cm: 'plaster', cc: [0.92, 0.97, 0.98] });
+  rect(SH, 26, 27, 43, 43, DECK37); water(SH, 27, 28, 42, 42, -0.55, BAS37.SH);
+  water(SH, 32, 38, 37, 42, -1.45, BAS37.SH); water(SH, 33, 39, 36, 42, -2.4, BAS37.SH);
+  for (let x = 33; x <= 36; x++) { const c = cIdx(x, 43); LV.fh[c] = -2.4; LV.bas[c] = BAS37.SH; }   // the pit runs to the south wall, where the corridor starts
+  LV.dry.sh = SH;
+  // the vestibule between the Shallows and the Dive Well
+  const GV = rect(room(Z37.VEST, R37Z.HUB, 'gatev', { h: 3.8, side: SIDE.vest, flr: { m: 'ptile', col: [0.86, 0.95, 0.97] }, cm: 'plaster', cc: [0.9, 0.95, 0.96] }), 34, 26, 36, 26, DECK37);
+  way(35, 27, 3, 'arch', { w: 2.6, h: 3.0, from: [35, 27], sign: 'DEEP END' }); way(35, 26, 3, 'arch', { w: 2.6, h: 3.0, from: [35, 26] });
+  // THE DIVE WELL: twelve metres to the ceiling, six to the floor
+  const WELL = room(Z37.POOL, R37Z.HUB, 'well', { h: 12.8, side: SIDE.pool, flr: { m: 'ptile', col: [0.8, 0.95, 0.98] }, cm: 'plaster', cc: [0.9, 0.96, 0.97] });
+  rect(WELL, 30, 13, 41, 25, DECK37); water(WELL, 31, 14, 40, 24, -6, BAS37.WELL);
+  water(WELL, 31, 24, 40, 24, -1.1, BAS37.WELL); water(WELL, 31, 23, 40, 23, -2.7, BAS37.WELL); water(WELL, 31, 22, 40, 22, -4.3, BAS37.WELL);
+  setFh(30, 19, 30, 19, -6, BAS37.WELL);   // the channel that leads into the tunnel
+  LV.dry.well = WELL; LV.tower = { x: 30, y: 16, top: 10 };
+  setFh(30, 16, 30, 16, 10, -1);          // the ten-metre tower is a solid block with a platform on top
+  // THE DIVE-WELL BOOTH: the lifeguards' control booth
+  const BOOTH = rect(room(Z37.BOOTH, R37Z.HUB, 'booth', { h: 3.0, side: { m: 'cab', c: [1, 0.95, 0.85], t: TRIM37.wood, tp: 1 }, flr: { m: 'wood', col: [0.9, 0.85, 0.78] }, cm: 'plaster', cc: [0.95, 0.93, 0.88] }), 42, 16, 45, 21, DECK37);
+  way(41, 18, 0, 'door', { dk: 'booth', plaque: 'LIFEGUARD', from: [41, 18] });
+  LV.dry.booth = BOOTH;
+  // THE CABANA: changing rooms, the dry place
+  const CAB = rect(room(Z37.CABANA, R37Z.HUB, 'cabana', { h: 3.2, side: SIDE.cab, flr: { m: 'wood', col: [0.96, 0.9, 0.8] }, cm: 'plaster', cc: [0.96, 0.94, 0.9] }), 20, 31, 25, 38, DECK37);
+  way(26, 35, 2, 'door', { dk: 'cabana', plaque: 'CABANA', from: [26, 35] });
+  LV.dry.cab = CAB;
+  // THE PUMP ROOM
+  const PLANT = rect(room(Z37.PLANT, R37Z.HUB, 'plant', { h: 4.6, side: SIDE.plant, flr: { m: 'wetc', col: [0.85, 0.95, 0.95] }, cm: 'plaster', cc: [0.5, 0.56, 0.56] }), 8, 29, 19, 38, DECK37);
+  way(20, 34, 2, 'door', { dk: 'plant', plaque: 'PLANT · STAFF ONLY', from: [20, 34], locked: true });
+  LV.dry.plant = PLANT;
+  // THE LAP POOL: six lanes to the east, a flooded tunnel at the far end
+  const LAP = room(Z37.POOL, R37Z.HUB, 'lap', { h: 6.4, side: SIDE.pool, flr: { m: 'lane', col: [0.9, 0.98, 1] }, cm: 'plaster', cc: [0.92, 0.97, 0.98] });
+  rect(LAP, 45, 31, 65, 38, DECK37); water(LAP, 46, 32, 65, 37, -1.5, BAS37.LAP);
+  LV.dry.lap = LAP;
+  const LV37 = rect(room(Z37.VEST, R37Z.HUB, 'lapv', { h: 3.6, side: SIDE.vest, flr: { m: 'ptile', col: [0.86, 0.95, 0.97] }, cm: 'plaster', cc: [0.9, 0.95, 0.96] }), 44, 33, 44, 34, DECK37);
+  way(43, 33, 0, 'arch', { w: 2.4, h: 3.0, from: [43, 33], sign: 'LAP POOL' }); way(43, 34, 0, 'arch', { w: 2.4, h: 3.0, from: [43, 34] });
+  way(44, 33, 0, 'arch', { w: 2.4, h: 3.0, from: [44, 33] }); way(44, 34, 0, 'arch', { w: 2.4, h: 3.0, from: [44, 34] });
+  // the tunnel to Water World: low, dark, entirely under the surface until the lap pool is drained
+  const TW = room(Z37.TUNNEL, R37Z.WW, 'tunnelW', { rel: true, h: 1.15, side: SIDE.tun, flr: { m: 'wetc', col: [0.6, 0.7, 0.7] }, cm: 'bconc', cc: [0.5, 0.58, 0.58] });
+  rect(TW, 66, 34, 69, 34, -1.5); rect(TW, 69, 35, 69, 40, -1.5);
+  for (const [x, y] of [[66, 34], [67, 34], [68, 34], [69, 34], [69, 35], [69, 36], [69, 37], [69, 38], [69, 39], [69, 40]]) { const c = cIdx(x, y); LV.bas[c] = BAS37.LAP; LV.dark[c] = 1; }
+  for (const [x, y] of [[68, 34], [69, 37]]) LV.ch[cIdx(x, y)] = 1.6;   // air bells: a head-high pocket under the roof where you can breathe
+  way(65, 34, 0, 'arch', { w: 1.8, h: 2.3, from: [65, 34], tunnel: true, sign: '' });
+  LV.dry.tw = TW;
+  // the corridor under the Shallows' pit, to the hotel
+  const HC = room(Z37.TUNNEL, R37Z.HOTEL, 'hcorr', { rel: true, h: 3.0, side: SIDE.tun, flr: { m: 'wetc', col: [0.6, 0.7, 0.7] }, cm: 'bconc', cc: [0.4, 0.46, 0.46] });
+  rect(HC, 34, 44, 35, 46, -2.4); for (const [x, y] of [[34, 44], [35, 44], [34, 45], [35, 45]]) LV.dark[cIdx(x, y)] = 1;
+  setFh(34, 46, 35, 46, -1.6); setFh(34, 47, 35, 47, -0.8);   // (the hotel lobby is at y 48 and above)
+  way(34, 43, 1, 'arch', { w: 2.0, h: 2.7, from: [34, 43], hcorr: true }); way(35, 43, 1, 'arch', { w: 2.0, h: 2.7, from: [35, 43] });
+  LV.dry.hc = HC;
+  // the flooded tunnel from the Dive Well to the hospital
+  const TH = room(Z37.TUNNEL, R37Z.HOSP, 'tunnelH', { rel: true, h: 1.2, side: SIDE.tun, flr: { m: 'wetc', col: [0.6, 0.7, 0.7] }, cm: 'bconc', cc: [0.5, 0.58, 0.58] });
+  rect(TH, 24, 19, 29, 19, -6); rect(TH, 24, 14, 24, 18, -6);
+  for (let c = 0; c < TH.cells.length; c++) { const cc = TH.cells[c]; LV.bas[cc] = BAS37.WELL; LV.dark[cc] = 1; }
+  for (const [x, y] of [[27, 19], [24, 16]]) LV.ch[cIdx(x, y)] = 1.5;   // air bells (absolute ceiling height): the roof lifts to 1.5 m above the surface
+  way(30, 19, 2, 'arch', { w: 1.8, h: 2.3, from: [30, 19], tunnel: true });
+  LV.dry.th = TH;
+  planHotel37(room, rect, way, setFh, water, SIDE);
+  planHospital37(room, rect, way, setFh, water, SIDE);
+  planWorld37(room, rect, way, setFh, water, SIDE);
+  // ---- resolve every edge: a wall between two different rooms, nothing inside a room ----
+  const rule = (a, b) => {
+    const za = a < 0 ? 0 : LV.zone[a], zb = b < 0 ? 0 : LV.zone[b];
+    if (!za || !zb) return 1;
+    return LV.room[a] >= 0 && LV.room[a] === LV.room[b] ? 0 : 1;
+  };
+  for (let y = 0; y <= n; y++) for (let x = 0; x < n; x++) LV.hE[hI(x, y)] = rule(y > 0 ? cIdx(x, y - 1) : -1, y < n ? cIdx(x, y) : -1);
+  for (let y = 0; y < n; y++) for (let x = 0; x <= n; x++) LV.vE[vI(x, y)] = rule(x > 0 ? cIdx(x - 1, y) : -1, x < n ? cIdx(x, y) : -1);
+  const EV = { arch: 2, door: 2, open: 0 };
+  for (const e of LV.ek.values()) setEdge(e.x, e.y, e.d, EV[e.kind] ?? 2);
+  // the basins' cells, and a few that are simply open between rooms
+  for (let c = 0; c < n * n; c++) if (LV.bas[c] >= 0) LV.basins[LV.bas[c]].cells.push(c);
+  LV.spawn = { x: 35, y: 31 };
+}
+
+// ---------- wall pieces ----------
+function side37(x, y) {
+  if (!inGrid(x, y)) return null;
+  const c = cIdx(x, y), z = LV.zone[c]; if (z === Z37.VOID) return null;
+  const r = LV.rooms[LV.room[c]], s = r.side || { m: 'ptile', c: [1, 1, 1], t: TRIM37.white, tp: 1 };
+  return { m: s.m, c: s.c, t: s.t, tp: s.tp, h: LV.ch[c], fh: LV.fh[c] };
+}
+const ceil37 = c => LV.ch[c];
+// arch / door heights are given above the floor of the cell they open from; the wall-piece builder wants absolute heights
+function opening37(e) {
+  if (!e) return null;
+  const f = e.from ? LV.fh[cIdx(e.from[0], e.from[1])] : 0;
+  if (e.kind === 'arch') return { w: e.w || 2.0, h: f + (e.h || 2.5), cw: e.tunnel ? 0.06 : 0.12 };
+  if (e.kind === 'door') return { w: DOORW, h: f + DOORH, cw: 0.09 };
+  return null;
+}
+
+// ---------- geometry ----------
+const MAT37_S = { ptile: [1 / 1.2, 1 / 1.2], lane: [1 / 1.2, 1 / 1.2], wetc: [1 / 2.4, 1 / 2.4], wood: [1 / 2.4, 1 / 2.4], hwall: [1 / 3.0, 1 / 2.85], carpet: 1 / 2.25, hceil: 1 / 1.8, plaster: [1 / 2.5, 1 / 2.5], bconc: [1 / 2.4, 1 / 2.4],
+  block: [1 / 1.6, 1 / 1.6], brick: [1 / 1.6, 1 / 1.6], lino: [1 / 1.2, 1 / 1.2], kceil: [1 / 1.2, 1 / 1.2], conc: [1 / 2.8, 1 / 2.8], paper: [1 / 0.9, 1 / 2.4] };
+const FLOORM37 = new Set(['ptile', 'lane', 'wetc', 'wood', 'carpet', 'lino', 'conc']), CEILM37 = new Set(['plaster', 'hceil', 'bconc', 'kceil']);
+function buildGeometry37(scene, mats) {
+  const CH = 8, NC = Math.ceil(N / CH), G = {};
+  const geo = (m, ci) => { const k = m + ':' + ci; return G[k] || (G[k] = new Geo(true)); };
+  const chunkOf = (x, z) => clamp(Math.floor(z / CELL / CH), 0, NC - 1) * NC + clamp(Math.floor(x / CELL / CH), 0, NC - 1);
+  const C4 = c => [c[0], c[1], c[2], 1];
+  const vq = (g, dir, q, a0, a1, y0, y1, su, sv, col) => {
+    if (y1 - y0 < 0.001 || a1 - a0 < 0.001) return;
+    if (dir === 0) g.face2(q, y0, a1, [0, 0, -1], [0, 1, 0], a1 - a0, y1 - y0, [1, 0, 0], su, sv, col);
+    else if (dir === 2) g.face2(q, y0, a0, [0, 0, 1], [0, 1, 0], a1 - a0, y1 - y0, [-1, 0, 0], su, sv, col);
+    else if (dir === 1) g.face2(a0, y0, q, [1, 0, 0], [0, 1, 0], a1 - a0, y1 - y0, [0, 0, 1], su, sv, col);
+    else g.face2(a1, y0, q, [-1, 0, 0], [0, 1, 0], a1 - a0, y1 - y0, [0, 0, -1], su, sv, col);
+  };
+  for (const p of LV.pieces) {
+    if (p.k === 'n') continue;
+    const ci = chunkOf((p.x0 + p.x1) / 2, (p.z0 + p.z1) / 2), tg = geo('trim', ci), tcol = C4(p.tc);
+    let lowY = 1e9, topY = 0;
+    for (const [sd, sg] of [[p.sa, -1], [p.sb, 1]]) {
+      if (!sd) continue;
+      const [su, sv] = MAT37_S[sd.m] || [1, 1], g = geo(sd.m, ci), from = p.k === 'l' ? Math.max(p.y0, sd.fh) : sd.fh;
+      if (p.horiz) vq(g, sg < 0 ? 3 : 1, sg < 0 ? p.z0 : p.z1, p.x0, p.x1, from, sd.h, su, sv, C4(sd.c));
+      else vq(g, sg < 0 ? 2 : 0, sg < 0 ? p.x0 : p.x1, p.z0, p.z1, from, sd.h, su, sv, C4(sd.c));
+      lowY = Math.min(lowY, sd.fh); topY = Math.max(topY, sd.h);
+    }
+    if (p.k === 'w') {
+      const lo = p.horiz ? p.z0 : p.x0, hi = p.horiz ? p.z1 : p.x1;
+      if (p.cap0) vq(tg, p.horiz ? 2 : 3, p.a0, lo, hi, lowY, p.capH0 ?? topY, 1, 1, tcol);
+      if (p.cap1) vq(tg, p.horiz ? 0 : 1, p.a1, lo, hi, lowY, p.capH1 ?? topY, 1, 1, tcol);
+    } else tg.face(p.x0, p.y0, p.z0, [1, 0, 0], [0, 0, 1], p.x1 - p.x0, p.z1 - p.z0, [0, -1, 0], 1, false, tcol);
+  }
+  for (const t of LV.trims) geo('trim', chunkOf((t[0] + t[3]) / 2, (t[2] + t[5]) / 2)).box(t[0], t[1], t[2], t[3], t[4], t[5], 1, 31, C4(t[6]));
+  // ---- floors, ceilings and the risers between floors of different heights ----
+  const up = (g, x0, z0, x1, z1, y, s, col) => g.face(x0, y, z1, [1, 0, 0], [0, 0, -1], x1 - x0, z1 - z0, [0, 1, 0], s, false, col);
+  const dn = (g, x0, z0, x1, z1, y, s, col) => g.face(x0, y, z0, [1, 0, 0], [0, 0, 1], x1 - x0, z1 - z0, [0, -1, 0], s, false, col);
+  for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
+    const c = cIdx(x, y), z = LV.zone[c]; if (z === Z37.VOID) continue;
+    const r = LV.rooms[LV.room[c]], x0 = x * CELL, z0 = y * CELL, x1 = x0 + CELL, z1 = z0 + CELL, ci = chunkOf(x0 + 1, z0 + 1), fh = LV.fh[c], hv = hash1(x * 31.7 + y * 17.3);
+    const fm = r.flr ? r.flr.m : 'ptile', fc = r.flr ? r.flr.col : [1, 1, 1], k = 0.94 + 0.08 * hv, fs = MAT37_S[fm];
+    const wet = LV.bas[c] >= 0 && fh < -0.3;   // a submerged floor is a shade bluer and darker
+    { const col = wet ? [fc[0] * 0.72 * k, fc[1] * 0.9 * k, fc[2] * 0.92 * k, 1] : [fc[0] * k, fc[1] * k, fc[2], 1]; up(geo(fm, ci), x0, z0, x1, z1, fh, Array.isArray(fs) ? fs[0] : fs, col); }
+    const cm = r.cm || 'plaster', cs = MAT37_S[cm], cc = r.cc || [1, 1, 1], ceilY = ceil37(c);
+    if (!r.open) dn(geo(cm, ci), x0, z0, x1, z1, ceilY, Array.isArray(cs) ? cs[0] : cs, C4(cc));
+    // risers toward the lower neighbour (east and south) where the way is open
+    for (const d of [0, 1]) {
+      const nx = x + DX[d], ny = y + DY[d]; if (!inGrid(nx, ny)) continue;
+      const n = cIdx(nx, ny); if (LV.zone[n] === Z37.VOID || edgeVal(x, y, d) !== 0) continue;
+      const fn = LV.fh[n], dh = fh - fn; if (Math.abs(dh) < 0.004) continue;
+      const hi = dh > 0 ? c : n, lo = dh > 0 ? n : c, top = Math.max(fh, fn), bot = Math.min(fh, fn), rr = LV.rooms[LV.room[hi]], rm = rr.flr ? rr.flr.m : 'ptile', rs = MAT37_S[rm], rcol = rr.flr ? rr.flr.col : [1, 1, 1];
+      const g = geo(rm, ci), su = Array.isArray(rs) ? rs[0] : rs, sv = Array.isArray(rs) ? rs[1] : rs, col = [rcol[0] * 0.86, rcol[1] * 0.9, rcol[2] * 0.92, 1];
+      if (d === 0) { const q = x1; vq(g, dh > 0 ? 0 : 2, q, z0, z1, bot, top, su, sv, col); }
+      else { const q = z1; vq(g, dh > 0 ? 1 : 3, q, x0, x1, bot, top, su, sv, col); }
+    }
+  }
+  LV.chunkMeshes = [];
+  for (const [k, g] of Object.entries(G)) {
+    if (!g.p.length) continue; const [m] = k.split(':');
+    const mesh = g.mesh('l37_' + k, scene); mesh.material = mats[m] || mats.ptile;
+    if (FLOORM37.has(m)) mesh._sortD = 900; else if (CEILM37.has(m)) mesh._sortD = 950; else LV.chunkMeshes.push(mesh);
+  }
+}
+
+// ---------- water: one merged plane per basin, moved up and down with the basin's level ----------
+function buildWater37(scene, mat) {
+  LV.waterMeshes = [];
+  for (const B of LV.basins) {
+    if (!B.cells.length) continue;
+    const g = new Geo(true);
+    for (const c of B.cells) { const x0 = (c % N) * CELL, z0 = ((c / N) | 0) * CELL; g.face(x0, 0, z0 + CELL, [1, 0, 0], [0, 0, -1], CELL, CELL, [0, 1, 0], 1, true, [1, 1, 1, 1]); }
+    const m = g.mesh('water37_' + B.name, scene); m.material = mat; m.position.y = B.y; m.isPickable = false; m.alphaIndex = 5; m._sortD = 100; m.__noPortal = true; B.mesh = m; LV.waterMeshes.push(m);
+  }
+}
+// where is the water, and how deep is it here?
+function waterY37(x, z) { const b = LV.bas[cell37(x, z)]; return b >= 0 ? LV.basins[b].y : -99; }
+function floorY37(x, z) { return LV.fh[cell37(x, z)]; }
+function depth37(x, z) { const c = cell37(x, z), b = LV.bas[c]; return b < 0 ? 0 : Math.max(0, LV.basins[b].y - LV.fh[c]); }
+
+// ---------- lights (baked): soft, even, a little too perfect ----------
+function planLights37() {
+  LV.fixtures = []; LV.panels = []; LV.bulbs = [];
+  const F = (x, z, o) => { const f = Object.assign({ x, z, state: 1, seed: RNG() }, o); LV.fixtures.push(f); return f; };
+  const grid = (r, step, o = {}) => {   // a regular grid of ceiling lights over a room's cells
+    const xs = r.cells.map(c => c % N), ys = r.cells.map(c => (c / N) | 0), x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys);
+    for (let y = y0 + (o.oy ?? 0); y <= y1; y += step) for (let x = x0 + (o.ox ?? 0); x <= x1; x += step) { const c = cIdx(x, y); if (LV.room[c] !== r.id) continue; const st = o.flick && RNG() < o.flick ? 2 : 1;
+      F(cellCenter(x), cellCenter(y), { I: o.I ?? 0.5, rad: o.rad ?? 12, sc: o.sc ?? 4, state: st }); LV.panels.push({ x: cellCenter(x), z: cellCenter(y), y: ceil37(c), state: st, w: o.w ?? 1.1, l: o.l ?? 2.2 }); }
+  };
+  grid(LV.dry.sh, 3, { I: 0.62, rad: 15, sc: 5, w: 1.2, l: 2.6 });
+  grid(LV.dry.well, 3, { I: 0.62, rad: 17, sc: 6, oy: 1, w: 1.2, l: 2.6 });
+  grid(LV.dry.lap, 3, { I: 0.6, rad: 14, sc: 5, ox: 1, oy: 1, w: 1.0, l: 2.2 });
+  for (const r of LV.rooms) if (r.t === 'gatev' || r.t === 'lapv') for (const c of r.cells) F(cellCenter(c % N), cellCenter((c / N) | 0), { I: 0.45, rad: 7, sc: 2.2 });
+  grid(LV.dry.cab, 2, { I: 0.5, rad: 8, sc: 3, w: 0.7, l: 1.3, flick: 0.12 });
+  grid(LV.dry.plant, 3, { I: 0.45, rad: 9, sc: 3, w: 0.5, l: 1.3, flick: 0.2 });
+  grid(LV.dry.booth, 2, { I: 0.45, rad: 7, sc: 2.5, w: 0.7, l: 1.3 });
+  for (const r of LV.rooms) if (r.t === 'tunnelH' || r.t === 'tunnelW' || r.t === 'hcorr') for (const c of r.cells) if (RNG() < 0.35) F(cellCenter(c % N), cellCenter((c / N) | 0), { I: 0.2, rad: 4.5, sc: 1.3, state: RNG() < 0.4 ? 2 : 1 });
+  lightHotel37(F, grid); lightHospital37(F, grid); lightWorld37(F, grid);
+  LV.sky = null;
+}
+
+// ==== audio37.js ====
+// ---------- r8 · Level 37 sound design (synthesized): water, filters, a lobby that plays music to nobody, a park that makes announcements ----------
+const SFX37 = {
+  surface() { shot((d, t) => { const f = nz(d, t, 1.6, 'bandpass', 500, 1.2, 0.34, 0.06); f.frequency.linearRampToValueAtTime(2200, t + 1.2); for (let i = 0; i < 14; i++) tone(d, t + 0.1 + i * 0.07 + Math.random() * 0.05, 0.11, 'sine', 500 + Math.random() * 500, 1100 + Math.random() * 700, 0.05, 0.005); nz(d, t + 0.9, 0.8, 'highpass', 3000, 0.7, 0.12, 0.2); return 2; }, null, 1); },
+  breathe() { shot((d, t) => { const f = nz(d, t, 0.5, 'bandpass', 900, 0.8, 0.28, 0.12); f.frequency.linearRampToValueAtTime(1500, t + 0.45); return 0.7; }, null, 1); },
+  bubbles() { shot((d, t) => { for (let i = 0; i < 5; i++) tone(d, t + i * 0.09 + Math.random() * 0.04, 0.1, 'sine', 300 + i * 70 + Math.random() * 120, 700 + Math.random() * 400, 0.07, 0.004); return 0.8; }, null, 0.8); },
+  splash(k = 1) { shot((d, t) => { nz(d, t, 0.9 * (0.6 + k * 0.5), 'lowpass', 900 + k * 600, 0.8, 0.7 * (0.5 + k * 0.5), 0.004); nz(d, t + 0.02, 0.5, 'bandpass', 2600, 1, 0.25 * k, 0.003); for (let i = 0; i < 8 * k + 3; i++) tone(d, t + 0.1 + Math.random() * 0.5, 0.1, 'sine', 600 + Math.random() * 900, 400 + Math.random() * 500, 0.04, 0.004); return 1.6; }, null, 1); },
+  splashSoft() { shot((d, t) => { nz(d, t, 0.45, 'lowpass', 700, 0.8, 0.3, 0.01); nz(d, t + 0.05, 0.3, 'bandpass', 2200, 1.2, 0.08, 0.01); return 0.7; }, null, 0.7); },
+  wade(depth) { shot((d, t) => { nz(d, t, 0.38, 'lowpass', 500 + depth * 220, 0.9, 0.34, 0.015); nz(d, t + 0.04, 0.22, 'bandpass', 1700 + Math.random() * 600, 1.3, 0.1, 0.01); return 0.6; }, null, 0.55 + depth * 0.3); },
+  ladder() { shot((d, t) => { for (let i = 0; i < 7; i++) { const s = t + i * 0.2; nz(d, s, 0.05, 'bandpass', 1700 + i * 60, 5, 0.34, 0.001); tone(d, s, 0.12, 'triangle', 520 + i * 18, 480 + i * 18, 0.05, 0.001); } return 1.8; }, null, 1); },
+  far(pos) { shot((d, t) => { const k = Math.random(); if (k < 0.5) { for (let i = 0; i < 2; i++) tone(d, t + i * 0.32, 0.12, 'sine', 900 - i * 160, 600 - i * 120, 0.18, 0.003); nz(d, t, 0.5, 'highpass', 4000, 0.8, 0.03, 0.01); } else if (k < 0.8) { nz(d, t, 1.4, 'lowpass', 220, 1, 0.5, 0.2); tone(d, t, 1.6, 'sine', 62, 58, 0.18, 0.3); } else { nz(d, t, 0.18, 'lowpass', 400, 1, 0.8, 0.005); nz(d, t + 0.3, 0.6, 'bandpass', 700, 3, 0.12, 0.01); } return 2; }, pos, 1.4); },
+  chime() { shot((d, t) => { [523, 659, 784, 1047].forEach((f, i) => tone(d, t + i * 0.18, 1.8, 'sine', f, f, 0.1, 0.01)); return 3; }, null, 1); },
+  drain(pos) { shot((d, t) => { const f = nz(d, t, 6, 'lowpass', 500, 1.5, 0.5, 0.6); f.frequency.linearRampToValueAtTime(140, t + 6); for (let i = 0; i < 18; i++) tone(d, t + 0.4 + i * 0.3, 0.2, 'sine', 160 + Math.random() * 90, 70, 0.09, 0.01); return 7; }, pos, 1.6); },
+  fill(pos) { shot((d, t) => { const f = nz(d, t, 6, 'lowpass', 160, 1.4, 0.45, 0.6); f.frequency.linearRampToValueAtTime(700, t + 6); return 7; }, pos, 1.6); },
+  pump(pos) { shot((d, t) => { for (let i = 0; i < 6; i++) { tone(d, t + i * 0.5, 0.45, 'sine', 70, 62, 0.28, 0.02); nz(d, t + i * 0.5, 0.3, 'lowpass', 220, 1, 0.3, 0.02); } return 3.5; }, pos, 1.2); },
+  creak(pos) { shot((d, t) => { const o = tone(d, t, 1.1, 'sawtooth', 120, 70, 0.07, 0.15); nz(d, t, 1.1, 'bandpass', 400, 6, 0.05, 0.2); return 1.4; }, pos, 1); },
+  pa(pos) { shot((d, t) => { [880, 660, 880, 1100].forEach((f, i) => tone(d, t + i * 0.34, 0.5, 'sine', f, f, 0.12, 0.01)); nz(d, t, 1.6, 'bandpass', 1800, 0.8, 0.02, 0.1); return 2.4; }, pos, 1.8); },
+  stamp(pos) { shot((d, t) => { nz(d, t, 0.1, 'lowpass', 500, 1, 0.9, 0.002); tone(d, t, 0.18, 'sine', 140, 80, 0.5, 0.002); nz(d, t + 0.06, 0.12, 'bandpass', 1800, 3, 0.2, 0.002); return 0.4; }, pos, 1); },
+  vcr(pos) { shot((d, t) => { nz(d, t, 1.4, 'bandpass', 3200, 1.5, 0.12, 0.2); for (let i = 0; i < 8; i++) tone(d, t + i * 0.12, 0.08, 'square', 1400 + i * 40, 1400 + i * 40, 0.03, 0.002); tone(d, t + 1.4, 0.25, 'sine', 2400, 2400, 0.08, 0.01); return 2; }, pos, 1); },
+  alarm(pos) { shot((d, t) => { for (let i = 0; i < 6; i++) { tone(d, t + i * 0.6, 0.55, 'sawtooth', 520, 840, 0.14, 0.02); } return 4; }, pos, 2.4); },
+  slam(pos) { shot((d, t) => { nz(d, t, 0.5, 'lowpass', 300, 1, 1, 0.003); tone(d, t, 0.8, 'sine', 70, 38, 0.8, 0.003); nz(d, t + 0.05, 0.9, 'bandpass', 600, 2, 0.15, 0.01); return 1.4; }, pos, 2); },
+  fish(pos) { shot((d, t) => { const o = distortNode(d, 0.5); tone(o, t, 1.1, 'sawtooth', 160, 70, 0.22, 0.02); nz(d, t, 0.9, 'lowpass', 400, 1, 0.5, 0.05); for (let i = 0; i < 12; i++) nz(d, t + i * 0.06, 0.05, 'bandpass', 2500 + Math.random() * 1500, 4, 0.12, 0.002); return 1.6; }, pos, 1.6); },
+  radioBlip() { shot((d, t) => { tone(d, t, 0.06, 'square', 1300, 1300, 0.04, 0.002); return 0.2; }, null, 1); },
+};
+// a lobby that plays soft music to nobody: slow chords (maj7 / m9) and a tune that never resolves
+const MUZ37 = [[48, [0, 4, 7, 11]], [45, [0, 3, 7, 10]], [50, [0, 4, 7, 10]], [43, [0, 4, 7, 11]], [47, [0, 3, 7, 10]], [52, [0, 4, 7, 10]]];
+function muzak37(dt, near, pos) {
+  G37.mzT = (G37.mzT || 0) - dt; if (G37.mzT > 0 || !AU.ctx || AU.ctx.state !== 'running' || near < 0.02) return;
+  G37.mzT = 0.62; const b = G37.mzB = ((G37.mzB ?? -1) + 1), ch = MUZ37[Math.floor(b / 8) % MUZ37.length], mf = m => 440 * Math.pow(2, (m - 69) / 12);
+  shot((d, t) => { const lp = AU.ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 1400; lp.connect(d);
+    if (b % 8 === 0) ch[1].forEach((iv, i) => tone(lp, t + i * 0.03, 3.4, 'sine', mf(ch[0] + 12 + iv), mf(ch[0] + 12 + iv), 0.05 * near, 0.04));
+    if (b % 2 === 0) tone(lp, t, 0.9, 'triangle', mf(ch[0] - 12), mf(ch[0] - 12), 0.09 * near, 0.01);
+    if (RNG() < 0.55) tone(lp, t + 0.3, 0.8, 'sine', mf(ch[0] + 24 + ch[1][Math.floor(RNG() * 4)] + (RNG() < 0.3 ? 2 : 0)), mf(ch[0] + 24), 0.04 * near, 0.01);
+    return 4; }, pos, 1);
+}
+function audio37(dt, z, under) {
+  const C = AU.ctx, now = C.currentTime, mute = AU.muted, live = G.state === 'play' || G.state === 'intro' || G.state === 'won';
+  if (AU.uw) AU.uw.frequency.setTargetAtTime(under ? 420 : 22000, now, 0.05);
+  if (!G37.amb) { const s = loopSrc(AU.brown), l = C.createBiquadFilter(); l.type = 'lowpass'; l.frequency.value = 520; const g = C.createGain(); g.gain.value = 0; const lfo = C.createOscillator(); lfo.frequency.value = 0.21; const lg = C.createGain(); lg.gain.value = 0.35; lfo.connect(lg).connect(g.gain); lfo.start(); s.connect(l).connect(g).connect(AU.duckB); G37.amb = { g, l, src: s }; }
+  if (!G37.hum) { const g = C.createGain(); g.gain.value = 0; const o = C.createOscillator(); o.type = 'sawtooth'; o.frequency.value = 50; const o2 = C.createOscillator(); o2.frequency.value = 100.4; const f = C.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 260; o.connect(f); o2.connect(f); f.connect(g).connect(AU.duckB); o.start(); o2.start(); G37.hum = { g, o, o2, src: { stop() { try { o.stop(); o2.stop(); } catch (e) {} } } }; }
+  const pool = z === Z37.POOL, wet = under ? 1 : 0, v = live ? 1 : 0;
+  G37.amb.g.gain.setTargetAtTime(mute ? 0 : (under ? 0.2 : pool ? 0.09 : z === Z37.TUNNEL || z === Z37.WWF || z === Z37.DOME ? 0.07 : 0.025) * v, now, 0.5);
+  G37.amb.l.frequency.setTargetAtTime(under ? 260 : pool ? 620 : 420, now, 0.3);
+  G37.hum.g.gain.setTargetAtTime(mute ? 0 : (z === Z37.PLANT || z === Z37.STAFF ? 0.07 : pool || z === Z37.HOSP ? 0.012 : 0.004) * v * (under ? 0.4 : 1), now, 0.6);
+  AU.humG.gain.setTargetAtTime(0, now, 0.2);
+  AU.tenG.gain.setTargetAtTime(mute ? 0 : clamp(G.chase * 0.5 + PL.fear * 0.14, 0, 0.6) * v, now, 0.5); AU.tenF.frequency.setTargetAtTime(280 + G.chase * 1500, now, 0.5);
+  // the hotel lobby's music, heard from further away than you'd think
+  const sp = W37.pos.speaker; if (sp && live) { const d = dist2(PL.x, PL.z, sp.x, sp.z), near = clamp(1 - d / 38, 0, 1) * (los(PL.x, PL.z, sp.x, sp.z) ? 1 : 0.5); muzak37(dt, near * 3, { x: sp.x, y: 2.6, z: sp.z, pl: { x: PL.x, z: PL.z }, ref: 4, roll: 0.7 }); }
+}
+// dynamic lights: a light over the flooding well, the vending machine's glow
+function wlights37(dt) {
+  const cp = CAM.position, t = FX.t;
+  if (W37.pos.vend && dist2(PL.x, PL.z, W37.pos.vend.x, W37.pos.vend.z) < 12) setSlot(3, { x: W37.pos.vend.x, y: 1.3, z: W37.pos.vend.z }, 0.6, null, 0, [0.5, 0.78, 1], 4, false, 1.0); else clearSlot(3);
+  if (G37.flood && W37.hatch) setSlot(4, { x: W37.hatch.x, y: W37.hatch.y - 0.4, z: W37.hatch.z }, 0.9 * (0.6 + 0.4 * Math.sin(t * 7)), null, 0, [1, 0.2, 0.1], 12, false, 0.4); else clearSlot(4);
+  clearSlot(5);
+}
+
+// ==== world37.js ====
+// ---------- r8 · Level 37 world assembly: materials, water, caustics, signage, the hub's props ----------
+const W37 = {};
+function resetW37() {
+  Object.assign(W37, { B: null, BOn: null, BFl: null, propMat: null, waterMat: null, caustMat: null, signs: [], used: new Map(), bob: [], finishProps: null, lensFl: null, glass: [], stand: null, caust: [] });
+}
+const COL37 = { white: [0.92, 0.94, 0.94], tile: [0.86, 0.95, 0.97], steel: [0.62, 0.64, 0.66], chrome: [0.78, 0.8, 0.82], wood: [0.5, 0.34, 0.2], wood2: [0.66, 0.5, 0.32], teal: [0.2, 0.6, 0.66], red: [0.78, 0.16, 0.12], yellow: [0.95, 0.78, 0.15],
+  blue: [0.15, 0.4, 0.8], black: [0.05, 0.05, 0.06], rubber: [0.08, 0.08, 0.09], cream: [0.9, 0.86, 0.74], green: [0.22, 0.52, 0.34], orange: [0.92, 0.5, 0.14], pink: [0.92, 0.56, 0.7], brass: [0.7, 0.55, 0.26], rust: [0.42, 0.24, 0.14] };
+
+// ----- the water: a translucent animated surface, seen from above and from below -----
+BABYLON.Effect.ShadersStore.water37VertexShader = `precision highp float; attribute vec3 position; attribute vec2 uv; attribute vec4 color; uniform mat4 world; uniform mat4 viewProjection; varying vec3 vPos; varying vec2 vUV; varying vec4 vC;
+void main(){ vec4 wp = world*vec4(position,1.0); vPos = wp.xyz; vUV = uv; vC = color; gl_Position = viewProjection*wp; }`;
+BABYLON.Effect.ShadersStore.water37FragmentShader = `precision highp float; varying vec3 vPos; varying vec2 vUV; varying vec4 vC; uniform vec4 wP;
+${GLSL_COMMON}
+void main(){
+  vec3 p = vPos; float t = lvl.w; vec2 q = p.xz;
+  vec2 g = vec2(cos(q.x*1.3 + t*0.9)*1.3, cos(q.y*1.7 - t*0.7)*1.7) + vec2(1.0)*cos((q.x+q.y)*2.1 - t*1.3)*2.1 + vec2(4.3, 1.1)*cos(q.x*4.3 + q.y*1.1 + t*1.9)*0.5 + vec2(2.0, -3.1)*cos(q.x*2.0 - q.y*3.1 - t*1.4)*0.4;
+  vec3 n = normalize(vec3(-g.x*0.014*wP.y, 1.0, -g.y*0.014*wP.y));
+  vec3 V = normalize(camPos - p); bool above = camPos.y > p.y;
+  if(!above) n = -n;
+  float fres = pow(1.0 - clamp(abs(dot(n, V)), 0.0, 1.0), 3.0);
+  float L = clamp(fixtureAt(p, vec3(0.0)) + 0.18, 0.0, 1.6);
+  vec3 deep = vec3(0.05, 0.42, 0.5) * (0.5 + L*0.75), sky = vec3(0.78, 0.95, 0.98) * (0.4 + L*0.7);
+  vec3 col = mix(deep, sky, fres*0.75 + 0.07);
+  float sp = pow(max(0.0, sin(q.x*7.0 + t*2.1)*sin(q.y*6.3 - t*1.7)), 6.0)*L;
+  col += vec3(0.5, 0.8, 0.85)*sp*0.45;
+  vec3 diff = vec3(0.0), spec = vec3(0.0);
+  dynLights(p, n, vec3(0.0, 1.0, 0.0), V, 90.0, 1.0, diff, spec);
+  col += spec*1.3 + diff*vec3(0.03, 0.1, 0.12);
+  float alpha = above ? mix(0.5, 0.93, fres) : 0.9;
+  if(!above) col = mix(col, vec3(0.22, 0.62, 0.7)*(0.45 + L*0.7), 0.55);
+  gl_FragColor = vec4(fogIt(col, p), alpha*wP.x);
+}`;
+BABYLON.Effect.ShadersStore.caust37VertexShader = BABYLON.Effect.ShadersStore.water37VertexShader;
+BABYLON.Effect.ShadersStore.caust37FragmentShader = `precision highp float; varying vec3 vPos; varying vec2 vUV; varying vec4 vC; uniform vec4 wP;
+${GLSL_COMMON}
+float caus(vec2 q, float t){ float a = sin(q.x*2.3 + t*0.8 + sin(q.y*1.7 + t*0.5)*1.4), b = sin(q.y*2.1 - t*0.7 + sin(q.x*1.9 - t*0.6)*1.3); float v = 1.0 - abs(a*b); return pow(clamp(v, 0.0, 1.0), 7.0); }
+void main(){
+  float d = wP.z - vC.r;                                // water depth over this floor
+  if(d < 0.12) discard;
+  vec2 q = vPos.xz*1.15; float t = lvl.w;
+  float c = caus(q, t)*0.7 + caus(q*1.7 + 3.3, t*1.3)*0.5;
+  float L = clamp(fixtureAt(vPos, vec3(0.0)) + 0.1, 0.0, 1.4), fade = smoothstep(0.12, 0.6, d)*(1.0 - smoothstep(3.5, 7.5, d));
+  vec3 col = vec3(0.35, 0.8, 0.85)*c*L*fade*0.55;
+  gl_FragColor = vec4(fogIt(col, vPos), 1.0);
+}`;
+function waterMat37() {
+  const names = ['world', 'viewProjection', 'wP', ...COMMON_UNIFORMS];
+  const m = new BABYLON.ShaderMaterial('water37', SCN, { vertex: 'water37', fragment: 'water37' }, { attributes: ['position', 'uv', 'color'], uniforms: names, samplers: ['lightTex'], needAlphaBlending: true });
+  m.setTexture('lightTex', LV.lightTex); m.setVector4('wP', new BABYLON.Vector4(1, 1, 0, 0)); m.backFaceCulling = false; m.alphaMode = BABYLON.Engine.ALPHA_COMBINE; m.disableDepthWrite = true;
+  MATS.list.push(m); return m;
+}
+function caustMat37(basin) {
+  const names = ['world', 'viewProjection', 'wP', ...COMMON_UNIFORMS];
+  const m = new BABYLON.ShaderMaterial('caust37_' + basin, SCN, { vertex: 'caust37', fragment: 'caust37' }, { attributes: ['position', 'uv', 'color'], uniforms: names, samplers: ['lightTex'], needAlphaBlending: true });
+  m.setTexture('lightTex', LV.lightTex); m.setVector4('wP', new BABYLON.Vector4(1, 1, 0, 0)); m.backFaceCulling = false; m.alphaMode = BABYLON.Engine.ALPHA_ADD; m.disableDepthWrite = true;
+  MATS.list.push(m); return m;
+}
+function buildCaustics37(scene) {
+  W37.caust = [];
+  for (const B of LV.basins) {
+    if (!B.cells.length) continue;
+    const g = new Geo(true);
+    for (const c of B.cells) { const x0 = (c % N) * CELL, z0 = ((c / N) | 0) * CELL, fh = LV.fh[c]; if (fh > 1) continue; g.face(x0, fh + 0.012, z0 + CELL, [1, 0, 0], [0, 0, -1], CELL, CELL, [0, 1, 0], 1, true, [fh, 0, 0, 1]); }
+    if (!g.p.length) continue;
+    const m = g.mesh('caust37_' + B.name, scene), mat = caustMat37(B.name); m.material = mat; m.alphaIndex = 3; m._sortD = 90; m.isPickable = false; m.__noPortal = true; B.caust = { mesh: m, mat };
+  }
+}
+
+// ----- signage: painted pool signs, one small texture each -----
+function sign37(text, root, pos, w, h, o = {}) {
+  const px = 512, py = Math.max(64, Math.round(512 * h / w)), S = dynTexPlane('sign37', w, h, px, py, root, pos, o.emis ?? 0.5), c = S.ctx;
+  c.fillStyle = o.bg || '#1a5a6e'; c.fillRect(0, 0, px, py);
+  c.strokeStyle = o.line || '#e8f4f6'; c.lineWidth = 6; c.strokeRect(8, 8, px - 16, py - 16);
+  c.fillStyle = o.fg || '#f2fafb'; c.textAlign = 'center'; c.textBaseline = 'middle';
+  const lines = String(text).split('\n'), fs = Math.round(Math.min(py / (lines.length + 0.9), px / Math.max(...lines.map(l => l.length)) * 1.45));
+  c.font = `bold ${fs}px "Arial Narrow", Arial, sans-serif`; lines.forEach((l, i) => c.fillText(l, px / 2, py / 2 + (i - (lines.length - 1) / 2) * fs * 1.12));
+  S.dt.update(); W37.signs.push(S); return S;
+}
+function pr37(x, z, ry = 0, y) { const r = propRoot(x, z, ry); r.position.y = y ?? floorY37(x, z); r.computeWorldMatrix(true); return r; }
+function wallAt37(x, y, d, along = 0, off = 0.005) { const [px, pz, ry] = wallPt(x, y, d, off, along), r = propRoot(px, pz, ry); r.position.y = LV.fh[cIdx(x, y)]; r.computeWorldMatrix(true); return r; }
+
+// ----- small furniture used all over the pools -----
+const F37 = {
+  bench(B, r, o = {}) { const L = o.len || 1.6; B.add(r, 'Box', { width: L, height: 0.06, depth: 0.42 }, COL37.wood2, 0, [0, 0.45, 0.3]); B.add(r, 'Box', { width: L, height: 0.04, depth: 0.05 }, COL37.wood, 0, [0, 0.72, 0.08]);
+    for (const s of [-1, 1]) { B.add(r, 'Box', { width: 0.05, height: 0.45, depth: 0.4 }, COL37.steel, 0, [s * (L / 2 - 0.1), 0.22, 0.3]); B.add(r, 'Box', { width: 0.04, height: 0.3, depth: 0.04 }, COL37.steel, 0, [s * (L / 2 - 0.1), 0.58, 0.08]); } return 0.5; },
+  locker(B, r, o = {}) { const n = o.n || 3; for (let i = 0; i < n; i++) { const x = (i - (n - 1) / 2) * 0.42, col = o.col || [0.42, 0.62, 0.66]; B.add(r, 'Box', { width: 0.4, height: 1.8, depth: 0.45 }, col, 0, [x, 0.9, 0.23]);
+      B.add(r, 'Box', { width: 0.3, height: 0.02, depth: 0.012 }, [0.1, 0.12, 0.14], 0, [x, 1.5, 0.46]); B.add(r, 'Box', { width: 0.3, height: 0.02, depth: 0.012 }, [0.1, 0.12, 0.14], 0, [x, 1.44, 0.46]);
+      B.add(r, 'Box', { width: 0.03, height: 0.12, depth: 0.02 }, COL37.chrome, 0, [x + 0.12, 1.1, 0.47]); B.add(r, 'Box', { width: 0.06, height: 0.04, depth: 0.005 }, [0.9, 0.9, 0.85], 0, [x - 0.08, 1.65, 0.457]); } return 0.5; },
+  ladder(B, r) { for (const s of [-1, 1]) { B.add(r, 'Cylinder', { diameter: 0.045, height: 1.9, tessellation: 8 }, COL37.chrome, 0, [s * 0.24, 0.55, 0.12]); B.add(r, 'Torus', { diameter: 0.22, thickness: 0.04, tessellation: 12 }, COL37.chrome, 0, [s * 0.24, 1.5, 0.02], [0, 0, Math.PI / 2]); B.add(r, 'Cylinder', { diameter: 0.045, height: 0.16, tessellation: 8 }, COL37.chrome, 0, [s * 0.24, 1.5, -0.08], [Math.PI / 2, 0, 0]); }
+    for (let i = 0; i < 4; i++) B.add(r, 'Cylinder', { diameter: 0.035, height: 0.48, tessellation: 6 }, COL37.chrome, 0, [0, 0.2 - i * 0.25 + 0.1, 0.12], [0, 0, Math.PI / 2]); return 0.3; },
+  guardChair(B, r) { for (const [x, z] of [[-0.45, -0.35], [0.45, -0.35], [-0.45, 0.35], [0.45, 0.35]]) B.add(r, 'Box', { width: 0.07, height: 2.5, depth: 0.07 }, COL37.white, 0, [x, 1.25, z]);
+    B.add(r, 'Box', { width: 1.1, height: 0.07, depth: 0.9 }, COL37.white, 0, [0, 1.95, 0]); B.add(r, 'Box', { width: 1.0, height: 0.55, depth: 0.06 }, COL37.white, 0, [0, 2.3, -0.42], [-0.12, 0, 0]);
+    B.add(r, 'Box', { width: 1.0, height: 0.05, depth: 0.04 }, COL37.red, 0, [0, 2.2, -0.45]); B.add(r, 'Box', { width: 0.9, height: 0.05, depth: 0.5 }, COL37.white, 0, [0, 1.2, 0.58], [-0.1, 0, 0]);
+    for (let i = 0; i < 6; i++) B.add(r, 'Box', { width: 0.88, height: 0.03, depth: 0.1 }, COL37.white, 0, [0, 0.3 + i * 0.3, 0.4 + (i * 0.025)]);
+    B.add(r, 'Cylinder', { diameter: 0.035, height: 1.4, tessellation: 6 }, COL37.red, 0, [0.5, 2.9, -0.4]); B.add(r, 'Box', { width: 1.4, height: 0.03, depth: 1.1 }, COL37.red, 0, [0.5, 3.6, -0.3]); return 0; },
+  ring(B, r, col) { B.add(r, 'Torus', { diameter: 0.7, thickness: 0.18, tessellation: 18 }, col || COL37.red, 0, [0, 0.09, 0]); for (let i = 0; i < 4; i++) { const a = i * Math.PI / 2 + Math.PI / 4; B.add(r, 'Box', { width: 0.2, height: 0.19, depth: 0.19 }, COL37.white, 0, [Math.sin(a) * 0.35, 0.09, Math.cos(a) * 0.35], [0, a, 0]); } },
+  palm(B, r) { B.add(r, 'Cylinder', { diameterTop: 0.5, diameterBottom: 0.36, height: 0.5, tessellation: 12 }, [0.5, 0.3, 0.2], 0, [0, 0.25, 0]); B.add(r, 'Cylinder', { diameterTop: 0.03, diameterBottom: 0.07, height: 1.3, tessellation: 6 }, [0.3, 0.22, 0.12], 0, [0, 1.1, 0]);
+    for (let i = 0; i < 9; i++) { const a = i / 9 * TAU; B.add(r, 'Box', { width: 0.1, height: 0.012, depth: 0.8 }, [0.14, 0.3, 0.12].map(v => v * rnd(0.8, 1.2)), 0, [Math.sin(a) * 0.35, 1.6 + rnd(-0.1, 0.12), Math.cos(a) * 0.35], [0.5, a, 0]); } return 0.55; },
+  lounger(B, r, col) { const c = col || COL37.cream; B.add(r, 'Box', { width: 0.62, height: 0.08, depth: 1.2 }, c, 0, [0, 0.34, 0.65]); B.add(r, 'Box', { width: 0.62, height: 0.08, depth: 0.8 }, c, 0, [0, 0.62, -0.18], [-0.9, 0, 0]);
+    for (const x of [-0.28, 0.28]) for (const z of [0.2, 1.1]) B.add(r, 'Box', { width: 0.04, height: 0.34, depth: 0.04 }, COL37.chrome, 0, [x, 0.17, z]); return 1.3; },
+  vending(B, r, col) { const c = col || [0.15, 0.4, 0.62]; B.add(r, 'Box', { width: 0.95, height: 1.85, depth: 0.8 }, c, 0, [0, 0.93, 0.4]); B.add(r, 'Box', { width: 0.7, height: 1.1, depth: 0.02 }, [0.06, 0.1, 0.14], 0.12, [-0.08, 1.2, 0.81]);
+    for (let j = 0; j < 4; j++) for (let i = 0; i < 4; i++) W37.BOn.add(r, 'Cylinder', { diameter: 0.07, height: 0.2, tessellation: 8 }, [0.5, 0.75, 0.9], 0.3, [-0.28 + i * 0.13, 0.85 + j * 0.25, 0.79]); B.add(r, 'Box', { width: 0.16, height: 0.5, depth: 0.03 }, COL37.chrome, 0, [0.35, 1.1, 0.8]);
+    B.add(r, 'Box', { width: 0.7, height: 0.2, depth: 0.04 }, [0.05, 0.05, 0.06], 0, [0, 0.2, 0.8]); return 0.9; },
+  shower(B, r) { B.add(r, 'Box', { width: 0.95, height: 2.2, depth: 0.04 }, [0.7, 0.85, 0.88], 0, [0, 1.1, 0.02]); B.add(r, 'Cylinder', { diameter: 0.025, height: 0.5, tessellation: 6 }, COL37.chrome, 0, [0, 2.0, 0.2], [Math.PI / 2, 0, 0]);
+    B.add(r, 'Cylinder', { diameter: 0.2, height: 0.03, tessellation: 12 }, COL37.chrome, 0, [0, 1.95, 0.45]); B.add(r, 'Box', { width: 0.02, height: 2.2, depth: 0.9 }, [0.78, 0.9, 0.92], 0, [0.46, 1.1, 0.46]); return 0.9; },
+  towelRack(B, r) { B.add(r, 'Box', { width: 1.2, height: 0.04, depth: 0.1 }, COL37.chrome, 0, [0, 1.45, 0.08]); for (let i = 0; i < 4; i++) B.add(r, 'Box', { width: 0.22, height: 0.5, depth: 0.04 }, pick([COL37.white, COL37.teal, COL37.cream, COL37.blue]), 0, [-0.45 + i * 0.3, 1.2, 0.11]); return 0.2; },
+};
+
+// ----- the assembly -----
+async function buildWorld37(progress) {
+  registerShaders();
+  SCN = new BABYLON.Scene(ENG);
+  SCN.clearColor = new BABYLON.Color4(0.55, 0.78, 0.8, 1); SCN.skipPointerMovePicking = true; SCN.blockMaterialDirtyMechanism = false;
+  CAM = new BABYLON.FreeCamera('cam', V3(10, 1.6, 10), SCN); CAM.inputs.clear(); CAM.minZ = 0.05; CAM.maxZ = 90; CAM.fov = 1.0;
+  resetW9(); resetW37();
+  progress(0.05, 'FILLING THE POOL…'); await nextFrame();
+  genLayout37(); collectPieces5(side37, opening37); planLights37();
+  const T = {};
+  progress(0.14, 'LAYING THE TILE…'); await nextFrame();
+  for (const k of ['ptile', 'lane', 'wetc']) T[k] = TEX37[k](SCN, 512);
+  T.wood = TEX9.wood(SCN, 512); T.conc = TEX9.conc(SCN, 512); T.block = TEX9.block(SCN, 512);
+  progress(0.26, 'HANGING THE WALLPAPER…'); await nextFrame();
+  for (const k of ['hwall', 'carpet', 'hceil', 'bconc', 'brick']) T[k] = TEX5[k](SCN, 512);
+  for (const k of ['lino', 'dceil']) T[k] = TEX18[k](SCN, 512);
+  progress(0.4, 'LIGHTING THE ROOMS…'); await nextFrame();
+  buildLightmap(SCN); buildCollision();
+  progress(0.52, 'WARMING THE WATER…'); await nextFrame();
+  const E = (n, d, t) => envMat9(n, d, t);
+  const mats = { ptile: E('ptile37', ['MAT_TILE'], T.ptile), lane: E('lane37', ['MAT_TILE'], T.lane), wetc: E('wetc37', ['MAT_BCONC'], T.wetc), wood: E('wood37', ['MAT_WOOD'], T.wood), hwall: E('hwall37', ['MAT_HWALL'], T.hwall),
+    carpet: E('carpet37', ['MAT_CARPET'], T.carpet), hceil: E('hceil37', ['MAT_HCEIL'], T.hceil), plaster: E('plaster37', ['MAT_PLASTER'], T.conc), bconc: E('bconc37', ['MAT_BCONC'], T.bconc), block: E('block37', ['MAT_BLOCK'], T.block),
+    brick: E('brick37', ['MAT_BLOCK'], T.brick), lino: E('lino37', ['MAT_KFLOOR', 'KSHEEN'], T.lino), kceil: E('kceil37', ['MAT_KCEIL'], T.dceil), conc: E('conc37', ['MAT_CONC'], T.conc), trim: E('trim37', ['MAT_CASE'], T.wetc) };
+  buildGeometry37(SCN, mats);
+  W37.waterMat = waterMat37(); buildWater37(SCN, W37.waterMat); buildCaustics37(SCN);
+  progress(0.64, 'SETTING OUT THE CHAIRS…'); await nextFrame();
+  buildProps37();
+  progress(0.78, 'HANGING DOORS…'); await nextFrame();
+  buildDoors37(); buildStory37(); buildItems37(G.diff); buildDust();
+  W37.finishProps();
+  SCN.setRenderingOrder(0, (a, b) => (a.getMesh()._sortD ?? 400) - (b.getMesh()._sortD ?? 400));
+  progress(0.9, 'LISTENING TO THE FILTERS…'); await nextFrame();
+}
+
+function buildDoors37() {
+  W9.doorAnim = new Set();
+  for (const e of LV.ek.values()) {
+    if (e.kind !== 'door') continue;
+    const horiz = e.d === 1 || e.d === 3, [mx, mz] = edgeMid(e.x, e.y, e.d), nx = e.x + DX[e.d], ny = e.y + DY[e.d], fh = LV.fh[cIdx(e.x, e.y)];
+    const fr = e.from || [e.x, e.y], to = fr[0] === e.x && fr[1] === e.y ? [nx, ny] : [e.x, e.y];
+    const s = horiz ? (to[1] === Math.max(e.y, ny) ? 1 : -1) : (to[0] === Math.max(e.x, nx) ? 1 : -1);
+    const hinge = tnode(null, horiz ? mx - DOORW / 2 + 0.03 : mx, fh, horiz ? mz : mz - DOORW / 2 + 0.03);
+    const mesh = doorLeaf(DOORC37[e.dk] || DOORC37.room, e.dk === 'plant' || e.dk === 'staff'); mesh.parent = hinge;
+    const c0 = horiz ? 0 : -Math.PI / 2, c1 = c0 + (horiz ? -s : s) * 1.62;
+    const bx = horiz ? [mx - DOORW / 2, mz - WT / 2, mx + DOORW / 2, mz + WT / 2] : [mx - WT / 2, mz - DOORW / 2, mx + WT / 2, mz + DOORW / 2];
+    const dr = { e, key: eKey(e.x, e.y, e.d), horiz, s, hinge, mesh, c0, c1, bx, mx, mz, house: -1, dk: e.dk, metal: e.dk === 'plant', open: 0, target: 0, latched: false, locked: !!e.locked, solid: addSolid(bx[0], bx[1], bx[2], bx[3], 'door'), shake: 0, cull: 32, bangs: 0 };
+    markDyn(bx[0], bx[1], bx[2], bx[3], 1); hinge.rotation.y = c0;
+    W9.doors.push(dr); W9.doorAt.set(dr.key, dr);
+    if (e.plaque) plaque37(sideOf5(e), e.plaque);
+    W.interact.push({ x: mx, z: mz, y: 1.1, r: 1.75, door: dr, label: () => doorLabel37(dr), ok: () => true, act: () => useDoor37(dr) });
+  }
+}
+const DOORC37 = { room: [0.5, 0.34, 0.2], cabana: [0.3, 0.55, 0.6], plant: [0.4, 0.44, 0.44], booth: [0.55, 0.42, 0.28], hotel: [0.42, 0.19, 0.09], hosp: [0.8, 0.86, 0.84], staff: [0.4, 0.42, 0.4], ww: [0.2, 0.46, 0.66] };
+function plaque37(s, text) { const r = atWall5(s, 0, 0); r.position.y = LV.fh[cIdx(s.x, s.y)]; r.computeWorldMatrix(true); sign37(text, twin(r), [DOORW / 2 + 0.34, 1.62, 0.03], 0.46, 0.14, { bg: '#e8e2d0', fg: '#2a2a2a', line: '#6a6a60', emis: 0.25 }); }
+
+// ==== hub37.js ====
+// ---------- r8 · Level 37: the hub's furnishings (Shallows, Dive Well, Lap Pool, Cabana, Pump Room, Booth) ----------
+function twin37(r) { const t = twin(r); t.position.y = r.position.y; t.computeWorldMatrix(true); return t; }
+const cc37 = v => cellCenter(v);
+// floating things ride on their basin: they follow its level (and settle on the floor when it is drained)
+function floater37(node, basin, dy = 0.03) { W37.bob.push({ n: node, b: LV.basins[basin], dy, ph: rnd(0, TAU), x: node.position.x, z: node.position.z }); return node; }
+
+function buildProps37() {
+  const mat = actMat('props37', { spec: 0.35, shin: 28, wrinkle: 0.12, emis: 1, wrap: 0.4, mottle: 0.2 }), B = new PropBatch(mat); B.fast = true;
+  W9.propMat = mat; W37.propMat = mat;
+  const lensOn = actMat('lensOn37', { emis: 1 }), lensFl = actMat('lensFl37', { emis: 1 }); setEmi(lensOn, 3.2); W37.lensFl = lensFl;
+  const BOn = new PropBatch(lensOn), BFl = new PropBatch(lensFl); BOn.fast = BFl.fast = true;
+  Object.assign(W37, { B, BOn, BFl });
+  W37.pos = {};
+  // ceiling lights
+  for (const p of LV.panels) { const r = propRoot(p.x, p.z, 0); r.position.y = p.y; r.computeWorldMatrix(true); (p.state === 2 ? BFl : BOn).add(r, 'Box', { width: p.w, height: 0.03, depth: p.l }, p.state ? [1, 0.98, 0.94] : [0.6, 0.6, 0.6], p.state ? 0.9 : 0, [0, -0.04, 0]); B.add(r, 'Box', { width: p.w + 0.08, height: 0.03, depth: p.l + 0.08 }, [0.8, 0.82, 0.82], 0, [0, -0.015, 0]); }
+  furnishShallows37(B); furnishWell37(B); furnishLap37(B); furnishCabana37(B); furnishPlant37(B); furnishBooth37(B);
+  furnishHotel37(B); furnishHospital37(B); furnishWorld37(B);
+  W37.finishProps = () => {
+    const keep = [], out = [...(B.finish('props37', keep) || []), ...(BOn.finish('lensOn37', keep) || []), ...(BFl.finish('lensFl37', keep) || [])];
+    out.forEach(m => m._sortD = 300);
+    new Set(keep).forEach(r => r && r.dispose && r.dispose());
+  };
+}
+function pillar37(B, x, z, ceilY) {
+  const fh = floorY37(x, z), r = propRoot(x, z, 0); r.position.y = fh; r.computeWorldMatrix(true); const h = ceilY - fh;
+  B.add(r, 'Box', { width: 0.9, height: h, depth: 0.9 }, [0.93, 0.97, 0.98], 0, [0, h / 2, 0]);
+  B.add(r, 'Box', { width: 0.96, height: 0.06, depth: 0.96 }, COL37.teal, 0, [0, 1.15, 0]); B.add(r, 'Box', { width: 0.96, height: 0.06, depth: 0.96 }, COL37.teal, 0, [0, 0.12, 0]);
+  addSolid(x - 0.5, z - 0.5, x + 0.5, z + 0.5, 'prop');
+}
+function furnishShallows37(B) {
+  const SH = LV.dry.sh, ceil = SH.h;
+  for (let y = 30; y <= 41; y += 4) for (let x = 29; x <= 40; x += 4) { if (x >= 30 && x <= 38 && y >= 37) continue; if (x >= 33 && x <= 37 && y >= 38) continue; pillar37(B, cc37(x), cc37(y), ceil); }
+  // the deck: benches, lifeguard chairs, ladders, towels, a ring on its hook
+  for (const [x, y, d] of [[28, 27, 3], [31, 27, 3], [39, 27, 3], [42, 27, 3]]) { const r = wallAt37(x, y, d, 0); B.add(r, 'Box', { width: 0.04, height: 0.04, depth: 0.04 }, COL37.white, 0, [0, 0, 0]); placeBench37(B, wallAt37(x, y, d, 0, 0.02)); }
+  { const r = pr37(cc37(27) + 1.2, cc37(28) - 0.6, Math.PI * 0.65); F37.guardChair(B, r); addSolid(r.position.x - 0.65, r.position.z - 0.55, r.position.x + 0.65, r.position.z + 0.55, 'prop'); W37.pos.chair1 = { x: r.position.x, z: r.position.z + 1.2 }; }
+  { const r = pr37(cc37(42) - 1.2, cc37(42) + 0.4, -Math.PI * 0.35); F37.guardChair(B, r); addSolid(r.position.x - 0.65, r.position.z - 0.55, r.position.x + 0.65, r.position.z + 0.55, 'prop'); }
+  for (const [x, y] of [[26.5, 31], [26.5, 38], [43.5, 31], [43.5, 39]]) { const r = pr37(cc37(Math.floor(x)) + (x % 1 < 0.9 ? 0.9 : -0.9), cc37(y), x < 30 ? Math.PI / 2 : -Math.PI / 2); F37.ladder(B, r); }
+  // depth marks around the edge, painted on the tile
+  for (const [x, y, d, t] of [[34, 27, 3, 'THE SHALLOWS\n0.5 M'], [38, 43, 1, 'PIT\n2.4 M · NO RUNNING'], [26, 30, 2, '0.5 M']]) { const r = wallAt37(x, y, d, 0); sign37(t, twin37(r), [0, 2.6, 0.03], 2.2, 0.55, { bg: '#e9f6f8', fg: '#17607a', line: '#17607a' }); }
+  sign37('KEEP WALKING\nYOUR FEET ARE FINE', twin37(wallAt37(30, 43, 1, 0)), [0, 3.4, 0.03], 3.2, 0.7, { bg: '#e9f6f8', fg: '#17607a', line: '#17607a' });
+  // things floating in the water: rings, a beach ball, a kickboard
+  for (const [x, z, col] of [[cc37(31), cc37(33), COL37.red], [cc37(38), cc37(35), COL37.yellow], [cc37(30), cc37(40), COL37.blue], [cc37(40), cc37(31), COL37.orange]]) { const n = tnode(null, x, 0, z), m = mkMerged(W37.propMat, P => { P('Torus', { diameter: 0.7, thickness: 0.18, tessellation: 18 }, col, 0, [0, 0.07, 0]); for (let i = 0; i < 4; i++) { const a = i * Math.PI / 2 + Math.PI / 4; P('Box', { width: 0.2, height: 0.19, depth: 0.19 }, COL37.white, 0, [Math.sin(a) * 0.35, 0.07, Math.cos(a) * 0.35], [0, a, 0]); } }, 'ring37'); m.parent = n; floater37(n, BAS37.SH, 0.0); }
+  { const n = tnode(null, cc37(36), 0, cc37(32)), m = mkMerged(W37.propMat, P => { P('Sphere', { diameter: 0.5, segments: 10 }, COL37.red, 0, [0, 0.22, 0]); P('Box', { width: 0.51, height: 0.12, depth: 0.51 }, COL37.white, 0, [0, 0.22, 0], null, null); P('Box', { width: 0.12, height: 0.51, depth: 0.51 }, COL37.yellow, 0, [0, 0.22, 0]); }, 'ball37'); m.parent = n; floater37(n, BAS37.SH, -0.02); W37.pos.ball = n; }
+  // a few small things on the floor of the pit (they were here before you)
+  for (let i = 0; i < 5; i++) { const x = cc37(33 + (i % 3)) + rnd(-0.8, 0.8), z = cc37(40 + Math.floor(i / 3)) + rnd(-0.8, 0.8), r = pr37(x, z, rnd(0, TAU)); B.add(r, 'Box', { width: 0.24, height: 0.025, depth: 0.1 }, pick([COL37.blue, COL37.pink, COL37.yellow]), 0, [0.1 * (i % 2 ? 1 : -1), 0.015, 0]); }
+  W37.pos.arrive = { x: cc37(35), z: cc37(31) };
+}
+function placeBench37(B, r) { F37.bench(B, r, { len: 1.7 }); solidLocal(r, -0.85, 0, 0.85, 0.55); }
+function furnishWell37(B) {
+  const WELL = LV.dry.well, ceil = WELL.h;
+  // diving boards on the north deck (one metre, three metres), the ten-metre tower in the west wall
+  for (const [x, h] of [[33, 1.0], [36, 3.0], [39, 1.0]]) {
+    const r = pr37(cc37(x), cc37(13) - 0.6, 0, DECK37), bw = 1.5;
+    B.add(r, 'Box', { width: bw * 0.7, height: h, depth: 1.5 }, COL37.white, 0, [0, h / 2, -0.3]); B.add(r, 'Box', { width: 0.55, height: 0.07, depth: 3.4 }, [0.86, 0.9, 0.92], 0, [0, h + 0.05, 1.5]);
+    B.add(r, 'Box', { width: 0.56, height: 0.01, depth: 3.38 }, COL37.teal, 0, [0, h + 0.1, 1.5]); B.add(r, 'Cylinder', { diameter: 0.05, height: h * 0.5, tessellation: 6 }, COL37.chrome, 0, [-0.42, h + 0.4, -0.3]);
+    addSolid(r.position.x - 0.9, r.position.z - 1.0, r.position.x + 0.9, r.position.z + 0.4, 'prop');
+    sign37(h + ' M', twin37(wallAt37(x, 13, 3, 0)), [0, 4.2, 0.03], 1.2, 0.5, { bg: '#e9f6f8', fg: '#17607a', line: '#17607a' }); }
+  // the tower: a solid block with a platform and a railing
+  { const T = LV.tower, bx = cc37(T.x), bz = cc37(T.y), r = pr37(bx, bz, 0, T.top);
+    B.add(r, 'Box', { width: 3.4, height: 0.2, depth: 3.4 }, [0.9, 0.95, 0.96], 0, [0, 0.1, 0]); for (const [x, z] of [[-1.6, -1.6], [1.6, -1.6], [-1.6, 1.6], [1.6, 1.6]]) B.add(r, 'Cylinder', { diameter: 0.07, height: 1.1, tessellation: 6 }, COL37.chrome, 0, [x, 0.7, z]);
+    for (const y of [0.7, 1.15]) { B.add(r, 'Box', { width: 3.2, height: 0.05, depth: 0.05 }, COL37.chrome, 0, [0, y, -1.6]); B.add(r, 'Box', { width: 0.05, height: 0.05, depth: 3.2 }, COL37.chrome, 0, [-1.6, y, 0]); B.add(r, 'Box', { width: 3.2, height: 0.05, depth: 0.05 }, COL37.chrome, 0, [0, y, 1.6]); }
+    B.add(r, 'Box', { width: 0.05, height: 0.05, depth: 3.2 }, COL37.chrome, 0, [1.6, 1.15, 0]);   // (the east edge is open: that's where you jump)
+    B.add(r, 'Box', { width: 1.2, height: 0.05, depth: 3.2 }, COL37.teal, 0, [1.7, 0.1, 0]);
+    // the tower's collision: a ring so nobody walks in at ground level (the east gap is switched off while you are on top)
+    const x0 = T.x * CELL, z0 = T.y * CELL; W37.tower = { top: T.top, cx: bx, cz: bz, edge: [addSolid(x0, z0, x0 + CELL, z0 + 0.3, 'tower'), addSolid(x0, z0 + CELL - 0.3, x0 + CELL, z0 + CELL, 'tower'), addSolid(x0, z0, x0 + 0.3, z0 + CELL, 'tower')], gap: addSolid(x0 + CELL - 0.3, z0, x0 + CELL, z0 + CELL, 'tower') };
+    for (const i of [...W37.tower.edge, W37.tower.gap]) LV.solids[i].off = false;
+    W37.pos.towerBase = { x: bx, z: z0 - 0.7 };
+    { const q = pr37(bx, z0 - 0.35, 0, DECK37); F37.ladder(B, q); } }
+  // the hatch in the ceiling over the middle of the pool, and the rope that hangs from it
+  { const hx = cc37(35) + 0.2, hz = cc37(19), r = pr37(hx, hz, 0, ceil - 0.02);
+    B.add(r, 'Cylinder', { diameter: 1.5, height: 0.14, tessellation: 24 }, [0.5, 0.52, 0.52], 0, [0, -0.05, 0]); B.add(r, 'Torus', { diameter: 1.7, thickness: 0.1, tessellation: 24 }, COL37.steel, 0, [0, -0.02, 0]);
+    for (let i = 0; i < 4; i++) { const a = i * Math.PI / 4; B.add(r, 'Box', { width: 0.06, height: 0.05, depth: 1.3 }, COL37.steel, 0, [0, -0.13, 0], [0, a, 0]); }
+    B.add(r, 'Cylinder', { diameter: 0.4, height: 0.05, tessellation: 12 }, COL37.red, 0, [0, -0.17, 0]);
+    const sg = pr37(hx, hz, 0, ceil - 0.9); sign37('SURFACE', twin37(sg), [0, 0, 0], 1.4, 0.4, { bg: '#1a5a6e', fg: '#f2fafb' }); W37.hatch = { x: hx, z: hz, y: ceil - 0.02, n: r }; }
+  for (const [x, y, d, t] of [[35, 14, 3, 'DEEP END\n6.0 M'], [31, 24, 2, '1.1 M']]) sign37(t, twin37(wallAt37(x, y, d, 0)), [0, 5.2, 0.03], 2.4, 0.7, { bg: '#e9f6f8', fg: '#17607a', line: '#17607a' });
+  sign37('NO DIVING\nNO RUNNING\nNO LIFEGUARD ON DUTY', twin37(wallAt37(41, 21, 0, 0)), [0, 3.0, 0.03], 2.0, 1.0, { bg: '#f4e8d0', fg: '#8a1a14', line: '#8a1a14' });
+  { const n = tnode(null, cc37(35) - 1.0, 0, cc37(15)); const m = mkMerged(W37.propMat, P => { P('Torus', { diameter: 0.75, thickness: 0.2, tessellation: 18 }, COL37.red, 0, [0, 0.08, 0]); }, 'ring37b'); m.parent = n; floater37(n, BAS37.WELL, 0); }
+  // the channel that leads into the tunnel: a grille and a sign
+  sign37('MAINTENANCE\nSWIM THROUGH', twin37(wallAt37(31, 18, 2, 0)), [0, -3.4, 0.03], 1.2, 0.5, { bg: '#2a3a40', fg: '#e8d27a', line: '#e8d27a', emis: 0.7 });
+}
+function furnishLap37(B) {
+  const LAP = LV.dry.lap;
+  // lane ropes between the lanes, starting blocks at the west end, backstroke flags
+  for (let y = 33; y <= 37; y++) { const n = tnode(null, 0, 0, y * CELL), len = (65 - 46 + 1) * CELL, m = mkMerged(W37.propMat, P => { P('Cylinder', { diameter: 0.045, height: len, tessellation: 5 }, COL37.white, 0, [(46 * CELL + 65 * CELL + CELL) / 2, 0.02, 0], [0, 0, Math.PI / 2]);
+      for (let i = 0; i < len / 0.55; i++) P('Cylinder', { diameter: 0.1, height: 0.1, tessellation: 8 }, i % 6 < 3 ? COL37.red : COL37.blue, 0, [46 * CELL + 0.2 + i * 0.55, 0.03, 0], [0, 0, Math.PI / 2]); }, 'rope37'); m.parent = n; n.position.x = 0; n.position.z = y * CELL; m.position.z = 0; floater37(n, BAS37.LAP, 0.0); n.__rope = true; W37.bob[W37.bob.length - 1].x = 0; }
+  for (let y = 32; y <= 37; y++) { const r = pr37(45.0 * CELL + 1.5, cc37(y), -Math.PI / 2, DECK37); B.add(r, 'Box', { width: 0.7, height: 0.7, depth: 0.7 }, [0.9, 0.95, 0.96], 0, [0, 0.35, 0]); B.add(r, 'Box', { width: 0.7, height: 0.05, depth: 0.7 }, COL37.teal, 0, [0, 0.72, 0], [0.12, 0, 0]); B.add(r, 'Box', { width: 0.7, height: 0.1, depth: 0.03 }, COL37.black, 0, [0, 0.45, 0.35]);
+    const q = tnode(null, 45 * CELL + 0.2, 0, cc37(y)); }
+  for (let i = 0; i < 7; i++) { const x = 46 * CELL + i * 3 * CELL; for (const z of [31 * CELL + 0.3, 38 * CELL + 3.3]) { const r = pr37(x, z, 0, DECK37); sign37(['0', '5', '10', '15', '20', '25', '30'][i] + ' M', twin37(r), [0, 0.01, 0], 0.7, 0.28, { bg: '#e9f6f8', fg: '#17607a', line: '#17607a' }); } }
+  for (let x = 47; x <= 64; x += 6) { const r = wallAt37(x, 31, 3, 0); sign37('LAP SWIMMING ONLY', twin37(r), [0, 3.4, 0.03], 3.2, 0.5, { bg: '#e9f6f8', fg: '#17607a', line: '#17607a' }); }
+  for (const x of [48, 54, 60]) placeBench37(B, wallAt37(x, 38, 1, 0, 0.02));
+  for (const [x, y] of [[46, 38], [58, 38]]) F37.ladder(B, pr37(cc37(x) + 1.2, y * CELL + 0.2, Math.PI, DECK37));
+  // the far end: the tunnel and its warnings
+  { const r = wallAt37(65, 34, 0, 0); r.position.y = -1.5; r.computeWorldMatrix(true); sign37('NO ENTRY\nSTAFF ONLY', twin37(r), [0, 2.35, 0.03], 1.8, 0.7, { bg: '#f4e8d0', fg: '#8a1a14', line: '#8a1a14' }); W37.pos.tunnelW = { x: 65 * CELL + 1.0, z: cc37(34) }; }
+  for (let i = 0; i < 3; i++) { const n = tnode(null, cc37(50 + i * 4), 0, cc37(32 + i * 2)), m = mkMerged(W37.propMat, P => { P('Box', { width: 0.3, height: 0.05, depth: 0.7 }, [COL37.yellow, COL37.pink, COL37.blue][i], 0, [0, 0.02, 0]); }, 'board37'); m.parent = n; floater37(n, BAS37.LAP, 0); }
+  W37.pos.lapStart = { x: 45 * CELL + 2.4, z: cc37(34) };
+}
+function furnishCabana37(B) {
+  const C = LV.dry.cab, X0 = 20 * CELL, Z0 = 31 * CELL;
+  for (let i = 0; i < 2; i++) { const r = wallAt37(20, 32 + i * 3, 2, 0); F37.locker(B, r, { n: 3, col: i ? [0.4, 0.6, 0.62] : [0.46, 0.5, 0.62] }); solidLocal(r, -0.65, 0, 0.65, 0.5); }
+  { const r = wallAt37(20, 35, 2, 0.4); F37.locker(B, r, { n: 3, col: [0.5, 0.42, 0.4] }); solidLocal(r, -0.65, 0, 0.65, 0.5); W37.pos.lockers = { x: r.position.x + 0.6, z: r.position.z + 0.2 }; }
+  for (let i = 0; i < 3; i++) { const r = wallAt37(21 + i * 2 - (i === 2 ? 0 : 0), 31, 3, 0); F37.shower(B, wallAt37(21 + i, 31, 3, 0, 0.0)); }
+  placeBench37(B, wallAt37(22, 38, 1, 0, 0.02)); placeBench37(B, wallAt37(24, 38, 1, 0, 0.02));
+  F37.towelRack(B, wallAt37(25, 33, 0, 0)); F37.towelRack(B, wallAt37(25, 37, 0, 0));
+  { const r = wallAt37(25, 31, 0, 0.5); F37.vending(B, r); solidLocal(r, -0.5, 0, 0.5, 0.85); W37.pos.vend = { x: r.position.x - 0.7, z: r.position.z + 0.2 }; }
+  sign37('CABANA\nCHANGING ROOMS', twin37(wallAt37(26, 35, 2, -2.0)), [0, 2.3, 0.03], 1.8, 0.6, { bg: '#e9f6f8', fg: '#17607a', line: '#17607a' });
+  sign37('PLEASE SHOWER\nBEFORE ENTERING THE WATER', twin37(wallAt37(22, 31, 3, 0)), [0, 2.55, 0.03], 2.4, 0.6, { bg: '#e9f6f8', fg: '#17607a', line: '#17607a' });
+  // the bulletin board
+  { const r = wallAt37(23, 38, 1, 0.5); B.add(r, 'Box', { width: 1.5, height: 1.0, depth: 0.04 }, COL37.wood, 0, [0, 1.5, 0.02]); B.add(r, 'Box', { width: 1.4, height: 0.9, depth: 0.012 }, [0.55, 0.38, 0.2], 0, [0, 1.5, 0.045]);
+    for (let i = 0; i < 6; i++) B.add(r, 'Box', { width: 0.2, height: 0.26, depth: 0.004 }, pick([COL37.white, COL37.cream, COL37.yellow, COL37.pink]), 0, [-0.55 + i * 0.22, 1.5 + rnd(-0.15, 0.15), 0.052]); W37.pos.board = { x: r.position.x, z: r.position.z - 0.8, r }; }
+  // the camp: a cot, a lantern, a kettle, a rolled hazmat suit; this is where she lives
+  { const r = pr37(cc37(22) + 0.6, cc37(35) + 1.5, 0.5, DECK37);
+    B.add(r, 'Box', { width: 0.7, height: 0.05, depth: 1.8 }, [0.35, 0.4, 0.3], 0, [0, 0.36, 0]); for (const x of [-0.3, 0.3]) for (const z of [-0.8, 0.8]) B.add(r, 'Box', { width: 0.04, height: 0.34, depth: 0.04 }, COL37.steel, 0, [x, 0.17, z]);
+    B.add(r, 'Box', { width: 0.55, height: 0.1, depth: 0.7 }, [0.84, 0.8, 0.68], 0, [0, 0.45, 0.55]); B.add(r, 'Box', { width: 0.7, height: 0.06, depth: 1.0 }, COL37.orange, 0, [0, 0.42, -0.2]);
+    addSolid(r.position.x - 0.5, r.position.z - 1.0, r.position.x + 0.5, r.position.z + 1.0, 'prop'); }
+  { const r = pr37(cc37(24) - 0.2, cc37(33) + 0.2, 0, DECK37); B.add(r, 'Cylinder', { diameter: 0.6, height: 0.04, tessellation: 12 }, COL37.wood, 0, [0, 0.45, 0]); B.add(r, 'Cylinder', { diameter: 0.05, height: 0.45, tessellation: 6 }, COL37.steel, 0, [0, 0.22, 0]); B.add(r, 'Cylinder', { diameter: 0.22, height: 0.18, tessellation: 12 }, COL37.steel, 0, [-0.1, 0.56, 0.05]);
+    W37.BOn.add(r, 'Cylinder', { diameter: 0.1, height: 0.2, tessellation: 8 }, [1, 0.8, 0.5], 0.7, [0.14, 0.58, -0.05]); addSolid(r.position.x - 0.35, r.position.z - 0.35, r.position.x + 0.35, r.position.z + 0.35, 'prop'); W37.pos.kettle = { x: r.position.x, z: r.position.z, y: 0.6 }; }
+  W37.pos.abara = { x: cc37(23) + 0.2, z: cc37(36) - 0.4 }; W37.pos.camp = { x: cc37(22) + 0.2, z: cc37(34) };
+}
+function furnishPlant37(B) {
+  const P = LV.dry.plant, I = COL37.steel, R = COL37.rust, X0 = 8 * CELL, Z0 = 29 * CELL;
+  // three big pumps, each with its own gate wheel and gauge on the wall opposite
+  W37.gates = [];
+  const defs = [{ id: 'sh', name: 'SHALLOWS', x: 10, basin: BAS37.SH, low: -2.7 }, { id: 'well', name: 'DIVE WELL', x: 14, basin: BAS37.WELL, low: -6.3 }, { id: 'lap', name: 'LAP POOL', x: 18, basin: BAS37.LAP, low: -1.65 }];
+  defs.forEach((g, i) => {
+    const px = cc37(g.x) - 0.2, pz = cc37(31) + 1.0, r = pr37(px, pz, 0, DECK37);
+    B.add(r, 'Cylinder', { diameter: 1.5, height: 1.2, tessellation: 18 }, [0.3, 0.42, 0.44], 0, [0, 0.7, 0], [Math.PI / 2, 0, 0], null); B.add(r, 'Box', { width: 1.9, height: 0.4, depth: 1.5 }, I, 0, [0, 0.2, 0]);
+    B.add(r, 'Cylinder', { diameter: 0.45, height: 1.0, tessellation: 12 }, I, 0, [0.9, 1.05, 0], [0, 0, 0]); B.pipe([px + 0.9, 1.6, pz], [px + 0.9, 3.9, pz], 0.2, R); B.pipe([px + 0.9, 3.9, pz], [px + 0.9, 3.9, pz - 3.5], 0.2, R);
+    addSolid(px - 1.0, pz - 0.8, px + 1.0, pz + 0.8, 'prop');
+    const wr = wallAt37(g.x, 38, 1, 0); const k = twin37(wr);
+    B.add(wr, 'Box', { width: 0.9, height: 1.0, depth: 0.06 }, [0.22, 0.24, 0.24], 0, [0, 1.5, 0.03]); B.add(wr, 'Cylinder', { diameter: 0.14, height: 0.3, tessellation: 10 }, I, 0, [0, 1.5, 0.2], [Math.PI / 2, 0, 0]);
+    sign37(g.name + '\nGATE', k, [0, 2.3, 0.03], 0.9, 0.42, { bg: '#2a3a40', fg: '#e8d27a', line: '#e8d27a', emis: 0.45 });
+    const wheel = mkMerged(W37.propMat, P => { P('Torus', { diameter: 0.6, thickness: 0.05, tessellation: 22 }, [0.7, 0.08, 0.05], 0, [0, 0, 0], [Math.PI / 2, 0, 0]); for (let j = 0; j < 3; j++) P('Box', { width: 0.58, height: 0.03, depth: 0.03 }, [0.7, 0.08, 0.05], 0, [0, 0, 0], [0, 0, j * Math.PI / 3]); P('Cylinder', { diameter: 0.1, height: 0.07, tessellation: 10 }, I, 0, [0, 0, 0], [Math.PI / 2, 0, 0]); }, 'wheel37');
+    const wp = localPt(wr, 0, 1.5, 0.34); wheel.position.copyFrom(wp); wheel.rotation.y = wr.rotation.y;
+    // a gauge needle over the wheel
+    const gp = localPt(wr, 0.28, 1.9, 0.07), gm = mkMerged(W37.propMat, P => { P('Cylinder', { diameter: 0.2, height: 0.02, tessellation: 18 }, [0.9, 0.9, 0.84], 0, [0, 0, 0], [Math.PI / 2, 0, 0]); }, 'gauge37'); gm.position.copyFrom(gp); gm.rotation.y = wr.rotation.y;
+    const nd = tnode(null, gp.x, gp.y, gp.z); nd.rotation.y = wr.rotation.y; const needle = mkMerged(W37.propMat, P => { P('Box', { width: 0.012, height: 0.09, depth: 0.006 }, [0.7, 0.05, 0.03], 0.2, [0, 0.04, 0.012]); }, 'needle37'); needle.parent = nd;
+    const p = localPt(wr, 0, 1.2, 0.9); W37.gates.push(Object.assign(g, { mesh: wheel, needle, x: p.x, z: p.z, y: 1.4, ang: 0, busy: false, low: false }));
+  });
+  // the pump room's other furniture: a desk with the plant log, a locker, a cart, hoses
+  { const r = wallAt37(11, 29, 3, 0); B.add(r, 'Box', { width: 1.4, height: 0.05, depth: 0.7 }, COL37.wood2, 0, [0, 0.76, 0.4]); for (const x of [-0.62, 0.62]) B.add(r, 'Box', { width: 0.05, height: 0.74, depth: 0.6 }, COL37.wood, 0, [x, 0.37, 0.4]); solidLocal(r, -0.75, 0, 0.75, 0.8);
+    B.add(r, 'Box', { width: 0.3, height: 0.03, depth: 0.22 }, [0.18, 0.28, 0.4], 0, [0, 0.8, 0.4]); W37.pos.plantLog = { x: r.position.x, z: r.position.z + 0.9, y: 0.82 }; }
+  for (const [x, y] of [[13, 29], [16, 29]]) F37.locker(B, wallAt37(x, y, 3, 0), { n: 3, col: [0.34, 0.4, 0.4] });
+  for (let i = 0; i < 4; i++) B.pipe([8 * CELL + 0.3, 3.6 + i * 0.18, 29 * CELL + 1 + i * 8], [20 * CELL - 0.3, 3.6 + i * 0.18, 29 * CELL + 1 + i * 8], 0.08 + 0.02 * (i % 2), i % 2 ? R : I);
+  sign37('PLANT\nAUTHORISED STAFF ONLY', twin37(wallAt37(19, 34, 0, 0)), [0, 2.4, 0.03], 1.6, 0.6, { bg: '#2a3a40', fg: '#e8d27a', line: '#e8d27a', emis: 0.45 });
+  for (let i = 0; i < 6; i++) { const r = pr37(8 * CELL + rnd(1, 11 * CELL - 1), 29 * CELL + rnd(5, 9.5 * CELL - 1), rnd(0, TAU), DECK37); B.add(r, 'Box', { width: rnd(0.5, 1.2), height: 0.003, depth: rnd(0.4, 0.9) }, [0.2, 0.3, 0.32], 0, [0, 0.003, 0]); }
+}
+function furnishBooth37(B) {
+  const bx = 42 * CELL, bz = 16 * CELL;
+  // the desk with the monitor, the CRT and the VCR; a panel with three slots in the wall
+  { const r = wallAt37(44, 16, 3, 0); B.add(r, 'Box', { width: 2.4, height: 0.05, depth: 0.8 }, COL37.wood2, 0, [0, 0.76, 0.45]); for (const x of [-1.1, 1.1]) B.add(r, 'Box', { width: 0.06, height: 0.74, depth: 0.7 }, COL37.wood, 0, [x, 0.37, 0.45]); solidLocal(r, -1.25, 0, 1.25, 0.9);
+    B.add(r, 'Box', { width: 0.7, height: 0.56, depth: 0.6 }, [0.62, 0.6, 0.55], 0, [-0.6, 1.07, 0.4]); B.add(r, 'Box', { width: 0.54, height: 0.4, depth: 0.02 }, [0.05, 0.06, 0.08], 0.1, [-0.6, 1.09, 0.71]);
+    B.add(r, 'Box', { width: 0.6, height: 0.1, depth: 0.5 }, [0.12, 0.12, 0.13], 0, [0.35, 0.84, 0.5]); B.add(r, 'Box', { width: 0.34, height: 0.03, depth: 0.012 }, [0.03, 0.03, 0.03], 0, [0.35, 0.86, 0.76]); B.add(r, 'Box', { width: 0.02, height: 0.02, depth: 0.015 }, [1, 0.1, 0.05], 0.3, [0.58, 0.87, 0.76]);
+    W37.pos.tv = { x: r.position.x - 0.6 + 0, z: r.position.z + 1.3, y: 1.1, r, vx: 0.35 }; W37.pos.deskB = { x: r.position.x, z: r.position.z + 1.2 }; W37.pos.tvRoot = r; }
+  { const r = wallAt37(42, 20, 2, 0); B.add(r, 'Box', { width: 1.0, height: 1.2, depth: 0.1 }, [0.26, 0.28, 0.28], 0, [0, 1.4, 0.05]); W37.pos.panelR = r; W37.pos.panel = { x: r.position.x + Math.sin(r.rotation.y) * 0.9, z: r.position.z + Math.cos(r.rotation.y) * 0.9 }; }
+  { const r = pr37(bx + 1.2, bz + 3.5, 2.6, DECK37); B.add(r, 'Cylinder', { diameter: 0.4, height: 0.05, tessellation: 12 }, COL37.black, 0, [0, 0.5, 0]); B.add(r, 'Cylinder', { diameter: 0.05, height: 0.5, tessellation: 6 }, COL37.steel, 0, [0, 0.25, 0]); B.add(r, 'Box', { width: 0.4, height: 0.55, depth: 0.06 }, COL37.black, 0, [0, 0.82, -0.2]); addSolid(r.position.x - 0.3, r.position.z - 0.3, r.position.x + 0.3, r.position.z + 0.3, 'prop'); }
+  { const r = wallAt37(45, 19, 0, 0); B.add(r, 'Box', { width: 1.1, height: 1.9, depth: 0.5 }, COL37.wood, 0, [0, 0.95, 0.25]); for (const y of [0.55, 1.1, 1.65]) B.add(r, 'Box', { width: 1.0, height: 0.03, depth: 0.46 }, COL37.wood2, 0, [0, y, 0.25]); solidLocal(r, -0.6, 0, 0.6, 0.55); }
+  sign37('LIFEGUARD\nCONTROL', twin37(wallAt37(41, 18, 0, -1.9)), [0, 2.3, 0.03], 1.6, 0.6, { bg: '#e9f6f8', fg: '#17607a', line: '#17607a' });
+  // the window onto the Dive Well (a pane of glass in a frame)
+  { const r = wallAt37(42, 20, 2, -0.3); }
+}
+// the Pump Room and booth interactions live in story37.js; the wings' furniture lives in wings37.js
+
+// ==== wings37.js ====
+// ---------- r8 · Level 37: the three wings (stubs; filled in below) ----------
+function planHotel37() {} function planHospital37() {} function planWorld37() {}
+function lightHotel37() {} function lightHospital37() {} function lightWorld37() {}
+function furnishHotel37() {} function furnishHospital37() {} function furnishWorld37() {}
+
+// ==== story37.js ====
+// ---------- r8 · Level 37 story (first pass: engine test scaffolding; replaced by the full story below) ----------
+const P37 = { keys: {}, gates: {} };
+function resetP37() { for (const k of Object.keys(P37)) delete P37[k]; Object.assign(P37, { keys: {}, gates: {} }); }
+resetP37();
+function setPhase37(p) { if (p) G37.phase = p; objective(obj37()); tasks37(); }
+function obj37() { return 'FIND DRY GROUND'; }
+function tasks37() {}
+function target37() { return null; }
+function wingsDone37() { return 0; }
+function arrive37() { toast('LEVEL 37', 2); }
+function flags37() {}
+function endCard37() { return ['SURFACED', 'The picture goes white.']; }
+function floodTick37() {}
+function stopFlood37() {}
+function places37Events() {}
+function doorLabel37(dr) { return dr.target ? 'CLOSE DOOR' : dr.locked ? 'LOCKED' : 'OPEN DOOR'; }
+function useDoor37(dr) { if (dr.locked) { SFX9.rattle(P9({ x: dr.mx, z: dr.mz })); toast('LOCKED', 1.6); return; } useDoor(dr); }
+function buildStory37() {
+  if (W37.tower) { const T = W37.tower; W.interact.push({ x: W37.pos.towerBase.x, z: W37.pos.towerBase.z, y: 1.2, r: 1.8, label: () => 'CLIMB THE TOWER', ok: () => !G37.onTower && G.state === 'play', act: () => climbTower37() }); }
+  for (const g of W37.gates || []) W.interact.push({ x: g.x, z: g.z, y: 1.4, r: 1.9, label: () => g.low ? `${g.name} GATE · REFILL` : `${g.name} GATE · DRAIN`, ok: () => G.state === 'play' && !g.busy, act: () => { g.busy = true; g.low = !g.low; const B = LV.basins[g.basin]; B.tgt = g.low ? g.low : 0; g.low = !g.low; } });
+}
+function buildItems37() {}
+
+// ==== ai37.js ====
+// ---------- r8 · Level 37: the people and things in the water (stub; filled in below) ----------
+const AI37 = { npcs: [], staff: [], fish: null };
+function initAI37() { Object.assign(AI, { all: [], howlers: [], smilers: [], exps: [], crawler: null, mimic: null, flick: 0 }); AI37.npcs = []; AI37.staff = []; AI37.fish = null; }
+function updateAI37(dt) {
+  PL.fear = 0; PL.interf = 0; AI.flick = 0; G.chase = 0;
+  for (const a of AI.all) a.update(dt);
+  AI.visT -= dt; if (AI.visT <= 0) { AI.visT = 0.1; for (const a of AI.all) a.cull(); }
+  const cs = []; for (const a of AI.all) if (a.shown && a.shadowR > 0) { const d = a.d; if (d < 20) cs.push([d, a]); } cs.sort((a, b) => a[0] - b[0]);
+  for (let i = 0; i < 8; i++) { const a = cs[i] && cs[i][1]; if (a) setShadowCaster(i, a.x, a.z, a.shadowR, 0.45); else setShadowCaster(i, 0, 0, 0, 0); }
+}
+function foes37() { return []; }
+
+// ==== main37.js ====
+// ---------- r8 · Level 37 · Sublimity: arrival, water physics (wading, swimming, diving, falling), breath, drift, flow and endings ----------
+const G37 = { from: null };
+const BREATH37 = [48, 32, 22];   // seconds underwater before you start to drown, by difficulty
+function resetG37() {
+  const from = G37.from; for (const k of Object.keys(G37)) delete G37[k];
+  Object.assign(G37, { from, phase: 'arrive', breath: 1, ey: 1.6, vy: 0, under: false, wasDepth: 0, falling: false, onTower: false, tilt: 0, drift: 0, driftT: 0, dryT: 0, hatchOpen: false, flood: 0, endWon: false, ending: '',
+    splashCd: 0, bubbleT: 0, ambT: 12, voiceT: 40, lastSafe: null, introSwim: true, warns: {}, hum: null, amb: null });
+}
+resetG37();
+DEATH_TXT.drown = ['DROWNED', 'The picture goes blue, then goes quiet. The date keeps counting.'];
+DEATH_TXT.fish = ['SOMETHING IN THE WATER', 'The last frames are a lens full of teeth and then nothing at all.'];
+DEATH_TXT.drift = ['STILL RECORDING', 'The tape runs for hours more. Nobody is holding the camera.'];
+function carryFrom18() { return carryFrom9(); }
+function teardown37() {
+  for (const k of ['hum', 'amb']) { const v = G37[k]; if (v) { try { v.src && v.src.stop(); (v.v ? v.v.g : v.g).disconnect(); v.bed && v.bed.disconnect(); } catch (e) {} G37[k] = null; } }
+  PL.spdK = 1; PL.load = false; document.body.classList.remove('lvl37'); $('breath37').classList.add('hide'); try { stopFlood37 && stopFlood37(); } catch (e) {}
+}
+async function goLevel37(from) {
+  const f = Object.assign({ hp: 100, san: 100, batt: [100, 90, 75][G.diff], spare: [2, 1, 1][G.diff], water: [3, 1, 1][G.diff], time: 0, dist: 0, lost: 0, tapes: 4 }, from || G37.from || {});
+  G37.from = Object.assign({}, f);
+  G.state = 'loading'; show('loading'); $('osd').classList.add('hide'); $('touch').classList.add('hide'); $('blue').classList.add('hide');
+  $('loadOsd').textContent = '▶ LEVEL 37 · SUBLIMITY'; $('loadFill').style.width = '0%';
+  if (AU.ctx && AU.ctx.state === 'suspended') AU.ctx.resume();
+  teardownScene();
+  LVL = 37; setDims(L37_N, L37_LMR); document.body.classList.remove('lvl9', 'lvl5', 'lvl18'); document.body.classList.add('lvl37'); AU.remap = null;
+  resetG37(); resetP37(); tasksReset('LEVEL 37 · SUBLIMITY');
+  const prog = (p, m) => { $('loadFill').style.width = (p * 100).toFixed(0) + '%'; $('loadMsg').textContent = m; };
+  RNG = mulberry32((Math.random() * 4294967296) >>> 0);
+  await buildWorld37(prog);
+  setupPost(+S.qual); applySettings();
+  Object.assign(PL, { x: W37.pos.arrive.x, z: W37.pos.arrive.z, yaw: 0, pitch: 0, vx: 0, vz: 0, kx: 0, kz: 0, crouch: false, ck: 0, sta: 1, exh: false,
+    hp: Math.max(f.hp, 75), san: Math.max(f.san, 75), batt: Math.max(f.batt, 60), spare: f.spare, water: f.water, flash: false, fk: 0, nv: false, zoomT: false, zk: 0,
+    noise: 0, dist: f.dist, lastHurt: -99, shake: 0, cell: -1, fear: 0, lookAt: null, lookK: 0, focus: null, interf: 0, spdK: 1, load: false });
+  updateField();
+  Object.assign(G, { time: f.time, lost: f.lost, tapes: f.tapes, cause: '', blackout: 0, exitOn: false, chase: 0, hintT: 0, grace: 0 });
+  HINT.stage = 0; HINT.site = null;
+  initAI37();
+  Object.assign(FX, { envA: [0.2, 0.26, 0.28, 0], envS: [0.0, 0.0, 0.0, 0], fadeW: 1, fadeB: 0 });
+  G37.ey = LV.basins[0].y + 0.22; CAM.position.set(PL.x, 1.6, PL.z); CAM.rotation.set(0, PL.yaw, 0); CAM.getViewMatrix(true); worldFX37(0.016); pushUniforms();
+  await new Promise(r => SCN.executeWhenReady(() => r()));
+  prog(1, 'READY'); await nextFrame();
+  try { localStorage.setItem('br_l37', '1'); } catch (e) {}
+  hideScreens(); G.state = 'intro'; INTRO.t = 0; SFX.tape();
+}
+function startLevel37Menu() {
+  if (G.state !== 'title') return;
+  audioInit(S.vol); if (AU.ctx.state === 'suspended') AU.ctx.resume();
+  applySettings(); lockPointer(); G37.from = null; goLevel37(null);
+}
+// arrival: you come up from underneath, through the surface, into a room that is much too bright
+function introCam37(dt) {
+  INTRO.t += dt; const t = INTRO.t, k = smooth(0.4, 4.2, t), W0 = LV.basins[BAS37.SH].y;
+  FX.fadeW = 1 - smooth(0.2, 2.6, t); FX.fadeB = 0;
+  const y = lerp(W0 - 1.7, 1.6 + W0 * 0, smooth(1.5, 4.6, t)), sw = t < 2.4 ? -0.45 + 0.3 * smooth(0.5, 2.4, t) : 0;
+  CAM.position.set(PL.x, y, PL.z); CAM.rotation.set(lerp(-1.2, 0, k), PL.yaw, Math.sin(t * 1.4) * 0.05 * (1 - k)); CAM.fov = S.fov * Math.PI / 180;
+  G37.ey = y; G37.under = y < W0 - 0.02; FX.under = G37.under ? 1 : 0;
+  if (t > 0.6 && !G37.introSnd) { G37.introSnd = true; SFX37.surface(); }
+  if (t > 4.9) beginPlay37();
+}
+function beginPlay37() {
+  G.state = 'play'; FX.fadeW = FX.fadeB = 0; PL.pitch = 0; $('osd').classList.remove('hide'); if (IS_TOUCH) $('touch').classList.remove('hide');
+  G37.introSwim = false; setPhase37('arrive'); cpSave('LEVEL START', { x: PL.x, z: PL.z, yaw: PL.yaw, quiet: true }); arrive37();
+}
+
+// ----- the water around the player: depth, wading, swimming, diving, falling -----
+function waterPhys37(dt) {
+  const play = G.state === 'play', t = FX.t, c = cell37(PL.x, PL.z), fh = LV.fh[c], b = LV.bas[c], W0 = b >= 0 ? LV.basins[b].y : -99, depth = b >= 0 ? Math.max(0, W0 - fh) : 0;
+  const swim = depth > 1.3, standEye = fh + lerp(1.62, 1.03, PL.ck), bobY = CAM.position.y - lerp(1.62, 1.03, PL.ck);
+  // on the tower the player stands on the platform; leaving it by the open edge is a fall
+  if (play) towerPhys37();
+  let ey = G37.ey, vy = G37.vy;
+  const surf = W0 + 0.22 + 0.025 * Math.sin(t * 1.7), floorMin = fh + 0.45;
+  const support = swim ? surf : standEye;
+  if (!play) { /* hold */ }
+  else if (ey > support + 0.35 && !G37.onTower) {   // nothing under you: fall
+    vy -= 9.8 * dt; ey += vy * dt; G37.falling = true;
+    if (swim && ey <= surf) { G37.falling = false; splash37(Math.min(1.5, Math.abs(vy) / 8)); vy *= 0.55; }
+    else if (!swim && ey <= standEye) { G37.falling = false; if (vy < -4) { PL.hp -= Math.max(0, (-vy - 6) * 5); FX.hurt = 0.6; PL.shake = 0.8; SFX.thunk && SFX.thunk(); } vy = 0; ey = standEye; }
+  } else if (swim) {
+    G37.falling = false;
+    const fwd = clamp(PL.spd, 0, 2.6), want = -Math.sin(PL.pitch) * fwd * 0.95 + (PL.crouch ? -0.6 : 0.42) * (G37.under ? 1 : 0.9);
+    vy = damp(vy, want, 2.6, dt); ey += vy * dt;
+    if (ey > surf) { ey = damp(ey, surf, 12, dt); if (vy > 0) vy = 0; }
+    ey = Math.max(ey, floorMin);
+  } else { G37.falling = false; ey = damp(ey, standEye, 11, dt); vy = 0; }
+  G37.ey = ey; G37.vy = vy;
+  CAM.position.y = ey + bobY * (swim ? 0.3 : 1);
+  G37.wasDepth = depth;
+  // under the surface?
+  const wasUnder = G37.under, under = b >= 0 && CAM.position.y < W0 - 0.03;
+  G37.under = under; FX.under = damp(FX.under || 0, under ? 1 : 0, 14, dt);
+  if (under !== wasUnder && play) { under ? splash37(0.35) : (SFX37.breathe(), G37.bubbleT = 0); }
+  // breath
+  if (play) {
+    const max = BREATH37[G.diff];
+    if (under) { G37.breath = Math.max(0, G37.breath - dt / max); G37.bubbleT -= dt; if (G37.bubbleT <= 0) { G37.bubbleT = rnd(1.4, 2.6); SFX37.bubbles(); } PL.fear = Math.max(PL.fear, G37.breath < 0.35 ? 0.5 : 0); }
+    else G37.breath = Math.min(1, G37.breath + dt * 0.55);
+    if (G37.breath < 0.3 && under) { FX.glitch = Math.max(FX.glitch, 0.25 + (0.3 - G37.breath)); if (!G37.warns.low) { G37.warns.low = true; toast('BREATHE · SWIM UP', 2); } }
+    if (G37.breath > 0.6) G37.warns.low = false;
+    if (under && G37.breath <= 0) { PL.hp -= dt * 16; FX.hurt = Math.max(FX.hurt, 0.6); PL.shake = Math.max(PL.shake, 0.5); if (PL.hp <= 0) { PL.hp = 0; die('drown'); } }
+    $('breath37').classList.toggle('hide', !(under || G37.breath < 0.99));
+    const f = $('breathFill'); if (f) { f.style.width = (G37.breath * 100).toFixed(0) + '%'; f.parentNode.classList.toggle('low', G37.breath < 0.3); }
+  }
+  // movement in the water: slower the deeper it is, no sprinting
+  PL.spdK = (depth < 0.15 ? 1 : depth < 0.9 ? 0.84 : swim ? (under ? 0.58 : 0.66) : 0.72) * (G37.drag || 1);
+  PL.load = depth > 0.5;
+  // wading splashes
+  G37.splashCd -= dt;
+  if (play && PL.spd > 0.4 && depth > 0.05 && depth <= 1.3 && G37.splashCd <= 0) { G37.splashCd = PL.run ? 0.28 : 0.46; SFX37.wade(depth); }
+  if (depth > 0.05 && G37.wasWet !== true) { G37.wasWet = true; if (play) SFX37.splashSoft(); } else if (depth <= 0.05) G37.wasWet = false;
+}
+function splash37(k) { SFX37.splash(k); PL.shake = Math.max(PL.shake, 0.3 * k); FX.glitch = Math.max(FX.glitch, 0.2 * k); makeNoise(0.2 + 0.2 * k); }
+// the ten-metre tower: climb it by the ladder (a lift with a fade), stand on top, step off the open edge
+function towerPhys37() {
+  const T = W37.tower; if (!T) return;
+  if (G37.onTower) {
+    const dx = PL.x - T.cx, dz = PL.z - T.cz;
+    if (PL.x > T.cx + CELL / 2 - 0.2) {   // you walked off the open edge
+      G37.onTower = false; for (const i of [...T.edge, T.gap]) LV.solids[i].off = false; G37.ey = T.top + 1.62; G37.vy = 1.0; G37.falling = true; toast('', 0.01);
+    } else { G37.ey = damp(G37.ey, T.top + lerp(1.62, 1.03, PL.ck), 12, 0.016); }
+  }
+}
+function climbTower37() {
+  const T = W37.tower; if (!T || G37.onTower || G.state !== 'play') return;
+  G37.climb = { t: 0 }; SFX37.ladder(); makeNoise(0.1);
+}
+function updateClimb37(dt) {
+  const C = G37.climb; if (!C) return; C.t += dt; const T = W37.tower;
+  FX.fadeB = C.t < 0.9 ? C.t / 0.9 : Math.max(0, 1 - (C.t - 1.5) / 0.7);
+  if (!C.moved && C.t >= 0.9) { C.moved = true; PL.x = T.cx - 0.6; PL.z = T.cz; PL.yaw = Math.PI / 2; PL.pitch = 0.1; PL.vx = PL.vz = 0; PL.cell = -1; G37.onTower = true; G37.ey = T.top + 1.62; G37.vy = 0; LV.solids[T.gap].off = true; updateField(); toast('THE EDGE IS OPEN TO THE EAST · TEN METRES', 3); }
+  if (C.t > 2.2) { G37.climb = null; FX.fadeB = 0; }
+}
+
+// ----- per-frame story events -----
+function gameEvents37(dt) {
+  places37Events(dt);
+  waterPhys37(dt); updateClimb37(dt); basins37(dt);
+  const pc = cell37(PL.x, PL.z), z = LV.zone[pc];
+  // the Scape: serenity and drift. Floating still in warm water steadies you and pulls at you; moving on and doing things pushes it back.
+  drift37(dt, z);
+  // ambient: the filters, the odd drip, a far door
+  G37.ambT -= dt; if (G37.ambT <= 0) { G37.ambT = rnd(14, 30); SFX37.far(P9({ x: PL.x + rnd(-24, 24), y: 2, z: PL.z + rnd(-24, 24) })); }
+  // whispers when sanity is low
+  G37.voiceT -= dt;
+  if (G37.voiceT <= 0 && PL.san < 45) { G37.voiceT = rnd(20, 38); SFX.whisper(); say('', pick(W37_WHISPER), { dur: 4, mode: 'whisper' }); }
+  if (G37.flood) floodTick37(dt);
+}
+const W37_WHISPER = ['…you can put it down for a minute…', '…the water is the same temperature as you…', '…count the tiles, it helps…', '…nobody is timing this…', '…you were going somewhere…', '…it\'s only water…'];
+function drift37(dt, z) {
+  const moving = PL.spd > 0.45, inWater = depth37(PL.x, PL.z) > 0.2 && !G37.under, k = [0.7, 1, 1.35][G.diff];
+  if (G.state !== 'play') return;
+  if (inWater && !moving && !G37.flood) { G37.drift = Math.min(1, G37.drift + dt / 38 * k); PL.san = Math.min(100, PL.san + dt * 1.4); }
+  else G37.drift = Math.max(0, G37.drift - dt / 14);
+  if (G37.drift > 0.6 && !G37.warns.drift) { G37.warns.drift = true; toast('IT IS VERY PLEASANT HERE · KEEP MOVING', 3); }
+  if (G37.drift < 0.3) G37.warns.drift = false;
+  FX.drift = G37.drift;
+  if (G37.drift >= 1) {   // the Scape carries you: you come to in the shallows with the clock moved on
+    G37.drift = 0; G37.warns.drift = false; FX.fadeB = 1; G.time += 600; later(0.2, () => { PL.x = W37.pos.arrive.x + rnd(-2, 2); PL.z = W37.pos.arrive.z + rnd(-2, 2); PL.cell = -1; G37.ey = 1.2; G37.vy = 0; updateField(); FX.fadeB = 0; FX.fadeW = 1; toast('THE CLOCK SAYS TEN MINUTES LATER', 3.4); say('M.E.G. OUTPOST 9', 'Nine. Your carrier dropped for a while. Keep moving.', { radio: true, delay: 1.5 }); });
+  }
+}
+function basins37(dt) {
+  for (const B of LV.basins) {
+    if (!B.mesh) continue;
+    const d = B.tgt - B.y; if (Math.abs(d) > 0.0005) { const sp = B.speed || 0.11; B.y += Math.sign(d) * Math.min(Math.abs(d), sp * dt); B.mesh.position.y = B.y; if (B.caust) B.caust.mat.setVector4('wP', new BABYLON.Vector4(1, 1, B.y, 0)); }
+    if (B.caust && !B.caust.init) { B.caust.init = true; B.caust.mat.setVector4('wP', new BABYLON.Vector4(1, 1, B.y, 0)); }
+  }
+  const t = FX.t;
+  for (const f of W37.bob) { const fh = LV.fh[cell37(f.x || f.n.position.x, f.z || f.n.position.z)], by = f.b.y, y = Math.max(by, fh) + f.dy + (by > fh ? 0.025 * Math.sin(t * 1.3 + f.ph) : 0); f.n.position.y = y; if (!f.n.__rope) f.n.rotation.z = by > fh ? 0.05 * Math.sin(t * 0.9 + f.ph) : 0; }
+}
+
+// ----- per-frame world effects -----
+function worldFX37(dt) {
+  const t = FX.t, cp = CAM.position, live = G.state === 'play' || G.state === 'dead' || G.state === 'won', z = LV.zone[cell37(cp.x, cp.z)], under = FX.under || 0;
+  FX.flicker = 0.9 + 0.1 * hash1(Math.floor(t * 30)); FX.lightScale = 1; FX.hurt = Math.max(0, FX.hurt - dt * 0.9); FX.glitch = Math.max(0, FX.glitch - dt * 1.3);
+  const zl = zoneLook37(z), dark = LV.dark[cell37(cp.x, cp.z)];
+  FX.fogDen = lerp(dark ? 0.05 : zl.den, 0.17, under); const fc = zl.fog;
+  FX.fog[0] = lerp(fc[0], 0.04, under); FX.fog[1] = lerp(fc[1], 0.33, under); FX.fog[2] = lerp(fc[2], 0.4, under);
+  FX.envA[0] = lerp(zl.amb[0], 0.04, under); FX.envA[1] = lerp(zl.amb[1], 0.14, under); FX.envA[2] = lerp(zl.amb[2], 0.18, under);
+  if (live) FX.exposure = 0.96 * S.bright * lerp(1, clamp(0.3 / Math.max(PL.light, 0.01), 0.22, 1), FX.nv);
+  if (W37.lensFl) setEmi(W37.lensFl, 3.2 * FX.flicker);
+  if (W.itemMat) setEmi(W.itemMat, 0.4 + 0.8 * Math.max(0, Math.sin(t * 2.6)) ** 6);
+  G37.doorT = (G37.doorT || 0) - dt; if (G37.doorT <= 0) { G37.doorT = 0.25; for (const d of W9.doors) { const on = dist2(d.mx, d.mz, cp.x, cp.z) < d.cull; if (d.vis !== on) { d.vis = on; d.mesh.setEnabled(on); } } } updateDoors9(dt);
+  // water sound and moving light
+  if (W37.waterMat) W37.waterMat.setVector4('wP', new BABYLON.Vector4(1, 1, 0, 0));
+  if (live) wlights37(dt);
+  if (AU.ctx) audio37(dt, z, under);
+  for (const m of LV.chunkMeshes) { const c = m.__c || (m.__c = m.getBoundingInfo().boundingBox.centerWorld.clone()); m._sortD = Math.hypot(c.x - cp.x, c.z - cp.z); }
+}
+// the look of each part of the level: fog colour/density and ambient light
+function zoneLook37(z) {
+  switch (z) {
+    case Z37.POOL: return { fog: [0.72, 0.9, 0.92], den: 0.0055, amb: [0.34, 0.4, 0.42] };
+    case Z37.CABANA: case Z37.BOOTH: case Z37.VEST: return { fog: [0.78, 0.84, 0.82], den: 0.009, amb: [0.3, 0.31, 0.29] };
+    case Z37.PLANT: return { fog: [0.4, 0.48, 0.48], den: 0.014, amb: [0.2, 0.23, 0.23] };
+    case Z37.TUNNEL: return { fog: [0.06, 0.13, 0.15], den: 0.045, amb: [0.07, 0.1, 0.11] };
+    case Z37.HOTEL: case Z37.CAFE: return { fog: [0.62, 0.55, 0.44], den: 0.014, amb: [0.28, 0.24, 0.18] };
+    case Z37.HOSP: return { fog: [0.72, 0.8, 0.78], den: 0.012, amb: [0.28, 0.32, 0.31] };
+    case Z37.PARK: return { fog: [0.74, 0.8, 0.84], den: 0.014, amb: [0.32, 0.35, 0.38] };
+    case Z37.DOME: return { fog: [0.1, 0.32, 0.42], den: 0.024, amb: [0.1, 0.18, 0.22] };
+    case Z37.STAFF: return { fog: [0.24, 0.16, 0.09], den: 0.032, amb: [0.12, 0.08, 0.05] };
+    case Z37.WWF: return { fog: [0.07, 0.26, 0.32], den: 0.04, amb: [0.09, 0.15, 0.18] };
+    default: return { fog: [0.7, 0.86, 0.88], den: 0.012, amb: [0.3, 0.34, 0.36] };
+  }
+}
+
+// ----- ending, win/lose screens -----
+function win37(kind) {
+  if (G.state !== 'play') return;
+  G.state = 'won'; G37.ending = kind; DEATH.t = 0; DEATH.shown = false; clearSlot(0); $('prompt').classList.remove('show'); G37.wc = { x: CAM.position.x, y: CAM.position.y, z: CAM.position.z, yaw: CAM.rotation.y, pitch: CAM.rotation.x };
+  SFX37.chime ? SFX37.chime() : 0;
+}
+function wonCam37(dt) {
+  DEATH.t += dt; const t = DEATH.t, w = G37.wc; updateAI37(dt);
+  if (G37.ending === 'surface') { CAM.position.set(w.x, w.y + smooth(0, 3, t) * 1.2, w.z); CAM.rotation.set(lerp(w.pitch, -0.9, smooth(0, 2.5, t)), w.yaw, 0); FX.fadeW = smooth(1.2, 4.2, t); }
+  else { CAM.position.set(w.x, lerp(w.y, 0.12, smooth(0, 3.5, t)), w.z); CAM.rotation.set(lerp(w.pitch, 0.9, smooth(0, 3.5, t)), w.yaw + t * 0.03, Math.sin(t) * 0.04); FX.fadeB = smooth(2.2, 5, t); }
+  if (t > 5.4 && !DEATH.shown) { DEATH.shown = true; showEnd37(true); }
+}
+function showEnd37(won) {
+  if (document.pointerLockElement) document.exitPointerLock();
+  $('osd').classList.add('hide'); $('touch').classList.add('hide'); G37.endWon = won; if (won) flags37();
+  const [title, text] = won ? endCard37() : (DEATH_TXT[G.cause] || DEATH_TXT.drown);
+  $('endKicker').textContent = won ? (G37.ending === 'stay' ? 'STILL WATER · END OF RECORDING' : 'SURFACED · END OF RECORDING') : '■ SIGNAL LOST · LEVEL 37';
+  $('endTitle').textContent = title; $('endText').textContent = text;
+  const st = [['TIME ON TAPE', fmtTC(G.time)], ['DISTANCE', Math.round(PL.dist) + ' M'], ['LEVEL', '37 · SUBLIMITY'], ['DIFFICULTY', DIFFS[G.diff]], ['WINGS', wingsDone37() + '/3']];
+  $('endStats').innerHTML = st.map(([a, b]) => `<div><span>${a}</span><b>${b}</b></div>`).join('');
+  $('btnAgain').textContent = won ? '▶ PLAY AGAIN (LEVEL 0)' : '▶ RETRY LEVEL 37'; show('end');
+}
+function hudObj37() { return G37.flood ? 'THE WATER IS RISING' : `WINGS ${wingsDone37()}/3`; }
+function hudItems37() { const a = []; if (P37.keys.hotel) a.push('ROOM KEY'); if (P37.keys.hosp) a.push('DISCHARGE'); if (P37.keys.tape) a.push('VIDEO'); return a.join(' · ') || 'EMPTY HANDS'; }
+
+if (/[?&]debug/.test(location.search)) addEventListener('load', () => Object.assign(window.__BR || (window.__BR = {}), { G37, W37, AI37, P37, LV37: () => LV, goLevel37, beginPlay37, worldFX37, gameEvents37, waterPhys37, depth37, floorY37, waterY37, cell37, Z37, BAS37, win37, climbTower37, setPhase37, target37, tasks37 }));
+
 // ==== main18.js ====
 // Level 18 · arrival, memory recovery, sanity, guidance and the final drawn door.
 const G18 = {from:null};
@@ -14232,7 +15146,7 @@ function worldFX18(dt){
  for(const m of LV.chunkMeshes){const c=m.__c||(m.__c=m.getBoundingInfo().boundingBox.centerWorld.clone());m._sortD=Math.hypot(c.x-cp.x,c.z-cp.z);}
 }
 function win18(){if(G.state!=='play'||!W18.exitDoor.on)return;G.state='won';DEATH.t=0;DEATH.shown=false;clearSlot(0);$('prompt').classList.remove('show');G18.wc={x:CAM.position.x,z:CAM.position.z,yaw:CAM.rotation.y,pitch:CAM.rotation.x};for(const f of AI18.fog)f.goAway(99);SFX18.chime();}
-function wonCam18(dt){DEATH.t+=dt;const t=DEATH.t,X=W18.exitDoor,w=G18.wc,k=smooth(0,2.8,t);updateAI18(dt);CAM.position.set(lerp(w.x,X.fx-0.3,k),1.6,lerp(w.z,X.fz,k));CAM.rotation.set(lerp(w.pitch,0,k),w.yaw+angDiff(w.yaw,-Math.PI/2)*k,0);FX.fadeW=smooth(1.6,4,t);if(t>5&&!DEATH.shown){DEATH.shown=true;showEnd18(true);}}
+function wonCam18(dt){DEATH.t+=dt;const t=DEATH.t,X=W18.exitDoor,w=G18.wc,k=smooth(0,2.8,t);updateAI18(dt);CAM.position.set(lerp(w.x,X.fx-0.3,k),1.6,lerp(w.z,X.fz,k));CAM.rotation.set(lerp(w.pitch,0,k),w.yaw+angDiff(w.yaw,-Math.PI/2)*k,0);FX.fadeW=smooth(1.6,4,t);if(t>5&&!DEATH.shown){DEATH.shown=true;G18.endWon=true;flags18();goLevel37(carryFrom18());}}
 function showEnd18(won){if(document.pointerLockElement)document.exitPointerLock();$('osd').classList.add('hide');$('touch').classList.add('hide');G18.endWon=won;if(won)flags18();const [title,text]=won?['YOU REMEMBERED',endText18()]:(DEATH_TXT[G.cause]||DEATH_TXT.forgotten);$('endKicker').textContent=won?'WOKEN UP · END OF RECORDING':'■ SIGNAL LOST · LEVEL 18';$('endTitle').textContent=title;$('endText').textContent=text;const st=[['TIME ON TAPE',fmtTC(G.time)],['DISTANCE',Math.round(PL.dist)+' M'],['DRAWINGS',G18.pinned.length+'/4'],['LEVEL','18 · NOSTALGIC MEMORIES'],['DIFFICULTY',DIFFS[G.diff]]];$('endStats').innerHTML=st.map(([a,b])=>`<div><span>${a}</span><b>${b}</b></div>`).join('');$('btnAgain').textContent=won?'▶ PLAY AGAIN (LEVEL 0)':'▶ RETRY LEVEL 18';show('end');}
 function target18(){let to=null;const pc=cell18(PL.x,PL.z),z=LV.zone[pc];if(G18.phase==='arrive')to=AI18.dino;else if(G18.phase==='exit')to=W18.exitDoor;else if(G18.phase==='name')to=targetMem18();else if(G18.phase==='color')to=P18.crayons||!W18.p18||!W18.p18.tub?W18.exitDoor:W18.p18.tub;else if(!G18.noteRead)to=W18.deskNote;else if(G18.carry.length&&(z===Z18.CLASS||G18.found===4))to=W18.board;else{const left=W18.drawings.filter(d=>!d.taken);to=left.sort((a,b)=>dist2(a.x,a.z,PL.x,PL.z)-dist2(b.x,b.z,PL.x,PL.z))[0]||W18.board;}if(!to)return null;const gc=cell18(to.x,to.z);if(gc===pc||los(PL.x,PL.z,to.x,to.z))return to;if(G18.targetCell!==gc||G18.targetVer!==LV.navVer){G18.targetCell=gc;G18.targetVer=LV.navVer;G18.targetField=bfs(gc%N,(gc/N)|0,c=>!LV.zone[c]);}const F=G18.targetField;let c=pc;if(F[c]<0)return to;for(let i=0;i<3;i++){let best=c;const x=c%N,y=(c/N)|0;for(let d=0;d<4;d++){const nx=x+DX[d],ny=y+DY[d],n=cIdx(nx,ny);if(inGrid(nx,ny)&&passable(x,y,d)&&F[n]>=0&&F[n]<F[best])best=n;}if(best===c)break;c=best;}return {x:cellCenter(c%N),z:cellCenter((c/N)|0)};}
 function hudObj18(){return G18.phase==='name'?'YOUR NAME':`DRAWINGS ${G18.found}/4`;}

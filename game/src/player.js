@@ -14,7 +14,7 @@ const TOUCH = { mx: 0, mz: 0 };
 
 function lightAt(x, z) { return baseLight(x, z, FX.flicker) * 0.667 * FX.lightScale; } // ~1 in a lit room, <0.1 in the dead zones
 function makeNoise(v) { PL.noise = Math.max(PL.noise, v); }
-function carpetWet(x, z) { return noise1(x * 0.35 + 3.1) + noise1(z * 0.35 - 8.7) > 0.7 || (LVL === 0 && !!P0.off && inPlace0(P0.off, x, z)); }
+function carpetWet(x, z) { if (LVL === 37) return depth37(x, z) > 0.04; return noise1(x * 0.35 + 3.1) + noise1(z * 0.35 - 8.7) > 0.7 || (LVL === 0 && !!P0.off && inPlace0(P0.off, x, z)); }
 
 function resetPlayer() {
   Object.assign(PL, { x: cellCenter(LV.spawn.x), z: cellCenter(LV.spawn.y), vx: 0, vz: 0, crouch: false, ck: 0, sta: 1, exh: false, hp: 100, san: 100,

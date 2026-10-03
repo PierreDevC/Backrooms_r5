@@ -189,7 +189,7 @@ function wonCam(dt) {
   if (DEATH.t > 2.4 && !DEATH.shown) { DEATH.shown = true; flags0(); goLevel9(carryFromL0()); }
 }
 function showEnd(won) {
-  if (LVL === 18) showEnd18(won); else if (LVL === 5) showEnd5(won); else if (LVL === 9) showEnd9(won); else showEnd0(won);
+  if (LVL === 37) showEnd37(won); else if (LVL === 18) showEnd18(won); else if (LVL === 5) showEnd5(won); else if (LVL === 9) showEnd9(won); else showEnd0(won);
   cpEndUI(won);   // Easy / Normal: offer the last checkpoint
 }
 function showEnd0(won) {
@@ -220,7 +220,7 @@ function teardownScene() {
   for (const a of AI.all) for (const v of [a.growl, a.whine]) if (v) { try { v.g.disconnect(); if (v.src) v.src.stop(); } catch (e) {} }
   if (hiss) { try { hiss.g.disconnect(); } catch (e) {} hiss = null; }
   if (HINT.beacon) { try { HINT.beacon.g.disconnect(); } catch (e) {} HINT.beacon = null; } HINT.stage = 0; HINT.site = null;
-  teardown9(); teardown5(); teardown18();
+  teardown9(); teardown5(); teardown18(); teardown37();
   Object.assign(AI, { all: [], howlers: [], smilers: [], exps: [], crawler: null, mimic: null });
   for (const k of ['interact', 'items', 'tapes', 'tvs', 'dead', 'beams']) W[k] = [];
   W.exit = null; TIMERS.length = 0; SUBS.q.length = 0; SUBS.cur = null; $('subs').innerHTML = ''; $('toast').classList.remove('show');
@@ -231,6 +231,7 @@ function teardownScene() {
   $('noise9').classList.add('hide'); HUD.nzOn = false; HUD.nzMk = null;
 }
 async function restartGame(play) {
+  if (LVL === 37 && play && !G37.endWon) { lockPointer(); return goLevel37(G37.from); }
   if (LVL === 18 && play && !G18.endWon) { lockPointer(); return goLevel18(G18.from); }
   if (LVL === 5 && play && !G5.endWon) { lockPointer(); return goLevel5(G5.from); }
   if (LVL === 9 && play && !G9.endWon) { lockPointer(); return goLevel9(G9.from); }
@@ -238,7 +239,7 @@ async function restartGame(play) {
   G.state = 'loading'; show('loading'); $('osd').classList.add('hide'); $('touch').classList.add('hide');
   if (AU.ctx && AU.ctx.state === 'suspended') AU.ctx.resume();
   teardownScene();
-  if (LVL !== 0) { LVL = 0; setDims(34, 512); document.body.classList.remove('lvl9', 'lvl5', 'lvl18'); }
+  if (LVL !== 0) { LVL = 0; setDims(34, 512); document.body.classList.remove('lvl9', 'lvl5', 'lvl18', 'lvl37'); }
   Object.assign(FX, { envA: [0.02, 0.018, 0.013, 0], envS: [0, 0, 0, 0] });
   $('loadOsd').textContent = '▶ LOADING TAPE'; $('btnAgain').textContent = '▶ PLAY AGAIN';
   await buildScene();
@@ -332,13 +333,13 @@ function frameSim(dt) {
   FX.t += dt; runTimers();
   switch (G.state) {
     case 'title': titleCam(dt); break;
-    case 'intro': LVL === 18 ? introCam18(dt) : LVL === 5 ? introCam5(dt) : LVL === 9 ? introCam9(dt) : introCam(dt); break;
-    case 'play': G.time += dt; updatePlayer(dt); if (LVL === 18) { updateAI18(dt); playerCamera(dt); gameEvents18(dt); } else if (LVL === 5) { updateAI5(dt); playerCamera(dt); gameEvents5(dt); } else if (LVL === 9) { updateAI9(dt); playerCamera(dt); gameEvents9(dt); } else { updateAI(dt); playerCamera(dt); gameEvents(dt); } break;
-    case 'dead': LVL === 18 ? updateAI18(dt) : LVL === 5 ? updateAI5(dt) : LVL === 9 ? updateAI9(dt) : updateAI(dt); deathCam(dt); break;
-    case 'won': LVL === 18 ? wonCam18(dt) : LVL === 5 ? wonCam5(dt) : LVL === 9 ? wonCam9(dt) : wonCam(dt); break;
+    case 'intro': LVL === 37 ? introCam37(dt) : LVL === 18 ? introCam18(dt) : LVL === 5 ? introCam5(dt) : LVL === 9 ? introCam9(dt) : introCam(dt); break;
+    case 'play': G.time += dt; updatePlayer(dt); if (LVL === 37) { updateAI37(dt); playerCamera(dt); gameEvents37(dt); } else if (LVL === 18) { updateAI18(dt); playerCamera(dt); gameEvents18(dt); } else if (LVL === 5) { updateAI5(dt); playerCamera(dt); gameEvents5(dt); } else if (LVL === 9) { updateAI9(dt); playerCamera(dt); gameEvents9(dt); } else { updateAI(dt); playerCamera(dt); gameEvents(dt); } break;
+    case 'dead': LVL === 37 ? updateAI37(dt) : LVL === 18 ? updateAI18(dt) : LVL === 5 ? updateAI5(dt) : LVL === 9 ? updateAI9(dt) : updateAI(dt); deathCam(dt); break;
+    case 'won': LVL === 37 ? wonCam37(dt) : LVL === 18 ? wonCam18(dt) : LVL === 5 ? wonCam5(dt) : LVL === 9 ? wonCam9(dt) : wonCam(dt); break;
   }
   if (G.state !== 'loading') {
-    try { LVL === 18 ? worldFX18(dt) : LVL === 5 ? worldFX5(dt) : LVL === 9 ? worldFX9(dt) : worldFX(dt); } catch (e) { frameErr('world', e); }   // kept apart so the HUD still updates
+    try { LVL === 37 ? worldFX37(dt) : LVL === 18 ? worldFX18(dt) : LVL === 5 ? worldFX5(dt) : LVL === 9 ? worldFX9(dt) : worldFX(dt); } catch (e) { frameErr('world', e); }   // kept apart so the HUD still updates
     cpTick(dt); holdTick(dt); docTick(dt);
     if (G.state === 'play' || G.state === 'dead') updateHUD(dt);
     updateSubs(dt);
@@ -347,12 +348,12 @@ function frameSim(dt) {
 function simStep(dt) {
   FX.t += dt; runTimers();
   switch (G.state) {
-    case 'intro': LVL === 18 ? introCam18(dt) : LVL === 5 ? introCam5(dt) : LVL === 9 ? introCam9(dt) : introCam(dt); break;
-    case 'play': G.time += dt; updatePlayer(dt); if (LVL === 18) { updateAI18(dt); playerCamera(dt); gameEvents18(dt); } else if (LVL === 5) { updateAI5(dt); playerCamera(dt); gameEvents5(dt); } else if (LVL === 9) { updateAI9(dt); playerCamera(dt); gameEvents9(dt); } else { updateAI(dt); playerCamera(dt); gameEvents(dt); } break;
-    case 'dead': LVL === 18 ? updateAI18(dt) : LVL === 5 ? updateAI5(dt) : LVL === 9 ? updateAI9(dt) : updateAI(dt); deathCam(dt); break;
-    case 'won': LVL === 18 ? wonCam18(dt) : LVL === 5 ? wonCam5(dt) : LVL === 9 ? wonCam9(dt) : wonCam(dt); break;
+    case 'intro': LVL === 37 ? introCam37(dt) : LVL === 18 ? introCam18(dt) : LVL === 5 ? introCam5(dt) : LVL === 9 ? introCam9(dt) : introCam(dt); break;
+    case 'play': G.time += dt; updatePlayer(dt); if (LVL === 37) { updateAI37(dt); playerCamera(dt); gameEvents37(dt); } else if (LVL === 18) { updateAI18(dt); playerCamera(dt); gameEvents18(dt); } else if (LVL === 5) { updateAI5(dt); playerCamera(dt); gameEvents5(dt); } else if (LVL === 9) { updateAI9(dt); playerCamera(dt); gameEvents9(dt); } else { updateAI(dt); playerCamera(dt); gameEvents(dt); } break;
+    case 'dead': LVL === 37 ? updateAI37(dt) : LVL === 18 ? updateAI18(dt) : LVL === 5 ? updateAI5(dt) : LVL === 9 ? updateAI9(dt) : updateAI(dt); deathCam(dt); break;
+    case 'won': LVL === 37 ? wonCam37(dt) : LVL === 18 ? wonCam18(dt) : LVL === 5 ? wonCam5(dt) : LVL === 9 ? wonCam9(dt) : wonCam(dt); break;
   }
-  LVL === 18 ? worldFX18(dt) : LVL === 5 ? worldFX5(dt) : LVL === 9 ? worldFX9(dt) : worldFX(dt); cpTick(dt); holdTick(dt); docTick(dt); updateSubs(dt);
+  LVL === 37 ? worldFX37(dt) : LVL === 18 ? worldFX18(dt) : LVL === 5 ? worldFX5(dt) : LVL === 9 ? worldFX9(dt) : worldFX(dt); cpTick(dt); holdTick(dt); docTick(dt); updateSubs(dt);
 }
 async function buildScene() {
   const prog = (p, m) => { $('loadFill').style.width = (p * 100).toFixed(0) + '%'; $('loadMsg').textContent = m; };
@@ -379,6 +380,7 @@ async function boot() {
     ENG.runRenderLoop(frame);
     G.state = 'title'; show('title'); titleL9();
     if (/[?&]level=9/.test(location.search)) { G.state = 'title'; goLevel9(null); }
+    else if (/[?&]level=37/.test(location.search)) { G.state = 'title'; goLevel37(null); }
     else if (/[?&]level=18/.test(location.search)) { G.state = 'title'; goLevel18(null); }
     else if (/[?&]level=5/.test(location.search)) { G.state = 'title'; goLevel5(null); }
   } catch (e) {

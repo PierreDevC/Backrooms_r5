@@ -43,7 +43,7 @@ function buildCompass() {
 const HUD = { t: 0, last: {}, foeOn: false, foes: [] };
 // red pulsing blips on the compass for nearby threats (edge arrows when they're behind you)
 function foeHUD9(w) {
-  const box = $('compassFoes'), list = G.state === 'play' ? (LVL === 18 ? foes18() : LVL === 5 ? foes5() : foes9()) : [];
+  const box = $('compassFoes'), list = G.state === 'play' ? (LVL === 37 ? foes37() : LVL === 18 ? foes18() : LVL === 5 ? foes5() : foes9()) : [];
   HUD.foeOn = true;
   while (HUD.foes.length < 3) { const e = document.createElement('div'); e.className = 'foe hide'; e.innerHTML = '<b></b><i></i>'; box.appendChild(e); HUD.foes.push({ e, k: '' }); }
   HUD.foes.forEach((F, i) => {
@@ -77,14 +77,14 @@ function updateHUD(dt) {
   const w = $('compass').clientWidth, hd = ((PL.yaw * 180 / Math.PI) % 360 + 360) % 360;
   $('compassStrip').style.transform = `translateX(${(w / 2 - (hd + 360) * CPX).toFixed(1)}px)`;
   const mk = $('compassMark');
-  const tg = LVL === 18 ? target18() : LVL === 5 ? target5() : LVL === 9 ? target9() : target0();
+  const tg = LVL === 37 ? target37() : LVL === 18 ? target18() : LVL === 5 ? target5() : LVL === 9 ? target9() : target0();
   if (tg) {
     const a = angDiff(PL.yaw, Math.atan2(tg.x - PL.x, tg.z - PL.z)) * 180 / Math.PI;
     mk.classList.toggle('hide', Math.abs(a) > 70); mk.style.left = (w / 2 + a * CPX).toFixed(1) + 'px';
     hset('compassMark', tg.fl > 0 ? '▼<i>UPSTAIRS</i>' : tg.fl < 0 ? '▼<i>DOWNSTAIRS</i>' : '▼', 'innerHTML');
   } else mk.classList.add('hide');
   noiseHUD9();
-  if (LVL === 18 || LVL === 9 || LVL === 5) foeHUD9(w); else if (HUD.foeOn) { HUD.foeOn = false; $('compassFoes').innerHTML = ''; }
+  if (LVL === 37 || LVL === 18 || LVL === 9 || LVL === 5) foeHUD9(w); else if (HUD.foeOn) { HUD.foeOn = false; $('compassFoes').innerHTML = ''; }
   const tk = $('compassTape');
   if (LVL === 0 && HINT.stage >= 3 && HINT.site) {
     const a = angDiff(PL.yaw, HINT.dir) * 180 / Math.PI;
@@ -105,8 +105,8 @@ function updateHUD(dt) {
   hset('battPct', Math.ceil(PL.batt) + '%');
   hset('spare', 'SPARE ×' + PL.spare);
   hset('inv', 'WATER ×' + PL.water);
-  hset('tapes', LVL === 18 ? hudObj18() : LVL === 5 ? hudObj5() : LVL === 9 ? hudObj9() : `TAPES ${G.tapes}/4`);
-  hset('code', LVL === 18 ? hudItems18() : LVL === 5 ? hudItems5() : LVL === 9 ? hudItems9() : 'CODE ' + [0, 1, 2, 3].map(i => G.code[i] ?? '_').join(' '));
+  hset('tapes', LVL === 37 ? hudObj37() : LVL === 18 ? hudObj18() : LVL === 5 ? hudObj5() : LVL === 9 ? hudObj9() : `TAPES ${G.tapes}/4`);
+  hset('code', LVL === 37 ? hudItems37() : LVL === 18 ? hudItems18() : LVL === 5 ? hudItems5() : LVL === 9 ? hudItems9() : 'CODE ' + [0, 1, 2, 3].map(i => G.code[i] ?? '_').join(' '));
   $('signal').classList.toggle('hide', LVL !== 0);
   $('nvTag').classList.toggle('hide', !PL.nv);
   $('zoomTag').classList.toggle('hide', PL.zk < 0.1); hset('zoomTag', `ZOOM ${lerp(1, 2.4, PL.zk).toFixed(1)}×`);
@@ -134,7 +134,7 @@ function openLevels() {
 }
 function startLevelPick(n) {   // level select: 0 → normal tape start (briefing on first play), 9/5/18 → fresh run (Level 9 shows its field briefing on first visit)
   if (G.state !== 'title') return;
-  if (n === 9) startLevel9Menu(); else if (n === 5) startLevel5Menu(); else if (n === 18) startLevel18Menu(); else startGame();
+  if (n === 9) startLevel9Menu(); else if (n === 5) startLevel5Menu(); else if (n === 18) startLevel18Menu(); else if (n === 37) startLevel37Menu(); else startGame();
 }
 function hideScreens() { for (const s of SCREENS) $(s).classList.add('hide'); }
 const DIFFS = ['EASY', 'NORMAL', 'NIGHTMARE'];
