@@ -100,7 +100,7 @@ function waterPhys37(dt) {
     if (G37.breath > 0.6) G37.warns.low = false;
     if (under && G37.breath <= 0) { PL.hp -= dt * 16; FX.hurt = Math.max(FX.hurt, 0.6); PL.shake = Math.max(PL.shake, 0.5); if (PL.hp <= 0) { PL.hp = 0; die('drown'); } }
     $('breath37').classList.toggle('hide', !(under || G37.breath < 0.99));
-    const f = $('breathFill'); if (f) { f.style.width = (G37.breath * 100).toFixed(0) + '%'; f.parentNode.classList.toggle('low', G37.breath < 0.3); }
+    const f = $('breathFill'); if (f) { f.style.width = (G37.breath * 100).toFixed(0) + '%'; $('breath37').classList.toggle('low', G37.breath < 0.3); const tt = $('breathTxt'); if (tt) tt.textContent = under ? Math.max(0, Math.ceil(G37.breath * max)) + ' S' : ''; }
   }
   // movement in the water: slower the deeper it is, no sprinting
   PL.spdK = (depth < 0.15 ? 1 : depth < 0.9 ? 0.84 : swim ? (under ? 0.58 : 0.66) : 0.72) * (G37.drag || 1);
