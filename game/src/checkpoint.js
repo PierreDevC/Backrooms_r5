@@ -58,7 +58,7 @@ function cpRespawn0() {
   stopAudioLive(AI.howlers);
   for (const h of AI.howlers) {
     const p = cpFarPt(10); if (p) h.place(p.x, p.z, rnd(0, TAU));
-    Object.assign(h, { st: 'wander', stT: 0, lost: 0, blind: 8, lk: null, wt: null, prey: null, pause: 0, seen: false, atkCd: 2, callT: rnd(120, 180), seeCd: 0 });
+    Object.assign(h, { st: 'wander', stT: 0, lost: 0, blind: 8, lk: null, wt: null, prey: null, pause: 0, seen: false, atkCd: 2, callT: rnd(35, 55), seeCd: 0, blipT: 0 });
   }
   const cr = AI.crawler; if (cr && cr.active) { cr.dorm = 0; cr.respawn(); }
   for (const s of AI.smilers) { if (s.present) s.relocate(false); s.st = 'lurk'; }

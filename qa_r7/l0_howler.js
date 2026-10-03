@@ -19,7 +19,7 @@ module.exports = async page => {
   });
   check(startup.state === 'play', 'Level 0 starts through the normal forced-briefing-skip path');
   check(startup.crawler === null && !startup.classes.includes('Crawler'), 'Crawler is absent; other Level 0 enemies remain');
-  check(startup.timers.every(timer => timer >= 119 && timer <= 180), 'first territorial calls are scheduled 120–180 seconds into play');
+  check(startup.timers.every(timer => timer >= 34 && timer <= 55), 'first territorial calls are scheduled 35–55 seconds into play');
   check(startup.call === 3 && startup.see === 3, 'all three calls and three screams decode');
   check(!/crawler/i.test(startup.briefing + startup.controls), 'briefing and controls no longer teach the Crawler mechanic');
   const fallback = await page.evaluate(async () => {
@@ -46,7 +46,7 @@ module.exports = async page => {
     const next = howler.callT, paused = howler.pause > 0;
     howler.update(0.05);
     const count = recorded.length;
-    howler.st = 'search'; howler.callT = 0; howler.update(0.05);
+    howler.st = 'chase'; howler.callT = 0; howler.update(0.05);
     const deferred = recorded.length === count && howler.callT > 0;
     howler.st = 'wander'; howler.callT = 0; howler.update(0.05);
     const source = game.AU.live.findLast(voice => voice.obj === howler);
@@ -55,12 +55,12 @@ module.exports = async page => {
     return { early, count, next, paused, deferred, recorded, before, voice };
   });
   console.log('QA calls ' + JSON.stringify(calls));
-  check(calls.early === 0 && calls.count === 1 && calls.next >= 120 && calls.next <= 180 && calls.paused,
-    'territorial call pauses the entity and resets its 120–180 second timer');
-  check(calls.deferred, 'a busy Howler defers its territorial call');
+  check(calls.early === 0 && calls.count === 1 && calls.next >= 70 && calls.next <= 95 && calls.paused,
+    'territorial call pauses the entity and resets its Normal 70–95 second timer');
+  check(calls.deferred, 'a chasing Howler defers its territorial call');
   check(calls.recorded.every(call => call.owner && call.atOwner),
     'calls originate from the actual Howler');
-  check(calls.voice && calls.voice.ref === 16 && calls.voice.roll === 0.42 && calls.voice.occF === 1100,
+  check(calls.voice && calls.voice.ref === 24 && calls.voice.roll === 0.3 && calls.voice.occF === 1100,
     'distant calls use long-range positional attenuation and wall muffling');
   const screams = await page.evaluate(() => {
     const game = window.__BR, howler = game.AI.howlers[0], original = game.SFX.howlSee;
@@ -87,7 +87,7 @@ module.exports = async page => {
       timers: game.AI.howlers.map(howler => howler.callT), cooldowns: game.AI.howlers.map(howler => howler.seeCd) };
   });
   check(retry.state === 'play' && retry.tapes === 1 && retry.crawler === null && retry.voices === 0 &&
-    retry.timers.every(timer => timer >= 120 && timer <= 180) && retry.cooldowns.every(timer => timer === 0),
+    retry.timers.every(timer => timer >= 35 && timer <= 55) && retry.cooldowns.every(timer => timer === 0),
     'checkpoint retains the tape, stops Howler audio and resets its timing without a Crawler');
   const camera = await page.evaluate(() => {
     const game = window.__BR, site = game.W.tapes[1], root = site.root;

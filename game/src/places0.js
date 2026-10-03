@@ -119,7 +119,7 @@ function buildCamp0(B, R) {
   // the battery Brandt left by the table
   const bp = { x: t.position.x + Math.cos(t.rotation.y) * 1.25, z: t.position.z - Math.sin(t.rotation.y) * 1.25 }; collide(bp, 0.3);
   W.p0.battery = batteryMesh0(bp.x, bp.z, rnd(0, TAU));
-  W.interact.push({ x: bp.x, z: bp.z, y: 0.2, r: 1.8, label: () => 'TAKE BRANDT\'S BATTERY (HEAVY)', ok: () => !P0.carry && !P0.power && W.p0.battery.isEnabled(), act: () => takeBattery0() });
+  W.p0.batIt = W.interact[W.interact.push({ x: bp.x, z: bp.z, y: 0.2, r: 1.8, label: () => 'TAKE BRANDT\'S BATTERY (HEAVY)', ok: () => !P0.carry && !P0.power && W.p0.battery.isEnabled(), act: () => takeBattery0() }) - 1];
   // cots, the radio, the supply crate, the whiteboard
   if (S[0]) for (const a of [-0.9, 0.9]) { const r = at(S[0], a); cot0(B, r); solidLocal(r, -0.4, 0.05, 0.4, 2.05); }
   if (S[0]) { const r = at(S[0], 0.9); page0(0, twin(r), [0.05, 0.36, 1.2], [0, 0.4, 0]); }
@@ -345,13 +345,32 @@ function throwBreaker0(i) {
   if (n === 1) later(2.2, () => sayExp(0, 'Marsh. Who is on the breakers? Everything down here heard that.') || sayExp(1, 'Okafor. Somebody is on the breakers. Quietly, please.'));
   if (n === 3) powerOn0('breakers'); else { toast(`BREAKER ${n}/3`, 1.8); setObj0(); }
 }
+// the battery in your hands: a copy of the model on the camera, drawn after the world so it never sinks into a wall
+function heldBattery0() {
+  if (!W.p0.held) { const r = batteryMesh0(0, 0, 0, CAM); r.position.set(0.12, -0.38, 0.55); r.rotation.set(0.3, Math.PI - 0.35, 0.04); r.getChildMeshes(false).forEach(m => { m.renderingGroupId = 1; m.alwaysSelectAsActiveMesh = true; }); W.p0.held = r; }
+  return W.p0.held;
+}
+function heldBattery0Tick() {
+  const p = W.p0; if (!p || !p.battery) return; const on = !!P0.carry && ['play', 'intro'].includes(G.state);
+  if (!on) { if (p.held && p.held.isEnabled()) p.held.setEnabled(false); return; }
+  const h = heldBattery0(); if (!h.isEnabled()) h.setEnabled(true);
+  const b = Math.min(1, PL.spd / 2.4), t = FX.t * 7.5; h.position.set(0.12 + Math.sin(t * 0.5) * 0.012 * b, -0.38 - Math.abs(Math.sin(t * 0.5)) * 0.02 * b - PL.ck * 0.04, 0.55);
+}
+// G: set it down in front of you; it stays where you leave it and can be picked up again
+function dropBattery0() {
+  if (!P0.carry || P0.power || G.state !== 'play') return false;
+  const p = { x: PL.x + Math.sin(PL.yaw) * 0.75, z: PL.z + Math.cos(PL.yaw) * 0.75 }; collide(p, 0.3);
+  if (!los(PL.x, PL.z, p.x, p.z)) { p.x = PL.x; p.z = PL.z; }
+  P0.carry = false; PL.load = false; const B = W.p0.battery; B.position.x = p.x; B.position.z = p.z; B.rotation.y = PL.yaw + 0.3; B.setEnabled(true);
+  Object.assign(W.p0.batIt, { x: p.x, z: p.z }); SFX.thunk && SFX.thunk(); makeNoise(0.15); toast('BATTERY PUT DOWN · E TO PICK IT UP', 2); setObj0(); return true;
+}
 function takeBattery0() {
   P0.carry = true; PL.load = true; W.p0.battery.setEnabled(false); SFX.pickup(); makeNoise(0.2);
-  toast('BRANDT\'S BATTERY · HEAVY · NO SPRINTING', 2.8); powerKnown0(); setObj0(); cpSave('BATTERY');
+  toast(P0.tookBat ? 'BRANDT\'S BATTERY' : 'BRANDT\'S BATTERY · HEAVY · NO SPRINTING · G TO PUT IT DOWN', 2.8); P0.tookBat = true; powerKnown0(); setObj0(); cpSave('BATTERY');
   if (!P0.brSaid && aliveExp(3)) { P0.brSaid = true; later(3, () => sayExp(3, 'Brandt. Is that my battery moving? Keep it level. The acid eats boots.')); }
 }
 function connectBattery0() {
-  P0.carry = false; PL.load = false;
+  P0.carry = false; PL.load = false; if (W.p0.held) W.p0.held.setEnabled(false);
   const E = W.exit, p = BABYLON.Vector3.TransformCoordinates(V3(0.62, 0, 0.3), E.root.getWorldMatrix());
   W.p0.exitBatt = batteryMesh0(p.x, p.z, E.root.rotation.y + 0.4);
   SFX.battery(); powerOn0('battery');
@@ -454,6 +473,7 @@ function places0Events(dt) {
     if (P0.reyes === 'unmet') task('reyes', 'REYES IS HURT · THE FLOODED OFFICE', { opt: true, sub: 'SHE CALLED FROM THE OFFICE WITH THE CUBICLES' });
   }
   if (P0.carry) { PL.load = true; if (PL.run) PL.run = false; }
+  heldBattery0Tick();
 }
 function setObj0() {
   const t = G.tapes;
@@ -482,4 +502,4 @@ function places0Start() {   // a new attempt on the same layout: put every story
 }
 function flags0() { flag('lost0', G.lost); flag('dead0', (AI.exps || []).filter(e => e && e.alive === false && typeof EXP !== 'undefined' && EXP[e.i]).map(e => EXP[e.i].name)); if (!flag('reyes0')) flag('reyes0', P0.reyes === 'helped' ? 'helped' : AI.exps[2] && !AI.exps[2].alive ? 'lost' : P0.reyes); }
 
-if (/[?&]debug/.test(location.search)) addEventListener('load', () => Object.assign(window.__BR || (window.__BR = {}), { P0, RUN, TASKS, DOC, HOLD, readLog0, useRadio0, throwBreaker0, takeBattery0, connectBattery0, powerOn0, reyesTalk0, placeAt0, setObj0, target0, readDoc, openNotes, task, taskOf, flag }));
+if (/[?&]debug/.test(location.search)) addEventListener('load', () => Object.assign(window.__BR || (window.__BR = {}), { P0, RUN, TASKS, DOC, HOLD, readLog0, useRadio0, throwBreaker0, takeBattery0, dropBattery0, W0: () => W, connectBattery0, powerOn0, reyesTalk0, placeAt0, setObj0, target0, readDoc, openNotes, task, taskOf, flag }));

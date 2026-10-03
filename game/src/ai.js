@@ -149,10 +149,15 @@ class Agent {
 function setGain(v, g, tc = 0.25) { if (v && AU.ctx) v.g.gain.setTargetAtTime(AU.muted ? 0 : g, AU.ctx.currentTime, tc); }
 
 // ================= THE HOWLER =================
+// its call carries across the whole floor; how often it calls depends on difficulty (Easy calls most, so you always know roughly where it is)
+const HOWL_INT = [[55, 75], [70, 95], [90, 120]];
+function howlInt() { return rnd(...HOWL_INT[G.diff] || HOWL_INT[1]); }
+// Level 0's compass: a Howler that has just called shows for a few seconds; one that is chasing you shows while close
+function foes0() { const o = []; for (const h of AI.howlers) { if (!h.alive && h.alive !== undefined) continue; const ch = h.st === 'chase'; if (!(h.blipT > 0 || (ch && h.d < 30))) continue; o.push({ kind: 'f', ang: Math.atan2(h.x - PL.x, h.z - PL.z), d: h.d, k: ch ? clamp(1 - h.d / 30, 0.3, 1) : clamp(h.blipT / 7, 0.25, 1), ch, fl: 0 }); } return o.sort((a, b) => a.d - b.d).slice(0, 3); }
 class Howler extends Agent {
   constructor(i) {
     super(buildEntity(), 0.34); mergeRig(this.rig);
-    Object.assign(this, { i, st: 'wander', percT: 0, howlCd: 10, atkCd: 0, lost: 0, blind: 0, lk: null, wt: null, pause: 0, seen: false, callT: rnd(120, 180), seeCd: 0, calls: 0,
+    Object.assign(this, { i, st: 'wander', percT: 0, howlCd: 10, atkCd: 0, lost: 0, blind: 0, lk: null, wt: null, pause: 0, seen: false, callT: rnd(35, 55), seeCd: 0, calls: 0,
       tw: { y: 0, x: 0, z: 0 }, twT: 0, hy: 0, hx: 0, hz: 0, lean: 0, sph: 0, prey: null, shadowR: 0.6 });
   }
   startChase() {
@@ -172,11 +177,11 @@ class Howler extends Agent {
   }
   update(dt) {
     const d = this.d, t = FX.t, play = G.state === 'play';
-    this.stT += dt; this.howlCd -= dt; this.atkCd -= dt; this.blind -= dt; this.percT -= dt; this.seeCd -= dt;
-    // r7: its territorial call, every 2-3 minutes, from wherever it is on the map (near or across the level)
+    this.stT += dt; this.howlCd -= dt; this.blipT = (this.blipT || 0) - dt; this.atkCd -= dt; this.blind -= dt; this.percT -= dt; this.seeCd -= dt;
+    // its territorial call, every minute or two (by difficulty), from wherever it is on the map; it also blips on the compass for a few seconds
     if (play) this.callT -= dt;
     if (this.callT <= 0 && play) {
-      if (this.st === 'wander') { this.callT = rnd(120, 180); this.calls++; this.pause = Math.max(this.pause, 2.8); SFX.howlCall(this.pos(2.4), this); FX.glitch = Math.max(FX.glitch, d < 25 ? 0.5 : 0.15); PL.fear = Math.max(PL.fear, clamp(1 - d / 60, 0, 0.6)); }
+      if (['wander', 'search', 'investigate'].includes(this.st)) { this.callT = howlInt(); this.calls++; this.blipT = 7; this.pause = Math.max(this.pause, 2.8); SFX.howlCall(this.pos(2.4), this); FX.glitch = Math.max(FX.glitch, d < 25 ? 0.5 : 0.15); PL.fear = Math.max(PL.fear, clamp(1 - d / 60, 0, 0.6)); }
       else this.callT = 6;
     }
     const chaseSpd = [3.2, 3.85, 4.35][G.diff];
@@ -255,7 +260,7 @@ class Howler extends Agent {
     const r = this.rig, amp = clamp(this.spd / 3.2, 0, 1.25), prev = this.sph, chasing = this.st === 'chase' ? 1 : 0, feed0 = this.st === 'feed', feed = feed0 && !r.sk;
     if (r.sk) rigWant(r, feed0 ? 'kneel' : null, { range: [1.0, 3.6], loop: false, fade: 0.5, t: 0.45 });   // skinned: kneels over the body
     this.sph += this.spd * dt * 2.0;
-    if (this.spd > 0.5 && d < 34 && Math.floor(this.sph / Math.PI) !== Math.floor(prev / Math.PI)) SFX.heavyStep(this.pos(0.1));
+    if (this.spd > 0.5 && d < 75 && Math.floor(this.sph / Math.PI) !== Math.floor(prev / Math.PI)) SFX.howlStep(this.pos(0.1), Math.min(1.4, this.spd / 2));   // heavy, and heard a long way off
     this.twT -= dt;
     if (this.twT <= 0) { this.twT = rnd(0.15, 1.6); this.tw = { y: rnd(-0.7, 0.7), x: rnd(-0.35, 0.3), z: rnd(-0.8, 0.8) * (RNG() < 0.4 ? 1 : 0.2) }; }
     let ty = this.tw.y;

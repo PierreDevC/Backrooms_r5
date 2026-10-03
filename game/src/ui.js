@@ -43,7 +43,7 @@ function buildCompass() {
 const HUD = { t: 0, last: {}, foeOn: false, foes: [] };
 // red pulsing blips on the compass for nearby threats (edge arrows when they're behind you)
 function foeHUD9(w) {
-  const box = $('compassFoes'), list = G.state === 'play' ? (LVL === 7 ? foes7() : LVL === 2 ? foes2() : LVL === 37 ? foes37() : LVL === 18 ? foes18() : LVL === 5 ? foes5() : foes9()) : [];
+  const box = $('compassFoes'), list = G.state === 'play' ? (LVL === 7 ? foes7() : LVL === 2 ? foes2() : LVL === 37 ? foes37() : LVL === 18 ? foes18() : LVL === 5 ? foes5() : LVL === 0 ? foes0() : foes9()) : [];
   HUD.foeOn = true;
   while (HUD.foes.length < 3) { const e = document.createElement('div'); e.className = 'foe hide'; e.innerHTML = '<b></b><i></i>'; box.appendChild(e); HUD.foes.push({ e, k: '' }); }
   HUD.foes.forEach((F, i) => {
@@ -84,7 +84,7 @@ function updateHUD(dt) {
     hset('compassMark', tg.fl > 0 ? '▼<i>UPSTAIRS</i>' : tg.fl < 0 ? '▼<i>DOWNSTAIRS</i>' : '▼', 'innerHTML');
   } else mk.classList.add('hide');
   noiseHUD9();
-  if (LVL === 7 || LVL === 2 || LVL === 37 || LVL === 18 || LVL === 9 || LVL === 5) foeHUD9(w); else if (HUD.foeOn) { HUD.foeOn = false; $('compassFoes').innerHTML = ''; }
+  if (LVL === 7 || LVL === 2 || LVL === 37 || LVL === 18 || LVL === 9 || LVL === 5 || LVL === 0) foeHUD9(w); else if (HUD.foeOn) { HUD.foeOn = false; $('compassFoes').innerHTML = ''; }
   const tk = $('compassTape');
   if (LVL === 0 && HINT.stage >= 3 && HINT.site) {
     const a = angDiff(PL.yaw, HINT.dir) * 180 / Math.PI;

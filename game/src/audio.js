@@ -296,7 +296,8 @@ const SMP = {
   heavyStep(pos) { return playS(bpick('hstep'), { pos, ref: 2.2, roll: 1.1, rate: rr(0.9, 1.05) }); },
   howl(pos) { return playS(bpick('howl'), { pos, ref: 3.5, roll: 0.9, rate: rr(0.93, 1.03) }); },
   // r7: the Howler's voice. The call carries across the level (gentle rolloff, 1.5x gain); the scream on sight is the loudest thing in the game.
-  howlCall(pos, follow) { return playS(bpick('hcall'), { pos, follow, ref: 16, roll: 0.42, vol: 1.5, rate: rr(0.94, 1.04), occF: 1100 }); },
+  howlStep(pos, k = 1) { const d = playS(bpick('hstep'), { pos, ref: 7, roll: 0.5, vol: 1.7 * k, rate: rr(0.78, 0.9), occF: 520 }); shot((dd, t) => { tone(dd, t, 0.34, 'sine', 48, 24, 0.9 * k); nz(dd, t, 0.16, 'lowpass', 180, 1, 0.5 * k); return 0.45; }, Object.assign({}, pos, { ref: 8, roll: 0.5, pl: PL }), 1); return d; },
+  howlCall(pos, follow) { return playS(bpick('hcall'), { pos, follow, ref: 24, roll: 0.3, vol: 1.5, rate: rr(0.94, 1.04), occF: 1100 }); },
   howlSee(pos, follow) { return playS(bpick('hsee'), { pos, follow, ref: 10, roll: 0.5, vol: 1.8, rate: rr(0.96, 1.03), occF: 2600 }); },
   screech(pos, hi) { return playS(hi ? 'scrHi' : 'scrLo', { pos, ref: 2.5, roll: 1, rate: rr(0.95, 1.05) }); },
   clicks(pos) { return playS(bpick('click'), { pos, ref: 1.6, roll: 1.2, rate: rr(0.9, 1.15) }); },
@@ -317,5 +318,5 @@ const SMP = {
   far(pos) { return playS(bpick(['farSlam', 'farGroan', 'farKnock'][Math.floor(Math.random() * 3)]), { pos, ref: 8, roll: 0.7 }); },
 };
 SFX.search = () => SFX.pickup(); SFX.far = () => 0;
-SFX.howlCall = pos => SFX.howl(pos); SFX.howlSee = pos => SFX.howl(pos);
+SFX.howlStep = pos => SFX.heavyStep(pos); SFX.howlCall = pos => SFX.howl(pos); SFX.howlSee = pos => SFX.howl(pos);
 for (const k of Object.keys(SMP)) { const synth = SFX[k]; SFX[k] = (...a) => SMP[k](...a) || synth(...a); }

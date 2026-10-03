@@ -107,6 +107,7 @@ function updatePlayer(dt) {
   if (JUST.has('KeyC')) PL.crouch = !PL.crouch;
   if (JUST.has('KeyZ')) PL.zoomT = !PL.zoomT;
   if (JUST.has('KeyG') && LVL === 5) useSpray5();
+  if (JUST.has('KeyG') && LVL === 0) dropBattery0();
   if (JUST.has('KeyG') && LVL === 7) useFlare7();   // r7: Mothex
   if (LVL === 9) hackKeys9(JUST);   // r6: PACKET STACK takes the movement keys while you're at a terminal
   JUST.clear();
