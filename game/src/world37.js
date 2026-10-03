@@ -19,15 +19,15 @@ void main(){
   if(!above) n = -n;
   float fres = pow(1.0 - clamp(abs(dot(n, V)), 0.0, 1.0), 3.0);
   float L = clamp(fixtureAt(p, vec3(0.0)) + 0.18, 0.0, 1.6);
-  vec3 deep = vec3(0.05, 0.42, 0.5) * (0.5 + L*0.75), sky = vec3(0.78, 0.95, 0.98) * (0.4 + L*0.7);
+  vec3 deep = vec3(0.03, 0.4, 0.26) * (0.5 + L*0.8), sky = vec3(0.72, 0.9, 0.7) * (0.4 + L*0.7);
   vec3 col = mix(deep, sky, fres*0.75 + 0.07);
   float sp = pow(max(0.0, sin(q.x*7.0 + t*2.1)*sin(q.y*6.3 - t*1.7)), 6.0)*L;
-  col += vec3(0.5, 0.8, 0.85)*sp*0.45;
+  col += vec3(0.7, 0.95, 0.7)*sp*0.45;
   vec3 diff = vec3(0.0), spec = vec3(0.0);
   dynLights(p, n, vec3(0.0, 1.0, 0.0), V, 90.0, 1.0, diff, spec);
   col += spec*1.3 + diff*vec3(0.03, 0.1, 0.12);
   float alpha = above ? mix(0.5, 0.93, fres) : 0.9;
-  if(!above) col = mix(col, vec3(0.22, 0.62, 0.7)*(0.45 + L*0.7), 0.55);
+  if(!above) col = mix(col, vec3(0.14, 0.6, 0.4)*(0.45 + L*0.7), 0.55);
   gl_FragColor = vec4(fogIt(col, p), alpha*wP.x);
 }`;
 BABYLON.Effect.ShadersStore.caust37VertexShader = BABYLON.Effect.ShadersStore.water37VertexShader;
@@ -40,8 +40,19 @@ void main(){
   vec2 q = vPos.xz*1.15; float t = lvl.w;
   float c = caus(q, t)*0.7 + caus(q*1.7 + 3.3, t*1.3)*0.5;
   float L = clamp(fixtureAt(vPos, vec3(0.0)) + 0.1, 0.0, 1.4), fade = smoothstep(0.12, 0.6, d)*(1.0 - smoothstep(3.5, 7.5, d));
-  vec3 col = vec3(0.35, 0.8, 0.85)*c*L*fade*0.55;
+  vec3 col = vec3(0.6, 0.95, 0.65)*c*L*fade*0.55;
   gl_FragColor = vec4(fogIt(col, vPos), 1.0);
+}`;
+BABYLON.Effect.ShadersStore.grout37VertexShader = BABYLON.Effect.ShadersStore.water37VertexShader;
+BABYLON.Effect.ShadersStore.grout37FragmentShader = `precision highp float; varying vec3 vPos; varying vec2 vUV; varying vec4 vC; uniform vec4 wP;
+${GLSL_COMMON}
+void main(){
+  float d = wP.z - vC.r; if(d < 0.1) discard;
+  float t = lvl.w, k = clamp(d, 0.0, 2.0); vec2 q = vPos.xz*11.7;
+  vec2 w = vec2(sin(q.y*0.55 + t*0.8 + sin(q.x*0.37)*1.6), sin(q.x*0.5 - t*0.7 + sin(q.y*0.33)*1.6))*(0.12 + 0.2*k);
+  vec2 f = abs(fract(q + w + 0.5) - 0.5); float line = smoothstep(0.1, 0.0, min(f.x, f.y));
+  float L = clamp(fixtureAt(vPos, vec3(0.0)) + 0.12, 0.0, 1.2);
+  gl_FragColor = vec4(fogIt(vec3(0.02, 0.07, 0.04), vPos), line*0.6*clamp(d*2.0, 0.0, 1.0)*(0.5 + L*0.5));
 }`;
 function waterMat37() {
   const names = ['world', 'viewProjection', 'wP', ...COMMON_UNIFORMS];
@@ -55,6 +66,12 @@ function caustMat37(basin) {
   m.setTexture('lightTex', LV.lightTex); m.setVector4('wP', new BABYLON.Vector4(1, 1, 0, 0)); m.backFaceCulling = false; m.alphaMode = BABYLON.Engine.ALPHA_ADD; m.disableDepthWrite = true;
   MATS.list.push(m); return m;
 }
+function groutMat37(basin) {
+  const names = ['world', 'viewProjection', 'wP', ...COMMON_UNIFORMS];
+  const m = new BABYLON.ShaderMaterial('grout37_' + basin, SCN, { vertex: 'grout37', fragment: 'grout37' }, { attributes: ['position', 'uv', 'color'], uniforms: names, samplers: ['lightTex'], needAlphaBlending: true });
+  m.setTexture('lightTex', LV.lightTex); m.setVector4('wP', new BABYLON.Vector4(1, 1, 0, 0)); m.backFaceCulling = false; m.alphaMode = BABYLON.Engine.ALPHA_COMBINE; m.disableDepthWrite = true;
+  MATS.list.push(m); return m;
+}
 function buildCaustics37(scene) {
   W37.caust = [];
   for (const B of LV.basins) {
@@ -62,7 +79,8 @@ function buildCaustics37(scene) {
     const g = new Geo(true);
     for (const c of B.cells) { const x0 = (c % N) * CELL, z0 = ((c / N) | 0) * CELL, fh = LV.fh[c]; if (fh > 1) continue; g.face(x0, fh + 0.012, z0 + CELL, [1, 0, 0], [0, 0, -1], CELL, CELL, [0, 1, 0], 1, true, [fh, 0, 0, 1]); }
     if (!g.p.length) continue;
-    const m = g.mesh('caust37_' + B.name, scene), mat = caustMat37(B.name); m.material = mat; m.alphaIndex = 3; m._sortD = 90; m.isPickable = false; m.__noPortal = true; B.caust = { mesh: m, mat };
+    const m = g.mesh('caust37_' + B.name, scene), mat = caustMat37(B.name); m.material = mat; m.alphaIndex = 3; m._sortD = 90; m.isPickable = false; m.__noPortal = true;
+    const m2 = g.mesh('grout37_' + B.name, scene), mat2 = groutMat37(B.name); m2.material = mat2; m2.alphaIndex = 2; m2._sortD = 91; m2.isPickable = false; m2.__noPortal = true; B.caust = { mesh: m, mat, mesh2: m2, mat2 };
   }
 }
 
@@ -126,7 +144,7 @@ async function buildWorld37(progress) {
   buildLightmap(SCN); buildCollision();
   progress(0.52, 'WARMING THE WATER…'); await nextFrame();
   const E = (n, d, t) => envMat9(n, d, t);
-  const mats = { ptile: E('ptile37', ['MAT_TILE'], T.ptile), lane: E('lane37', ['MAT_TILE'], T.lane), wetc: E('wetc37', ['MAT_BCONC'], T.wetc), wood: E('wood37', ['MAT_WOOD'], T.wood), hwall: E('hwall37', ['MAT_HWALL'], T.hwall),
+  const mats = { ptile: E('ptile37', ['MAT_TILE'], T.ptile), ptw: E('ptw37', ['MAT_KWALL'], T.ptile), lane: E('lane37', ['MAT_TILE'], T.lane), wetc: E('wetc37', ['MAT_BCONC'], T.wetc), wood: E('wood37', ['MAT_WOOD'], T.wood), hwall: E('hwall37', ['MAT_HWALL'], T.hwall),
     carpet: E('carpet37', ['MAT_CARPET'], T.carpet), hceil: E('hceil37', ['MAT_HCEIL'], T.hceil), plaster: E('plaster37', ['MAT_PLASTER'], T.conc), bconc: E('bconc37', ['MAT_BCONC'], T.bconc), block: E('block37', ['MAT_BLOCK'], T.block),
     brick: E('brick37', ['MAT_BLOCK'], T.brick), lino: E('lino37', ['MAT_KFLOOR', 'KSHEEN'], T.lino), kceil: E('kceil37', ['MAT_KCEIL'], T.dceil), conc: E('conc37', ['MAT_CONC'], T.conc), trim: E('trim37', ['MAT_CASE'], T.wetc) };
   buildGeometry37(SCN, mats);

@@ -10,6 +10,8 @@ const BAS37 = { SH: 0, LAP: 1, WELL: 2, CAFE: 3, HPOOL: 4, WWP: 5, WWF: 6 };
 const cell37 = (x, z) => cIdx(cellOf(x), cellOf(z));
 const TRIM37 = { white: [0.92, 0.94, 0.94], teal: [0.35, 0.62, 0.66], steel: [0.55, 0.57, 0.58], wood: [0.5, 0.36, 0.22], brass: [0.7, 0.55, 0.26], green: [0.45, 0.62, 0.52], dark: [0.1, 0.1, 0.11] };
 
+// tall slits of blown-out white in the Shallows' side walls, with warm light coming off them (as in the reference renders)
+const SLITS37 = [[26, 30, 2], [26, 34, 2], [26, 38, 2], [43, 29, 0], [43, 38, 0], [43, 41, 0]];
 function genLayout37() {
   const n = N;
   LV.zone = new Uint8Array(n * n); LV.room = new Int16Array(n * n).fill(-1); LV.reg = new Int8Array(n * n).fill(-1); LV.dark = new Uint8Array(n * n);
@@ -25,21 +27,23 @@ function genLayout37() {
   const water = (r, x0, y0, x1, y1, fh, bas) => { for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) { const c = cIdx(x, y); if (LV.room[c] !== r.id) continue; LV.fh[c] = fh; LV.bas[c] = bas; LV.ch[c] = r.rel ? fh + r.h : r.h; } };
   LV.dry = {};   // named rooms the story code looks up
   const SIDE = {
-    pool: { m: 'ptile', c: [0.95, 1, 1], t: TRIM37.teal, tp: 2 }, cab: { m: 'ptile', c: [1, 0.96, 0.88], t: TRIM37.wood, tp: 2 }, plant: { m: 'wetc', c: [0.9, 1, 0.98], t: TRIM37.steel, tp: 1 },
-    tun: { m: 'wetc', c: [0.55, 0.65, 0.66], t: TRIM37.dark, tp: 0 }, vest: { m: 'ptile', c: [0.9, 0.98, 0.98], t: TRIM37.teal, tp: 2 },
+    pool: { m: 'ptw', c: [0.96, 1, 0.9], t: TRIM37.green, tp: 2 }, cab: { m: 'ptw', c: [1, 0.97, 0.86], t: TRIM37.wood, tp: 2 }, plant: { m: 'wetc', c: [0.9, 1, 0.98], t: TRIM37.steel, tp: 1 },
+    tun: { m: 'wetc', c: [0.55, 0.65, 0.66], t: TRIM37.dark, tp: 0 }, vest: { m: 'ptw', c: [0.94, 1, 0.9], t: TRIM37.green, tp: 2 },
   };
   // ================= THE HUB =================
   // THE SHALLOWS: a great tiled hall, knee-deep, pillars standing in the water, a pit at the south end that drops to the corridor below
-  const SH = room(Z37.POOL, R37Z.HUB, 'shallows', { h: 7.4, side: SIDE.pool, flr: { m: 'ptile', col: [0.92, 0.99, 1] }, cm: 'kceil', cc: [1, 1, 1] });
+  const SH = room(Z37.POOL, R37Z.HUB, 'shallows', { h: 7.4, side: SIDE.pool, flr: { m: 'ptile', col: [0.94, 1, 0.9] }, cm: 'ptile', cc: [0.94, 1, 0.88] });
   rect(SH, 26, 27, 43, 43, DECK37); water(SH, 27, 28, 42, 42, -0.55, BAS37.SH);
   water(SH, 32, 38, 37, 42, -1.45, BAS37.SH); water(SH, 33, 39, 36, 42, -2.4, BAS37.SH);
   for (let x = 33; x <= 36; x++) { const c = cIdx(x, 43); LV.fh[c] = -2.4; LV.bas[c] = BAS37.SH; }   // the pit runs to the south wall, where the corridor starts
   LV.dry.sh = SH;
+  LV.pil37 = [];   // round tiled columns standing in the water
+  for (let y = 30; y <= 41; y += 4) for (let x = 29; x <= 40; x += 4) { if (x >= 30 && x <= 38 && y >= 37) continue; if (x >= 33 && x <= 37 && y >= 38) continue; LV.pil37.push({ x: cellCenter(x), z: cellCenter(y), r: 0.66, fh: -0.55, top: SH.h }); }
   // the vestibule between the Shallows and the Dive Well
-  const GV = rect(room(Z37.VEST, R37Z.HUB, 'gatev', { h: 3.8, side: SIDE.vest, flr: { m: 'ptile', col: [0.86, 0.95, 0.97] }, cm: 'kceil', cc: [1, 1, 1] }), 34, 26, 36, 26, DECK37);
+  const GV = rect(room(Z37.VEST, R37Z.HUB, 'gatev', { h: 3.8, side: SIDE.vest, flr: { m: 'ptile', col: [0.9, 0.98, 0.88] }, cm: 'ptile', cc: [0.94, 1, 0.88] }), 34, 26, 36, 26, DECK37);
   way(35, 27, 3, 'arch', { w: 2.6, h: 3.0, from: [35, 27], sign: 'DEEP END' }); way(35, 26, 3, 'arch', { w: 2.6, h: 3.0, from: [35, 26] });
   // THE DIVE WELL: twelve metres to the ceiling, six to the floor
-  const WELL = room(Z37.POOL, R37Z.HUB, 'well', { h: 12.8, side: SIDE.pool, flr: { m: 'ptile', col: [0.8, 0.95, 0.98] }, cm: 'kceil', cc: [1, 1, 1] });
+  const WELL = room(Z37.POOL, R37Z.HUB, 'well', { h: 12.8, side: SIDE.pool, flr: { m: 'ptile', col: [0.86, 1, 0.88] }, cm: 'ptile', cc: [0.94, 1, 0.88] });
   rect(WELL, 30, 13, 41, 25, DECK37); water(WELL, 31, 14, 40, 24, -6, BAS37.WELL);
   water(WELL, 31, 24, 40, 24, -1.1, BAS37.WELL); water(WELL, 31, 23, 40, 23, -2.7, BAS37.WELL); water(WELL, 31, 22, 40, 22, -4.3, BAS37.WELL);
   setFh(30, 19, 30, 19, -6, BAS37.WELL);   // the channel that leads into the tunnel
@@ -58,10 +62,10 @@ function genLayout37() {
   way(20, 34, 2, 'door', { dk: 'plant', plaque: 'PLANT · STAFF ONLY', from: [20, 34], locked: true });
   LV.dry.plant = PLANT;
   // THE LAP POOL: six lanes to the east, a flooded tunnel at the far end
-  const LAP = room(Z37.POOL, R37Z.HUB, 'lap', { h: 6.4, side: SIDE.pool, flr: { m: 'lane', col: [0.9, 0.98, 1] }, cm: 'kceil', cc: [1, 1, 1] });
+  const LAP = room(Z37.POOL, R37Z.HUB, 'lap', { h: 6.4, side: SIDE.pool, flr: { m: 'lane', col: [0.9, 1, 0.9] }, cm: 'ptile', cc: [0.94, 1, 0.88] });
   rect(LAP, 45, 31, 65, 38, DECK37); water(LAP, 46, 32, 65, 37, -1.5, BAS37.LAP);
   LV.dry.lap = LAP;
-  const LV37 = rect(room(Z37.VEST, R37Z.HUB, 'lapv', { h: 3.6, side: SIDE.vest, flr: { m: 'ptile', col: [0.86, 0.95, 0.97] }, cm: 'kceil', cc: [1, 1, 1] }), 44, 33, 44, 34, DECK37);
+  const LV37 = rect(room(Z37.VEST, R37Z.HUB, 'lapv', { h: 3.6, side: SIDE.vest, flr: { m: 'ptile', col: [0.9, 0.98, 0.88] }, cm: 'ptile', cc: [0.94, 1, 0.88] }), 44, 33, 44, 34, DECK37);
   way(43, 33, 0, 'arch', { w: 2.4, h: 3.0, from: [43, 33], sign: 'LAP POOL' }); way(43, 34, 0, 'arch', { w: 2.4, h: 3.0, from: [43, 34] });
   way(44, 33, 0, 'arch', { w: 2.4, h: 3.0, from: [44, 33] }); way(44, 34, 0, 'arch', { w: 2.4, h: 3.0, from: [44, 34] });
   // the tunnel to Water World: low, dark, entirely under the surface until the lap pool is drained
@@ -106,7 +110,7 @@ function genLayout37() {
 function side37(x, y) {
   if (!inGrid(x, y)) return null;
   const c = cIdx(x, y), z = LV.zone[c]; if (z === Z37.VOID) return null;
-  const r = LV.rooms[LV.room[c]], s = r.side || { m: 'ptile', c: [1, 1, 1], t: TRIM37.white, tp: 1 };
+  const r = LV.rooms[LV.room[c]], s = r.side || { m: 'ptw', c: [1, 1, 1], t: TRIM37.white, tp: 1 };
   return { m: s.m, c: s.c, t: s.t, tp: s.tp, h: LV.ch[c], fh: LV.fh[c] };
 }
 const ceil37 = c => LV.ch[c];
@@ -114,13 +118,13 @@ const ceil37 = c => LV.ch[c];
 function opening37(e) {
   if (!e) return null;
   const f = e.from ? LV.fh[cIdx(e.from[0], e.from[1])] : 0;
-  if (e.kind === 'arch') return { w: e.w || 2.0, h: f + (e.h || 2.5), cw: e.tunnel ? 0.06 : 0.12 };
+  if (e.kind === 'arch') return { w: e.w || 2.0, h: f + (e.h || 2.5), cw: 0 };
   if (e.kind === 'door') return { w: DOORW, h: f + DOORH, cw: 0.09 };
   return null;
 }
 
 // ---------- geometry ----------
-const MAT37_S = { ptile: [1 / 1.2, 1 / 1.2], lane: [1 / 1.2, 1 / 1.2], wetc: [1 / 2.4, 1 / 2.4], wood: [1 / 2.4, 1 / 2.4], hwall: [1 / 3.0, 1 / 2.85], carpet: 1 / 2.25, hceil: 1 / 1.8, plaster: [1 / 2.5, 1 / 2.5], bconc: [1 / 2.4, 1 / 2.4],
+const MAT37_S = { ptile: [1 / 1.2, 1 / 1.2], ptw: [1 / 1.2, 1 / 1.2], lane: [1 / 1.2, 1 / 1.2], wetc: [1 / 2.4, 1 / 2.4], wood: [1 / 2.4, 1 / 2.4], hwall: [1 / 3.0, 1 / 2.85], carpet: 1 / 2.25, hceil: 1 / 1.8, plaster: [1 / 2.5, 1 / 2.5], bconc: [1 / 2.4, 1 / 2.4],
   block: [1 / 1.6, 1 / 1.6], brick: [1 / 1.6, 1 / 1.6], lino: [1 / 1.2, 1 / 1.2], kceil: [1 / 1.2, 1 / 1.2], conc: [1 / 2.8, 1 / 2.8], paper: [1 / 0.9, 1 / 2.4] };
 const FLOORM37 = new Set(['ptile', 'lane', 'wetc', 'wood', 'carpet', 'lino', 'conc']), CEILM37 = new Set(['plaster', 'hceil', 'bconc', 'kceil']);
 function buildGeometry37(scene, mats) {
@@ -153,6 +157,36 @@ function buildGeometry37(scene, mats) {
     } else tg.face(p.x0, p.y0, p.z0, [1, 0, 0], [0, 0, 1], p.x1 - p.x0, p.z1 - p.z0, [0, -1, 0], 1, false, tcol);
   }
   for (const t of LV.trims) geo('trim', chunkOf((t[0] + t[3]) / 2, (t[2] + t[5]) / 2)).box(t[0], t[1], t[2], t[3], t[4], t[5], 1, 31, C4(t[6]));
+  // ---- round arches (a half-circle on top of the jambs) and round tiled columns, built straight into the tile meshes ----
+  const tri = (g, A, B2, C2, n, su, sv, uvs) => { const b0 = g.p.length / 3; for (const [p, uv] of [[A, uvs[0]], [B2, uvs[1]], [C2, uvs[2]]]) { g.p.push(p[0], p[1], p[2]); g.n.push(n[0], n[1], n[2]); g.t.push(1, 0, 0, 1); g.uv.push(uv[0], uv[1]); g.c.push(...n.slice(3)); } g.i.push(b0, b0 + 1, b0 + 2, b0, b0 + 2, b0 + 1); };
+  for (const e of LV.ek.values()) {
+    if (e.kind !== 'arch') continue;
+    const op = opening37(e), horiz = e.d === 1 || e.d === 3, [mx, mz] = edgeMid(e.x, e.y, e.d), m = horiz ? mx : mz, c = horiz ? mz : mx, w = op.w, hT = op.h, f0 = LV.fh[cIdx(e.x, e.y)], r = Math.min(w / 2, (hT - f0) * 0.5), ys = hT - r, Hh = WT / 2;
+    const sA = (e.d === 0 || e.d === 1) ? -1 : 1, cA = cIdx(e.x, e.y), cB = cIdx(e.x + DX[e.d], e.y + DY[e.d]);
+    const W3 = (u, y, q) => horiz ? [u, y, q] : [q, y, u], N3 = s => horiz ? [0, 0, s] : [s, 0, 0];
+    const arc = [], NS = 14; for (let k = 0; k <= NS; k++) { const th = Math.PI - k / NS * Math.PI; arc.push([m + Math.cos(th) * w / 2, ys + Math.sin(th) * r, th]); }
+    for (const [cell, sg] of [[cA, sA], [cB, -sA]]) {   // the wall face looking into this cell: spandrel fill between the jamb corners and the arc
+      const sd = side37(cell % N, (cell / N) | 0); if (!sd) continue; const [su, sv] = MAT37_S[sd.m] || [1, 1], g = geo(sd.m, chunkOf(mx, mz)), q = c + sg * Hh, nn = N3(sg), col = [sd.c[0], sd.c[1], sd.c[2], 1];
+      for (const [side, ia, ib] of [[-1, 0, NS / 2], [1, NS / 2, NS]]) {
+        const corner = side < 0 ? [m - w / 2, hT] : [m + w / 2, hT];
+        for (let k = ia; k < ib; k++) { const A = arc[k], B2 = arc[k + 1]; tri(g, W3(corner[0], corner[1], q), W3(A[0], A[1], q), W3(B2[0], B2[1], q), nn.concat(col), su, sv, [[corner[0] * su, corner[1] * sv], [A[0] * su, A[1] * sv], [B2[0] * su, B2[1] * sv]]); }
+        // fill the strip between the arc's top and the flat top of the opening on the mid column
+      }
+      // the little triangle above the arc's crown, between the two halves
+    }
+    // the soffit: the inside of the arch, running through the wall
+    { const sd = side37(cA % N, (cA / N) | 0) || side37(cB % N, (cB / N) | 0), [su, sv] = MAT37_S[sd.m] || [1, 1], g = geo(sd.m, chunkOf(mx, mz)), col = [sd.c[0] * 0.92, sd.c[1] * 0.92, sd.c[2] * 0.92, 1];
+      for (let k = 0; k < NS; k++) { const A = arc[k], B2 = arc[k + 1], nA = [-Math.cos(A[2]), -Math.sin(A[2])], nm = horiz ? [nA[0], nA[1], 0] : [0, nA[1], nA[0]];
+        const p00 = W3(A[0], A[1], c - Hh), p01 = W3(A[0], A[1], c + Hh), p10 = W3(B2[0], B2[1], c - Hh), p11 = W3(B2[0], B2[1], c + Hh), uA = k / NS * 3, uB = (k + 1) / NS * 3;
+        tri(g, p00, p01, p10, nm.concat(col), su, sv, [[uA, 0], [uA, 1.2], [uB, 0]]); tri(g, p01, p11, p10, nm.concat(col), su, sv, [[uA, 1.2], [uB, 1.2], [uB, 0]]); } }
+  }
+  for (const P of LV.pil37 || []) {   // round columns
+    const g = geo('ptw', chunkOf(P.x, P.z)), NSG = 22, col = [0.96, 1, 0.9, 1];
+    for (let k = 0; k < NSG; k++) { const a0 = k / NSG * TAU, a1 = (k + 1) / NSG * TAU, x0 = P.x + Math.sin(a0) * P.r, z0 = P.z + Math.cos(a0) * P.r, x1 = P.x + Math.sin(a1) * P.r, z1 = P.z + Math.cos(a1) * P.r, u0 = a0 * P.r * (1 / 1.2), u1 = a1 * P.r * (1 / 1.2), v0 = P.fh / 1.2, v1 = P.top / 1.2;
+      const n0 = [Math.sin(a0), 0, Math.cos(a0)], n1 = [Math.sin(a1), 0, Math.cos(a1)], b0 = g.p.length / 3;
+      for (const [x, y, z, n, u, v] of [[x0, P.fh, z0, n0, u0, v0], [x1, P.fh, z1, n1, u1, v0], [x1, P.top, z1, n1, u1, v1], [x0, P.top, z0, n0, u0, v1]]) { g.p.push(x, y, z); g.n.push(n[0], 0, n[2]); g.t.push(Math.cos((a0 + a1) / 2), 0, -Math.sin((a0 + a1) / 2), 1); g.uv.push(u, v); g.c.push(...col); }
+      g.i.push(b0, b0 + 1, b0 + 2, b0, b0 + 2, b0 + 3, b0, b0 + 2, b0 + 1, b0, b0 + 3, b0 + 2); }
+  }
   // ---- floors, ceilings and the risers between floors of different heights ----
   const up = (g, x0, z0, x1, z1, y, s, col) => g.face(x0, y, z1, [1, 0, 0], [0, 0, -1], x1 - x0, z1 - z0, [0, 1, 0], s, false, col);
   const dn = (g, x0, z0, x1, z1, y, s, col) => g.face(x0, y, z0, [1, 0, 0], [0, 0, 1], x1 - x0, z1 - z0, [0, -1, 0], s, false, col);
@@ -161,7 +195,7 @@ function buildGeometry37(scene, mats) {
     const r = LV.rooms[LV.room[c]], x0 = x * CELL, z0 = y * CELL, x1 = x0 + CELL, z1 = z0 + CELL, ci = chunkOf(x0 + 1, z0 + 1), fh = LV.fh[c], hv = hash1(x * 31.7 + y * 17.3);
     const fm = r.flr ? r.flr.m : 'ptile', fc = r.flr ? r.flr.col : [1, 1, 1], k = 0.94 + 0.08 * hv, fs = MAT37_S[fm];
     const wet = LV.bas[c] >= 0 && fh < -0.3;   // a submerged floor is a shade bluer and darker
-    { const col = wet ? [fc[0] * 0.72 * k, fc[1] * 0.9 * k, fc[2] * 0.92 * k, 1] : [fc[0] * k, fc[1] * k, fc[2], 1]; up(geo(fm, ci), x0, z0, x1, z1, fh, Array.isArray(fs) ? fs[0] : fs, col); }
+    { const col = wet ? [fc[0] * 0.6 * k, fc[1] * 0.88 * k, fc[2] * 0.7 * k, 1] : [fc[0] * k, fc[1] * k, fc[2], 1]; up(geo(fm, ci), x0, z0, x1, z1, fh, Array.isArray(fs) ? fs[0] : fs, col); }
     const cm = r.cm || 'plaster', cs = MAT37_S[cm], cc = r.cc || [1, 1, 1], ceilY = ceil37(c);
     if (!r.open) dn(geo(cm, ci), x0, z0, x1, z1, ceilY, Array.isArray(cs) ? cs[0] : cs, C4(cc));
     // risers toward the lower neighbour (east and south) where the way is open
@@ -207,9 +241,10 @@ function planLights37() {
     for (let y = y0 + (o.oy ?? 0); y <= y1; y += step) for (let x = x0 + (o.ox ?? 0); x <= x1; x += step) { const c = cIdx(x, y); if (LV.room[c] !== r.id) continue; const st = o.flick && RNG() < o.flick ? 2 : 1;
       F(cellCenter(x), cellCenter(y), { I: o.I ?? 0.5, rad: o.rad ?? 12, sc: o.sc ?? 4, state: st }); LV.panels.push({ x: cellCenter(x), z: cellCenter(y), y: ceil37(c), state: st, w: o.w ?? 1.1, l: o.l ?? 2.2 }); }
   };
-  grid(LV.dry.sh, 3, { I: 0.62, rad: 15, sc: 5, w: 1.2, l: 2.6 });
-  grid(LV.dry.well, 3, { I: 0.62, rad: 17, sc: 6, oy: 1, w: 1.2, l: 2.6 });
-  grid(LV.dry.lap, 3, { I: 0.6, rad: 14, sc: 5, ox: 1, oy: 1, w: 1.0, l: 2.2 });
+  for (const [x, y, d] of SLITS37) { const [mx, mz] = edgeMid(x, y, d); F(mx - DX[d] * 1.4, mz - DY[d] * 1.4, { I: 0.8, rad: 12, sc: 3.4 }); }
+  grid(LV.dry.sh, 3, { I: 0.3, rad: 15, sc: 5, w: 1.2, l: 2.6 });
+  grid(LV.dry.well, 3, { I: 0.38, rad: 17, sc: 6, oy: 1, w: 1.2, l: 2.6 });
+  grid(LV.dry.lap, 3, { I: 0.38, rad: 14, sc: 5, ox: 1, oy: 1, w: 1.0, l: 2.2 });
   for (const r of LV.rooms) if (r.t === 'gatev' || r.t === 'lapv') for (const c of r.cells) F(cellCenter(c % N), cellCenter((c / N) | 0), { I: 0.45, rad: 7, sc: 2.2 });
   grid(LV.dry.cab, 2, { I: 0.5, rad: 8, sc: 3, w: 0.7, l: 1.3, flick: 0.12 });
   grid(LV.dry.plant, 3, { I: 0.45, rad: 9, sc: 3, w: 0.5, l: 1.3, flick: 0.2 });

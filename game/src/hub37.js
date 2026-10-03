@@ -18,6 +18,7 @@ function buildProps37() {
   W37.finishProps = () => {
     const keep = [], out = [...(B.finish('props37', keep) || []), ...(BOn.finish('lensOn37', keep) || []), ...(BFl.finish('lensFl37', keep) || [])];
     out.forEach(m => m._sortD = 300);
+    if (W37.cones) (W37.cones.finish('shafts37', keep) || []).forEach(m => { m._sortD = 2000; m.alwaysSelectAsActiveMesh = false; m.isPickable = false; });
     new Set(keep).forEach(r => r && r.dispose && r.dispose());
   };
 }
@@ -29,7 +30,16 @@ function pillar37(B, x, z, ceilY) {
 }
 function furnishShallows37(B) {
   const SH = LV.dry.sh, ceil = SH.h;
-  for (let y = 30; y <= 41; y += 4) for (let x = 29; x <= 40; x += 4) { if (x >= 30 && x <= 38 && y >= 37) continue; if (x >= 33 && x <= 37 && y >= 38) continue; pillar37(B, cc37(x), cc37(y), ceil); }
+  W37.cones = new PropBatch(coneMat('shafts37', [1, 0.94, 0.7, 0.07])); W37.cones.fast = false;
+  for (const [x, y, d] of SLITS37) {
+    const r = wallAt37(x, y, d, 0); r.position.y = DECK37; r.computeWorldMatrix(true);
+    W37.BOn.add(r, 'Box', { width: 1.5, height: 4.6, depth: 0.04 }, [1, 0.99, 0.88], 1, [0, 2.6, 0.02]);   // the opening, blown out white
+    for (const s of [-1, 1]) B.add(r, 'Box', { width: 0.18, height: 5.0, depth: 0.3 }, [0.92, 0.96, 0.88], 0, [s * 0.84, 2.6, 0.15]);
+    B.add(r, 'Box', { width: 1.9, height: 0.22, depth: 0.3 }, [0.92, 0.96, 0.88], 0, [0, 5.0, 0.15]); B.add(r, 'Box', { width: 1.9, height: 0.22, depth: 0.3 }, [0.92, 0.96, 0.88], 0, [0, 0.25, 0.15]);
+    const q = pr37(r.position.x + Math.sin(r.rotation.y) * 2.4, r.position.z + Math.cos(r.rotation.y) * 2.4, r.rotation.y + Math.PI, 1.9);
+    W37.cones.add(q, 'Box', { width: 1.5, height: 4.2, depth: 5.0 }, [1, 0.94, 0.7, 1], 1, [0, 0, 0], [0.62, 0, 0]);
+  }
+  for (const P of LV.pil37) addSolid(P.x - 0.5, P.z - 0.5, P.x + 0.5, P.z + 0.5, 'prop');   // the columns themselves are built with the tile meshes
   // the deck: benches, lifeguard chairs, ladders, towels, a ring on its hook
   for (const [x, y, d] of [[28, 27, 3], [31, 27, 3], [39, 27, 3], [42, 27, 3]]) { const r = wallAt37(x, y, d, 0); B.add(r, 'Box', { width: 0.04, height: 0.04, depth: 0.04 }, COL37.white, 0, [0, 0, 0]); placeBench37(B, wallAt37(x, y, d, 0, 0.02)); }
   { const r = pr37(cc37(27) + 1.2, cc37(28) - 0.6, Math.PI * 0.65); F37.guardChair(B, r); addSolid(r.position.x - 0.65, r.position.z - 0.55, r.position.x + 0.65, r.position.z + 0.55, 'prop'); W37.pos.chair1 = { x: r.position.x, z: r.position.z + 1.2 }; }

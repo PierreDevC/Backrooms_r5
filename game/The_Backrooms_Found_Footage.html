@@ -14173,18 +14173,17 @@ if (/[?&]debug/.test(location.search)) Object.assign(window.__BR || (window.__BR
 // ---------- r8 · Level 37 procedural textures: pool tile, lane-line tile, caustic-wet concrete ----------
 const TEX37 = {
   // glazed pool tile, 8 x 8 per 1.2 m (15 cm tiles): white-blue, hairline grout, faint wear
-  ptile: (sc, S) => genTex9(sc, S, 0.9, (u, v, x, y, o) => {
-    const tu = (u * 8) % 1, tv = (v * 8) % 1, ti = Math.floor(u * 8), tj = Math.floor(v * 8), seam = Math.min(tu, 1 - tu, tv, 1 - tv) < 0.045;
-    const n = tfbm(u * 10, v * 10, 10, 3, 211), tone = (h2i(ti, tj, 212) - 0.5) * 0.035, gl = 0.5 - Math.hypot(tu - 0.35, tv - 0.3) * 0.5;
-    const b = 0.9 + n * 0.05 + tone + Math.max(0, gl) * 0.04;
-    const g = seam ? 0.62 : 1;
-    o[0] = b * 0.93 * g; o[1] = b * 0.99 * g; o[2] = b * g; o[3] = seam ? 0 : 0.55 + n * 0.2;
+  // glazed square tile, 9 x 9 per 1.2 m (about 13 cm), cream with a green cast, dark thin grout (like the reference renders)
+  ptile: (sc, S) => genTex9(sc, S, 1.2, (u, v, x, y, o) => {
+    const K = 9, tu = (u * K) % 1, tv = (v * K) % 1, ti = Math.floor(u * K), tj = Math.floor(v * K), e = Math.min(tu, 1 - tu, tv, 1 - tv), seam = e < 0.06;
+    const n = tfbm(u * 10, v * 10, 10, 3, 211), tone = (h2i(ti, tj, 212) - 0.5) * 0.03, b = 0.9 + n * 0.05 + tone, g = seam ? 0.36 : 1;
+    o[0] = b * 0.95 * g; o[1] = b * g; o[2] = b * 0.9 * g; o[3] = seam ? 0 : 0.5 + n * 0.2;
   }),
   // dark-line tile for lane floors: same tile with a black lane stripe every 4 m (u runs along the lane)
   lane: (sc, S) => genTex9(sc, S, 0.9, (u, v, x, y, o) => {
-    const tu = (u * 8) % 1, tv = (v * 8) % 1, seam = Math.min(tu, 1 - tu, tv, 1 - tv) < 0.045, n = tfbm(u * 10, v * 10, 10, 3, 221);
-    const stripe = Math.abs(v - 0.5) < 0.05 ? 0.18 : 1, b = (0.88 + n * 0.05) * stripe;
-    o[0] = b * 0.9 * (seam ? 0.62 : 1); o[1] = b * 0.97 * (seam ? 0.62 : 1); o[2] = b * (seam ? 0.62 : 1); o[3] = seam ? 0 : 0.5;
+    const tu = (u * 14) % 1, tv = (v * 14) % 1, seam = Math.min(tu, 1 - tu, tv, 1 - tv) < 0.07, n = tfbm(u * 10, v * 10, 10, 3, 221);
+    const stripe = Math.abs(v - 0.5) < 0.05 ? 0.2 : 1, b = (0.88 + n * 0.05) * stripe;
+    o[0] = b * 0.97 * (seam ? 0.3 : 1); o[1] = b * (seam ? 0.3 : 1); o[2] = b * 0.84 * (seam ? 0.3 : 1); o[3] = seam ? 0 : 0.5;
   }),
   // wet stained concrete for the pump room and the tunnels
   wetc: (sc, S) => genTex9(sc, S, 1.4, (u, v, x, y, o) => {
@@ -14207,6 +14206,8 @@ const BAS37 = { SH: 0, LAP: 1, WELL: 2, CAFE: 3, HPOOL: 4, WWP: 5, WWF: 6 };
 const cell37 = (x, z) => cIdx(cellOf(x), cellOf(z));
 const TRIM37 = { white: [0.92, 0.94, 0.94], teal: [0.35, 0.62, 0.66], steel: [0.55, 0.57, 0.58], wood: [0.5, 0.36, 0.22], brass: [0.7, 0.55, 0.26], green: [0.45, 0.62, 0.52], dark: [0.1, 0.1, 0.11] };
 
+// tall slits of blown-out white in the Shallows' side walls, with warm light coming off them (as in the reference renders)
+const SLITS37 = [[26, 30, 2], [26, 34, 2], [26, 38, 2], [43, 29, 0], [43, 38, 0], [43, 41, 0]];
 function genLayout37() {
   const n = N;
   LV.zone = new Uint8Array(n * n); LV.room = new Int16Array(n * n).fill(-1); LV.reg = new Int8Array(n * n).fill(-1); LV.dark = new Uint8Array(n * n);
@@ -14222,32 +14223,34 @@ function genLayout37() {
   const water = (r, x0, y0, x1, y1, fh, bas) => { for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) { const c = cIdx(x, y); if (LV.room[c] !== r.id) continue; LV.fh[c] = fh; LV.bas[c] = bas; LV.ch[c] = r.rel ? fh + r.h : r.h; } };
   LV.dry = {};   // named rooms the story code looks up
   const SIDE = {
-    pool: { m: 'ptile', c: [0.95, 1, 1], t: TRIM37.teal, tp: 2 }, cab: { m: 'ptile', c: [1, 0.96, 0.88], t: TRIM37.wood, tp: 2 }, plant: { m: 'wetc', c: [0.9, 1, 0.98], t: TRIM37.steel, tp: 1 },
-    tun: { m: 'wetc', c: [0.55, 0.65, 0.66], t: TRIM37.dark, tp: 0 }, vest: { m: 'ptile', c: [0.9, 0.98, 0.98], t: TRIM37.teal, tp: 2 },
+    pool: { m: 'ptw', c: [0.96, 1, 0.9], t: TRIM37.green, tp: 2 }, cab: { m: 'ptw', c: [1, 0.97, 0.86], t: TRIM37.wood, tp: 2 }, plant: { m: 'wetc', c: [0.9, 1, 0.98], t: TRIM37.steel, tp: 1 },
+    tun: { m: 'wetc', c: [0.55, 0.65, 0.66], t: TRIM37.dark, tp: 0 }, vest: { m: 'ptw', c: [0.94, 1, 0.9], t: TRIM37.green, tp: 2 },
   };
   // ================= THE HUB =================
   // THE SHALLOWS: a great tiled hall, knee-deep, pillars standing in the water, a pit at the south end that drops to the corridor below
-  const SH = room(Z37.POOL, R37Z.HUB, 'shallows', { h: 7.4, side: SIDE.pool, flr: { m: 'ptile', col: [0.92, 0.99, 1] }, cm: 'plaster', cc: [0.92, 0.97, 0.98] });
+  const SH = room(Z37.POOL, R37Z.HUB, 'shallows', { h: 7.4, side: SIDE.pool, flr: { m: 'ptile', col: [0.94, 1, 0.9] }, cm: 'ptile', cc: [0.94, 1, 0.88] });
   rect(SH, 26, 27, 43, 43, DECK37); water(SH, 27, 28, 42, 42, -0.55, BAS37.SH);
   water(SH, 32, 38, 37, 42, -1.45, BAS37.SH); water(SH, 33, 39, 36, 42, -2.4, BAS37.SH);
   for (let x = 33; x <= 36; x++) { const c = cIdx(x, 43); LV.fh[c] = -2.4; LV.bas[c] = BAS37.SH; }   // the pit runs to the south wall, where the corridor starts
   LV.dry.sh = SH;
+  LV.pil37 = [];   // round tiled columns standing in the water
+  for (let y = 30; y <= 41; y += 4) for (let x = 29; x <= 40; x += 4) { if (x >= 30 && x <= 38 && y >= 37) continue; if (x >= 33 && x <= 37 && y >= 38) continue; LV.pil37.push({ x: cellCenter(x), z: cellCenter(y), r: 0.66, fh: -0.55, top: SH.h }); }
   // the vestibule between the Shallows and the Dive Well
-  const GV = rect(room(Z37.VEST, R37Z.HUB, 'gatev', { h: 3.8, side: SIDE.vest, flr: { m: 'ptile', col: [0.86, 0.95, 0.97] }, cm: 'plaster', cc: [0.9, 0.95, 0.96] }), 34, 26, 36, 26, DECK37);
+  const GV = rect(room(Z37.VEST, R37Z.HUB, 'gatev', { h: 3.8, side: SIDE.vest, flr: { m: 'ptile', col: [0.9, 0.98, 0.88] }, cm: 'ptile', cc: [0.94, 1, 0.88] }), 34, 26, 36, 26, DECK37);
   way(35, 27, 3, 'arch', { w: 2.6, h: 3.0, from: [35, 27], sign: 'DEEP END' }); way(35, 26, 3, 'arch', { w: 2.6, h: 3.0, from: [35, 26] });
   // THE DIVE WELL: twelve metres to the ceiling, six to the floor
-  const WELL = room(Z37.POOL, R37Z.HUB, 'well', { h: 12.8, side: SIDE.pool, flr: { m: 'ptile', col: [0.8, 0.95, 0.98] }, cm: 'plaster', cc: [0.9, 0.96, 0.97] });
+  const WELL = room(Z37.POOL, R37Z.HUB, 'well', { h: 12.8, side: SIDE.pool, flr: { m: 'ptile', col: [0.86, 1, 0.88] }, cm: 'ptile', cc: [0.94, 1, 0.88] });
   rect(WELL, 30, 13, 41, 25, DECK37); water(WELL, 31, 14, 40, 24, -6, BAS37.WELL);
   water(WELL, 31, 24, 40, 24, -1.1, BAS37.WELL); water(WELL, 31, 23, 40, 23, -2.7, BAS37.WELL); water(WELL, 31, 22, 40, 22, -4.3, BAS37.WELL);
   setFh(30, 19, 30, 19, -6, BAS37.WELL);   // the channel that leads into the tunnel
   LV.dry.well = WELL; LV.tower = { x: 30, y: 16, top: 10 };
   setFh(30, 16, 30, 16, 10, -1);          // the ten-metre tower is a solid block with a platform on top
   // THE DIVE-WELL BOOTH: the lifeguards' control booth
-  const BOOTH = rect(room(Z37.BOOTH, R37Z.HUB, 'booth', { h: 3.0, side: { m: 'cab', c: [1, 0.95, 0.85], t: TRIM37.wood, tp: 1 }, flr: { m: 'wood', col: [0.9, 0.85, 0.78] }, cm: 'plaster', cc: [0.95, 0.93, 0.88] }), 42, 16, 45, 21, DECK37);
+  const BOOTH = rect(room(Z37.BOOTH, R37Z.HUB, 'booth', { h: 3.0, side: { m: 'cab', c: [1, 0.95, 0.85], t: TRIM37.wood, tp: 1 }, flr: { m: 'wood', col: [0.9, 0.85, 0.78] }, cm: 'kceil', cc: [1, 0.98, 0.94] }), 42, 16, 45, 21, DECK37);
   way(41, 18, 0, 'door', { dk: 'booth', plaque: 'LIFEGUARD', from: [41, 18] });
   LV.dry.booth = BOOTH;
   // THE CABANA: changing rooms, the dry place
-  const CAB = rect(room(Z37.CABANA, R37Z.HUB, 'cabana', { h: 3.2, side: SIDE.cab, flr: { m: 'wood', col: [0.96, 0.9, 0.8] }, cm: 'plaster', cc: [0.96, 0.94, 0.9] }), 20, 31, 25, 38, DECK37);
+  const CAB = rect(room(Z37.CABANA, R37Z.HUB, 'cabana', { h: 3.2, side: SIDE.cab, flr: { m: 'wood', col: [0.96, 0.9, 0.8] }, cm: 'kceil', cc: [1, 0.98, 0.94] }), 20, 31, 25, 38, DECK37);
   way(26, 35, 2, 'door', { dk: 'cabana', plaque: 'CABANA', from: [26, 35] });
   LV.dry.cab = CAB;
   // THE PUMP ROOM
@@ -14255,10 +14258,10 @@ function genLayout37() {
   way(20, 34, 2, 'door', { dk: 'plant', plaque: 'PLANT · STAFF ONLY', from: [20, 34], locked: true });
   LV.dry.plant = PLANT;
   // THE LAP POOL: six lanes to the east, a flooded tunnel at the far end
-  const LAP = room(Z37.POOL, R37Z.HUB, 'lap', { h: 6.4, side: SIDE.pool, flr: { m: 'lane', col: [0.9, 0.98, 1] }, cm: 'plaster', cc: [0.92, 0.97, 0.98] });
+  const LAP = room(Z37.POOL, R37Z.HUB, 'lap', { h: 6.4, side: SIDE.pool, flr: { m: 'lane', col: [0.9, 1, 0.9] }, cm: 'ptile', cc: [0.94, 1, 0.88] });
   rect(LAP, 45, 31, 65, 38, DECK37); water(LAP, 46, 32, 65, 37, -1.5, BAS37.LAP);
   LV.dry.lap = LAP;
-  const LV37 = rect(room(Z37.VEST, R37Z.HUB, 'lapv', { h: 3.6, side: SIDE.vest, flr: { m: 'ptile', col: [0.86, 0.95, 0.97] }, cm: 'plaster', cc: [0.9, 0.95, 0.96] }), 44, 33, 44, 34, DECK37);
+  const LV37 = rect(room(Z37.VEST, R37Z.HUB, 'lapv', { h: 3.6, side: SIDE.vest, flr: { m: 'ptile', col: [0.9, 0.98, 0.88] }, cm: 'ptile', cc: [0.94, 1, 0.88] }), 44, 33, 44, 34, DECK37);
   way(43, 33, 0, 'arch', { w: 2.4, h: 3.0, from: [43, 33], sign: 'LAP POOL' }); way(43, 34, 0, 'arch', { w: 2.4, h: 3.0, from: [43, 34] });
   way(44, 33, 0, 'arch', { w: 2.4, h: 3.0, from: [44, 33] }); way(44, 34, 0, 'arch', { w: 2.4, h: 3.0, from: [44, 34] });
   // the tunnel to Water World: low, dark, entirely under the surface until the lap pool is drained
@@ -14303,7 +14306,7 @@ function genLayout37() {
 function side37(x, y) {
   if (!inGrid(x, y)) return null;
   const c = cIdx(x, y), z = LV.zone[c]; if (z === Z37.VOID) return null;
-  const r = LV.rooms[LV.room[c]], s = r.side || { m: 'ptile', c: [1, 1, 1], t: TRIM37.white, tp: 1 };
+  const r = LV.rooms[LV.room[c]], s = r.side || { m: 'ptw', c: [1, 1, 1], t: TRIM37.white, tp: 1 };
   return { m: s.m, c: s.c, t: s.t, tp: s.tp, h: LV.ch[c], fh: LV.fh[c] };
 }
 const ceil37 = c => LV.ch[c];
@@ -14311,13 +14314,13 @@ const ceil37 = c => LV.ch[c];
 function opening37(e) {
   if (!e) return null;
   const f = e.from ? LV.fh[cIdx(e.from[0], e.from[1])] : 0;
-  if (e.kind === 'arch') return { w: e.w || 2.0, h: f + (e.h || 2.5), cw: e.tunnel ? 0.06 : 0.12 };
+  if (e.kind === 'arch') return { w: e.w || 2.0, h: f + (e.h || 2.5), cw: 0 };
   if (e.kind === 'door') return { w: DOORW, h: f + DOORH, cw: 0.09 };
   return null;
 }
 
 // ---------- geometry ----------
-const MAT37_S = { ptile: [1 / 1.2, 1 / 1.2], lane: [1 / 1.2, 1 / 1.2], wetc: [1 / 2.4, 1 / 2.4], wood: [1 / 2.4, 1 / 2.4], hwall: [1 / 3.0, 1 / 2.85], carpet: 1 / 2.25, hceil: 1 / 1.8, plaster: [1 / 2.5, 1 / 2.5], bconc: [1 / 2.4, 1 / 2.4],
+const MAT37_S = { ptile: [1 / 1.2, 1 / 1.2], ptw: [1 / 1.2, 1 / 1.2], lane: [1 / 1.2, 1 / 1.2], wetc: [1 / 2.4, 1 / 2.4], wood: [1 / 2.4, 1 / 2.4], hwall: [1 / 3.0, 1 / 2.85], carpet: 1 / 2.25, hceil: 1 / 1.8, plaster: [1 / 2.5, 1 / 2.5], bconc: [1 / 2.4, 1 / 2.4],
   block: [1 / 1.6, 1 / 1.6], brick: [1 / 1.6, 1 / 1.6], lino: [1 / 1.2, 1 / 1.2], kceil: [1 / 1.2, 1 / 1.2], conc: [1 / 2.8, 1 / 2.8], paper: [1 / 0.9, 1 / 2.4] };
 const FLOORM37 = new Set(['ptile', 'lane', 'wetc', 'wood', 'carpet', 'lino', 'conc']), CEILM37 = new Set(['plaster', 'hceil', 'bconc', 'kceil']);
 function buildGeometry37(scene, mats) {
@@ -14350,6 +14353,36 @@ function buildGeometry37(scene, mats) {
     } else tg.face(p.x0, p.y0, p.z0, [1, 0, 0], [0, 0, 1], p.x1 - p.x0, p.z1 - p.z0, [0, -1, 0], 1, false, tcol);
   }
   for (const t of LV.trims) geo('trim', chunkOf((t[0] + t[3]) / 2, (t[2] + t[5]) / 2)).box(t[0], t[1], t[2], t[3], t[4], t[5], 1, 31, C4(t[6]));
+  // ---- round arches (a half-circle on top of the jambs) and round tiled columns, built straight into the tile meshes ----
+  const tri = (g, A, B2, C2, n, su, sv, uvs) => { const b0 = g.p.length / 3; for (const [p, uv] of [[A, uvs[0]], [B2, uvs[1]], [C2, uvs[2]]]) { g.p.push(p[0], p[1], p[2]); g.n.push(n[0], n[1], n[2]); g.t.push(1, 0, 0, 1); g.uv.push(uv[0], uv[1]); g.c.push(...n.slice(3)); } g.i.push(b0, b0 + 1, b0 + 2, b0, b0 + 2, b0 + 1); };
+  for (const e of LV.ek.values()) {
+    if (e.kind !== 'arch') continue;
+    const op = opening37(e), horiz = e.d === 1 || e.d === 3, [mx, mz] = edgeMid(e.x, e.y, e.d), m = horiz ? mx : mz, c = horiz ? mz : mx, w = op.w, hT = op.h, f0 = LV.fh[cIdx(e.x, e.y)], r = Math.min(w / 2, (hT - f0) * 0.5), ys = hT - r, Hh = WT / 2;
+    const sA = (e.d === 0 || e.d === 1) ? -1 : 1, cA = cIdx(e.x, e.y), cB = cIdx(e.x + DX[e.d], e.y + DY[e.d]);
+    const W3 = (u, y, q) => horiz ? [u, y, q] : [q, y, u], N3 = s => horiz ? [0, 0, s] : [s, 0, 0];
+    const arc = [], NS = 14; for (let k = 0; k <= NS; k++) { const th = Math.PI - k / NS * Math.PI; arc.push([m + Math.cos(th) * w / 2, ys + Math.sin(th) * r, th]); }
+    for (const [cell, sg] of [[cA, sA], [cB, -sA]]) {   // the wall face looking into this cell: spandrel fill between the jamb corners and the arc
+      const sd = side37(cell % N, (cell / N) | 0); if (!sd) continue; const [su, sv] = MAT37_S[sd.m] || [1, 1], g = geo(sd.m, chunkOf(mx, mz)), q = c + sg * Hh, nn = N3(sg), col = [sd.c[0], sd.c[1], sd.c[2], 1];
+      for (const [side, ia, ib] of [[-1, 0, NS / 2], [1, NS / 2, NS]]) {
+        const corner = side < 0 ? [m - w / 2, hT] : [m + w / 2, hT];
+        for (let k = ia; k < ib; k++) { const A = arc[k], B2 = arc[k + 1]; tri(g, W3(corner[0], corner[1], q), W3(A[0], A[1], q), W3(B2[0], B2[1], q), nn.concat(col), su, sv, [[corner[0] * su, corner[1] * sv], [A[0] * su, A[1] * sv], [B2[0] * su, B2[1] * sv]]); }
+        // fill the strip between the arc's top and the flat top of the opening on the mid column
+      }
+      // the little triangle above the arc's crown, between the two halves
+    }
+    // the soffit: the inside of the arch, running through the wall
+    { const sd = side37(cA % N, (cA / N) | 0) || side37(cB % N, (cB / N) | 0), [su, sv] = MAT37_S[sd.m] || [1, 1], g = geo(sd.m, chunkOf(mx, mz)), col = [sd.c[0] * 0.92, sd.c[1] * 0.92, sd.c[2] * 0.92, 1];
+      for (let k = 0; k < NS; k++) { const A = arc[k], B2 = arc[k + 1], nA = [-Math.cos(A[2]), -Math.sin(A[2])], nm = horiz ? [nA[0], nA[1], 0] : [0, nA[1], nA[0]];
+        const p00 = W3(A[0], A[1], c - Hh), p01 = W3(A[0], A[1], c + Hh), p10 = W3(B2[0], B2[1], c - Hh), p11 = W3(B2[0], B2[1], c + Hh), uA = k / NS * 3, uB = (k + 1) / NS * 3;
+        tri(g, p00, p01, p10, nm.concat(col), su, sv, [[uA, 0], [uA, 1.2], [uB, 0]]); tri(g, p01, p11, p10, nm.concat(col), su, sv, [[uA, 1.2], [uB, 1.2], [uB, 0]]); } }
+  }
+  for (const P of LV.pil37 || []) {   // round columns
+    const g = geo('ptw', chunkOf(P.x, P.z)), NSG = 22, col = [0.96, 1, 0.9, 1];
+    for (let k = 0; k < NSG; k++) { const a0 = k / NSG * TAU, a1 = (k + 1) / NSG * TAU, x0 = P.x + Math.sin(a0) * P.r, z0 = P.z + Math.cos(a0) * P.r, x1 = P.x + Math.sin(a1) * P.r, z1 = P.z + Math.cos(a1) * P.r, u0 = a0 * P.r * (1 / 1.2), u1 = a1 * P.r * (1 / 1.2), v0 = P.fh / 1.2, v1 = P.top / 1.2;
+      const n0 = [Math.sin(a0), 0, Math.cos(a0)], n1 = [Math.sin(a1), 0, Math.cos(a1)], b0 = g.p.length / 3;
+      for (const [x, y, z, n, u, v] of [[x0, P.fh, z0, n0, u0, v0], [x1, P.fh, z1, n1, u1, v0], [x1, P.top, z1, n1, u1, v1], [x0, P.top, z0, n0, u0, v1]]) { g.p.push(x, y, z); g.n.push(n[0], 0, n[2]); g.t.push(Math.cos((a0 + a1) / 2), 0, -Math.sin((a0 + a1) / 2), 1); g.uv.push(u, v); g.c.push(...col); }
+      g.i.push(b0, b0 + 1, b0 + 2, b0, b0 + 2, b0 + 3, b0, b0 + 2, b0 + 1, b0, b0 + 3, b0 + 2); }
+  }
   // ---- floors, ceilings and the risers between floors of different heights ----
   const up = (g, x0, z0, x1, z1, y, s, col) => g.face(x0, y, z1, [1, 0, 0], [0, 0, -1], x1 - x0, z1 - z0, [0, 1, 0], s, false, col);
   const dn = (g, x0, z0, x1, z1, y, s, col) => g.face(x0, y, z0, [1, 0, 0], [0, 0, 1], x1 - x0, z1 - z0, [0, -1, 0], s, false, col);
@@ -14358,7 +14391,7 @@ function buildGeometry37(scene, mats) {
     const r = LV.rooms[LV.room[c]], x0 = x * CELL, z0 = y * CELL, x1 = x0 + CELL, z1 = z0 + CELL, ci = chunkOf(x0 + 1, z0 + 1), fh = LV.fh[c], hv = hash1(x * 31.7 + y * 17.3);
     const fm = r.flr ? r.flr.m : 'ptile', fc = r.flr ? r.flr.col : [1, 1, 1], k = 0.94 + 0.08 * hv, fs = MAT37_S[fm];
     const wet = LV.bas[c] >= 0 && fh < -0.3;   // a submerged floor is a shade bluer and darker
-    { const col = wet ? [fc[0] * 0.72 * k, fc[1] * 0.9 * k, fc[2] * 0.92 * k, 1] : [fc[0] * k, fc[1] * k, fc[2], 1]; up(geo(fm, ci), x0, z0, x1, z1, fh, Array.isArray(fs) ? fs[0] : fs, col); }
+    { const col = wet ? [fc[0] * 0.6 * k, fc[1] * 0.88 * k, fc[2] * 0.7 * k, 1] : [fc[0] * k, fc[1] * k, fc[2], 1]; up(geo(fm, ci), x0, z0, x1, z1, fh, Array.isArray(fs) ? fs[0] : fs, col); }
     const cm = r.cm || 'plaster', cs = MAT37_S[cm], cc = r.cc || [1, 1, 1], ceilY = ceil37(c);
     if (!r.open) dn(geo(cm, ci), x0, z0, x1, z1, ceilY, Array.isArray(cs) ? cs[0] : cs, C4(cc));
     // risers toward the lower neighbour (east and south) where the way is open
@@ -14404,9 +14437,10 @@ function planLights37() {
     for (let y = y0 + (o.oy ?? 0); y <= y1; y += step) for (let x = x0 + (o.ox ?? 0); x <= x1; x += step) { const c = cIdx(x, y); if (LV.room[c] !== r.id) continue; const st = o.flick && RNG() < o.flick ? 2 : 1;
       F(cellCenter(x), cellCenter(y), { I: o.I ?? 0.5, rad: o.rad ?? 12, sc: o.sc ?? 4, state: st }); LV.panels.push({ x: cellCenter(x), z: cellCenter(y), y: ceil37(c), state: st, w: o.w ?? 1.1, l: o.l ?? 2.2 }); }
   };
-  grid(LV.dry.sh, 3, { I: 0.62, rad: 15, sc: 5, w: 1.2, l: 2.6 });
-  grid(LV.dry.well, 3, { I: 0.62, rad: 17, sc: 6, oy: 1, w: 1.2, l: 2.6 });
-  grid(LV.dry.lap, 3, { I: 0.6, rad: 14, sc: 5, ox: 1, oy: 1, w: 1.0, l: 2.2 });
+  for (const [x, y, d] of SLITS37) { const [mx, mz] = edgeMid(x, y, d); F(mx - DX[d] * 1.4, mz - DY[d] * 1.4, { I: 0.8, rad: 12, sc: 3.4 }); }
+  grid(LV.dry.sh, 3, { I: 0.3, rad: 15, sc: 5, w: 1.2, l: 2.6 });
+  grid(LV.dry.well, 3, { I: 0.38, rad: 17, sc: 6, oy: 1, w: 1.2, l: 2.6 });
+  grid(LV.dry.lap, 3, { I: 0.38, rad: 14, sc: 5, ox: 1, oy: 1, w: 1.0, l: 2.2 });
   for (const r of LV.rooms) if (r.t === 'gatev' || r.t === 'lapv') for (const c of r.cells) F(cellCenter(c % N), cellCenter((c / N) | 0), { I: 0.45, rad: 7, sc: 2.2 });
   grid(LV.dry.cab, 2, { I: 0.5, rad: 8, sc: 3, w: 0.7, l: 1.3, flick: 0.12 });
   grid(LV.dry.plant, 3, { I: 0.45, rad: 9, sc: 3, w: 0.5, l: 1.3, flick: 0.2 });
@@ -14495,15 +14529,15 @@ void main(){
   if(!above) n = -n;
   float fres = pow(1.0 - clamp(abs(dot(n, V)), 0.0, 1.0), 3.0);
   float L = clamp(fixtureAt(p, vec3(0.0)) + 0.18, 0.0, 1.6);
-  vec3 deep = vec3(0.05, 0.42, 0.5) * (0.5 + L*0.75), sky = vec3(0.78, 0.95, 0.98) * (0.4 + L*0.7);
+  vec3 deep = vec3(0.03, 0.4, 0.26) * (0.5 + L*0.8), sky = vec3(0.72, 0.9, 0.7) * (0.4 + L*0.7);
   vec3 col = mix(deep, sky, fres*0.75 + 0.07);
   float sp = pow(max(0.0, sin(q.x*7.0 + t*2.1)*sin(q.y*6.3 - t*1.7)), 6.0)*L;
-  col += vec3(0.5, 0.8, 0.85)*sp*0.45;
+  col += vec3(0.7, 0.95, 0.7)*sp*0.45;
   vec3 diff = vec3(0.0), spec = vec3(0.0);
   dynLights(p, n, vec3(0.0, 1.0, 0.0), V, 90.0, 1.0, diff, spec);
   col += spec*1.3 + diff*vec3(0.03, 0.1, 0.12);
   float alpha = above ? mix(0.5, 0.93, fres) : 0.9;
-  if(!above) col = mix(col, vec3(0.22, 0.62, 0.7)*(0.45 + L*0.7), 0.55);
+  if(!above) col = mix(col, vec3(0.14, 0.6, 0.4)*(0.45 + L*0.7), 0.55);
   gl_FragColor = vec4(fogIt(col, p), alpha*wP.x);
 }`;
 BABYLON.Effect.ShadersStore.caust37VertexShader = BABYLON.Effect.ShadersStore.water37VertexShader;
@@ -14516,8 +14550,19 @@ void main(){
   vec2 q = vPos.xz*1.15; float t = lvl.w;
   float c = caus(q, t)*0.7 + caus(q*1.7 + 3.3, t*1.3)*0.5;
   float L = clamp(fixtureAt(vPos, vec3(0.0)) + 0.1, 0.0, 1.4), fade = smoothstep(0.12, 0.6, d)*(1.0 - smoothstep(3.5, 7.5, d));
-  vec3 col = vec3(0.35, 0.8, 0.85)*c*L*fade*0.55;
+  vec3 col = vec3(0.6, 0.95, 0.65)*c*L*fade*0.55;
   gl_FragColor = vec4(fogIt(col, vPos), 1.0);
+}`;
+BABYLON.Effect.ShadersStore.grout37VertexShader = BABYLON.Effect.ShadersStore.water37VertexShader;
+BABYLON.Effect.ShadersStore.grout37FragmentShader = `precision highp float; varying vec3 vPos; varying vec2 vUV; varying vec4 vC; uniform vec4 wP;
+${GLSL_COMMON}
+void main(){
+  float d = wP.z - vC.r; if(d < 0.1) discard;
+  float t = lvl.w, k = clamp(d, 0.0, 2.0); vec2 q = vPos.xz*11.7;
+  vec2 w = vec2(sin(q.y*0.55 + t*0.8 + sin(q.x*0.37)*1.6), sin(q.x*0.5 - t*0.7 + sin(q.y*0.33)*1.6))*(0.12 + 0.2*k);
+  vec2 f = abs(fract(q + w + 0.5) - 0.5); float line = smoothstep(0.1, 0.0, min(f.x, f.y));
+  float L = clamp(fixtureAt(vPos, vec3(0.0)) + 0.12, 0.0, 1.2);
+  gl_FragColor = vec4(fogIt(vec3(0.02, 0.07, 0.04), vPos), line*0.6*clamp(d*2.0, 0.0, 1.0)*(0.5 + L*0.5));
 }`;
 function waterMat37() {
   const names = ['world', 'viewProjection', 'wP', ...COMMON_UNIFORMS];
@@ -14531,6 +14576,12 @@ function caustMat37(basin) {
   m.setTexture('lightTex', LV.lightTex); m.setVector4('wP', new BABYLON.Vector4(1, 1, 0, 0)); m.backFaceCulling = false; m.alphaMode = BABYLON.Engine.ALPHA_ADD; m.disableDepthWrite = true;
   MATS.list.push(m); return m;
 }
+function groutMat37(basin) {
+  const names = ['world', 'viewProjection', 'wP', ...COMMON_UNIFORMS];
+  const m = new BABYLON.ShaderMaterial('grout37_' + basin, SCN, { vertex: 'grout37', fragment: 'grout37' }, { attributes: ['position', 'uv', 'color'], uniforms: names, samplers: ['lightTex'], needAlphaBlending: true });
+  m.setTexture('lightTex', LV.lightTex); m.setVector4('wP', new BABYLON.Vector4(1, 1, 0, 0)); m.backFaceCulling = false; m.alphaMode = BABYLON.Engine.ALPHA_COMBINE; m.disableDepthWrite = true;
+  MATS.list.push(m); return m;
+}
 function buildCaustics37(scene) {
   W37.caust = [];
   for (const B of LV.basins) {
@@ -14538,7 +14589,8 @@ function buildCaustics37(scene) {
     const g = new Geo(true);
     for (const c of B.cells) { const x0 = (c % N) * CELL, z0 = ((c / N) | 0) * CELL, fh = LV.fh[c]; if (fh > 1) continue; g.face(x0, fh + 0.012, z0 + CELL, [1, 0, 0], [0, 0, -1], CELL, CELL, [0, 1, 0], 1, true, [fh, 0, 0, 1]); }
     if (!g.p.length) continue;
-    const m = g.mesh('caust37_' + B.name, scene), mat = caustMat37(B.name); m.material = mat; m.alphaIndex = 3; m._sortD = 90; m.isPickable = false; m.__noPortal = true; B.caust = { mesh: m, mat };
+    const m = g.mesh('caust37_' + B.name, scene), mat = caustMat37(B.name); m.material = mat; m.alphaIndex = 3; m._sortD = 90; m.isPickable = false; m.__noPortal = true;
+    const m2 = g.mesh('grout37_' + B.name, scene), mat2 = groutMat37(B.name); m2.material = mat2; m2.alphaIndex = 2; m2._sortD = 91; m2.isPickable = false; m2.__noPortal = true; B.caust = { mesh: m, mat, mesh2: m2, mat2 };
   }
 }
 
@@ -14602,7 +14654,7 @@ async function buildWorld37(progress) {
   buildLightmap(SCN); buildCollision();
   progress(0.52, 'WARMING THE WATER…'); await nextFrame();
   const E = (n, d, t) => envMat9(n, d, t);
-  const mats = { ptile: E('ptile37', ['MAT_TILE'], T.ptile), lane: E('lane37', ['MAT_TILE'], T.lane), wetc: E('wetc37', ['MAT_BCONC'], T.wetc), wood: E('wood37', ['MAT_WOOD'], T.wood), hwall: E('hwall37', ['MAT_HWALL'], T.hwall),
+  const mats = { ptile: E('ptile37', ['MAT_TILE'], T.ptile), ptw: E('ptw37', ['MAT_KWALL'], T.ptile), lane: E('lane37', ['MAT_TILE'], T.lane), wetc: E('wetc37', ['MAT_BCONC'], T.wetc), wood: E('wood37', ['MAT_WOOD'], T.wood), hwall: E('hwall37', ['MAT_HWALL'], T.hwall),
     carpet: E('carpet37', ['MAT_CARPET'], T.carpet), hceil: E('hceil37', ['MAT_HCEIL'], T.hceil), plaster: E('plaster37', ['MAT_PLASTER'], T.conc), bconc: E('bconc37', ['MAT_BCONC'], T.bconc), block: E('block37', ['MAT_BLOCK'], T.block),
     brick: E('brick37', ['MAT_BLOCK'], T.brick), lino: E('lino37', ['MAT_KFLOOR', 'KSHEEN'], T.lino), kceil: E('kceil37', ['MAT_KCEIL'], T.dceil), conc: E('conc37', ['MAT_CONC'], T.conc), trim: E('trim37', ['MAT_CASE'], T.wetc) };
   buildGeometry37(SCN, mats);
@@ -14658,6 +14710,7 @@ function buildProps37() {
   W37.finishProps = () => {
     const keep = [], out = [...(B.finish('props37', keep) || []), ...(BOn.finish('lensOn37', keep) || []), ...(BFl.finish('lensFl37', keep) || [])];
     out.forEach(m => m._sortD = 300);
+    if (W37.cones) (W37.cones.finish('shafts37', keep) || []).forEach(m => { m._sortD = 2000; m.alwaysSelectAsActiveMesh = false; m.isPickable = false; });
     new Set(keep).forEach(r => r && r.dispose && r.dispose());
   };
 }
@@ -14669,7 +14722,16 @@ function pillar37(B, x, z, ceilY) {
 }
 function furnishShallows37(B) {
   const SH = LV.dry.sh, ceil = SH.h;
-  for (let y = 30; y <= 41; y += 4) for (let x = 29; x <= 40; x += 4) { if (x >= 30 && x <= 38 && y >= 37) continue; if (x >= 33 && x <= 37 && y >= 38) continue; pillar37(B, cc37(x), cc37(y), ceil); }
+  W37.cones = new PropBatch(coneMat('shafts37', [1, 0.94, 0.7, 0.07])); W37.cones.fast = false;
+  for (const [x, y, d] of SLITS37) {
+    const r = wallAt37(x, y, d, 0); r.position.y = DECK37; r.computeWorldMatrix(true);
+    W37.BOn.add(r, 'Box', { width: 1.5, height: 4.6, depth: 0.04 }, [1, 0.99, 0.88], 1, [0, 2.6, 0.02]);   // the opening, blown out white
+    for (const s of [-1, 1]) B.add(r, 'Box', { width: 0.18, height: 5.0, depth: 0.3 }, [0.92, 0.96, 0.88], 0, [s * 0.84, 2.6, 0.15]);
+    B.add(r, 'Box', { width: 1.9, height: 0.22, depth: 0.3 }, [0.92, 0.96, 0.88], 0, [0, 5.0, 0.15]); B.add(r, 'Box', { width: 1.9, height: 0.22, depth: 0.3 }, [0.92, 0.96, 0.88], 0, [0, 0.25, 0.15]);
+    const q = pr37(r.position.x + Math.sin(r.rotation.y) * 2.4, r.position.z + Math.cos(r.rotation.y) * 2.4, r.rotation.y + Math.PI, 1.9);
+    W37.cones.add(q, 'Box', { width: 1.5, height: 4.2, depth: 5.0 }, [1, 0.94, 0.7, 1], 1, [0, 0, 0], [0.62, 0, 0]);
+  }
+  for (const P of LV.pil37) addSolid(P.x - 0.5, P.z - 0.5, P.x + 0.5, P.z + 0.5, 'prop');   // the columns themselves are built with the tile meshes
   // the deck: benches, lifeguard chairs, ladders, towels, a ring on its hook
   for (const [x, y, d] of [[28, 27, 3], [31, 27, 3], [39, 27, 3], [42, 27, 3]]) { const r = wallAt37(x, y, d, 0); B.add(r, 'Box', { width: 0.04, height: 0.04, depth: 0.04 }, COL37.white, 0, [0, 0, 0]); placeBench37(B, wallAt37(x, y, d, 0, 0.02)); }
   { const r = pr37(cc37(27) + 1.2, cc37(28) - 0.6, Math.PI * 0.65); F37.guardChair(B, r); addSolid(r.position.x - 0.65, r.position.z - 0.55, r.position.x + 0.65, r.position.z + 0.55, 'prop'); W37.pos.chair1 = { x: r.position.x, z: r.position.z + 1.2 }; }
@@ -14801,10 +14863,171 @@ function furnishBooth37(B) {
 // the Pump Room and booth interactions live in story37.js; the wings' furniture lives in wings37.js
 
 // ==== wings37.js ====
-// ---------- r8 · Level 37: the three wings (stubs; filled in below) ----------
-function planHotel37() {} function planHospital37() {} function planWorld37() {}
-function lightHotel37() {} function lightHospital37() {} function lightWorld37() {}
-function furnishHotel37() {} function furnishHospital37() {} function furnishWorld37() {}
+// ---------- r8 · Level 37: the three wings ----------
+// THE LUKEWARM HOTEL (Level 233): carpet and wallpaper under pool-warm air, a lobby that plays music to nobody, rooms numbered 201 to 204, a cafeteria with a pool in it,
+// a pool court where a swimmer keeps hearing someone count, and a door behind the reception desk that is not on any plan.
+// WELLBORN HOSPITAL (Level 130): admissions, a long corridor of wards, laundry, pharmacy, nurses' station, records, theatre. Nobody is ever seen on shift: the Staff only show up in night shot.
+// WATER WORLD (Level 43): the park gate under a painted sky, a main building, an aquarium dome of almond water, the staff halls, and the wave pool where the video tape is.
+function planHotel37(room, rect, way, setFh, water, SIDE) {
+  const H = R37Z.HOTEL, wp = { m: 'hwall', c: [1, 0.96, 0.88], t: [0.42, 0.26, 0.14], tp: 2 }, cr = { m: 'carpet', col: [0.78, 0.5, 0.36] };
+  const L = rect(room(Z37.HOTEL, H, 'lobby', { h: 4.3, side: wp, flr: cr, cm: 'hceil', cc: [1, 0.96, 0.9] }), 30, 48, 40, 54, 0);
+  way(34, 47, 1, 'arch', { w: 2.0, h: 2.7, from: [34, 47] }); way(35, 47, 1, 'arch', { w: 2.0, h: 2.7, from: [35, 47] });
+  way(40, 51, 0, 'arch', { w: 2.6, h: 3.0, from: [40, 51], sign: 'CAFETERIA' }); way(35, 54, 1, 'arch', { w: 3.0, h: 3.0, from: [35, 54], sign: 'POOL' }); way(30, 51, 2, 'arch', { w: 2.2, h: 2.8, from: [30, 51], sign: 'ROOMS 201-204' });
+  LV.dry.lobby = L;
+  const CF = room(Z37.CAFE, H, 'cafe', { h: 4.0, side: { m: 'hwall', c: [1, 0.98, 0.9], t: [0.5, 0.36, 0.22], tp: 2 }, flr: { m: 'wood', col: [0.95, 0.85, 0.7] }, cm: 'hceil', cc: [1, 0.97, 0.9] });
+  rect(CF, 41, 48, 49, 55, 0); water(CF, 43, 50, 47, 53, -1.2, BAS37.CAFE); LV.dry.cafe = CF;
+  const CO = rect(room(Z37.HOTEL, H, 'rooms', { h: 3.1, side: wp, flr: cr, cm: 'hceil', cc: [1, 0.95, 0.88] }), 21, 51, 29, 51, 0);
+  for (let k = 0; k < 4; k++) {
+    const x = 21 + k * 2, num = 201 + k, rm = rect(room(Z37.HOTEL, H, 'hroom' + num, { h: 3.1, side: wp, flr: { m: 'carpet', col: [0.5 + 0.06 * k, 0.4, 0.46] }, cm: 'hceil', cc: [1, 0.95, 0.88], num }), x, 49, x + 1, 50, 0);
+    way(x, 51, 3, 'door', { dk: 'hotel', plaque: String(num), from: [x, 51], locked: num === 204, hroom: num }); LV.dry['r' + num] = rm;
+  }
+  LV.dry.corr37 = CO;
+  const V = rect(room(Z37.HOTEL, H, 'vault', { h: 3.0, side: { m: 'hwall', c: [0.6, 0.62, 0.7], t: [0.2, 0.2, 0.24], tp: 2 }, flr: { m: 'carpet', col: [0.35, 0.36, 0.45] }, cm: 'hceil', cc: [0.7, 0.7, 0.75] }), 28, 52, 29, 54, 0);
+  way(30, 53, 2, 'door', { dk: 'vault', plaque: '233', from: [30, 53], locked: true }); LV.dry.vault = V;
+  const C = room(Z37.POOL, H, 'court', { h: 5.6, side: { m: 'ptw', c: [1, 0.97, 0.9], t: [0.7, 0.55, 0.3], tp: 2 }, flr: { m: 'ptile', col: [1, 0.96, 0.88] }, cm: 'kceil', cc: [1, 0.98, 0.94] });
+  rect(C, 28, 55, 48, 66, DECK37); water(C, 30, 57, 46, 64, -1.8, BAS37.HPOOL); LV.dry.court = C;
+}
+function planHospital37(room, rect, way, setFh, water, SIDE) {
+  const H = R37Z.HOSP, wl = { m: 'block', c: [0.82, 0.92, 0.86], t: [0.6, 0.72, 0.66], tp: 2 }, fl = { m: 'lino', col: [0.88, 0.94, 0.9] };
+  const ST = room(Z37.HOSP, H, 'hstair', { rel: true, h: 3.2, side: { m: 'wetc', c: [0.7, 0.8, 0.78], t: [0.4, 0.45, 0.45], tp: 1 }, flr: { m: 'wetc', col: [0.7, 0.8, 0.8] }, cm: 'kceil', cc: [0.9, 0.95, 0.93] });
+  rect(ST, 24, 13, 24, 13, -4.4); rect(ST, 24, 12, 24, 12, -2.2);
+  LV.bas[cIdx(24, 13)] = BAS37.WELL; LV.ch[cIdx(24, 13)] = 2.0; LV.ch[cIdx(24, 12)] = 3.6; LV.dark[cIdx(24, 13)] = 1;
+  way(24, 14, 1, 'arch', { w: 1.8, h: 2.3, from: [24, 14], tunnel: true });
+  const A = rect(room(Z37.HOSP, H, 'admissions', { h: 3.4, side: wl, flr: fl, cm: 'kceil', cc: [0.96, 1, 0.98] }), 20, 7, 28, 11, 0);
+  way(24, 12, 3, 'arch', { w: 2.0, h: 2.7, from: [24, 12] }); LV.dry.adm = A;
+  const CO = rect(room(Z37.HOSP, H, 'hcorr', { h: 3.2, side: wl, flr: fl, cm: 'kceil', cc: [0.96, 1, 0.98] }), 12, 6, 38, 6, 0);
+  way(24, 7, 3, 'arch', { w: 2.2, h: 2.7, from: [24, 7] }); LV.dry.hcorr = CO;
+  [[11, 13], [14, 16], [17, 19], [29, 31], [32, 34], [35, 37]].forEach(([a, b], i) => { const w = rect(room(Z37.HOSP, H, 'ward' + (i + 1), { h: 3.0, side: wl, flr: fl, cm: 'kceil', cc: [0.96, 1, 0.98], num: i + 1 }), a, 3, b, 5, 0); way(a + 1, 6, 3, 'door', { dk: 'hosp', plaque: 'WARD ' + (i + 1), from: [a + 1, 6] }); LV.dry['ward' + (i + 1)] = w; });
+  const mk = (id, x0, x1, door, plaque, locked) => { const r = rect(room(Z37.HOSP, H, id, { h: 3.0, side: wl, flr: fl, cm: 'kceil', cc: [0.96, 1, 0.98] }), x0, 7, x1, 10, 0); way(door, 7, 3, 'door', { dk: 'hosp', plaque, from: [door, 7], locked }); LV.dry[id] = r; return r; };
+  mk('laundry', 11, 15, 13, 'LAUNDRY'); mk('pharmacy', 16, 19, 17, 'PHARMACY', true); mk('nurses', 29, 32, 30, 'NURSES'); mk('records', 33, 37, 35, 'RECORDS');
+  const OT = rect(room(Z37.HOSP, H, 'theatre', { h: 3.4, side: { m: 'block', c: [0.7, 0.88, 0.84], t: [0.5, 0.62, 0.58], tp: 2 }, flr: { m: 'lino', col: [0.7, 0.85, 0.82] }, cm: 'kceil', cc: [0.9, 1, 0.98] }), 39, 3, 40, 10, 0);
+  way(38, 6, 0, 'door', { dk: 'hosp', plaque: 'THEATRE', from: [38, 6] }); LV.dry.theatre = OT;
+}
+function planWorld37(room, rect, way, setFh, water, SIDE) {
+  const W = R37Z.WW;
+  const PZ = rect(room(Z37.PARK, W, 'plaza', { h: 9.0, side: { m: 'block', c: [0.7, 0.86, 0.96], t: [0.9, 0.9, 0.9], tp: 2 }, flr: { m: 'conc', col: [0.95, 0.95, 0.9] }, cm: 'kceil', cc: [0.6, 0.8, 0.98] }), 56, 41, 70, 48, 0);
+  way(69, 40, 1, 'arch', { w: 1.8, h: 2.3, from: [69, 40], tunnel: true }); LV.dry.plaza = PZ;
+  const FY = rect(room(Z37.PARK, W, 'foyer', { h: 5.0, side: { m: 'ptw', c: [0.85, 0.97, 1], t: [0.2, 0.5, 0.7], tp: 2 }, flr: { m: 'ptile', col: [0.8, 0.9, 0.95] }, cm: 'kceil', cc: [1, 1, 1] }), 56, 49, 70, 52, 0);
+  way(62, 48, 1, 'arch', { w: 3.2, h: 3.4, from: [62, 48], sign: 'WATER WORLD' }); way(63, 48, 1, 'arch', { w: 3.2, h: 3.4, from: [63, 48] }); LV.dry.foyer = FY;
+  const DM = rect(room(Z37.DOME, W, 'dome', { h: 6.0, side: { m: 'block', c: [0.3, 0.55, 0.7], t: [0.2, 0.3, 0.4], tp: 2 }, flr: { m: 'ptile', col: [0.5, 0.7, 0.8] }, cm: 'kceil', cc: [0.3, 0.5, 0.6] }), 56, 53, 70, 60, 0);
+  way(62, 52, 1, 'arch', { w: 3.2, h: 3.4, from: [62, 52], sign: 'AQUARIUM' }); way(63, 52, 1, 'arch', { w: 3.2, h: 3.4, from: [63, 52] }); LV.dry.dome = DM;
+  const sd = { m: 'brick', c: [1, 0.78, 0.6], t: [0.3, 0.2, 0.12], tp: 2 }, sf = { m: 'wetc', col: [0.8, 0.7, 0.6] };
+  const SC = rect(room(Z37.STAFF, W, 'scorr', { h: 3.0, side: sd, flr: sf, cm: 'bconc', cc: [0.55, 0.45, 0.38] }), 56, 61, 70, 61, 0);
+  way(60, 60, 1, 'door', { dk: 'staff', plaque: 'STAFF ONLY', from: [60, 60] });
+  const rr = (id, x0, x1, door, plaque, locked) => { const r = rect(room(Z37.STAFF, W, id, { h: 3.2, side: sd, flr: sf, cm: 'bconc', cc: [0.55, 0.45, 0.38] }), x0, 62, x1, 65, 0); way(door, 62, 3, 'door', { dk: 'staff', plaque, from: [door, 62], locked }); LV.dry[id] = r; return r; };
+  rr('gen', 56, 59, 57, 'GENERATOR'); rr('control', 61, 64, 62, 'CONTROL', true); rr('brk', 66, 69, 67, 'STAFF ROOM');
+  LV.dry.scorr = SC; for (const c of SC.cells) LV.dark[c] = 1;
+  const FIN = room(Z37.WWF, W, 'wavepool', { h: 5.4, side: { m: 'ptw', c: [0.7, 0.92, 1], t: [0.2, 0.45, 0.6], tp: 2 }, flr: { m: 'ptile', col: [0.7, 0.9, 1] }, cm: 'kceil', cc: [0.5, 0.75, 0.85] });
+  rect(FIN, 52, 66, 70, 70, DECK37); water(FIN, 53, 67, 69, 69, -3.0, BAS37.WWF);
+  way(67, 65, 1, 'door', { dk: 'staff', plaque: 'POOL ACCESS', from: [67, 65] }); LV.dry.fin = FIN;
+  LV.ghosts = [[58, 67, 0], [58, 68, 0], [58, 69, 0], [64, 67, 0], [64, 68, 0], [64, 69, 0]];   // glass-and-tile panels you can swim straight through
+}
+function lightHotel37(F, grid) { for (const k of ['lobby', 'cafe', 'court']) grid(LV.dry[k], 3, { I: 0.52, rad: 12, sc: 4, ox: 1, oy: 1, w: 0.9, l: 0.9 }); for (const k of ['corr37', 'r201', 'r202', 'r203', 'r204', 'vault']) grid(LV.dry[k], 2, { I: 0.4, rad: 6, sc: 2, w: 0.6, l: 0.6 }); }
+function lightHospital37(F, grid) { for (const k of ['adm', 'hcorr', 'laundry', 'pharmacy', 'nurses', 'records', 'theatre']) grid(LV.dry[k], 2, { I: 0.5, rad: 8, sc: 3, w: 0.6, l: 1.2, flick: k === 'hcorr' ? 0.1 : 0 }); for (let i = 1; i <= 6; i++) grid(LV.dry['ward' + i], 2, { I: 0.38, rad: 5, sc: 2, w: 0.5, l: 1.0 }); }
+function lightWorld37(F, grid) {
+  grid(LV.dry.plaza, 3, { I: 0.7, rad: 14, sc: 5, ox: 1, w: 1.2, l: 1.2 }); grid(LV.dry.foyer, 3, { I: 0.55, rad: 11, sc: 4, ox: 1, w: 1.0, l: 1.0 }); grid(LV.dry.dome, 3, { I: 0.4, rad: 10, sc: 4, w: 0.8, l: 0.8, flick: 0.2 });
+  for (const c of LV.dry.scorr.cells) if ((c % N) % 3 === 0) F(cellCenter(c % N), cellCenter((c / N) | 0), { I: 0.3, rad: 6, sc: 2, state: RNG() < 0.3 ? 2 : 1 });
+  for (const k of ['gen', 'control', 'brk']) grid(LV.dry[k], 2, { I: 0.3, rad: 6, sc: 2, w: 0.5, l: 0.5, flick: 0.25 }); grid(LV.dry.fin, 3, { I: 0.5, rad: 11, sc: 4, w: 1.0, l: 2.0, flick: 0.15 });
+}
+
+// ================= furnishings =================
+function furnishHotel37(B) {
+  { const r = wallAt37(30, 49, 2, 1.8); B.add(r, 'Box', { width: 4.4, height: 1.08, depth: 0.7 }, [0.34, 0.2, 0.1], 0, [0, 0.54, 1.6]); B.add(r, 'Box', { width: 4.5, height: 0.06, depth: 0.8 }, [0.8, 0.78, 0.72], 0, [0, 1.1, 1.6]);
+    for (let j = 0; j < 3; j++) for (let i = 0; i < 6; i++) B.add(r, 'Box', { width: 0.26, height: 0.24, depth: 0.2 }, [0.44, 0.28, 0.14], 0, [-1.6 + i * 0.64, 1.3 + j * 0.28, 0.12]);
+    solidLocal(r, -2.2, 1.2, 2.2, 2.0); sign37('RECEPTION', twin37(r), [0, 2.6, 0.03], 1.4, 0.3, { bg: '#241608', fg: '#e8c868', line: '#b08a3a', emis: 0.3 });
+    W37.pos.desk = localPt(r, 0, 1.1, 0.9); W37.pos.guestbook = localPt(r, -0.8, 1.14, 1.0); W37.pos.drawer = localPt(r, 1.2, 0.8, 0.9); W37.pos.bell = localPt(r, 0.5, 1.14, 1.0); }
+  { const r = wallAt37(31, 54, 1, 0, 0);   // the escalator: eight steps into the ceiling, OUT OF SERVICE
+    for (let i = 0; i < 8; i++) B.add(r, 'Box', { width: 1.0, height: 0.18, depth: 0.4 }, [0.62, 0.62, 0.64], 0, [0, 0.3 + i * 0.28, 1.0 + i * 0.4]);
+    for (const s of [-1, 1]) B.add(r, 'Box', { width: 0.12, height: 1.0, depth: 4.0 }, [0.2, 0.2, 0.22], 0, [s * 0.58, 1.4, 2.3], [-0.62, 0, 0]);
+    solidLocal(r, -0.7, 0, 0.7, 4.3); sign37('OUT OF SERVICE\nUSE STAIRS', twin37(r), [0, 1.6, 0.4], 1.2, 0.5, { bg: '#f4e8d0', fg: '#8a1a14', line: '#8a1a14' }); }
+  for (const [x, y, d] of [[32, 48, 3], [38, 48, 3], [38, 54, 1]]) { const r = wallAt37(x, y, d, 0); F37.palm(B, r); solidLocal(r, -0.35, 0, 0.35, 0.6); }
+  for (const [x, y, ry] of [[36.2, 52, 2.6], [37.6, 50.4, 3.6], [33.4, 51.2, -1.2]]) { const r = pr37(x * CELL, y * CELL, ry, 0); B.add(r, 'Box', { width: 0.8, height: 0.28, depth: 0.8 }, [0.42, 0.1, 0.08], 0, [0, 0.3, 0.4]); B.add(r, 'Box', { width: 0.8, height: 0.6, depth: 0.14 }, [0.4, 0.09, 0.07], 0, [0, 0.66, 0.06], [-0.1, 0, 0]); for (const s of [-1, 1]) B.add(r, 'Box', { width: 0.12, height: 0.3, depth: 0.8 }, [0.38, 0.08, 0.06], 0, [s * 0.46, 0.5, 0.4]); addSolid(r.position.x - 0.6, r.position.z - 0.6, r.position.x + 0.6, r.position.z + 0.6, 'prop'); }
+  { const r = pr37(35.0 * CELL, 51 * CELL, 0, 0); B.add(r, 'Cylinder', { diameter: 1.4, height: 0.05, tessellation: 20 }, [0.7, 0.68, 0.6], 0, [0, 0.45, 0]); B.add(r, 'Cylinder', { diameter: 0.1, height: 0.45, tessellation: 8 }, COL37.brass, 0, [0, 0.22, 0]); addSolid(r.position.x - 0.7, r.position.z - 0.7, r.position.x + 0.7, r.position.z + 0.7, 'prop'); }
+  W37.pos.speaker = { x: 35 * CELL, z: 51 * CELL };
+  sign37('THE LUKEWARM HOTEL', twin37(wallAt37(36, 54, 1, 0)), [0, 2.6, 0.03], 3.6, 0.55, { bg: '#241608', fg: '#e8c868', line: '#b08a3a', emis: 0.35 });
+  // the cafeteria
+  for (const [x, y] of [[42, 49], [48, 49], [42, 54], [48, 54], [45, 49], [45, 54]]) { const r = pr37(cc37(x) + (x === 42 ? -0.4 : x === 48 ? 0.4 : 0), cc37(y) + (y === 49 ? -0.3 : 0.3), 0, 0); B.add(r, 'Box', { width: 1.6, height: 0.05, depth: 0.8 }, COL37.wood2, 0, [0, 0.74, 0]); for (const sx of [-0.7, 0.7]) for (const sz of [-0.3, 0.3]) B.add(r, 'Box', { width: 0.05, height: 0.72, depth: 0.05 }, COL37.wood, 0, [sx, 0.36, sz]); for (const s of [-1, 1]) B.add(r, 'Box', { width: 1.6, height: 0.05, depth: 0.34 }, COL37.wood2, 0, [0, 0.44, s * 0.62]); addSolid(r.position.x - 0.9, r.position.z - 0.9, r.position.x + 0.9, r.position.z + 0.9, 'prop'); }
+  for (let i = 0; i < 8; i++) { const r = wallAt37(41 + i, 48, 3, 0), k = twin37(r), cols = ['#e2483c', '#f08a24', '#e0b000', '#3aa04a', '#2f7fd0', '#8a5cc8'], S = dynTexPlane('cafedraw', 0.55, 0.42, 128, 98, k, [rnd(-0.6, 0.6), 1.7 + rnd(-0.2, 0.2), 0.02], 0.35), c = S.ctx;
+    c.fillStyle = '#fbf6e8'; c.fillRect(0, 0, 128, 98); c.strokeStyle = cols[i % 6]; c.lineWidth = 5; c.beginPath(); c.moveTo(20, 80); c.lineTo(40, 30); c.lineTo(60, 80); c.stroke(); c.strokeStyle = cols[(i + 2) % 6]; c.beginPath(); c.arc(90, 36, 16, 0, TAU); c.stroke(); c.beginPath(); c.moveTo(10, 84); c.lineTo(118, 84); c.stroke(); S.dt.update(); }
+  { const r = wallAt37(49, 52, 0, 0); F37.vending(B, r, [0.2, 0.5, 0.7]); solidLocal(r, -0.5, 0, 0.5, 0.85); W37.pos.cafeVend = localPt(r, 0, 1, 1.0); }
+  sign37('CAFETERIA\nPLEASE WALK, DON\'T RUN', twin37(wallAt37(41, 49, 2, 0)), [0, 2.4, 0.03], 2.2, 0.6, { bg: '#f4ecd8', fg: '#5a3a1a', line: '#8a6a3a' });
+  for (const [x, z] of [[cc37(44), cc37(51)], [cc37(46), cc37(52)]]) { const n = tnode(null, x, 0, z), m = mkMerged(W37.propMat, P => { P('Cylinder', { diameter: 0.5, height: 0.04, tessellation: 12 }, COL37.white, 0, [0, 0.02, 0]); }, 'tray37'); m.parent = n; floater37(n, BAS37.CAFE, 0.0); }
+  W37.pos.cafePool = { x: cc37(45), z: cc37(51.5) };
+  // the pool court
+  for (const x of [29, 31, 33, 38, 40, 42]) { const r = pr37(cc37(x), 56 * CELL + 1.2, Math.PI, DECK37); F37.lounger(B, r, pick([COL37.cream, COL37.white, COL37.teal])); addSolid(r.position.x - 0.4, r.position.z - 0.4, r.position.x + 0.4, r.position.z + 1.1, 'prop'); }
+  for (let i = 0; i < 4; i++) { const r = pr37(cc37(31 + i * 4), 66 * CELL + 0.6, 0, DECK37); F37.lounger(B, r, pick([COL37.cream, COL37.white])); addSolid(r.position.x - 0.4, r.position.z - 0.2, r.position.x + 0.4, r.position.z + 1.3, 'prop'); }
+  for (const [x, y, d] of [[28, 59, 2], [28, 62, 2], [48, 60, 0]]) { const r = wallAt37(x, y, d, 0); F37.palm(B, r); solidLocal(r, -0.35, 0, 0.35, 0.6); }
+  sign37('INDOOR POOL\nWATER TEMPERATURE 27°', twin37(wallAt37(38, 55, 3, 0)), [0, 3.0, 0.03], 2.8, 0.7, { bg: '#f4ecd8', fg: '#17607a', line: '#8a6a3a' });
+  { const r = pr37(46 * CELL + 0.8, cc37(60), -Math.PI / 2, DECK37); B.add(r, 'Box', { width: 0.7, height: 0.7, depth: 0.7 }, [0.9, 0.95, 0.96], 0, [0, 0.35, 0]); B.add(r, 'Box', { width: 0.7, height: 0.05, depth: 0.7 }, COL37.teal, 0, [0, 0.72, 0], [0.12, 0, 0]); addSolid(r.position.x - 0.4, r.position.z - 0.4, r.position.x + 0.4, r.position.z + 0.4, 'prop'); }
+  W37.pos.swimmer = { x: 47 * CELL + 0.1, z: cc37(61), laneX0: 31 * CELL, laneX1: 46 * CELL - 0.4, laneZ: cc37(60) };
+  // the guest rooms
+  for (let k = 0; k < 4; k++) {
+    const x = 21 + k * 2;
+    { const r = wallAt37(x, 49, 3, 1.8); FURN5.bed(B, r, { col: pick([[0.5, 0.12, 0.12], [0.18, 0.3, 0.3], [0.5, 0.42, 0.3]]) }); solidLocal(r, -0.8, 0, 0.8, 2.2); }
+    { const q = wallAt37(x, 49, 3, 0.2); B.add(q, 'Box', { width: 0.46, height: 0.56, depth: 0.4 }, COL37.wood2, 0, [0, 0.28, 0.21]); solidLocal(q, -0.25, 0, 0.25, 0.45); if (k === 3) W37.pos.nightstand = localPt(q, 0, 0.6, 0.6); }
+    { const r = wallAt37(x + 1, 50, 0, 0); FURN5.painting(B, r, { w: 0.9, h: 0.7, y: 1.7, seed: 0.1 + k * 0.2 }); }
+    sign37(String(201 + k), twin37(wallAt37(x, 51, 1, 0)), [0.9, 1.5, 0.03], 0.14, 0.09, { bg: '#241608', fg: '#e8c868', line: '#b08a3a', emis: 0.3 });
+  }
+  { const r = wallAt37(28, 52, 3, 0.4); B.add(r, 'Box', { width: 0.8, height: 0.05, depth: 0.5 }, [0.15, 0.15, 0.2], 0, [0, 0.8, 0.5]); B.add(r, 'Box', { width: 0.1, height: 0.8, depth: 0.1 }, [0.15, 0.15, 0.2], 0, [0, 0.4, 0.5]); solidLocal(r, -0.45, 0.1, 0.45, 0.9); W37.pos.vaultTable = localPt(r, 0, 0.85, 0.5); }
+  sign37('233', twin37(wallAt37(29, 53, 2, 0)), [0, 1.9, 0.03], 0.3, 0.2, { bg: '#241608', fg: '#e8c868', line: '#b08a3a', emis: 0.4 });
+}
+function furnishHospital37(B) {
+  const WB = [0.92, 0.95, 0.93];
+  for (const [x, y] of [[21, 8], [21, 10], [27, 8], [27, 10]]) { const r = wallAt37(x, y, x < 24 ? 2 : 0, 0); for (let i = 0; i < 3; i++) { B.add(r, 'Box', { width: 0.5, height: 0.06, depth: 0.5 }, [0.2, 0.4, 0.5], 0, [-0.55 + i * 0.55, 0.46, 0.5]); B.add(r, 'Box', { width: 0.5, height: 0.4, depth: 0.05 }, [0.2, 0.4, 0.5], 0, [-0.55 + i * 0.55, 0.72, 0.28]); } B.add(r, 'Box', { width: 1.7, height: 0.06, depth: 0.1 }, COL37.steel, 0, [0, 0.4, 0.3]); solidLocal(r, -0.9, 0.15, 0.9, 0.8); }
+  { const r = wallAt37(23, 7, 3, 0); B.add(r, 'Box', { width: 3.8, height: 1.0, depth: 0.6 }, [0.8, 0.84, 0.84], 0, [0, 0.5, 0.4]); B.add(r, 'Box', { width: 3.8, height: 1.0, depth: 0.04 }, [0.7, 0.85, 0.85], 0.04, [0, 1.6, 0.6]); B.add(r, 'Box', { width: 3.9, height: 0.05, depth: 0.7 }, COL37.steel, 0, [0, 1.02, 0.4]); solidLocal(r, -1.9, 0, 1.9, 0.75);
+    sign37('ADMISSIONS\nDISCHARGE', twin37(r), [0, 2.5, 0.05], 2.2, 0.7, { bg: '#e6f2ee', fg: '#2a5a4a', line: '#2a5a4a' }); W37.pos.admDesk = localPt(r, 0, 1.05, 1.1); W37.pos.formSpot = localPt(r, 1.2, 1.06, 0.4); }
+  { const r = wallAt37(27, 9, 0, 0); B.add(r, 'Box', { width: 0.4, height: 1.2, depth: 0.3 }, [0.8, 0.84, 0.84], 0, [0, 0.9, 0.15]); B.add(r, 'Box', { width: 0.26, height: 0.12, depth: 0.02 }, [0.05, 0.3, 0.1], 0.9, [0, 1.25, 0.31]); solidLocal(r, -0.25, 0, 0.25, 0.4); W37.pos.ticket = localPt(r, 0, 1.0, 0.7); }
+  { const r = wallAt37(24, 11, 1, 0, 0.05), k = twin37(r), S = dynTexPlane('hclock', 0.5, 0.5, 128, 128, k, [0, 2.6, 0.02], 0.5), c = S.ctx; c.fillStyle = '#f4f4ee'; c.fillRect(0, 0, 128, 128); c.strokeStyle = '#222'; c.lineWidth = 6; c.beginPath(); c.arc(64, 64, 58, 0, TAU); c.stroke(); c.beginPath(); c.moveTo(64, 64); c.lineTo(64, 24); c.stroke(); c.lineWidth = 4; c.beginPath(); c.moveTo(64, 64); c.lineTo(94, 80); c.stroke(); S.dt.update(); }
+  for (let x = 13; x <= 37; x += 4) { const r = wallAt37(x, 6, 1, 0); B.add(r, 'Box', { width: 3.4, height: 0.06, depth: 0.08 }, [0.7, 0.78, 0.74], 0, [0, 0.9, 0.06]); }
+  for (const x of [15, 22, 31, 36]) { const r = pr37(cc37(x), 6 * CELL + 0.7, 0.05 * x, 0); B.add(r, 'Box', { width: 0.8, height: 0.12, depth: 1.9 }, [0.88, 0.9, 0.9], 0, [0, 0.8, 0]); B.add(r, 'Box', { width: 0.7, height: 0.1, depth: 0.5 }, [0.95, 0.95, 0.92], 0, [0, 0.92, -0.65]); for (const sx of [-0.36, 0.36]) for (const sz of [-0.8, 0.8]) B.add(r, 'Cylinder', { diameter: 0.14, height: 0.06, tessellation: 8 }, COL37.black, 0, [sx, 0.06, sz]); B.add(r, 'Box', { width: 0.04, height: 0.6, depth: 1.5 }, COL37.steel, 0, [0, 0.4, 0]); addSolid(r.position.x - 0.5, r.position.z - 1.1, r.position.x + 0.5, r.position.z + 1.1, 'prop'); }
+  sign37('QUIET PLEASE\nPATIENTS RESTING', twin37(wallAt37(24, 6, 3, 0)), [0, 2.4, 0.03], 2.2, 0.6, { bg: '#e6f2ee', fg: '#2a5a4a', line: '#2a5a4a' });
+  for (let i = 1; i <= 6; i++) { const w = LV.dry['ward' + i], cx = w.cells[4] % N, cy = (w.cells[4] / N) | 0;
+    { const r = pr37(cc37(cx), cc37(cy) - 0.4, 0, 0); B.add(r, 'Box', { width: 1.0, height: 0.12, depth: 2.0 }, [0.85, 0.88, 0.88], 0, [0, 0.62, 0]); B.add(r, 'Box', { width: 0.95, height: 0.14, depth: 1.6 }, [0.92, 0.92, 0.9], 0, [0, 0.76, 0.2]); B.add(r, 'Box', { width: 0.7, height: 0.1, depth: 0.4 }, [0.97, 0.97, 0.94], 0, [0, 0.86, -0.65]); B.add(r, 'Box', { width: 1.0, height: 0.7, depth: 0.06 }, COL37.steel, 0, [0, 0.9, -1.05]); for (const sx of [-0.5, 0.5]) for (const sz of [-0.9, 0.9]) B.add(r, 'Cylinder', { diameter: 0.1, height: 0.3, tessellation: 8 }, COL37.black, 0, [sx, 0.15, sz]);
+      addSolid(r.position.x - 0.6, r.position.z - 1.1, r.position.x + 0.6, r.position.z + 1.1, 'prop'); w.bedPos = { x: r.position.x, z: r.position.z }; }
+    { const q = pr37(cc37(cx) + 1.4, cc37(cy) + 0.6, 0, 0); B.add(q, 'Cylinder', { diameter: 0.04, height: 1.9, tessellation: 6 }, COL37.chrome, 0, [0, 0.95, 0]); B.add(q, 'Cylinder', { diameter: 0.5, height: 0.04, tessellation: 12 }, COL37.chrome, 0, [0, 0.03, 0]); B.add(q, 'Box', { width: 0.12, height: 0.2, depth: 0.04 }, [0.8, 0.92, 0.96], 0.1, [0.1, 1.7, 0]); addSolid(q.position.x - 0.28, q.position.z - 0.28, q.position.x + 0.28, q.position.z + 0.28, 'prop'); w.dripPos = { x: q.position.x, z: q.position.z }; }
+    sign37('WARD ' + i, twin37(wallAt37(cx, 5, 1, 0)), [0, 2.4, 0.03], 0.8, 0.26, { bg: '#e6f2ee', fg: '#2a5a4a', line: '#2a5a4a' }); }
+  { const r = wallAt37(11, 7, 3, 0); for (let j = 0; j < 4; j++) { B.add(r, 'Box', { width: 2.0, height: 0.04, depth: 0.5 }, COL37.steel, 0, [0.4, 0.3 + j * 0.5, 0.3]); for (let i = 0; i < 5; i++) B.add(r, 'Box', { width: 0.34, height: 0.16, depth: 0.4 }, [0.94, 0.95, 0.92], 0, [-0.4 + i * 0.4, 0.4 + j * 0.5, 0.3]); } solidLocal(r, -0.7, 0, 1.5, 0.6); W37.pos.linen = localPt(r, 0.4, 1.4, 0.9); }
+  { const r = wallAt37(17, 10, 1, 0.6); for (let j = 0; j < 4; j++) B.add(r, 'Box', { width: 3.0, height: 0.04, depth: 0.4 }, COL37.steel, 0, [0, 0.4 + j * 0.45, 0.25]); for (let j = 0; j < 4; j++) for (let i = 0; i < 12; i++) B.add(r, 'Box', { width: 0.18, height: 0.16, depth: 0.3 }, WB.map(v => v * rnd(0.9, 1)), 0, [-1.3 + i * 0.24, 0.5 + j * 0.45, 0.25]); solidLocal(r, -1.6, 0, 1.6, 0.5); W37.pos.drip = localPt(r, 0.2, 1.4, 0.8); }
+  { const r = wallAt37(31, 7, 3, 0); B.add(r, 'Box', { width: 2.2, height: 0.05, depth: 0.8 }, [0.7, 0.75, 0.74], 0, [0, 0.8, 0.45]); for (const x of [-1.0, 1.0]) B.add(r, 'Box', { width: 0.06, height: 0.78, depth: 0.7 }, COL37.steel, 0, [x, 0.39, 0.45]); solidLocal(r, -1.2, 0, 1.2, 0.9);
+    B.add(r, 'Box', { width: 1.6, height: 1.0, depth: 0.03 }, [0.95, 0.95, 0.95], 0, [0, 1.8, 0.02]); W37.pos.nursesDesk = localPt(r, 0, 0.9, 0.9); W37.pos.formDesk = localPt(r, 0.7, 0.84, 0.7); W37.pos.whiteboard = localPt(r, 0, 1.6, 0.6); }
+  { const r = wallAt37(34, 10, 1, 0); for (let i = 0; i < 3; i++) { B.add(r, 'Box', { width: 1.2, height: 2.0, depth: 0.5 }, [0.55, 0.58, 0.58], 0, [-1.3 + i * 1.3, 1.0, 0.25]); for (let j = 0; j < 8; j++) B.add(r, 'Box', { width: 1.1, height: 0.04, depth: 0.46 }, [0.4, 0.42, 0.42], 0, [-1.3 + i * 1.3, 0.25 + j * 0.25, 0.25]); } solidLocal(r, -1.9, 0, 1.9, 0.5);
+    const r2 = wallAt37(36, 7, 3, 0.4); B.add(r2, 'Box', { width: 1.2, height: 0.05, depth: 0.7 }, [0.7, 0.75, 0.74], 0, [0, 0.8, 0.4]); solidLocal(r2, -0.7, 0, 0.7, 0.8); W37.pos.recordsDesk = localPt(r2, 0, 0.85, 0.8); W37.pos.rosterSpot = localPt(r2, 0, 0.86, 0.8); }
+  { const q = pr37(cc37(40) - 0.0, cc37(6), 0, 0); B.add(q, 'Box', { width: 0.8, height: 0.1, depth: 2.0 }, [0.8, 0.84, 0.84], 0, [0, 0.9, 0]); B.add(q, 'Cylinder', { diameter: 0.14, height: 0.9, tessellation: 8 }, COL37.steel, 0, [0, 0.45, 0]); B.add(q, 'Cylinder', { diameter: 1.4, height: 0.06, tessellation: 18 }, [0.9, 0.92, 0.9], 0.3, [0, 3.0, 0]); addSolid(q.position.x - 0.5, q.position.z - 1.1, q.position.x + 0.5, q.position.z + 1.1, 'prop'); }
+  W37.pos.staff = [];
+  const add = (key, x, z, ry, task) => W37.pos.staff.push({ key, x, z, ry, task });
+  add('admit', cc37(25), 7 * CELL + 1.3, Math.PI, 'desk'); add('laundry', cc37(12) + 1.0, cc37(8), 0.4, 'shelf'); add('pharm', cc37(17), cc37(8), -0.3, 'shelf'); add('nurse1', cc37(30) + 0.3, cc37(8), 1.2, 'desk'); add('records', cc37(34), cc37(9), 2.4, 'file');
+  add('ward1', LV.dry.ward1.bedPos.x + 0.9, LV.dry.ward1.bedPos.z, -1.57, 'bed'); add('ward3', LV.dry.ward3.bedPos.x - 0.9, LV.dry.ward3.bedPos.z + 0.2, 1.57, 'bed'); add('ward5', LV.dry.ward5.bedPos.x - 0.9, LV.dry.ward5.bedPos.z, 1.57, 'bed'); add('hall1', cc37(19), 6 * CELL + 1.8, 0.2, 'walk'); add('hall2', cc37(33), 6 * CELL + 1.8, 3.1, 'walk'); add('theatre', cc37(40) - 0.9, cc37(6), -1.57, 'bed');
+}
+function furnishWorld37(B) {
+  const COLW = { blue: [0.2, 0.55, 0.85], yel: [0.98, 0.82, 0.2], pink: [0.95, 0.5, 0.65] };
+  for (const [x, y] of [[58, 44], [61, 44], [67, 44]]) F37.bench(B, pr37(cc37(x), cc37(y), Math.PI / 2 * (x > 62 ? 1 : -1), 0), { len: 1.6 });
+  for (const [x, y] of [[59, 47], [66, 47]]) { const r = pr37(cc37(x), cc37(y), 0, 0); B.add(r, 'Cylinder', { diameter: 0.6, height: 0.9, tessellation: 12 }, COLW.blue, 0, [0, 0.45, 0]); B.add(r, 'Cylinder', { diameter: 0.64, height: 0.06, tessellation: 12 }, COL37.white, 0, [0, 0.92, 0]); addSolid(r.position.x - 0.35, r.position.z - 0.35, r.position.x + 0.35, r.position.z + 0.35, 'prop'); }
+  { const r = pr37(cc37(63), cc37(45), 0, 0); B.add(r, 'Cylinder', { diameter: 3.2, height: 0.5, tessellation: 24 }, [0.85, 0.9, 0.9], 0, [0, 0.25, 0]); B.add(r, 'Cylinder', { diameter: 2.8, height: 0.04, tessellation: 24 }, [0.12, 0.45, 0.55], 0.1, [0, 0.49, 0]); B.add(r, 'Cylinder', { diameter: 0.3, height: 1.3, tessellation: 10 }, [0.85, 0.9, 0.9], 0, [0, 1.1, 0]); B.add(r, 'Sphere', { diameter: 0.7, segments: 10 }, COLW.yel, 0, [0, 1.9, 0]); addSolid(r.position.x - 1.7, r.position.z - 1.7, r.position.x + 1.7, r.position.z + 1.7, 'prop'); W37.pos.fountain = { x: r.position.x, z: r.position.z }; }
+  { const r = wallAt37(60, 41, 1, 0); B.add(r, 'Box', { width: 2.2, height: 1.4, depth: 0.08 }, [0.95, 0.95, 0.9], 0, [0, 1.6, 0.04]); sign37('PARK MAP\nYOU ARE HERE', twin37(r), [0, 1.6, 0.1], 2.0, 1.2, { bg: '#f6f2e0', fg: '#1a6a8a', line: '#1a6a8a', emis: 0.4 }); W37.pos.map = localPt(r, 0, 1.4, 1.0); }
+  sign37('WATER WORLD\nTHE FUN IS ALWAYS OPEN', twin37(wallAt37(62, 48, 3, 0)), [0, 4.6, 0.03], 4.0, 0.9, { bg: '#2a7ac0', fg: '#ffe040', line: '#ffe040', emis: 0.7 });
+  sign37('NO RUNNING · NO DIVING · NO OUTSIDE FOOD', twin37(wallAt37(66, 41, 1, 0)), [0, 2.6, 0.03], 3.4, 0.5, { bg: '#2a7ac0', fg: '#ffffff', line: '#ffffff' });
+  for (const [x, y] of [[57, 42], [65, 42]]) { const r = pr37(cc37(x), cc37(y), 0.4, 0); B.add(r, 'Box', { width: 1.6, height: 2.4, depth: 1.2 }, [0.9, 0.35, 0.2], 0, [0, 1.2, 0]); B.add(r, 'Box', { width: 1.7, height: 0.12, depth: 1.3 }, COL37.white, 0, [0, 2.5, 0]); B.add(r, 'Box', { width: 1.0, height: 0.5, depth: 0.04 }, [0.1, 0.3, 0.4], 0.12, [0, 1.6, 0.62]); addSolid(r.position.x - 0.9, r.position.z - 0.9, r.position.x + 0.9, r.position.z + 0.9, 'prop'); }
+  { const r = wallAt37(57, 52, 1, 0); B.add(r, 'Box', { width: 3.0, height: 1.0, depth: 0.7 }, COLW.yel, 0, [0, 0.5, 0.4]); B.add(r, 'Box', { width: 3.1, height: 0.05, depth: 0.8 }, COL37.white, 0, [0, 1.02, 0.4]); solidLocal(r, -1.5, 0, 1.5, 0.8); sign37('GIFTS', twin37(r), [0, 2.2, 0.05], 1.2, 0.4, { bg: '#2a7ac0', fg: '#ffe040', line: '#ffe040', emis: 0.6 }); }
+  for (const x of [66, 68]) { const r = wallAt37(x, 52, 1, 0); F37.vending(B, r, [0.2, 0.5, 0.75]); solidLocal(r, -0.5, 0, 0.5, 0.85); if (x === 66) W37.pos.wwVend = localPt(r, 0, 1, 1.0); }
+  W37.pos.tanks = [];
+  for (const [x0, x1, y0, y1, name] of [[57, 60, 54, 56, 'TANK 1 · REEF'], [66, 69, 54, 56, 'TANK 2 · OPEN OCEAN'], [57, 60, 58, 59, 'TANK 3 · KELP'], [66, 69, 58, 59, 'TANK 4 · THE DEEP']]) {
+    const cx = (x0 + x1 + 1) / 2 * CELL, cz = (y0 + y1 + 1) / 2 * CELL, w = (x1 - x0 + 1) * CELL - 1.0, d = (y1 - y0 + 1) * CELL - 1.0, r = pr37(cx, cz, 0, 0);
+    B.add(r, 'Box', { width: w + 0.2, height: 0.5, depth: d + 0.2 }, [0.15, 0.2, 0.24], 0, [0, 0.25, 0]); B.add(r, 'Box', { width: w, height: 4.6, depth: d }, [0.35, 0.65, 0.7], 0.5, [0, 2.8, 0]); B.add(r, 'Box', { width: w + 0.2, height: 0.3, depth: d + 0.2 }, [0.15, 0.2, 0.24], 0, [0, 5.2, 0]);
+    for (let i = 0; i < 9; i++) B.add(r, 'Box', { width: 0.1 + rnd(0, 0.5), height: 0.04, depth: 0.03 }, [0.95, 0.8, 0.5], 0.8, [rnd(-w / 2 + 0.3, w / 2 - 0.3), 0.8 + rnd(0, 3.6), d / 2 + 0.01]);
+    addSolid(cx - w / 2 - 0.1, cz - d / 2 - 0.1, cx + w / 2 + 0.1, cz + d / 2 + 0.1, 'prop'); W37.pos.tanks.push({ x: cx, z: cz + d / 2 + 0.7, name, taken: false }); }
+  sign37('ALMOND WATER\nFILTERED · DO NOT TAP THE GLASS', twin37(wallAt37(62, 53, 3, 0)), [0, 2.8, 0.03], 3.0, 0.8, { bg: '#0c3a54', fg: '#bfe8f4', line: '#8fd0e8', emis: 0.7 });
+  for (let i = 0; i < 5; i++) B.pipe([56 * CELL + 0.3, 2.7 + i * 0.07, 61 * CELL + 0.4 + i * 0.5], [71 * CELL - 0.3, 2.7 + i * 0.07, 61 * CELL + 0.4 + i * 0.5], 0.07 + 0.02 * (i % 2), i % 2 ? COL37.rust : COL37.steel);
+  { const r = wallAt37(57, 65, 1, 0); B.add(r, 'Box', { width: 2.4, height: 2.3, depth: 0.6 }, [0.3, 0.32, 0.3], 0, [0, 1.15, 0.3]); B.add(r, 'Cylinder', { diameter: 1.4, height: 1.1, tessellation: 16 }, [0.3, 0.4, 0.3], 0, [0, 0.7, 0.8], [Math.PI / 2, 0, 0]); solidLocal(r, -1.3, 0, 1.3, 1.6); W37.pos.genSw = localPt(r, 0, 1.2, 1.3); }
+  { const r = wallAt37(62, 65, 1, 0); B.add(r, 'Box', { width: 2.4, height: 0.05, depth: 0.8 }, COL37.wood2, 0, [0, 0.76, 0.45]); for (const x of [-1.1, 1.1]) B.add(r, 'Box', { width: 0.06, height: 0.74, depth: 0.7 }, COL37.wood, 0, [x, 0.37, 0.45]); solidLocal(r, -1.25, 0, 1.25, 0.9);
+    B.add(r, 'Box', { width: 0.7, height: 0.56, depth: 0.6 }, [0.62, 0.6, 0.55], 0, [-0.6, 1.07, 0.4]); B.add(r, 'Box', { width: 0.54, height: 0.4, depth: 0.02 }, [0.05, 0.06, 0.08], 0.1, [-0.6, 1.09, 0.71]); B.add(r, 'Box', { width: 0.6, height: 0.1, depth: 0.5 }, [0.12, 0.12, 0.13], 0, [0.4, 0.84, 0.5]);
+    W37.pos.ctrl = localPt(r, 0, 1.0, 1.0); W37.pos.ctrlNote = localPt(r, 0.9, 0.8, 0.8); }
+  { const r = wallAt37(67, 65, 1, 0); B.add(r, 'Box', { width: 0.9, height: 1.0, depth: 0.7 }, [0.42, 0.5, 0.55], 0, [0, 0.5, 0.35]); B.add(r, 'Cylinder', { diameter: 0.5, height: 0.1, tessellation: 12 }, [0.8, 0.8, 0.8], 0, [0, 1.05, 0.4]); solidLocal(r, -0.5, 0, 0.5, 0.75); W37.pos.breakTable = localPt(r, 0, 1.1, 1.0); }
+  for (const [x, y] of [[53, 66], [61, 66], [69, 66]]) { const r = pr37(cc37(x), cc37(y) - 0.6, 0, DECK37); B.add(r, 'Box', { width: 0.7, height: 2.2, depth: 0.7 }, [0.92, 0.38, 0.2], 0, [0, 1.1, 0]); B.add(r, 'Box', { width: 1.2, height: 0.08, depth: 1.2 }, [0.92, 0.38, 0.2], 0, [0, 2.3, 0]); addSolid(r.position.x - 0.4, r.position.z - 0.4, r.position.x + 0.4, r.position.z + 0.4, 'prop'); }
+  { const r = pr37(71 * CELL - 0.4, cc37(68), -Math.PI / 2, -3); B.add(r, 'Box', { width: 3.0, height: 2.4, depth: 0.5 }, [0.25, 0.3, 0.32], 0, [0, 1.2, 0.25]); for (let i = 0; i < 8; i++) B.add(r, 'Box', { width: 0.06, height: 2.0, depth: 0.06 }, [0.5, 0.52, 0.5], 0, [-1.2 + i * 0.34, 1.2, 0.55]); W37.pos.waveMachine = { x: 70 * CELL - 0.6, z: cc37(68) }; }
+  for (let i = 0; i < 5; i++) { const n = tnode(null, cc37(54 + i * 3), 0, cc37(67 + (i % 3))), m = mkMerged(W37.propMat, P => { P('Torus', { diameter: 0.7, thickness: 0.18, tessellation: 16 }, i % 2 ? COL37.yellow : COL37.red, 0, [0, 0.08, 0]); }, 'buoy37'); m.parent = n; floater37(n, BAS37.WWF, 0); }
+  W37.pos.tapeSpot = { x: 54.5 * CELL, z: cc37(68), y: -3 };
+  W37.pos.plazaCenter = { x: cc37(63), z: cc37(46) };
+}
 
 // ==== story37.js ====
 // ---------- r8 · Level 37 story (first pass: engine test scaffolding; replaced by the full story below) ----------
@@ -14881,7 +15104,7 @@ async function goLevel37(from) {
   Object.assign(G, { time: f.time, lost: f.lost, tapes: f.tapes, cause: '', blackout: 0, exitOn: false, chase: 0, hintT: 0, grace: 0 });
   HINT.stage = 0; HINT.site = null;
   initAI37();
-  Object.assign(FX, { envA: [0.2, 0.26, 0.28, 0], envS: [0.0, 0.0, 0.0, 0], fadeW: 1, fadeB: 0 });
+  Object.assign(FX, { envA: [0.2, 0.26, 0.28, 0], envS: [0.0, 0.0, 0.0, 0.62], fadeW: 1, fadeB: 0 });
   G37.ey = LV.basins[0].y + 0.22; CAM.position.set(PL.x, 1.6, PL.z); CAM.rotation.set(0, PL.yaw, 0); CAM.getViewMatrix(true); worldFX37(0.016); pushUniforms();
   await new Promise(r => SCN.executeWhenReady(() => r()));
   prog(1, 'READY'); await nextFrame();
@@ -15007,8 +15230,8 @@ function drift37(dt, z) {
 function basins37(dt) {
   for (const B of LV.basins) {
     if (!B.mesh) continue;
-    const d = B.tgt - B.y; if (Math.abs(d) > 0.0005) { const sp = B.speed || 0.11; B.y += Math.sign(d) * Math.min(Math.abs(d), sp * dt); B.mesh.position.y = B.y; if (B.caust) B.caust.mat.setVector4('wP', new BABYLON.Vector4(1, 1, B.y, 0)); }
-    if (B.caust && !B.caust.init) { B.caust.init = true; B.caust.mat.setVector4('wP', new BABYLON.Vector4(1, 1, B.y, 0)); }
+    const d = B.tgt - B.y; if (Math.abs(d) > 0.0005) { const sp = B.speed || 0.11; B.y += Math.sign(d) * Math.min(Math.abs(d), sp * dt); B.mesh.position.y = B.y; if (B.caust) { B.caust.mat.setVector4('wP', new BABYLON.Vector4(1, 1, B.y, 0)); B.caust.mat2.setVector4('wP', new BABYLON.Vector4(1, 1, B.y, 0)); } }
+    if (B.caust && !B.caust.init) { B.caust.init = true; B.caust.mat.setVector4('wP', new BABYLON.Vector4(1, 1, B.y, 0)); B.caust.mat2.setVector4('wP', new BABYLON.Vector4(1, 1, B.y, 0)); }
   }
   const t = FX.t;
   for (const f of W37.bob) { const fh = LV.fh[cell37(f.x || f.n.position.x, f.z || f.n.position.z)], by = f.b.y, y = Math.max(by, fh) + f.dy + (by > fh ? 0.025 * Math.sin(t * 1.3 + f.ph) : 0); f.n.position.y = y; if (!f.n.__rope) f.n.rotation.z = by > fh ? 0.05 * Math.sin(t * 0.9 + f.ph) : 0; }
@@ -15020,9 +15243,9 @@ function worldFX37(dt) {
   FX.flicker = 0.9 + 0.1 * hash1(Math.floor(t * 30)); FX.lightScale = 1; FX.hurt = Math.max(0, FX.hurt - dt * 0.9); FX.glitch = Math.max(0, FX.glitch - dt * 1.3);
   const zl = zoneLook37(z), dark = LV.dark[cell37(cp.x, cp.z)];
   FX.fogDen = lerp(dark ? 0.05 : zl.den, 0.17, under); const fc = zl.fog;
-  FX.fog[0] = lerp(fc[0], 0.04, under); FX.fog[1] = lerp(fc[1], 0.33, under); FX.fog[2] = lerp(fc[2], 0.4, under);
+  FX.fog[0] = lerp(fc[0], 0.03, under); FX.fog[1] = lerp(fc[1], 0.3, under); FX.fog[2] = lerp(fc[2], 0.2, under);
   FX.envA[0] = lerp(zl.amb[0], 0.04, under); FX.envA[1] = lerp(zl.amb[1], 0.14, under); FX.envA[2] = lerp(zl.amb[2], 0.18, under);
-  if (live) FX.exposure = 0.96 * S.bright * lerp(1, clamp(0.3 / Math.max(PL.light, 0.01), 0.22, 1), FX.nv);
+  if (live) FX.exposure = 0.82 * S.bright * lerp(1, clamp(0.3 / Math.max(PL.light, 0.01), 0.22, 1), FX.nv);
   if (W37.lensFl) setEmi(W37.lensFl, 3.2 * FX.flicker);
   if (W.itemMat) setEmi(W.itemMat, 0.4 + 0.8 * Math.max(0, Math.sin(t * 2.6)) ** 6);
   G37.doorT = (G37.doorT || 0) - dt; if (G37.doorT <= 0) { G37.doorT = 0.25; for (const d of W9.doors) { const on = dist2(d.mx, d.mz, cp.x, cp.z) < d.cull; if (d.vis !== on) { d.vis = on; d.mesh.setEnabled(on); } } } updateDoors9(dt);
@@ -15035,8 +15258,8 @@ function worldFX37(dt) {
 // the look of each part of the level: fog colour/density and ambient light
 function zoneLook37(z) {
   switch (z) {
-    case Z37.POOL: return { fog: [0.72, 0.9, 0.92], den: 0.0055, amb: [0.34, 0.4, 0.42] };
-    case Z37.CABANA: case Z37.BOOTH: case Z37.VEST: return { fog: [0.78, 0.84, 0.82], den: 0.009, amb: [0.3, 0.31, 0.29] };
+    case Z37.POOL: return { fog: [0.5, 0.62, 0.52], den: 0.007, amb: [0.3, 0.34, 0.28] };
+    case Z37.CABANA: case Z37.BOOTH: case Z37.VEST: return { fog: [0.72, 0.78, 0.68], den: 0.01, amb: [0.36, 0.38, 0.32] };
     case Z37.PLANT: return { fog: [0.4, 0.48, 0.48], den: 0.014, amb: [0.2, 0.23, 0.23] };
     case Z37.TUNNEL: return { fog: [0.06, 0.13, 0.15], den: 0.045, amb: [0.07, 0.1, 0.11] };
     case Z37.HOTEL: case Z37.CAFE: return { fog: [0.62, 0.55, 0.44], den: 0.014, amb: [0.28, 0.24, 0.18] };

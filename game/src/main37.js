@@ -35,7 +35,7 @@ async function goLevel37(from) {
   Object.assign(G, { time: f.time, lost: f.lost, tapes: f.tapes, cause: '', blackout: 0, exitOn: false, chase: 0, hintT: 0, grace: 0 });
   HINT.stage = 0; HINT.site = null;
   initAI37();
-  Object.assign(FX, { envA: [0.2, 0.26, 0.28, 0], envS: [0.0, 0.0, 0.0, 0], fadeW: 1, fadeB: 0 });
+  Object.assign(FX, { envA: [0.2, 0.26, 0.28, 0], envS: [0.0, 0.0, 0.0, 0.62], fadeW: 1, fadeB: 0 });
   G37.ey = LV.basins[0].y + 0.22; CAM.position.set(PL.x, 1.6, PL.z); CAM.rotation.set(0, PL.yaw, 0); CAM.getViewMatrix(true); worldFX37(0.016); pushUniforms();
   await new Promise(r => SCN.executeWhenReady(() => r()));
   prog(1, 'READY'); await nextFrame();
@@ -161,8 +161,8 @@ function drift37(dt, z) {
 function basins37(dt) {
   for (const B of LV.basins) {
     if (!B.mesh) continue;
-    const d = B.tgt - B.y; if (Math.abs(d) > 0.0005) { const sp = B.speed || 0.11; B.y += Math.sign(d) * Math.min(Math.abs(d), sp * dt); B.mesh.position.y = B.y; if (B.caust) B.caust.mat.setVector4('wP', new BABYLON.Vector4(1, 1, B.y, 0)); }
-    if (B.caust && !B.caust.init) { B.caust.init = true; B.caust.mat.setVector4('wP', new BABYLON.Vector4(1, 1, B.y, 0)); }
+    const d = B.tgt - B.y; if (Math.abs(d) > 0.0005) { const sp = B.speed || 0.11; B.y += Math.sign(d) * Math.min(Math.abs(d), sp * dt); B.mesh.position.y = B.y; if (B.caust) { B.caust.mat.setVector4('wP', new BABYLON.Vector4(1, 1, B.y, 0)); B.caust.mat2.setVector4('wP', new BABYLON.Vector4(1, 1, B.y, 0)); } }
+    if (B.caust && !B.caust.init) { B.caust.init = true; B.caust.mat.setVector4('wP', new BABYLON.Vector4(1, 1, B.y, 0)); B.caust.mat2.setVector4('wP', new BABYLON.Vector4(1, 1, B.y, 0)); }
   }
   const t = FX.t;
   for (const f of W37.bob) { const fh = LV.fh[cell37(f.x || f.n.position.x, f.z || f.n.position.z)], by = f.b.y, y = Math.max(by, fh) + f.dy + (by > fh ? 0.025 * Math.sin(t * 1.3 + f.ph) : 0); f.n.position.y = y; if (!f.n.__rope) f.n.rotation.z = by > fh ? 0.05 * Math.sin(t * 0.9 + f.ph) : 0; }
@@ -174,9 +174,9 @@ function worldFX37(dt) {
   FX.flicker = 0.9 + 0.1 * hash1(Math.floor(t * 30)); FX.lightScale = 1; FX.hurt = Math.max(0, FX.hurt - dt * 0.9); FX.glitch = Math.max(0, FX.glitch - dt * 1.3);
   const zl = zoneLook37(z), dark = LV.dark[cell37(cp.x, cp.z)];
   FX.fogDen = lerp(dark ? 0.05 : zl.den, 0.17, under); const fc = zl.fog;
-  FX.fog[0] = lerp(fc[0], 0.04, under); FX.fog[1] = lerp(fc[1], 0.33, under); FX.fog[2] = lerp(fc[2], 0.4, under);
+  FX.fog[0] = lerp(fc[0], 0.03, under); FX.fog[1] = lerp(fc[1], 0.3, under); FX.fog[2] = lerp(fc[2], 0.2, under);
   FX.envA[0] = lerp(zl.amb[0], 0.04, under); FX.envA[1] = lerp(zl.amb[1], 0.14, under); FX.envA[2] = lerp(zl.amb[2], 0.18, under);
-  if (live) FX.exposure = 0.96 * S.bright * lerp(1, clamp(0.3 / Math.max(PL.light, 0.01), 0.22, 1), FX.nv);
+  if (live) FX.exposure = 0.82 * S.bright * lerp(1, clamp(0.3 / Math.max(PL.light, 0.01), 0.22, 1), FX.nv);
   if (W37.lensFl) setEmi(W37.lensFl, 3.2 * FX.flicker);
   if (W.itemMat) setEmi(W.itemMat, 0.4 + 0.8 * Math.max(0, Math.sin(t * 2.6)) ** 6);
   G37.doorT = (G37.doorT || 0) - dt; if (G37.doorT <= 0) { G37.doorT = 0.25; for (const d of W9.doors) { const on = dist2(d.mx, d.mz, cp.x, cp.z) < d.cull; if (d.vis !== on) { d.vis = on; d.mesh.setEnabled(on); } } } updateDoors9(dt);
@@ -189,8 +189,8 @@ function worldFX37(dt) {
 // the look of each part of the level: fog colour/density and ambient light
 function zoneLook37(z) {
   switch (z) {
-    case Z37.POOL: return { fog: [0.72, 0.9, 0.92], den: 0.0055, amb: [0.34, 0.4, 0.42] };
-    case Z37.CABANA: case Z37.BOOTH: case Z37.VEST: return { fog: [0.78, 0.84, 0.82], den: 0.009, amb: [0.3, 0.31, 0.29] };
+    case Z37.POOL: return { fog: [0.5, 0.62, 0.52], den: 0.007, amb: [0.3, 0.34, 0.28] };
+    case Z37.CABANA: case Z37.BOOTH: case Z37.VEST: return { fog: [0.72, 0.78, 0.68], den: 0.01, amb: [0.36, 0.38, 0.32] };
     case Z37.PLANT: return { fog: [0.4, 0.48, 0.48], den: 0.014, amb: [0.2, 0.23, 0.23] };
     case Z37.TUNNEL: return { fog: [0.06, 0.13, 0.15], den: 0.045, amb: [0.07, 0.1, 0.11] };
     case Z37.HOTEL: case Z37.CAFE: return { fog: [0.62, 0.55, 0.44], den: 0.014, amb: [0.28, 0.24, 0.18] };
