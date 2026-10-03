@@ -181,7 +181,7 @@ function furnishNorth2(B) {
   { const x0 = 41 * CELL + 0.3, x1 = 44 * CELL - 0.3, z0 = 6 * CELL + 0.3, z1 = 10 * CELL - 0.3;
     B.add(pr2((x0 + x1) / 2, (z0 + z1) / 2, 0, 0), 'Box', { width: x1 - x0 - 1.2, height: 0.12, depth: z1 - z0 - 1.2 }, COL2.iron, 0, [0.6, 0.06, 0]);
     WP2.gateMesh = mkMerged(WP2.propMat, Q => { for (let i = 0; i < 12; i++) Q('Box', { width: 0.04, height: 2.3, depth: 0.04 }, COL2.yellow, 0, [x0 + 0.9, 1.15, z0 + 0.6 + i * ((z1 - z0 - 1.2) / 11)]); Q('Box', { width: 0.05, height: 0.05, depth: z1 - z0 - 1.0 }, COL2.yellow, 0, [x0 + 0.9, 2.3, (z0 + z1) / 2]); Q('Box', { width: 0.05, height: 0.05, depth: z1 - z0 - 1.0 }, COL2.yellow, 0, [x0 + 0.9, 0.2, (z0 + z1) / 2]); }, 'liftgate2');
-    const r = wallAt2(43, 7, 0, 0); B.add(r, 'Box', { width: 0.4, height: 0.7, depth: 0.12 }, COL2.iron, 0, [0, 1.4, 0.06]); WP2.BRed.add(r, 'Sphere', { diameter: 0.09, segments: 6 }, [1, 0.2, 0.1], 0.9, [0, 1.6, 0.13]); B.add(r, 'Box', { width: 0.12, height: 0.12, depth: 0.04 }, COL2.white, 0, [0, 1.3, 0.13]);
+    const r = wallAt2(40, 8, 3, 0); B.add(r, 'Box', { width: 0.4, height: 0.7, depth: 0.12 }, COL2.iron, 0, [0, 1.4, 0.06]); WP2.BRed.add(r, 'Sphere', { diameter: 0.09, segments: 6 }, [1, 0.2, 0.1], 0.9, [0, 1.6, 0.13]); B.add(r, 'Box', { width: 0.12, height: 0.12, depth: 0.04 }, COL2.white, 0, [0, 1.3, 0.13]);
     P.liftPanel = localPt(r, 0, 1.3, 0.8); P.liftGateX = x0 + 0.9; WP2.liftGate = addSolid(x0 + 0.85, z0, x0 + 0.95, z1, 'liftgate'); P.liftCar = { x: cc2(42) + 1.6, z: cc2(7) + 1.8 }; }
 }
 
