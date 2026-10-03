@@ -165,7 +165,7 @@ function showEnd2(won) {
   $('endTitle').textContent = title; $('endText').textContent = text;
   const st = [['TIME ON TAPE', fmtTC(G.time)], ['DISTANCE', Math.round(PL.dist) + ' M'], ['LEVEL', '2 · PIPE DREAMS'], ['DIFFICULTY', DIFFS[G.diff]], ['REGULATORS', GP2.regs + '/3'], ['SURGES', String(GP2.surges)]];
   $('endStats').innerHTML = st.map(([a, b]) => `<div><span>${a}</span><b>${b}</b></div>`).join('');
-  $('btnAgain').textContent = won ? '▶ PLAY AGAIN (LEVEL 0)' : '▶ RETRY LEVEL 2'; show('end');
+  $('btnAgain').textContent = won ? (GP2.ending === 'lift' ? '▶ CONTINUE · LEVEL 7' : '▶ PLAY AGAIN (LEVEL 0)') : '▶ RETRY LEVEL 2'; show('end');
 }
 function hudObj2() { return GP2.surge ? (GP2.surge.st === 'warn' ? 'SURGE COMING' : 'SURGE') : `REGULATORS ${GP2.regs}/3`; }
 function hudItems2() { const a = []; if (PP2.crowbar) a.push('CROWBAR'); if (PP2.wheel && !PP2.regs.e) a.push('VALVE WHEEL'); if (PP2.idcard && !PP2.idGiven) a.push('ID CARD'); if (PP2.timecard) a.push('TIME CARD'); return a.join(' · ') || 'EMPTY HANDS'; }

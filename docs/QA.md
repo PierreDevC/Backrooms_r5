@@ -179,3 +179,6 @@ Final visual correction connected the enemy neck/shoulders without changing its 
 
 ## r9 Level 2
 `node qa18/run18.js "$PWD/game/The_Backrooms_Found_Footage.html" "$PWD/qa2/s2_story.js" 960 540` plays the whole chain (phone, Ida, three regulators, breakers, Benny, ID card, lift). `s2_systems.js` covers surges in the open and in a shelter, heat, the Hound (chase and stare-down) and the ON SHIFT ending; `s2_death.js` death and retry; `s2_reach.js` reachability; `s2_views.js` screenshots (set V2=sump,spine,... to choose). Headless only.
+
+## r10 Level 7
+`node qa18/run18.js "$PWD/game/The_Backrooms_Found_Footage.html" "$PWD/qa7/s7_story.js" 960 540` plays the whole chain to THE CROSSING; `s7_endings.js` KEEPER and THE DEEP; `s7_systems.js` the Shadow, Gulpers, drowning, retry; `s7_reach.js` reachability from every ladder; `s7_views.js` and `s7_weather.js` screenshots (V7=raft,deck,... selects views). Headless only.

@@ -1,5 +1,8 @@
 # The Backrooms: Found Footage — Coding-Agent Handoff (r7.2)
 
+## r10 (branch agent/claude): Level 7 Thalassophobia — read docs/LEVEL7.md
+Level 2 THE LIFT → goLevel7(carryFrom2()). Files: textures7, level7, audio7, world7, props7, props7b, story7, ai7, main7, voicebank7 (suffix 7; state objects GS7/WS7/PS7/ZS7/AIS7/BAS7). It reuses Level 37 functions (waterPhys37, buildGeometry37, buildWater37, Fish37, side37 helpers, F37 props). Compass north is +z. Tests: qa7/s7_*.js.
+
 ## r9 (branch agent/claude): Level 2 Pipe Dreams — read docs/LEVEL2.md
 Level 37 SURFACED → goLevel2(carryFrom37()). Files: textures2, level2, audio2, world2, props2, story2, ai2, main2, voicebank2 (suffix 2; state objects GP2/WP2/PP2/ZP2/AIP2 avoid collisions with older short names). Tests: qa2/s2_*.js.
 

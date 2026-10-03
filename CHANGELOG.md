@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## r10 — 2026-10-03 · Level 7 "Thalassophobia" (branch agent/claude)
+- New level after Level 2 (Level 2's THE LIFT ending offers CONTINUE · LEVEL 7; also in the level picker). A night ocean, 64x64 cells: the oil rig MERIDIAN, the grounded cargo ship AURELIA, the lighthouse islet CAPE SORREL, a pier and a boat, the seabed HABITAT ORCA-2, the wreck HALCYON, a lit buoy line, a trench.
+- Reuses Level 37's swimming/diving/breath engine and geometry; adds an endless horizon, a star dome with moon and dawn glow, night -> storm (rain, lightning, thunder) -> dawn, ladders (fade-teleports), flares (G), moonlit open-air lighting.
+- Story: Kell (rig radio), Wren (keeper), Fen (diver); generator -> air valve -> Fen -> the three lamp parts (jerry can and engine-room tank on the Aurelia; the Halcyon's bridge safe, combination 4 2 7 from Fen, the mate's log and the tide board; the cable splice on the seabed with Wren's clamp) -> the lamp room. Three endings: THE CROSSING (the boat), KEEPER (Wren's second column), THE DEEP (the cable down the trench). Three deaths (drowned, the Gulpers, the Long Shadow).
+- The Long Shadow patrols deep water, hunts swimmers in the dark, respects lamps, buoys and flares; Gulpers (Level 37's Fish) guard the first hold and the wreck.
+- Level 2's lift end card now says salt air and a horn. Voiced lines (Piper, CC0/PD voices, ASR-checked) via audio_pipeline/gen_vo7.py. docs/LEVEL7.md; qa7/ tests. No human playthrough, audio, touch, performance or difficulty review. Notion sync pending.
+
 ## r9 — 2026-10-03 · Level 2 "Pipe Dreams" (branch agent/claude)
 - New level after Level 37 (the SURFACED ending now offers CONTINUE · LEVEL 2; also in the level picker). 48x48 hot maintenance tunnels: the Spine, the Boiler Office and Boiler Hall, the Low Galleries (standing hot water, red bulbs, the Gamma Team's store), the Switchyard (Facelings on shift), the Long Pipe (a metre-wide main the whole way, the Hound), the Gamma Lift.
 - Systems: HEAT meter (hot zones, cold stores, shelters), pressure SURGES (three knocks and a klaxon, then steam floods every tunnel that isn't a shelter), pipe phones (Ida rings the nearest one; any phone gives a hint), regulators (hold to shut), a breaker puzzle the foreman taps out, a jammed door and a crowbar, a freight lift.

@@ -299,7 +299,7 @@ function endCard2() {
   if (PP2.valveOpen) S.push('Somewhere under you, a man is telling nobody about a crowbar.');
   if ((PP2.houndStares || 0) > 0) S.push('You never ran.');
   if (f.ending37 === 'surface') S.push('Your sleeves still smell of chlorine.');
-  S.push('The doors open on yellow wallpaper and a hum you know.');
+  S.push('The doors open on salt air, and a horn a long way off.');
   return ['THE LIFT', S.join(' ')];
 }
 function cpRespawn2() { if (GP2.surge) endSurge2(); GP2.heat = Math.min(GP2.heat, 0.3); const h = AIP2.hound; if (h) h.goAway(30); }

@@ -96,7 +96,7 @@ class Fish37 extends Agent {
     // seen as a long shadow: fear when it is near and you are in the water
     if (pIn) { const k2 = clamp(1 - d / 12, 0, 0.7); PL.fear = Math.max(PL.fear, k2); if (this.st === 'hunt' && d < 7) G.chase = Math.max(G.chase, clamp(1 - d / 9, 0, 1)); }
     this.atkCd -= dt;
-    if (play && pIn && this.st === 'hunt' && d < 1.5 && Math.abs(G37.ey - 0.5 - this.y) < 1.4 && this.atkCd <= 0) { this.atkCd = [2.6, 2.2, 1.8][G.diff]; knock(this, 13, 'fish', 3.2); SFX37.splash && SFX37.splash(P9({ x: PL.x, y: B.y, z: PL.z })); FX.glitch = Math.max(FX.glitch, 1.2); toast('SOMETHING HIT YOU IN THE WATER', 1.6); }
+    if (play && pIn && this.st === 'hunt' && d < 1.5 && Math.abs(G37.ey - 0.5 - this.y) < 1.4 && this.atkCd <= 0) { this.atkCd = [2.6, 2.2, 1.8][G.diff] * (this.cdK || 1); knock(this, 13, 'fish', 3.2); SFX37.splash && SFX37.splash(P9({ x: PL.x, y: B.y, z: PL.z })); FX.glitch = Math.max(FX.glitch, 1.2); toast('SOMETHING HIT YOU IN THE WATER', 1.6); }
     if (this.st === 'lurk' && !pIn) this.aggroed = this.aggroed;
   }
   cull() { const v = this.present && this.d < 32 && depth37(this.x, this.z) > 0; this.shown = v && (this.basin !== BAS37.WELL || G37.flood); setRigVisible(this.rig, this.shown); }

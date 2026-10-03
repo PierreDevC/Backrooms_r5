@@ -295,3 +295,5 @@ body:not(.lvl9) #btnPBrief{display:none}
 body.docopen #subs,body.docopen #toast{left:31%;width:min(560px,56vw);white-space:normal}
 @media (max-width:700px){body.docopen #subs,body.docopen #toast{left:50%;top:auto}}
 body.hacking #toast,body.peeping #toast{top:9%}body.hacking #subs,body.peeping #subs{bottom:4%}
+
+#rain7{position:fixed;inset:0;pointer-events:none;z-index:4;background:repeating-linear-gradient(104deg,rgba(190,210,255,0) 0 7px,rgba(190,210,255,.2) 7px 8px,rgba(190,210,255,0) 8px 21px);background-size:320px 320px;animation:rain7 .2s linear infinite;mix-blend-mode:screen}@keyframes rain7{from{background-position:0 0}to{background-position:-34px 320px}}

@@ -15,7 +15,7 @@ function cpAvail() { return !!(CP.on && CP.on.lvl === LVL && cpEnabled()); }
 function cpTick(dt) {
   if (CP.noteT > 0 && (CP.noteT -= dt) <= 0) { const n = $('cpNote'); if (n) n.classList.remove('show'); }
   if (CP.fadeT > 0) {   // fade up from black after a retry (a stair / slide fade that starts meanwhile keeps its own darkness)
-    CP.fadeT = Math.max(0, CP.fadeT - dt); const k = smooth(0, 1.2, CP.fadeT), busy = (LVL === 9 && G9.tp) || (LVL === 5 && G5.tp) || (LVL === 18 && G18.slide) || (LVL === 37 && G37.climb);
+    CP.fadeT = Math.max(0, CP.fadeT - dt); const k = smooth(0, 1.2, CP.fadeT), busy = (LVL === 9 && G9.tp) || (LVL === 5 && G5.tp) || (LVL === 18 && G18.slide) || (LVL === 37 && G37.climb) || (LVL === 7 && GS7.climb);
     if (G.state === 'play') FX.fadeB = busy ? Math.max(FX.fadeB, k) : k;
   }
 }
@@ -43,7 +43,7 @@ function cpRetry() {
   G.cause = ''; G.chase = 0;
   Object.assign(FX, { hurt: 0, fadeW: 0, fadeB: 1, glitch: 2 });
   DEATH.shown = false; DEATH.t = 0;
-  try { if (LVL === 9) cpRespawn9(); else if (LVL === 5) cpRespawn5(); else if (LVL === 18) cpRespawn18(); else if (LVL === 37) cpRespawn37(); else if (LVL === 2) cpRespawn2(); else cpRespawn0(); } catch (e) { frameErr('cp', e); }
+  try { if (LVL === 9) cpRespawn9(); else if (LVL === 5) cpRespawn5(); else if (LVL === 18) cpRespawn18(); else if (LVL === 37) cpRespawn37(); else if (LVL === 2) cpRespawn2(); else if (LVL === 7) cpRespawn7(); else cpRespawn0(); } catch (e) { frameErr('cp', e); }
   CAM.position.set(PL.x, 1.62, PL.z); CAM.rotation.set(0, PL.yaw, 0);
   G.state = 'play'; CP.fadeT = 1.2;
   $('osd').classList.remove('hide'); if (IS_TOUCH) $('touch').classList.remove('hide');

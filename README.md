@@ -21,6 +21,7 @@ r6 adds places, a second route through each level's key step, documents, optiona
 4. **Level 18 — Nostalgic Memories:** follow the Plush Dino through a preschool; recover four childhood drawings, pin them on MY MEMORIES, colour in the door with crayons from the art room, put your name on it (your cubby, the music room's floor piano, your birthday card in the dark), and leave through the door you drew.
 5. **Level 37 — Sublimity:** a Poolrooms complex. Abara at the Cabana wants her cassette from the pit; drain the Shallows from the pump room; three wings (the Lukewarm Hotel, Wellborn Hospital, Water World) each keep one thing for the lifeguard panel; play the video, the Dive Well floods, swim up to the hatch. Or sit down with Abara.
 6. **Level 2 — Pipe Dreams:** hot maintenance tunnels. Ida, the night engineer, talks you in on the pipe phones; shut three regulators (the Low Galleries, the Switchyard's breakers and Facelings, the Long Pipe and its Hound), get into a steam shelter when the pipes knock three times, and ride the Gamma Lift up. Or punch in.
+7. **Level 7 — Thalassophobia:** a night ocean. Start the rig's generator, open the air valve for the diver in Habitat Orca-2, fetch fuel from the grounded Aurelia, the lens motor from the Halcyon's bridge safe and splice the cable on the seabed, then light Cape Sorrel's lamp: sail away, stay with the keeper, or follow the cable down. Swim between lights; the Long Shadow hunts the dark.
 
 ## Play and build
 Open `game/The_Backrooms_Found_Footage.html` in a modern WebGL browser. Internet is needed for Babylon.js CDN; fonts are optional. Download the HTML to play if your host blocks pointer lock/WebGL in embeds.
@@ -29,7 +30,7 @@ Open `game/The_Backrooms_Found_Footage.html` in a modern WebGL browser. Internet
 cd game && python3 build.py
 python3 -m http.server 8000 --bind 127.0.0.1
 ```
-Visit `http://localhost:8000/The_Backrooms_Found_Footage.html`. Append `?debug&level=2` (or `level=37`, `level=18`, `level=9`, `level=5`) to start a level directly. In the title menu, SELECT LEVEL starts any of the six.
+Visit `http://localhost:8000/The_Backrooms_Found_Footage.html`. Append `?debug&level=2` (or `level=7`, `level=37`, `level=18`, `level=9`, `level=5`) to start a level directly. In the title menu, SELECT LEVEL starts any of the seven.
 
 WASD/arrows move · mouse look · Shift sprint · C crouch (toggle) · F flashlight · N night vision · Z or hold right mouse zoom · E/Enter interact · Q almond water · R battery · Esc/P pause · M mute. Level 5: G sprays Mothex. Level 9: right-click a door (or X) to latch it (the deadbolt turns), Tab map, LOOK OUTSIDE at any window, V to look through a door's peephole. Touch controls appear on phones.
 

@@ -14,7 +14,7 @@ const TOUCH = { mx: 0, mz: 0 };
 
 function lightAt(x, z) { return baseLight(x, z, FX.flicker) * 0.667 * FX.lightScale; } // ~1 in a lit room, <0.1 in the dead zones
 function makeNoise(v) { PL.noise = Math.max(PL.noise, v); }
-function carpetWet(x, z) { if (LVL === 37) return depth37(x, z) > 0.04; if (LVL === 2) return !!LV.wet2[cell2(x, z)]; return noise1(x * 0.35 + 3.1) + noise1(z * 0.35 - 8.7) > 0.7 || (LVL === 0 && !!P0.off && inPlace0(P0.off, x, z)); }
+function carpetWet(x, z) { if (LVL === 37) return depth37(x, z) > 0.04; if (LVL === 2) return !!LV.wet2[cell2(x, z)]; if (LVL === 7) return depth37(x, z) > 0.04; return noise1(x * 0.35 + 3.1) + noise1(z * 0.35 - 8.7) > 0.7 || (LVL === 0 && !!P0.off && inPlace0(P0.off, x, z)); }
 
 function resetPlayer() {
   Object.assign(PL, { x: cellCenter(LV.spawn.x), z: cellCenter(LV.spawn.y), vx: 0, vz: 0, crouch: false, ck: 0, sta: 1, exh: false, hp: 100, san: 100,
@@ -106,7 +106,8 @@ function updatePlayer(dt) {
   if (JUST.has('Tab') && LVL === 9) toggleMap9();
   if (JUST.has('KeyC')) PL.crouch = !PL.crouch;
   if (JUST.has('KeyZ')) PL.zoomT = !PL.zoomT;
-  if (JUST.has('KeyG') && LVL === 5) useSpray5();   // r7: Mothex
+  if (JUST.has('KeyG') && LVL === 5) useSpray5();
+  if (JUST.has('KeyG') && LVL === 7) useFlare7();   // r7: Mothex
   if (LVL === 9) hackKeys9(JUST);   // r6: PACKET STACK takes the movement keys while you're at a terminal
   JUST.clear();
   // movement
@@ -157,7 +158,7 @@ function updatePlayer(dt) {
   PL.zk = damp(PL.zk, PL.zoomT || RMB ? 1 : 0, 7, dt);
   // survival
   if (FX.t - PL.lastHurt > 10 && PL.hp < 100) PL.hp = Math.min(100, PL.hp + dt * 1.4);
-  PL.light = lightAt(PL.x, PL.z);
+  PL.light = LVL === 7 ? Math.max(lightAt(PL.x, PL.z), 0.4 - Math.min(0.4, Math.max(0, G37.under ? depth37(PL.x, PL.z) * 0.06 : 0))) : lightAt(PL.x, PL.z);   // r10: the moonlit sea is not a dark zone; the deep is
   let ds = 0;
   if (LVL !== 18 && PL.light < 0.12) ds -= ((PL.fk > 0.5 || PL.nv) ? 0.3 : 1.1) * (LVL !== 0 ? 0.5 : 1);
   else if (LVL !== 18 && PL.light > 0.3 && PL.san < 70) ds += 0.25;

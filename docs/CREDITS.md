@@ -84,3 +84,6 @@ Generated with Piper TTS (audio_pipeline/gen_vo37.py) and checked with faster-wh
 
 ## r9 · Level 2 voice lines
 Same pipeline as Level 37 (audio_pipeline/gen_vo2.py, Piper TTS, faster-whisper check). Models, CC0 or public domain: en_US-kathleen-low (Ida, CC0), en_US-mike-medium (Benny, CC0), en_US-bryce-medium (Outpost 9) and en_US-john-medium (Dr. Hale) as in Level 9, en_US-ljspeech-high (whispers, public domain). Synthetic speech, no human voice acting. All Level 2 sound effects are synthesized in game/src/audio2.js; textures are procedural (textures2.js) plus the existing ambientCG/Poly Haven assets.
+
+## r10 · Level 7 voice lines
+Same pipeline as Levels 37 and 2 (audio_pipeline/gen_vo7.py, Piper TTS, faster-whisper check). Models, CC0 or public domain: en_US-mike-medium (Kell, CC0), en_GB-cori-high (Wren, public domain), en_US-joe-medium (Fen, CC0), en_US-bryce-medium (Outpost 9) and en_US-john-medium (Dr. Hale) as in Level 9, en_US-ljspeech-high (PA and whispers, public domain). Synthetic speech, no human voice acting. Sound effects are synthesized in game/src/audio7.js; the sea, sky and tower bands are procedural.
