@@ -480,6 +480,6 @@ function places0Start() {   // a new attempt on the same layout: put every story
   if (W.p0.exitBatt) { W.p0.exitBatt.dispose(); W.p0.exitBatt = null; }
   for (const b of W.p0.breakers) { b.h.rotation.x = 0.55; setEmi(b.lamp, 1.6, 0.12, 0.05); }
 }
-function flags0() { flag('lost0', G.lost); if (!flag('reyes0')) flag('reyes0', P0.reyes === 'helped' ? 'helped' : AI.exps[2] && !AI.exps[2].alive ? 'lost' : P0.reyes); }
+function flags0() { flag('lost0', G.lost); flag('dead0', (AI.exps || []).filter(e => e && e.alive === false && typeof EXP !== 'undefined' && EXP[e.i]).map(e => EXP[e.i].name)); if (!flag('reyes0')) flag('reyes0', P0.reyes === 'helped' ? 'helped' : AI.exps[2] && !AI.exps[2].alive ? 'lost' : P0.reyes); }
 
 if (/[?&]debug/.test(location.search)) addEventListener('load', () => Object.assign(window.__BR || (window.__BR = {}), { P0, RUN, TASKS, DOC, HOLD, readLog0, useRadio0, throwBreaker0, takeBattery0, connectBattery0, powerOn0, reyesTalk0, placeAt0, setObj0, target0, readDoc, openNotes, task, taskOf, flag }));

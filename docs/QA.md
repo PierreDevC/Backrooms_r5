@@ -173,3 +173,6 @@ No PAGEERROR or shader failure was observed. Do not interpret debug-driven compl
 Enemy appearance capture enemy_staged.jpg uses forced debug placement in the bright corridor to inspect the rig; normal navigation forbids bright areas. Void screenshots show its intentionally dark environment. presentation_final.log records the last cosmetic/HUD checks.
 
 Final visual correction connected the enemy neck/shoulders without changing its state machine or collision radius. All runtime presentation checks completed after the correction. Mobile HUD moves compass/objective below readouts; notes and all end-stat values fit.
+
+## r8 Level 37
+`node qa18/run18.js "$PWD/game/The_Backrooms_Found_Footage.html" "$PWD/qa37/s37_story.js" 960 540` runs the full objective chain (Abara, plant, pit, three wings, panel, flood, hatch win). `s37_npc.js` times Teague and checks fish bites; `s37_views.js` screenshots every wing. Headless only; no human review.

@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## r8 — 2026-10-02 · Level 37 "Sublimity" (branch agent/claude, not merged)
+- New level after Level 18 (Level 18 win chains to it): a 72x72 Poolrooms complex built to the user's reference renders (cream-sage tile with dark grout, round tiled columns, round and nested arches, light slits with sun shafts, emerald water with grout/caustic overlays). Hub (Shallows, Dive Well with ten-metre tower, Lap pool, Cabana, Plant, lifeguard booth) plus three wings: Lukewarm Hotel, Wellborn Hospital, Water World.
+- Swimming/diving/breath physics, per-basin draining and flooding, the Scape drift meter, underwater audio.
+- Story: Abara, Teague, the Staff (night shot only), Pell's tape, notes/logs/PA; three wing quests, panel, flood and two endings (SURFACED, STILL WATER). Fish creature in the wave pool and the flooded well. Run flags from Levels 0/9/5/18 feed the hospital roster and the ending card. Level 0 now records `dead0`.
+- docs/LEVEL37.md; qa37/ (story chain, NPC/fish, wing views). No human playthrough, audio, touch, performance or difficulty review. Notion sync pending.
+
 ## r7.2 — 2026-10-02 · Level 18 floor-piano clues
 - Enlarged MUSIC room poster teaches stepping on keys, repeated notes and moving between colours on the bare floor. Readable lesson points to the birthday card off the dark east walk and stays in FIELD NOTES; card also teaches the controls.
 - Nearby piano panel displays the learned melody and last seven notes as labelled colour chips. Wrong-tune retry and open-toy-box/key guidance; no timing requirement or premature tune reveal. PLAY [COLOUR] AGAIN uses E or touch USE while looking down.

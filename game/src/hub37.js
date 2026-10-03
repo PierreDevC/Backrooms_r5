@@ -144,7 +144,7 @@ function furnishPlant37(B) {
     // a gauge needle over the wheel
     const gp = localPt(wr, 0.28, 1.9, 0.07), gm = mkMerged(W37.propMat, P => { P('Cylinder', { diameter: 0.2, height: 0.02, tessellation: 18 }, [0.9, 0.9, 0.84], 0, [0, 0, 0], [Math.PI / 2, 0, 0]); }, 'gauge37'); gm.position.copyFrom(gp); gm.rotation.y = wr.rotation.y;
     const nd = tnode(null, gp.x, gp.y, gp.z); nd.rotation.y = wr.rotation.y; const needle = mkMerged(W37.propMat, P => { P('Box', { width: 0.012, height: 0.09, depth: 0.006 }, [0.7, 0.05, 0.03], 0.2, [0, 0.04, 0.012]); }, 'needle37'); needle.parent = nd;
-    const p = localPt(wr, 0, 1.2, 0.9); W37.gates.push(Object.assign(g, { mesh: wheel, needle, x: p.x, z: p.z, y: 1.4, ang: 0, busy: false, low: false }));
+    const p = localPt(wr, 0, 1.2, 0.9); W37.gates.push(Object.assign(g, { mesh: wheel, needle, x: p.x, z: p.z, y: 1.4, ang: 0, busy: false }));
   });
   // the pump room's other furniture: a desk with the plant log, a locker, a cart, hoses
   { const r = wallAt37(11, 29, 3, 0); B.add(r, 'Box', { width: 1.4, height: 0.05, depth: 0.7 }, COL37.wood2, 0, [0, 0.76, 0.4]); for (const x of [-0.62, 0.62]) B.add(r, 'Box', { width: 0.05, height: 0.74, depth: 0.6 }, COL37.wood, 0, [x, 0.37, 0.4]); solidLocal(r, -0.75, 0, 0.75, 0.8);

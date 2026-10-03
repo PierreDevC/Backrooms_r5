@@ -1,5 +1,8 @@
 # The Backrooms: Found Footage — Coding-Agent Handoff (r7.2)
 
+## r8 (branch agent/claude, unmerged): Level 37 Sublimity — read docs/LEVEL37.md
+Level 18 win → goLevel37. Build files: textures37, level37, audio37, world37, hub37, wings37, story37, storywings37, ai37, main37 (suffix 37). Tests: qa37/s37_story.js, s37_npc.js, s37_views.js via qa18/run18.js. User merges to main.
+
 ## Current release · r7.2 · 2026-10-02
 - Level 18 floor-piano discoverability: enlarged, readable classroom lesson; birthday-card route clue; repeated-note and bare-floor rules; labelled target/played-note feedback near the piano. The tune is shown only after reading the card or solving it. No timing requirement or melody change.
 - Look down and use E/touch USE to PLAY [COLOUR] AGAIN; walking off/back on also repeats. Wrong seven-note attempts explain how to retry; success directs the player to the cubby key. Lesson and task rules remain in FIELD NOTES. Checkpoint respawn clears M18.seq/M18.tile while retaining discovered clues and quest progress.

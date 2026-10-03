@@ -177,6 +177,7 @@ function worldFX37(dt) {
   FX.fog[0] = lerp(fc[0], 0.03, under); FX.fog[1] = lerp(fc[1], 0.3, under); FX.fog[2] = lerp(fc[2], 0.2, under);
   FX.envA[0] = lerp(zl.amb[0], 0.04, under); FX.envA[1] = lerp(zl.amb[1], 0.14, under); FX.envA[2] = lerp(zl.amb[2], 0.18, under);
   if (live) FX.exposure = 0.82 * S.bright * lerp(1, clamp(0.3 / Math.max(PL.light, 0.01), 0.22, 1), FX.nv);
+  FX.ambBoost *= 0.2; FX.exposure *= lerp(1, 0.22, FX.nv);   // the pool is already bright: night shot should not white out the tile
   if (W37.lensFl) setEmi(W37.lensFl, 3.2 * FX.flicker);
   if (W.itemMat) setEmi(W.itemMat, 0.4 + 0.8 * Math.max(0, Math.sin(t * 2.6)) ** 6);
   G37.doorT = (G37.doorT || 0) - dt; if (G37.doorT <= 0) { G37.doorT = 0.25; for (const d of W9.doors) { const on = dist2(d.mx, d.mz, cp.x, cp.z) < d.cull; if (d.vis !== on) { d.vis = on; d.mesh.setEnabled(on); } } } updateDoors9(dt);

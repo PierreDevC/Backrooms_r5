@@ -1,0 +1,24 @@
+const path = require('path');
+module.exports = async (page) => {
+  const out = process.env.BR_QA_OUT, shot = async (name) => { await page.evaluate(() => { window.__BR.DBG.ts = 0; }); await page.waitForTimeout(1200); await page.screenshot({ path: path.join(out, name + '.png') }); await page.evaluate(() => { window.__BR.DBG.ts = 1; }); };
+  await page.evaluate(() => { const B = window.__BR; B.G.state = 'title'; B.G.diff = 1; B.goLevel37(null); });
+  await page.waitForFunction(() => ['intro', 'play'].includes(window.__BR.G.state) && window.__BR.W37 && window.__BR.W37.pos, null, { timeout: 240000 });
+  const a = await page.evaluate(() => { const B = window.__BR; for (let i = 0; i < 400 && B.G.state !== 'play'; i++) B.simStep(0.05); for (let i = 0; i < 30; i++) B.simStep(0.05);
+    const LV = B.LV37(); return { st: B.G.state, errs: B.ERRS.n, last: B.ERRS.last, rooms: LV.rooms.length, fh: B.floorY37(B.PL.x, B.PL.z), depth: B.depth37(B.PL.x, B.PL.z), ey: B.G37.ey, cam: B.CAM().position.y }; });
+  console.log('A ' + JSON.stringify(a));
+  const view = async (name, x, z, yaw, pitch = 0) => { await page.evaluate(([x, z, yaw, pitch]) => { const B = window.__BR, PL = B.PL; PL.x = x; PL.z = z; PL.cell = -1; PL.yaw = yaw; PL.pitch = pitch; PL.fk = 0; for (let i = 0; i < 24; i++) B.simStep(0.05); PL.yaw = yaw; PL.pitch = pitch; B.simStep(0.02); }, [x, z, yaw, pitch]); await shot(name); };
+  const C = 3.6;
+  await view('w_lobby', 35 * C, 49 * C, 0.15, 0.02);
+  await view('w_cafe', 42 * C, 52 * C, Math.PI / 2, 0.0);
+  await view('w_court', 35 * C, 56 * C, 0.1, 0.05);
+  await view('w_room', 22 * C, 51 * C, -Math.PI / 2 + 3.1, 0.0);
+  await view('w_adm', 24 * C, 10 * C, Math.PI, 0.0);
+  await view('w_hcorr', 14 * C, 6.5 * C, Math.PI / 2, 0.0);
+  await view('w_ward', 13.5 * C, 5.5 * C, 0.0, 0.0);
+  await view('w_plaza', 63 * C, 41.6 * C, 0.1, 0.05);
+  await view('w_foyer', 63 * C, 49.5 * C, 0.0, 0.0);
+  await view('w_dome', 62 * C, 53.6 * C, 0.1, 0.0);
+  await view('w_staff', 58 * C, 61.5 * C, Math.PI / 2, 0.0);
+  await view('w_wave', 56 * C, 66.5 * C, 0.0, 0.1);
+  const e = await page.evaluate(() => ({ errs: window.__BR.ERRS.n, last: window.__BR.ERRS.last })); console.log('E ' + JSON.stringify(e));
+};

@@ -232,6 +232,7 @@ function teardownScene() {
 }
 async function restartGame(play) {
   if (LVL === 37 && play && !G37.endWon) { lockPointer(); return goLevel37(G37.from); }
+  if (LVL === 18 && play && G18.endWon) { lockPointer(); return goLevel37(carryFrom18()); }
   if (LVL === 18 && play && !G18.endWon) { lockPointer(); return goLevel18(G18.from); }
   if (LVL === 5 && play && !G5.endWon) { lockPointer(); return goLevel5(G5.from); }
   if (LVL === 9 && play && !G9.endWon) { lockPointer(); return goLevel9(G9.from); }

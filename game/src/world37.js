@@ -152,7 +152,7 @@ async function buildWorld37(progress) {
   progress(0.64, 'SETTING OUT THE CHAIRS…'); await nextFrame();
   buildProps37();
   progress(0.78, 'HANGING DOORS…'); await nextFrame();
-  buildDoors37(); buildStory37(); buildItems37(G.diff); buildDust();
+  buildGhosts37(); buildDoors37(); buildStory37(); buildItems37(G.diff); buildDust();
   W37.finishProps();
   SCN.setRenderingOrder(0, (a, b) => (a.getMesh()._sortD ?? 400) - (b.getMesh()._sortD ?? 400));
   progress(0.9, 'LISTENING TO THE FILTERS…'); await nextFrame();
@@ -178,3 +178,13 @@ function buildDoors37() {
 }
 const DOORC37 = { room: [0.5, 0.34, 0.2], cabana: [0.3, 0.55, 0.6], plant: [0.4, 0.44, 0.44], booth: [0.55, 0.42, 0.28], hotel: [0.42, 0.19, 0.09], hosp: [0.8, 0.86, 0.84], staff: [0.4, 0.42, 0.4], ww: [0.2, 0.46, 0.66] };
 function plaque37(s, text) { const r = atWall5(s, 0, 0); r.position.y = LV.fh[cIdx(s.x, s.y)]; r.computeWorldMatrix(true); sign37(text, twin(r), [DOORW / 2 + 0.34, 1.62, 0.03], 0.46, 0.14, { bg: '#e8e2d0', fg: '#2a2a2a', line: '#6a6a60', emis: 0.25 }); }
+
+// glass-and-tile panels in the wave pool: you can see them and swim straight through them (no collision, no lightmap shadow)
+function buildGhosts37() {
+  if (!LV.ghosts || !LV.ghosts.length) return;
+  const m = new BABYLON.StandardMaterial('ghost37', SCN); m.disableLighting = true; m.emissiveColor = new BABYLON.Color3(0.35, 0.62, 0.6); m.alpha = 0.28; m.backFaceCulling = false; m.specularColor = BABYLON.Color3.Black();
+  W37.ghosts = [];
+  for (const [x, y] of LV.ghosts) {
+    const b = BABYLON.MeshBuilder.CreateBox('ghost37', { width: CELL, height: 5.0, depth: 0.05 }, SCN); b.material = m; b.position.set(cellCenter(x), floorY37(cellCenter(x), cellCenter(y)) + 2.5, y * CELL); b.isPickable = false; b.alphaIndex = 5; W37.ghosts.push(b);
+  }
+}

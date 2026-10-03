@@ -96,7 +96,7 @@ function cpRespawn5() {
   }
   for (const a of FEM5.acid) a.mesh.dispose(); FEM5.acid.length = 0;
 }
-function cpRespawn37() { G37.climb = null; G37.falling = false; G37.onTower = false; G37.vy = 0; G37.ey = floorY37(PL.x, PL.z) + 1.62; G37.breath = 1; G37.drift = 0; if (W37.tower) for (const i of [...W37.tower.edge, W37.tower.gap]) LV.solids[i].off = false; }
+function cpRespawn37() { try { cpRespawnFlood37(); } catch (e) {} G37.climb = null; G37.falling = false; G37.onTower = false; G37.vy = 0; G37.ey = floorY37(PL.x, PL.z) + 1.62; G37.breath = 1; G37.drift = 0; if (W37.tower) for (const i of [...W37.tower.edge, W37.tower.gap]) LV.solids[i].off = false; }
 function cpRespawn18() {
   G18.slide = null; G18.digging = false; PL.spdK = 1;
   M18.seq.length = 0; M18.tile = -1;

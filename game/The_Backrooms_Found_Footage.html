@@ -5796,7 +5796,7 @@ function places0Start() {   // a new attempt on the same layout: put every story
   if (W.p0.exitBatt) { W.p0.exitBatt.dispose(); W.p0.exitBatt = null; }
   for (const b of W.p0.breakers) { b.h.rotation.x = 0.55; setEmi(b.lamp, 1.6, 0.12, 0.05); }
 }
-function flags0() { flag('lost0', G.lost); if (!flag('reyes0')) flag('reyes0', P0.reyes === 'helped' ? 'helped' : AI.exps[2] && !AI.exps[2].alive ? 'lost' : P0.reyes); }
+function flags0() { flag('lost0', G.lost); flag('dead0', (AI.exps || []).filter(e => e && e.alive === false && typeof EXP !== 'undefined' && EXP[e.i]).map(e => EXP[e.i].name)); if (!flag('reyes0')) flag('reyes0', P0.reyes === 'helped' ? 'helped' : AI.exps[2] && !AI.exps[2].alive ? 'lost' : P0.reyes); }
 
 if (/[?&]debug/.test(location.search)) addEventListener('load', () => Object.assign(window.__BR || (window.__BR = {}), { P0, RUN, TASKS, DOC, HOLD, readLog0, useRadio0, throwBreaker0, takeBattery0, connectBattery0, powerOn0, reyesTalk0, placeAt0, setObj0, target0, readDoc, openNotes, task, taskOf, flag }));
 
@@ -12645,7 +12645,7 @@ function cpRespawn5() {
   }
   for (const a of FEM5.acid) a.mesh.dispose(); FEM5.acid.length = 0;
 }
-function cpRespawn37() { G37.climb = null; G37.falling = false; G37.onTower = false; G37.vy = 0; G37.ey = floorY37(PL.x, PL.z) + 1.62; G37.breath = 1; G37.drift = 0; if (W37.tower) for (const i of [...W37.tower.edge, W37.tower.gap]) LV.solids[i].off = false; }
+function cpRespawn37() { try { cpRespawnFlood37(); } catch (e) {} G37.climb = null; G37.falling = false; G37.onTower = false; G37.vy = 0; G37.ey = floorY37(PL.x, PL.z) + 1.62; G37.breath = 1; G37.drift = 0; if (W37.tower) for (const i of [...W37.tower.edge, W37.tower.gap]) LV.solids[i].off = false; }
 function cpRespawn18() {
   G18.slide = null; G18.digging = false; PL.spdK = 1;
   M18.seq.length = 0; M18.tile = -1;
@@ -13097,6 +13097,7 @@ function teardownScene() {
 }
 async function restartGame(play) {
   if (LVL === 37 && play && !G37.endWon) { lockPointer(); return goLevel37(G37.from); }
+  if (LVL === 18 && play && G18.endWon) { lockPointer(); return goLevel37(carryFrom18()); }
   if (LVL === 18 && play && !G18.endWon) { lockPointer(); return goLevel18(G18.from); }
   if (LVL === 5 && play && !G5.endWon) { lockPointer(); return goLevel5(G5.from); }
   if (LVL === 9 && play && !G9.endWon) { lockPointer(); return goLevel9(G9.from); }
@@ -14662,7 +14663,7 @@ async function buildWorld37(progress) {
   progress(0.64, 'SETTING OUT THE CHAIRS…'); await nextFrame();
   buildProps37();
   progress(0.78, 'HANGING DOORS…'); await nextFrame();
-  buildDoors37(); buildStory37(); buildItems37(G.diff); buildDust();
+  buildGhosts37(); buildDoors37(); buildStory37(); buildItems37(G.diff); buildDust();
   W37.finishProps();
   SCN.setRenderingOrder(0, (a, b) => (a.getMesh()._sortD ?? 400) - (b.getMesh()._sortD ?? 400));
   progress(0.9, 'LISTENING TO THE FILTERS…'); await nextFrame();
@@ -14688,6 +14689,16 @@ function buildDoors37() {
 }
 const DOORC37 = { room: [0.5, 0.34, 0.2], cabana: [0.3, 0.55, 0.6], plant: [0.4, 0.44, 0.44], booth: [0.55, 0.42, 0.28], hotel: [0.42, 0.19, 0.09], hosp: [0.8, 0.86, 0.84], staff: [0.4, 0.42, 0.4], ww: [0.2, 0.46, 0.66] };
 function plaque37(s, text) { const r = atWall5(s, 0, 0); r.position.y = LV.fh[cIdx(s.x, s.y)]; r.computeWorldMatrix(true); sign37(text, twin(r), [DOORW / 2 + 0.34, 1.62, 0.03], 0.46, 0.14, { bg: '#e8e2d0', fg: '#2a2a2a', line: '#6a6a60', emis: 0.25 }); }
+
+// glass-and-tile panels in the wave pool: you can see them and swim straight through them (no collision, no lightmap shadow)
+function buildGhosts37() {
+  if (!LV.ghosts || !LV.ghosts.length) return;
+  const m = new BABYLON.StandardMaterial('ghost37', SCN); m.disableLighting = true; m.emissiveColor = new BABYLON.Color3(0.35, 0.62, 0.6); m.alpha = 0.28; m.backFaceCulling = false; m.specularColor = BABYLON.Color3.Black();
+  W37.ghosts = [];
+  for (const [x, y] of LV.ghosts) {
+    const b = BABYLON.MeshBuilder.CreateBox('ghost37', { width: CELL, height: 5.0, depth: 0.05 }, SCN); b.material = m; b.position.set(cellCenter(x), floorY37(cellCenter(x), cellCenter(y)) + 2.5, y * CELL); b.isPickable = false; b.alphaIndex = 5; W37.ghosts.push(b);
+  }
+}
 
 // ==== hub37.js ====
 // ---------- r8 · Level 37: the hub's furnishings (Shallows, Dive Well, Lap Pool, Cabana, Pump Room, Booth) ----------
@@ -14836,7 +14847,7 @@ function furnishPlant37(B) {
     // a gauge needle over the wheel
     const gp = localPt(wr, 0.28, 1.9, 0.07), gm = mkMerged(W37.propMat, P => { P('Cylinder', { diameter: 0.2, height: 0.02, tessellation: 18 }, [0.9, 0.9, 0.84], 0, [0, 0, 0], [Math.PI / 2, 0, 0]); }, 'gauge37'); gm.position.copyFrom(gp); gm.rotation.y = wr.rotation.y;
     const nd = tnode(null, gp.x, gp.y, gp.z); nd.rotation.y = wr.rotation.y; const needle = mkMerged(W37.propMat, P => { P('Box', { width: 0.012, height: 0.09, depth: 0.006 }, [0.7, 0.05, 0.03], 0.2, [0, 0.04, 0.012]); }, 'needle37'); needle.parent = nd;
-    const p = localPt(wr, 0, 1.2, 0.9); W37.gates.push(Object.assign(g, { mesh: wheel, needle, x: p.x, z: p.z, y: 1.4, ang: 0, busy: false, low: false }));
+    const p = localPt(wr, 0, 1.2, 0.9); W37.gates.push(Object.assign(g, { mesh: wheel, needle, x: p.x, z: p.z, y: 1.4, ang: 0, busy: false }));
   });
   // the pump room's other furniture: a desk with the plant log, a locker, a cart, hoses
   { const r = wallAt37(11, 29, 3, 0); B.add(r, 'Box', { width: 1.4, height: 0.05, depth: 0.7 }, COL37.wood2, 0, [0, 0.76, 0.4]); for (const x of [-0.62, 0.62]) B.add(r, 'Box', { width: 0.05, height: 0.74, depth: 0.6 }, COL37.wood, 0, [x, 0.37, 0.4]); solidLocal(r, -0.75, 0, 0.75, 0.8);
@@ -15030,33 +15041,644 @@ function furnishWorld37(B) {
 }
 
 // ==== story37.js ====
-// ---------- r8 · Level 37 story (first pass: engine test scaffolding; replaced by the full story below) ----------
-const P37 = { keys: {}, gates: {} };
-function resetP37() { for (const k of Object.keys(P37)) delete P37[k]; Object.assign(P37, { keys: {}, gates: {} }); }
-resetP37();
-function setPhase37(p) { if (p) G37.phase = p; objective(obj37()); tasks37(); }
-function obj37() { return 'FIND DRY GROUND'; }
-function tasks37() {}
-function target37() { return null; }
-function wingsDone37() { return 0; }
-function arrive37() { toast('LEVEL 37', 2); }
-function flags37() {}
-function endCard37() { return ['SURFACED', 'The picture goes white.']; }
-function floodTick37() {}
-function stopFlood37() {}
-function places37Events() {}
-function doorLabel37(dr) { return dr.target ? 'CLOSE DOOR' : dr.locked ? 'LOCKED' : 'OPEN DOOR'; }
-function useDoor37(dr) { if (dr.locked) { SFX9.rattle(P9({ x: dr.mx, z: dr.mz })); toast('LOCKED', 1.6); return; } useDoor(dr); }
-function buildStory37() {
-  if (W37.tower) { const T = W37.tower; W.interact.push({ x: W37.pos.towerBase.x, z: W37.pos.towerBase.z, y: 1.2, r: 1.8, label: () => 'CLIMB THE TOWER', ok: () => !G37.onTower && G.state === 'play', act: () => climbTower37() }); }
-  for (const g of W37.gates || []) W.interact.push({ x: g.x, z: g.z, y: 1.4, r: 1.9, label: () => g.low ? `${g.name} GATE · REFILL` : `${g.name} GATE · DRAIN`, ok: () => G.state === 'play' && !g.busy, act: () => { g.busy = true; g.low = !g.low; const B = LV.basins[g.basin]; B.tgt = g.low ? g.low : 0; g.low = !g.low; } });
+// ---------- r8 · Level 37 story: the hub (Abara, the plant, the pit, the booth panel, the flood, the two endings) ----------
+// Written with the backrooms-dialogue skill. Text only; nothing here is voiced. Full line ledger: docs/LEVEL37.md.
+// The spine: Abara needs her cassette (Pell's camcorder is in the pit with it) -> the plant -> drain the Shallows -> the pit -> she tells you the three wings
+// -> each wing keeps one thing (hotel: the ROOM 233 CARD; hospital: the DISCHARGE WRISTBAND; Water World: NEW_VIDEO.AVI) -> the booth panel has three slots
+// -> the video plays, the Dive Well floods, you swim up to the hatch. Or you sit down with Abara.
+const P37 = { keys: {} };
+function resetP37() {
+  for (const k of Object.keys(P37)) delete P37[k];
+  Object.assign(P37, { met: false, intro: 0, topics: {}, quest: false, kettleKey: false, plant: false, drained: false, cam: false, cass: false, tapeRead: false, ret: false, told: false, boothRead: false, plantRead: false,
+    keys: { hotel: false, hosp: false, tape: false }, panel: { hotel: false, hosp: false, tape: false }, played: false, stay: false, vend: {}, locker: false, board: false, gatesUsed: {},
+    hotel: { book: false, bell: 0, drawer: false, sw: false, timed: false, vaultKey: false, card: false, seen: false, t: 0, warn: false, draw: false },
+    hosp: { seen: false, nv: false, ticket: false, linen: false, linenDone: false, lanyard: false, iv: false, ivDone: false, chart: false, chartDone: false, stamps: 0, form: false, roster: false, board: false, sayT: 0, paT: 0 },
+    ww: { seen: false, map: false, gen: false, ctrl: false, tape: false, tanks: 0, note: false, paT: 0 }, radioT: 0, hintT: 0 });
 }
-function buildItems37() {}
+resetP37();
+const wingsDone37 = () => (P37.keys.hotel ? 1 : 0) + (P37.keys.hosp ? 1 : 0) + (P37.keys.tape ? 1 : 0);
+const OUT9 = 'M.E.G. OUTPOST 9', HALE_R = 'DR. HALE';
+const near37 = (p, r = 3) => p && dist2(PL.x, PL.z, p.x, p.z) < r;
+function sayAb37(t, o = {}) { const N = AI37.abara; say('ABARA', t, Object.assign({ pos: N ? { x: N.x, z: N.z } : null, dur: 4.2 }, o)); }
+
+// ----- phases and objectives -----
+function setPhase37(p) { if (p) G37.phase = p; objective(obj37()); tasks37(); }
+function obj37() {
+  if (G37.flood) return G37.hatchReady ? 'OPEN THE HATCH' : 'SWIM UP · THE HATCH IS AT THE TOP';
+  switch (G37.phase) {
+    case 'arrive': return 'FIND DRY GROUND · THE CABANA, WEST OF THE SHALLOWS';
+    case 'dry': return P37.quest ? (P37.plant ? (P37.drained ? 'FIND THE CASSETTE AND THE CAMCORDER · THE PIT' : 'DRAIN THE SHALLOWS · THE PUMP ROOM') : 'THE PLANT KEY · UNDER THE KETTLE') : 'TALK TO ABARA';
+    case 'wings': { const w = wingsDone37(); return `THE THREE WINGS · ${w}/3 · EACH KEEPS ONE THING`; }
+    case 'finale': return 'THE LIFEGUARD BOOTH · THE PANEL HAS THREE SLOTS';
+  }
+  return '';
+}
+function tasks37() {
+  task('dry', 'FIND DRY GROUND · THE CABANA', { quiet: true }); if (P37.met) taskDone('dry', 'THE CABANA · ABARA', true);
+  if (P37.quest) {
+    task('cass', 'ABARA\'S CASSETTE · TAPE FOUR, IN THE PIT', { quiet: true, sub: 'PELL\'S CAMCORDER WENT DOWN WITH IT' });
+    task('kettle', 'THE PLANT KEY · UNDER THE KETTLE', { quiet: true }); if (P37.kettleKey) taskDone('kettle', 'THE PLANT KEY', true);
+    task('drain', 'DRAIN THE SHALLOWS · GATE THREE, THE PUMP ROOM', { quiet: true }); if (P37.drained) taskDone('drain', 'THE SHALLOWS ARE DRAINED', true);
+    if (P37.cass && P37.cam) taskDone('cass', 'THE CASSETTE · AND PELL\'S CAMCORDER', true);
+  }
+  if (P37.told) {
+    task('wings', `THE THREE WINGS · ${wingsDone37()}/3`, { quiet: true, sub: 'HOTEL · HOSPITAL · PARK. EACH KEEPS ONE THING' }); if (wingsDone37() >= 3) taskDone('wings', 'ALL THREE WINGS', true);
+    task('hotel', 'THE LUKEWARM HOTEL · THE ROOM 233 CARD', { quiet: true, sub: 'THE PIT CORRIDOR, SOUTH' }); if (P37.keys.hotel) taskDone('hotel', 'THE ROOM 233 CARD', true);
+    task('hosp', 'WELLBORN HOSPITAL · THE DISCHARGE WRISTBAND', { quiet: true, sub: 'DOWN THE DIVE WELL AND ALONG, OR DRAIN IT' }); if (P37.keys.hosp) taskDone('hosp', 'THE DISCHARGE WRISTBAND', true);
+    task('park', 'WATER WORLD · NEW_VIDEO.AVI', { quiet: true, sub: 'THE EAST END OF THE LAP POOL, THE LONG DARK TUNNEL' }); if (P37.keys.tape) taskDone('park', 'NEW_VIDEO.AVI', true);
+  }
+  if (wingsDone37() >= 3) { task('panel', 'SEAT ALL THREE IN THE LIFEGUARD PANEL', { quiet: true }); if (P37.played) taskDone('panel', 'THE PANEL IS FULL', true); }
+  hotelTasks37(); hospTasks37(); wwTasks37();
+}
+function target37() {
+  const pc = cell37(PL.x, PL.z); const P = W37.pos;
+  if (G37.flood) return G37.hatchReady ? W37.hatch : { x: W37.hatch.x, z: W37.hatch.z };
+  if (G37.phase === 'arrive') return { x: cc37(24), z: cc37(35) };
+  if (G37.phase === 'dry') {
+    if (!P37.met || !P37.quest) return AI37.abara;
+    if (!P37.kettleKey) return P.kettle;
+    if (!P37.plant) return { x: 20 * CELL - 0.8, z: cc37(34) };
+    if (!P37.drained) { const g = W37.gates[0]; return g; }
+    return { x: cc37(35), z: cc37(41) };
+  }
+  if (G37.phase === 'wings') return wingTarget37();
+  if (G37.phase === 'finale') return P.panel || P.deskB;
+  return null;
+}
+
+// ----- arrival -----
+function arrive37() {
+  later(1.6, () => say(OUT9, 'Nine. Camera, there is water on your carrier. A lot of it.', { radio: true }));
+  later(9, () => say(OUT9, 'Nine. Find a floor that isn\'t wet and stand on it.', { radio: true }));
+  if (flag('hale9') === 'saved') later(20, () => say(HALE_R, 'Hale. If this reaches the pool: walk or swim, but don\'t float. Whatever you do in warm water, do it on purpose.', { radio: true }));
+  later(26, () => toast('[C] DIVE · LOOK DOWN AND SWIM TO GO DEEPER · BREATHE AT THE SURFACE', 4));
+}
+
+// ----- the hub's objects -----
+function buildStory37() {
+  const P = W37.pos, I = o => { W.interact.push(o); return o; };
+  W.itemMat = actMat('items', { spec: 0.8, shin: 50, emis: 1, wrap: 0.3 });
+  if (W37.tower) I({ x: P.towerBase.x, z: P.towerBase.z, y: 1.2, r: 1.8, label: () => 'CLIMB THE TOWER · TEN METRES', ok: () => !G37.onTower && G.state === 'play', act: () => climbTower37() });
+  // Abara's corner: the kettle (and the key under it), the lockers, the vending machine, the board
+  { const it = I({ x: P.kettle.x, z: P.kettle.z, y: 0.7, r: 1.8, label: () => P37.kettleKey ? 'THE KETTLE' : 'LIFT THE KETTLE', ok: () => G.state === 'play', act: () => kettle37() }); }
+  I({ x: P.lockers.x, z: P.lockers.z, y: 1.1, r: 1.9, label: () => P37.locker ? 'THE LOCKERS · EMPTY NOW' : 'OPEN THE LOCKERS', ok: () => G.state === 'play', act: () => lockers37() });
+  I({ x: P.vend.x, z: P.vend.z, y: 1.1, r: 1.8, label: () => P37.vend.cab ? 'VENDING MACHINE · EMPTY' : 'VENDING MACHINE · WATER', ok: () => G.state === 'play', act: () => vend37('cab', 'cabana') });
+  I({ x: P.board.x, z: P.board.z, y: 1.5, r: 1.9, label: () => 'READ THE BOARD', ok: () => G.state === 'play', act: () => readBoard37() });
+  // the plant: log, three gates
+  I({ x: P.plantLog.x, z: P.plantLog.z, y: 0.85, r: 1.8, label: () => 'READ THE PLANT LOG', ok: () => G.state === 'play', act: () => readPlantLog37() });
+  for (const g of W37.gates) {
+    const it = I({ x: g.x, z: g.z, y: 1.4, r: 1.9, label: () => holdBusy(it) ? `TURNING THE WHEEL… ${holdPct(it)}%` : `${g.name} GATE · ${LV.basins[g.basin].tgt < -0.5 ? 'REFILL' : 'DRAIN'}`, ok: () => G.state === 'play' && !g.busy, act: () => gate37(g, it) });
+  }
+  // the pit: Pell's camcorder and the cassette
+  { const px = cc37(34) + 0.4, pz = cc37(41) - 0.6;
+    const cam = mkMerged(W.itemMat, Q => { Q('Box', { width: 0.16, height: 0.12, depth: 0.3 }, [0.12, 0.12, 0.13], 0.1, [0, 0.06, 0]); Q('Cylinder', { diameter: 0.08, height: 0.1, tessellation: 12 }, [0.04, 0.04, 0.06], 0.2, [0, 0.07, 0.19], [Math.PI / 2, 0, 0]); Q('Sphere', { diameter: 0.02, segments: 5 }, [1, 0.1, 0.05], 1, [0.04, 0.13, 0.08]); }, 'pellcam'); cam.position.set(px, -2.4, pz); cam.rotation.y = 0.8;
+    const cas = mkMerged(W.itemMat, Q => { Q('Box', { width: 0.1, height: 0.02, depth: 0.064 }, [0.8, 0.8, 0.76], 0.5, [0, 0.01, 0]); Q('Box', { width: 0.06, height: 0.004, depth: 0.03 }, [0.1, 0.1, 0.1], 0, [0, 0.022, 0]); }, 'cass37'); cas.position.set(px + 0.8, -2.4, pz + 0.4); cas.rotation.y = 0.3;
+    W37.pit = { cam, cas, px, pz };
+    I({ x: px, z: pz, y: -2.2, r: 1.7, label: () => 'TAKE THE CAMCORDER · P. PELL', ok: () => !P37.cam && G.state === 'play', act: () => takePellCam37() });
+    I({ x: px + 0.8, z: pz + 0.4, y: -2.2, r: 1.7, label: () => 'TAKE THE CASSETTE · TAPE FOUR', ok: () => !P37.cass && G.state === 'play', act: () => takeCassette37() }); }
+  // the booth: the lifeguard log, the panel, the television, the hatch
+  I({ x: P.deskB.x, z: P.deskB.z, y: 0.85, r: 1.8, label: () => 'READ THE LIFEGUARD LOG', ok: () => G.state === 'play', act: () => readGuardLog37() });
+  { const it = I({ x: P.panel.x, z: P.panel.z, y: 1.3, r: 1.9, label: () => panelLabel37(), ok: () => G.state === 'play' && !P37.played, act: () => panel37() }); W37.panelIt = it; }
+  if (W37.hatch) { const h = W37.hatch, it = I({ x: h.x, z: h.z, y: h.y - 0.4, r: 2.4, label: () => holdBusy(it) ? `OPENING THE HATCH… ${holdPct(it)}%` : 'OPEN THE HATCH', ok: () => G.state === 'play' && G37.flood && G37.hatchReady, act: () => hatch37(it) }); W37.hatchIt = it; }
+  // Abara: sit down with her (the other ending)
+  I({ get x() { return AI37.abara ? AI37.abara.x : 0; }, get z() { return AI37.abara ? AI37.abara.z : 0; }, y: 0.5, r: 2.2, label: () => 'SIT DOWN WITH ABARA · STAY', ok: () => G.state === 'play' && P37.ret && wingsDone37() >= 1 && !G37.flood && near37(AI37.abara, 3.2) && P37.staySeen, act: () => stay37() });
+  buildWingStory37();
+}
+function kettle37() {
+  if (!P37.quest) { sayAb37('Leave the kettle. It\'s hot. It\'s always hot.'); return; }
+  if (P37.kettleKey) { toast('THE KETTLE IS HOT', 1.6); return; }
+  P37.kettleKey = true; SFX.pickup(); toast('A KEY ON A TAG · PLANT', 2.4); setPhase37(); cpSave('THE PLANT KEY');
+  W37.gates.forEach(g => g.busy = false);
+}
+function lockers37() {
+  if (P37.locker) return; P37.locker = true; PL.water += 2; PL.spare++; SFX.pickup(); toast('ALMOND WATER ×2 · A SPARE BATTERY', 2.6);
+  later(0.8, () => sayAb37('Take what\'s yours. Nothing in there is mine.'));
+}
+function vend37(k, where) {
+  if (P37.vend[k]) return; P37.vend[k] = true; PL.water++; SFX.pickup(); toast('A BOTTLE · ALMOND WATER', 2);
+  if (where === 'cabana') later(0.6, () => sayAb37('It takes nothing and gives you water. Don\'t ask it for more.'));
+}
+function readBoard37() {
+  SFX.click(); readDoc('board37', 'CABANA · NOTICES', ['POOL RULES: shower first. No running. No glass. No diving in the shallows (we mean it).', 'LOST PROPERTY goes to the booth. Lost swimmers go to the booth. The booth is staffed.', 'If you stop hearing the filters, count to twenty and look for a wall.', 'Please return towels to the rack. Blue ones are clean. (in pencil, under it:) she is right about the blue ones'], { kind: 'board' });
+}
+function readPlantLog37() {
+  P37.plantRead = true; SFX.click();
+  readDoc('plant37', 'PLANT LOG · NIGHTS', ['GATE 1 · LAP POOL. Low: the east tunnel is walkable and dark. High: it is under. Go under if you must. Count.', 'GATE 2 · DIVE WELL. Low: there is a stair at the bottom, west side, to wherever it goes. High: that stair is under six metres. Pumps run for about thirty seconds.', 'GATE 3 · SHALLOWS. Low: the pit runs out to the south wall, and there is a corridor in the wall.', 'Never run two gates together. The pumps complain. The pumps always complain.', 'Water in the well does not come up on its own. If it comes up, somebody has played the video.', '(someone else, in biro) the wheel is a hold, not a click. it takes three seconds and it feels like longer'], { kind: 'log' });
+  if (!P37.drained && P37.plant) tasks37();
+}
+function gate37(g, it) {
+  if (holdBusy(it)) return; const B = LV.basins[g.basin], low = B.tgt > g.low + 0.3 ? g.low : 0;
+  SFX37.pump(P9(g)); SFX9.rattle && SFX9.rattle(P9(g)); makeNoise(0.3);
+  holdStart(it, 3, () => { g.busy = false; B.tgt = low; B.speed = g.id === 'well' ? 0.2 : 0.11; SFX37[low < 0 ? 'drain' : 'fill'](P9({ x: PL.x, y: 1, z: PL.z })); makeNoise(0.4);
+    toast(low < 0 ? `${g.name} · DRAINING` : `${g.name} · FILLING`, 2.6); P37.gatesUsed[g.id] = true;
+    if (g.id === 'sh' && low < 0) { later(26, () => { P37.drained = true; toast('THE SHALLOWS ARE EMPTY', 2.6); setPhase37(); cpSave('THE SHALLOWS DRAINED'); if (!P37.cass) later(2, () => say(OUT9, 'Nine. Your carrier just cleared. First time all hour.', { radio: true })); }); }
+    if (g.id === 'well' && low < 0) later(1, () => toast('THE STAIR AT THE BOTTOM OF THE WELL IS DRY', 2.6)); }, { r: 2.4, cancel: 'YOU LET GO OF THE WHEEL', noise: 0.2, tick: dt => { g.mesh.rotation.z += dt * (low < 0 ? 2.4 : -2.4); } });
+}
+function takePellCam37() { P37.cam = true; W37.pit.cam.setEnabled(false); SFX.pickup(); toast('PELL\'S CAMCORDER · TAPE SEVEN INSIDE', 2.6); pitCheck37(); }
+function takeCassette37() { P37.cass = true; W37.pit.cas.setEnabled(false); SFX.pickup(); toast('A CASSETTE · S.A. · TAPE FOUR', 2.4); pitCheck37(); }
+function pitCheck37() {
+  tasks37(); if (P37.cam && P37.cass) { cpSave('THE PIT'); later(2, () => toast('BRING THEM BACK TO ABARA', 2.4)); }
+}
+// ----- Abara -----
+// each E on her says the next thing she has to say; some of it waits on what you've done
+function talkAbara37() {
+  const N = AI37.abara, A = (t, d = 0) => later(d, () => sayAb37(t));
+  if (!P37.met) {
+    P37.met = true; P37.intro = 1; G37.phase = 'dry'; A('Don\'t drip on the cot.'); A('Towels are on the rack. The blue ones are clean.', 3.4); A('Camera, right? I know the harness. You\'re the third I\'ve seen come through that door.', 7); A('Abara. Relief team. Nobody has been relieved.', 12);
+    later(15, () => { setPhase37('dry'); cpSave('THE CABANA'); });
+    later(24, () => say(OUT9, 'Nine. Somebody just told you not to drip on a cot. That was not one of ours.', { radio: true })); return;
+  }
+  if (!P37.quest) {   // before she has asked for anything
+    const T = P37.topics;
+    if (!T.water) { T.water = true; A('Don\'t drink it. Sit in it all you like. That\'s the trouble.'); A('Three weeks by my watch. My watch says three hours. I don\'t trust either number.', 4); return; }
+    if (!T.team) { T.team = true; A('Kowalczyk went up the stairs in the blue house and the stairs weren\'t there. Lund went after him. I stayed with the radio.'); A('The radio was a pool. I won\'t explain that any better.', 5.4); return; }
+    if (!T.pell) {
+      T.pell = true; A('There was a Camera before you. Pell. Tall. Hummed when he was thinking.'); A('He left his camcorder in the pit and my cassette went in after it. I was cleaning it. I\'d like tape four back.', 4.6);
+      A('Plant\'s through the west door. Key\'s under the kettle. Don\'t tell me it\'s a pump room, I know what it is.', 10);
+      later(11, () => { P37.quest = true; setPhase37('dry'); toast('NEW OBJECTIVE · ABARA\'S CASSETTE', 2.8); }); return;
+    }
+  }
+  if (P37.quest && !(P37.cam && P37.cass)) {
+    const k = P37.drained ? 'drained' : P37.plant ? 'plant' : P37.kettleKey ? 'key' : 'ask';
+    if (k === 'ask') A('Kettle. Under it. It isn\'t a riddle.'); else if (k === 'key') A('West door, then. The wheel marked SHALLOWS. Hold it. It\'s a long three seconds.');
+    else if (k === 'plant') A('Gate three. Run it down and walk to the bottom. Don\'t swim, you\'ll lose the camcorder and I\'ll lose the tape.');
+    else A('The pit. South end. Mind the step.'); return;
+  }
+  if (P37.quest && P37.cam && P37.cass && !P37.ret) {
+    P37.ret = true; SFX.pickup(); A('That\'s four. That\'s definitely four.'); A('He had a tape in there too? Put it on the table. I\'ll listen later. Not now.', 4.6);
+    later(8, () => { tasks37(); P37.tapeRead = true; readDoc('pell37', 'TAPE SEVEN · P. PELL', PELL37, { kind: 'log' }); });
+    later(9, () => { P37.told = true; setPhase37('wings'); cpSave('THREE WINGS'); }); return;
+  }
+  if (P37.ret && !P37.told2) {
+    P37.told2 = true; A('Right. Three doors, none of them out.'); A('Pit corridor, south: a hotel. Down the well and along: a hospital. East end of the lane pool: a park.', 3.6);
+    A('Each one keeps something. You\'ll know it because somebody won\'t let you take it.', 9); A('The lifeguard\'s panel has three slots. I count them every morning. I\'m not saying anything by it.', 13.4); return;
+  }
+  // later visits: what she says about what you have done
+  const w = wingsDone37(), T = P37.topics;
+  if (P37.keys.hotel && !T.hotel) { T.hotel = true; A('Hotel. Did the music follow you? It follows me.'); return; }
+  if (P37.keys.hosp && !T.hosp) { T.hosp = true; hospAbara37(A); return; }
+  if (P37.keys.tape && !T.park) { T.park = true; A('You drank from the tanks? Nobody drinks from the tanks.'); A('I did once. It was very good. That was the problem with it.', 4); return; }
+  if (w >= 1 && !T.stay) { T.stay = true; P37.staySeen = true; A('There\'s a second cot. I\'m not saying anything. It\'s there.'); return; }
+  if (w >= 3) { A(pick(['You\'ll go up. I know. Leave the kettle on. I\'ll hear it from here.', 'Go on. Tell somebody the water was warm.'])); return; }
+  A(pick(['Drink something. You look like a drowned tape.', 'Hold the wheel longer than you think you need to.', 'The booth is on the north side of the deep end. The door sticks.', 'I haven\'t tried. I\'m only saying the slots are there.']));
+}
+function hospAbara37(A) {
+  const f = RUN.f, dead = f.dead0 && f.dead0.length ? f.dead0 : [];
+  A('Anybody I know?');
+  A('Kowalczyk and Lund. On a roster. Porters, it says. Lund would have gone after him.', 3);
+  if (dead.length) A(`${dead[0].replace(/^[A-Z]\. /, '').split(' ')[0]}. That sounds like someone who'd want the shifts changed.`, 8.5);
+  else A('Nine would want that. I\'m not calling Nine.', 8.5);
+}
+const PELL37 = ['Is it on. Okay. Tape seven. I stopped counting days, the camcorder keeps its own.', 'Water\'s warm. That\'s my whole complaint. M.E.G. wants a map, so: pool, pool, large pool, pool with a diving board that isn\'t one.',
+  'A woman here, relief team, says she\'s been here three hours. I\'ve been here since Tuesday. I\'m recording this so one of us is right.', 'Last one. Leaving the camera in the pit for the next person. If it\'s you: keep it rolling, but stand up now and then.', 'I sat down on the fourth. It was a good fourth.'];
+// ----- the booth -----
+function readGuardLog37() {
+  P37.boothRead = true; SFX.click();
+  readDoc('guard37', 'LIFEGUARD LOG', ['06:00 Pool open.', '06:05 Pool open.', '06:10 No swimmers. Water 27. Water 27. Water 27.', 'The panel has three slots and a label under each: HOTEL, HOSPITAL, PARK. Somebody labelled them for me. Not me.', 'The video goes in the slot marked PARK. Do not play it with the Dive Well open. Ref: the incident.', 'If the level moves, go UP. The hatch is in the roof. It is not locked. Nothing here is locked. That\'s the thing about it.'], { kind: 'log' });
+  tasks37();
+}
+const SLOTN37 = { hotel: 'THE ROOM 233 CARD', hosp: 'THE DISCHARGE WRISTBAND', tape: 'NEW_VIDEO.AVI' };
+function panelLabel37() {
+  for (const k of ['hotel', 'hosp', 'tape']) if (P37.keys[k] && !P37.panel[k]) return `SEAT ${SLOTN37[k]} · SLOT ${['hotel', 'hosp', 'tape'].indexOf(k) + 1}`;
+  if (P37.panel.hotel && P37.panel.hosp && P37.panel.tape) return 'PLAY THE VIDEO';
+  const left = ['hotel', 'hosp', 'tape'].filter(k => !P37.panel[k]).length; return `THE PANEL · ${left} SLOT${left === 1 ? '' : 'S'} EMPTY`;
+}
+function panel37() {
+  for (const k of ['hotel', 'hosp', 'tape']) if (P37.keys[k] && !P37.panel[k]) {
+    P37.panel[k] = true; SFX.click(); SFX.pickup(); toast(`${SLOTN37[k]} · SEATED`, 2.4); makeNoise(0.1);
+    const n = (P37.panel.hotel ? 1 : 0) + (P37.panel.hosp ? 1 : 0) + (P37.panel.tape ? 1 : 0);
+    if (n === 3) { later(1.4, () => { setPhase37('finale'); cpSave('THE PANEL IS FULL'); }); later(2, () => say(OUT9, 'Nine. Whatever you just did, my board says the level is about to move. Keep your head up.', { radio: true })); }
+    tasks37(); return;
+  }
+  if (P37.panel.hotel && P37.panel.hosp && P37.panel.tape) { startFlood37(); return; }
+  SFX.click(); toast('THE SLOTS ARE LABELLED · HOTEL · HOSPITAL · PARK', 2.6);
+}
+// ----- the flood -----
+function startFlood37() {
+  if (G37.flood) return; P37.played = true; G37.flood = 1; G37.hatchReady = false; G37.floodT = 0;
+  SFX37.vcr(P9(W37.pos.tv ? { x: W37.pos.tv.x, y: 1.1, z: W37.pos.tv.z } : { x: PL.x, y: 1, z: PL.z })); drawTv37(true); toast('NEW_VIDEO.AVI · PLAYING', 2.4); setPhase37(); cpSave('THE VIDEO');
+  later(2.6, () => { SFX37.alarm({ x: PL.x, y: 2, z: PL.z, pl: { x: PL.x, z: PL.z } }); say('PA', 'The Deep is now open.', { dur: 3.6 }); FX.glitch = 1.6; });
+  later(3.6, () => { sluice37(true); const B = LV.basins[BAS37.WELL]; G37.wellY0 = B.tgt; B.tgt = LV.dry.well.h - 0.9; B.speed = 0.15; for (const c of LV.dry.well.cells) if (LV.bas[c] < 0 && LV.fh[c] < 9) { LV.bas[c] = BAS37.WELL; } });
+  later(4.2, () => { for (const d of W9.doors) if (d.dk === 'booth') { setDoor(d, false); d.locked = true; } SFX37.slam(P9({ x: PL.x, y: 1, z: PL.z })); });
+  later(8, () => sayAb37('Camera. Swim up. Not across.', { radio: true, dur: 3.2 }));
+  later(14, () => spawnFish37('well'));
+  W37.hatchIt && null;
+}
+function sluice37(close) { for (const d of W9.doors) if (d.e && d.e.sign === 'DEEP END') ; W37.sluice = W37.sluice || { x: 35 * CELL - 0.1, z: 26 * CELL + 0.5 }; if (close) { if (W37.sluiceI === undefined) { W37.sluiceI = LV.solids.length; addSolid(34.5 * CELL, 26 * CELL + 0.3, 36.5 * CELL + 0.1, 26 * CELL + 0.9, 'sluice'); } else LV.solids[W37.sluiceI].off = false; SFX37.slam(P9(W37.sluice)); } else if (W37.sluiceI !== undefined) LV.solids[W37.sluiceI].off = true; }
+function floodTick37(dt) {
+  G37.floodT += dt; const B = LV.basins[BAS37.WELL], top = LV.dry.well.h;
+  // the hatch can be opened once the surface is within reach of it
+  G37.hatchReady = B.y > top - 1.6 && !G37.onTower;
+  if (G37.hatchReady && !G37.warns.hatch) { G37.warns.hatch = true; toast('THE HATCH IS WITHIN REACH', 2.6); setPhase37(); }
+  if (G37.floodT > 3 && Math.floor(G37.floodT) % 22 === 0 && Math.floor(G37.floodT - dt) % 22 !== 0) say('PA', pick(['Please keep your arms and legs inside the water.', 'The Deep is open. The Deep is open.', 'Lost belongings may be collected at the surface.']), { dur: 3.4 });
+}
+function stopFlood37() {}
+function hatch37(it) {
+  if (holdBusy(it)) return; SFX37.creak(P9(W37.hatch)); holdStart(it, 2.4, () => { win37('surface'); }, { r: 3, cancel: 'YOU LET GO OF THE HATCH', noise: 0.1 });
+}
+function stay37() {
+  P37.stay = true; sayAb37('Good. Shoes off.', { dur: 2.6 }); later(2.6, () => win37('stay'));
+}
+// ----- the television in the booth -----
+function drawTv37(playing) {
+  const tv = W37.tvScreen; if (!tv) return; const c = tv.ctx, w = 256, h = 192;
+  c.fillStyle = '#05080a'; c.fillRect(0, 0, w, h);
+  if (playing) { for (let i = 0; i < 700; i++) { const v = 40 + Math.random() * 110; c.fillStyle = `rgb(${v * 0.7},${v},${v * 0.8})`; c.fillRect(Math.random() * w, Math.random() * h, 3, 1); } c.fillStyle = '#cfe8d8'; c.font = 'bold 13px monospace'; c.fillText('NEW_VIDEO.AVI', 10, 18); c.fillText('00:00:00 ◄◄', 10, h - 12); c.strokeStyle = '#8fd0b0'; c.lineWidth = 3; c.beginPath(); c.moveTo(0, 120); for (let x = 0; x <= w; x += 8) c.lineTo(x, 120 + Math.sin(x * 0.12) * 14); c.stroke(); }
+  else { c.fillStyle = '#12301e'; c.font = 'bold 14px monospace'; c.fillText('NO SIGNAL', 80, 96); }
+  tv.dt.update();
+}
+// ----- level-wide per frame -----
+function places37Events(dt) {
+  if (G.state !== 'play') return;
+  const pc = cell37(PL.x, PL.z), z = LV.zone[pc], P = W37.pos;
+  // first steps into the Cabana: Nine has nothing to say, the room has a person in it
+  if (G37.phase === 'arrive' && LV.room[pc] === LV.dry.cab.id) { setPhase37('dry'); }
+  // the plant: unlocked with the key from under the kettle
+  if (P37.kettleKey && !P37.plant) for (const d of W9.doors) if (d.dk === 'plant' && d.locked && dist2(PL.x, PL.z, d.mx, d.mz) < 2.2) { /* handled in useDoor37 */ }
+  // idle hint on the radio
+  P37.hintT += dt; if (P37.hintT > 240 && !G37.flood && P37.told && wingsDone37() < 3) { P37.hintT = 0; say(OUT9, pick(['Nine. You\'ve been in the water a while. Pick a door.', 'Nine. Three doors and you\'ve used none. Not complaining.']), { radio: true }); }
+  for (const g of W37.gates) { const B = LV.basins[g.basin]; if (g.needle && B) g.needle.rotation.z = lerp(1.2, -1.2, clamp((B.y - g.low) / -g.low, 0, 1)); }
+  hotelEvents37(dt, z); hospEvents37(dt, z); wwEvents37(dt, z);
+  // the pit things only show once you can see them (they are always there; draining just makes it easy)
+  if (W37.pit) { const ok = LV.basins[BAS37.SH].y < -1.0; W37.pit.cam.setEnabled(!P37.cam); W37.pit.cas.setEnabled(!P37.cass); }
+}
+function doorLabel37(dr) {
+  const e = dr.e, d = dr.dk;
+  if (d === 'plant' && dr.locked) return P37.kettleKey ? 'UNLOCK THE PLANT · THE KEY FROM THE KETTLE' : 'LOCKED · PLANT · STAFF ONLY';
+  if (d === 'hotel' && e.hroom === 204 && dr.locked) return P37.hotel.drawer ? 'UNLOCK 204 · THE ROOM KEY' : 'LOCKED · 204';
+  if (d === 'vault' && dr.locked) return P37.hotel.vaultKey ? 'UNLOCK 233 · THE BRASS KEY' : 'LOCKED · 233';
+  if (d === 'hosp' && e.plaque === 'PHARMACY' && dr.locked) return P37.hosp.lanyard ? 'UNLOCK THE PHARMACY · THE LANYARD' : 'LOCKED · PHARMACY';
+  if (d === 'staff' && e.plaque === 'CONTROL' && dr.locked) return P37.ww.gen ? 'UNLOCK CONTROL' : 'LOCKED · NO POWER';
+  if (dr.locked) return 'LOCKED';
+  return dr.target ? 'CLOSE DOOR' : 'OPEN DOOR';
+}
+function useDoor37(dr) {
+  const e = dr.e, d = dr.dk;
+  if (dr.locked) {
+    const ok = (d === 'plant' && P37.kettleKey) || (d === 'hotel' && e.hroom === 204 && P37.hotel.drawer) || (d === 'vault' && P37.hotel.vaultKey) || (d === 'hosp' && e.plaque === 'PHARMACY' && P37.hosp.lanyard) || (d === 'staff' && e.plaque === 'CONTROL' && P37.ww.gen);
+    if (!ok) { SFX9.rattle(P9({ x: dr.mx, z: dr.mz })); makeNoise(0.15); toast(d === 'plant' ? 'LOCKED · THE KEY IS UNDER THE KETTLE (ASK ABARA)' : 'LOCKED', 2); if (d === 'plant' && !P37.quest) toast('LOCKED · PLANT · STAFF ONLY', 2); return; }
+    dr.locked = false; SFX5.unlock(P9({ x: dr.mx, z: dr.mz })); makeNoise(0.15);
+    if (d === 'plant') { P37.plant = true; setPhase37(); cpSave('THE PLANT'); }
+    later(0.9, () => setDoor(dr, true)); return;
+  }
+  useDoor(dr);
+}
+function buildItems37(diff) {
+  const mat = W.itemMat, cells = [];
+  for (const k of ['cab', 'booth', 'plant', 'lobby', 'cafe', 'r201', 'r202', 'r203', 'adm', 'hcorr', 'laundry', 'nurses', 'records', 'foyer', 'plaza', 'dome', 'scorr']) { const r = LV.dry[k] || LV.dry['sh']; if (!r) continue; for (const c of r.cells) if (LV.bas[c] < 0) cells.push(c); }
+  shuffle(cells); const used = new Set();
+  const place = type => {
+    for (const c of cells) {
+      if (used.has(c)) continue; used.add(c);
+      const p = { x: cellCenter(c % N) + rnd(-1.1, 1.1), z: cellCenter((c / N) | 0) + rnd(-1.1, 1.1) }; collide(p, 0.3);
+      if (cellOf(p.x) !== c % N || cellOf(p.z) !== ((c / N) | 0) || LV.bas[cell37(p.x, p.z)] >= 0) continue;
+      const root = tnode(null, p.x, floorY37(p.x, p.z), p.z); root.rotation.y = rnd(0, TAU); itemModel(type, root, mat);
+      const it = { type, x: p.x, z: p.z, root, taken: false }; W.items.push(it);
+      W.interact.push({ x: p.x, z: p.z, y: 0.1, r: 1.9, it, label: () => type === 'battery' ? 'TAKE CAMCORDER BATTERY' : 'TAKE ALMOND WATER', ok: () => !it.taken, act: () => takeItem(it) });
+      return;
+    }
+  };
+  for (let i = 0; i < [6, 5, 3][diff]; i++) place('battery');
+  for (let i = 0; i < [9, 6, 3][diff]; i++) place('water');
+}
+// ----- endings -----
+function flags37() { flag('ending37', G37.ending); flag('wings37', wingsDone37()); }
+function endCard37() {
+  const f = RUN.f, S = [];
+  if (G37.ending === 'stay') {
+    S.push('The camcorder is on the tile beside the second cot, still recording a ceiling.');
+    S.push('Abara pours two. The water in the kettle is the filter\'s, not the pool\'s. She is particular about that.');
+    if (P37.keys.hosp && f.dead0 && f.dead0.length) S.push('Somewhere along a corridor of wards, a roster has one more name on it than it had this morning.');
+    if (P37.keys.hotel) S.push('The lobby music has moved a little closer.');
+    S.push('The tape runs for six more hours. Nobody comes to take it out.');
+    return ['STILL WATER', S.join(' ')];
+  }
+  S.push('The hatch opens on a ceiling fan and an ordinary light. Water runs off the lens for a long time.');
+  if (f.hale9 === 'saved') S.push('A radio in another room is saying Hale\'s name, then yours.');
+  if (f.dead0 && f.dead0.length) S.push(`On a shift you will never see, someone called ${f.dead0[0].replace(/^[A-Z]\. /, '')} is changing a bulb he was told to change.`);
+  if (f.lost0 === 0) S.push('Nine reads the four names off the lobby board, and all four answer.');
+  if (P37.keys.hotel) S.push('There is a brass key in your pocket that wasn\'t there when you went in. It says 233.');
+  if (f.camera18) S.push('The camcorder is still running. You let it.'); else S.push('The tape runs out on the step.');
+  S.push('Behind you, a kettle goes on.');
+  return ['SURFACED', S.join(' ')];
+}
+function cpRespawnFlood37() {
+  if (!G37.flood) return;
+  G37.flood = 0; G37.hatchReady = false; G37.warns.hatch = false; const B = LV.basins[BAS37.WELL]; B.tgt = G37.wellY0 ?? 0; B.speed = 0.2; sluice37(false);
+  P37.played = false; for (const d of W9.doors) if (d.dk === 'booth') d.locked = false; if (AI37.fish) { AI37.fish.dispose && AI37.fish.dispose(); AI37.fish = null; }
+  drawTv37(false);
+}
+if (/[?&]debug/.test(location.search)) addEventListener('load', () => Object.assign(window.__BR || (window.__BR = {}), { P37, talkAbara37, kettle37, gate37, readPlantLog37, takePellCam37, takeCassette37, panel37, startFlood37, floodTick37, hatch37, stay37, endCard37, doorLabel37, useDoor37, wingsDone37, obj37, panelLabel37, resetP37, tasks37 }));
+
+// ==== storywings37.js ====
+// ---------- r8 · Level 37 story: the three wings ----------
+// HOTEL (L233): a swimmer who can't start a race without her father's stopwatch; the door that isn't a door. HOSPITAL (L130): three chores for the Staff, who only show up
+// on night shot, a roster of names, a discharge form. WATER WORLD (L43): a generator, a control room, the almond-water tanks, and a tape somebody hid in the wave machine.
+const swS37 = (t, o = {}) => { const N = AI37.teague; say('TEAGUE', t, Object.assign({ pos: N ? { x: N.x, z: N.z } : null, dur: 4.4 }, o)); };
+const staff37 = k => AI37.staff.find(s => s.key === k);
+
+function buildWingStory37() {
+  const P = W37.pos, I = o => { W.interact.push(o); return o; };
+  // ===== hotel =====
+  I({ x: P.guestbook.x, z: P.guestbook.z, y: 1.14, r: 1.8, label: () => 'READ THE GUEST BOOK', ok: () => G.state === 'play', act: () => guestBook37() });
+  I({ x: P.bell.x, z: P.bell.z, y: 1.14, r: 1.7, label: () => 'RING THE BELL', ok: () => G.state === 'play', act: () => bell37() });
+  I({ x: P.drawer.x, z: P.drawer.z, y: 0.8, r: 1.7, label: () => P37.hotel.drawer ? 'THE DRAWER · EMPTY' : 'OPEN THE DRAWER', ok: () => G.state === 'play', act: () => drawer37() });
+  I({ x: P.nightstand.x, z: P.nightstand.z, y: 0.6, r: 1.7, label: () => P37.hotel.sw ? 'THE NIGHTSTAND · A CARD' : 'TAKE THE STOPWATCH', ok: () => LV.dry.r204 && G.state === 'play', act: () => stopwatch37() });
+  I({ x: P.vaultTable.x, z: P.vaultTable.z, y: 0.85, r: 1.6, label: () => 'TAKE THE ROOM 233 CARD', ok: () => !P37.keys.hotel && G.state === 'play', act: () => takeCard37() });
+  I({ x: P.cafeVend.x, z: P.cafeVend.z, y: 1.1, r: 1.8, label: () => P37.vend.cafe ? 'VENDING MACHINE · EMPTY' : 'VENDING MACHINE · WATER', ok: () => G.state === 'play', act: () => vend37('cafe', 'hotel') });
+  I({ x: P.cafePool.x, z: P.cafePool.z, y: 0.8, r: 3.4, label: () => 'READ THE TRAY SIGN', ok: () => G.state === 'play' && dist2(PL.x, PL.z, P.cafePool.x, P.cafePool.z) < 3.4, act: () => { SFX.click(); readDoc('tray37', 'CAFETERIA', ['PLEASE CLEAR YOUR OWN TRAY.', 'PLEASE DO NOT SWIM IN THE CAFETERIA POOL. (someone has circled DO NOT)', 'The drawings on the walls are not yours to take. They are somebody\'s.'], { kind: 'board' }); } });
+  // ===== hospital =====
+  I({ x: P.ticket.x, z: P.ticket.z, y: 1.0, r: 1.7, label: () => P37.hosp.ticket ? 'NOW SERVING 0 · YOURS: 1' : 'TAKE A NUMBER', ok: () => G.state === 'play', act: () => ticket37() });
+  I({ x: P.whiteboard.x, z: P.whiteboard.z, y: 1.6, r: 2.2, label: () => 'READ THE WHITEBOARD', ok: () => G.state === 'play', act: () => whiteboard37() });
+  I({ x: P.linen.x, z: P.linen.z, y: 1.4, r: 1.8, label: () => 'TAKE THE LINEN', ok: () => !P37.hosp.linen && G.state === 'play', act: () => { P37.hosp.linen = true; SFX.pickup(); toast('LINEN · FOR WARD 3', 2.2); hospTasks37(); setPhase37(); } });
+  I({ x: P.drip.x, z: P.drip.z, y: 1.4, r: 1.8, label: () => 'TAKE AN IV BAG', ok: () => !P37.hosp.iv && G.state === 'play', act: () => { P37.hosp.iv = true; SFX.pickup(); toast('AN IV BAG · FOR WARD 5', 2.2); hospTasks37(); setPhase37(); } });
+  I({ x: P.recordsDesk.x, z: P.recordsDesk.z, y: 0.9, r: 1.8, label: () => P37.hosp.chart ? 'THE CHART · TAKEN' : 'TAKE THE CHART', ok: () => G.state === 'play', act: () => takeChart37() });
+  I({ x: P.rosterSpot.x, z: P.rosterSpot.z, y: 0.9, r: 1.8, label: () => 'READ THE STAFF ROSTER', ok: () => G.state === 'play', act: () => roster37() });
+  I({ x: P.formDesk.x, z: P.formDesk.z, y: 0.9, r: 1.8, label: () => P37.hosp.form ? 'THE FORM · TAKEN' : 'TAKE THE DISCHARGE FORM', ok: () => !P37.hosp.form && G.state === 'play', act: () => { P37.hosp.form = true; SFX.pickup(); toast('A DISCHARGE FORM · THREE STAMPS', 2.4); hospTasks37(); setPhase37(); } });
+  // ===== water world =====
+  I({ x: P.map.x, z: P.map.z, y: 1.5, r: 2.0, label: () => 'READ THE PARK MAP', ok: () => G.state === 'play', act: () => parkMap37() });
+  for (const t of P.tanks) I({ x: t.x, z: t.z, y: 1.2, r: 2.2, label: () => t.taken ? t.name + ' · EMPTY' : 'DRINK FROM ' + t.name, ok: () => !t.taken && G.state === 'play', act: () => tank37(t) });
+  { const it = I({ x: P.genSw.x, z: P.genSw.z, y: 1.2, r: 1.9, label: () => P37.ww.gen ? 'THE GENERATOR · RUNNING' : holdBusy(it) ? `PRIMING… ${holdPct(it)}%` : 'START THE GENERATOR', ok: () => !P37.ww.gen && G.state === 'play', act: () => generator37(it) }); }
+  I({ x: P.ctrl.x, z: P.ctrl.z, y: 1.0, r: 1.8, label: () => 'READ THE NOTE ON THE MONITOR', ok: () => G.state === 'play', act: () => ctrlNote37() });
+  I({ x: P.breakTable.x, z: P.breakTable.z, y: 1.1, r: 1.8, label: () => 'READ THE STAFF ROOM NOTICES', ok: () => G.state === 'play', act: () => breakNote37() });
+  I({ x: P.tapeSpot.x, z: P.tapeSpot.z, y: -2.8, r: 1.9, label: () => 'TAKE THE TAPE · NEW_VIDEO.AVI', ok: () => !P37.keys.tape && G.state === 'play', act: () => takeVideo37() });
+  I({ x: P.wwVend.x, z: P.wwVend.z, y: 1.1, r: 1.8, label: () => P37.vend.ww ? 'VENDING MACHINE · EMPTY' : 'VENDING MACHINE · WATER', ok: () => G.state === 'play', act: () => vend37('ww', 'park') });
+}
+
+// ---------- the hotel ----------
+function guestBook37() {
+  P37.hotel.book = true; SFX.click();
+  const f = RUN.f, L = ['TEAGUE, J. · lane 4 · 233 · departed: (blank)', 'PELL, A. · 204 · departed: (blank)', 'Party of one, M.E.G. (camera) · 204 · no luggage · brought own light', 'OKONKWO party of three · Tuesday · Tuesday · Tuesday'];
+  if (f.lost0 > 0 || (f.dead0 && f.dead0.length)) L.splice(3, 0, 'Party of four, M.E.G. · asked for a room by the pool · told it was full');
+  readDoc('guest37', 'GUEST BOOK', L, { kind: 'note' }); hotelTasks37();
+}
+function bell37() { P37.hotel.bell++; SFX5.bell(P9({ x: PL.x, y: 1.2, z: PL.z })); makeNoise(0.2); if (P37.hotel.bell === 3) later(1.4, () => { SFX.whisper(); say('', '…checkout was at eleven…', { mode: 'whisper' }); }); else toast('NOBODY COMES', 1.4); }
+function drawer37() {
+  if (P37.hotel.drawer) return; P37.hotel.drawer = true; SFX.pickup(); toast('A KEY ON A GREEN TAG · 204', 2.6);
+  readDoc('card204', 'HOUSEKEEPING CARD', ['204 stays locked. Guest asked.', 'Do not turn down the bed. He wants it as he left it.', '(He = the guest in 204. We do not know which guest.)'], { kind: 'note' }); hotelTasks37(); cpSave('ROOM 204 KEY');
+}
+function stopwatch37() {
+  if (P37.hotel.sw) { readDoc('splits37', 'CARD ON THE NIGHTSTAND', ['Splits: 29.1 / 30.4 / 31.0 / 30.2.', 'You went out too fast. You always go out too fast.', '— D.'], { kind: 'note' }); return; }
+  P37.hotel.sw = true; SFX.pickup(); toast('A STOPWATCH · SILVER · DENTED · 0:00.0', 2.8);
+  later(0.8, () => readDoc('splits37', 'CARD ON THE NIGHTSTAND', ['Splits: 29.1 / 30.4 / 31.0 / 30.2.', 'You went out too fast. You always go out too fast.', '— D.'], { kind: 'note' })); hotelTasks37(); setPhase37();
+}
+function talkTeague37() {
+  const H = P37.hotel, N = AI37.teague;
+  if (H.timed) { swS37(pick(['Go on. Tell someone it was warm.', 'Lane four is yours if you want it. Nobody swims it.', 'I\'m not going up. I\'m going to do another forty.'])); return; }
+  if (!H.met) { H.met = true; swS37('Not yet. Forty lengths.'); swS37('Sorry. I\'m counting, and somebody is counting with me, and he\'s a stroke ahead.', { delay: 3.6 }); return; }
+  if (!H.ask) { H.ask = true; swS37('Room 204. There\'s a stopwatch on the nightstand.'); swS37('I can\'t start without it. It\'s silly. It\'s a stopwatch.', { delay: 3.4 }); H.seen = true; hotelTasks37(); setPhase37(); return; }
+  if (H.sw && !H.given) { H.given = true; swS37('That\'s his. It\'s dented where he dropped it at Regionals.'); swS37('Press the top when I touch the wall. Not before. Not after.', { delay: 4.4 }); toast('HOLD [E] TO TIME HER', 3); hotelTasks37(); return; }
+  if (H.given && !H.timed) { timeTeague37(); return; }
+  swS37(pick(['Press the top when I touch the wall.', 'Room 204. Nightstand.']));
+}
+function timeTeague37() {
+  const N = AI37.teague; if (!N || N.swimming) return; const it = N.inter;
+  holdStart(it, 20, () => { N.swimming = false; N.lapT = 0; P37.hotel.timed = true; SFX37.stamp(P9({ x: PL.x, y: 1.2, z: PL.z })); toast('TEAGUE · 2:04.1 · 4 LENGTHS', 3);
+    swS37('Slow.'); swS37('He\'d have said slow.', { delay: 2.6 }); swS37('He would have been wrong. But he\'d have said it.', { delay: 5.6 });
+    swS37('Reception. There\'s a door beside the escalator that isn\'t a door. Here.', { delay: 10 }); later(11.6, () => { P37.hotel.vaultKey = true; SFX5.jingle(P9({ x: PL.x, y: 1.2, z: PL.z })); toast('A BRASS KEY · 233', 2.6); hotelTasks37(); setPhase37(); cpSave('THE BRASS KEY'); });
+    swS37('Don\'t read the card. I always read the card.', { delay: 14.5 }); }, { r: 3.2, cancel: 'YOU STOPPED THE WATCH EARLY', noise: 0.04 });
+  N.swimming = true; N.lapT = 0; swS37('Go.', { dur: 1.4 });
+}
+function takeCard37() {
+  P37.keys.hotel = true; SFX.pickup(); SFX5.jingle(P9({ x: PL.x, y: 1, z: PL.z })); PL.san = Math.max(0, PL.san - 8); FX.glitch = Math.max(FX.glitch, 0.8); toast('THE ROOM 233 CARD · IT WEIGHS MORE THAN A CARD', 3);
+  readDoc('card233', 'ROOM 233 · THE LUKEWARM HOTEL', ['CHECK-OUT 11:00', 'Valid for: one night. Extensions at reception.', '(on the back, in a child\'s writing, in crayon) can we stay one more night'], { kind: 'note' });
+  later(1.2, () => { SFX.whisper(); say('', '…one more night…', { mode: 'whisper' }); }); hotelTasks37(); setPhase37(); cpSave('ROOM 233 CARD');
+}
+function hotelTasks37() {
+  const H = P37.hotel; if (!P37.told) return;
+  if (H.seen || H.book || H.met) task('swimmer', 'TEAGUE · SHE CAN\'T START WITHOUT HER FATHER\'S STOPWATCH', { quiet: true, sub: 'ROOM 204 · THE KEY IS IN THE RECEPTION DRAWER' });
+  if (H.met || H.book) { task('rdrawer', 'THE ROOM 204 KEY · THE RECEPTION DRAWER', { quiet: true, opt: false }); if (H.drawer) taskDone('rdrawer', 'THE ROOM 204 KEY', true); }
+  if (H.drawer) { task('stopw', 'THE STOPWATCH · ROOM 204', { quiet: true }); if (H.sw) taskDone('stopw', 'THE STOPWATCH', true); }
+  if (H.sw) { task('timeher', 'TIME TEAGUE · FOUR LENGTHS', { quiet: true }); if (H.timed) taskDone('timeher', 'TEAGUE · 2:04.1', true); }
+  if (H.vaultKey) { task('vault', 'THE DOOR BESIDE THE ESCALATOR · 233', { quiet: true }); if (P37.keys.hotel) taskDone('vault', 'THE ROOM 233 CARD', true); }
+  if (H.timed) taskDone('swimmer', 'TEAGUE · SHE GOT HER TIME', true);
+}
+function hotelEvents37(dt, z) {
+  const H = P37.hotel, inH = z === Z37.HOTEL || z === Z37.CAFE || (LV.room[cell37(PL.x, PL.z)] === LV.dry.court.id);
+  if (inH && !H.entered) { H.entered = true; toast('THE LUKEWARM HOTEL', 2.8); SFX.beep(1100, 0.05); later(4, () => toast('THE MUSIC IS NICE', 2.2)); }
+  if (inH) { H.t += dt; if (H.t > 70 && !H.warn) { H.warn = true; toast('THE MUSIC HAS BEEN NICE FOR A WHILE', 3); } if (H.t > 70) PL.san = Math.max(0, PL.san - (0.18 + Math.min(0.5, (H.t - 70) / 160)) * dt * [0.6, 1, 1.3][G.diff]); }
+  else H.t = Math.max(0, H.t - dt * 1.8);
+}
+// ---------- the hospital ----------
+function ticket37() { P37.hosp.ticket = true; SFX.click(); toast('NOW SERVING 0 · YOURS: 1', 2.6); later(1.4, () => say('PA', 'Now serving number zero.', { dur: 3 })); hospTasks37(); }
+function whiteboard37() {
+  P37.hosp.board = true; SFX.click();
+  readDoc('wb37', 'WHITEBOARD · TODAY', ['BED 3 · LINEN · LAUNDRY, THE SHELF (DON\'T COUNT IT)', 'BED 5 · IV BAG · PHARMACY (LANYARD: HALL, EAST SIDE)', 'CHART · RECORDS → HERE', 'FORM: THREE STAMPS → ADMISSIONS', '(underneath, smaller) nobody is rushing you'], { kind: 'board' }); hospTasks37(); setPhase37();
+}
+function takeChart37() {
+  if (P37.hosp.chart) return; P37.hosp.chart = true; SFX.pickup(); toast('THE CHART · FOR THE NURSES\' STATION', 2.6);
+  readDoc('chart37', 'CHART · CAMERA', ['ADMITTED 29 SEP 1996 · 23:47', 'STATUS: PENDING', 'ATTENDING: —', 'NOTES: brought own light. keeps recording. will not put it down.', '(this is not a complaint)'], { kind: 'log' }); hospTasks37(); setPhase37();
+}
+function roster37() {
+  P37.hosp.roster = true; SFX.click(); const f = RUN.f, L = ['KOWALCZYK · LUND · PORTERS · ON STAFF', 'PELL, A. · CAMERA · ON STAFF (NIGHTS)'];
+  for (const n of f.dead0 || []) L.push(`${n.replace(/^[A-Z]\. /, '')} · ${pick(['SECURITY', 'MAINTENANCE', 'PORTER', 'LAUNDRY', 'NIGHT DESK'])} · ON STAFF`);
+  if (f.pruitt5) L.push('PRUITT, E. · NIGHT PORTER · ON STAFF (SINCE 1951)'); if (f.lusk5) L.push('LUSK · SECURITY · ON STAFF (KEEPS HIS KEYS ON THE TABLE)');
+  L.push('(at the bottom) CAMERA · PENDING'); readDoc('roster37', 'STAFF ROSTER · NIGHT SHIFT', L, { kind: 'log' });
+  if (!P37.hosp.rosterSaid) { P37.hosp.rosterSaid = true; later(2, () => toast('THEY ARE NOT GONE · THEY ARE ON SHIFT', 3.2)); }
+}
+function staffLabel37(s) {
+  const H = P37.hosp;
+  if (s.key === 'ward3' && H.linen && !H.linenDone) return 'GIVE THE LINEN · WARD 3';
+  if (s.key === 'ward5' && H.iv && !H.ivDone) return 'GIVE THE IV BAG · WARD 5';
+  if (s.key === 'nurse1' && H.chart && !H.chartDone) return 'FILE THE CHART';
+  if (s.key === 'hall2' && !H.lanyard) return 'ASK FOR THE LANYARD';
+  if (s.key === 'admit' && H.form && H.stamps >= 3 && !P37.keys.hosp) return 'HAND IN THE DISCHARGE FORM';
+  return 'SPEAK TO THE STAFF';
+}
+function stampForm37() { P37.hosp.stamps++; SFX37.stamp(P9({ x: PL.x, y: 1, z: PL.z })); toast(`DISCHARGE FORM · ${P37.hosp.stamps}/3 STAMPS`, 2.4); hospTasks37(); setPhase37(); if (P37.hosp.stamps === 3) later(1.2, () => toast('TAKE IT TO ADMISSIONS', 2.4)); }
+function talkStaff37(s) {
+  const H = P37.hosp, say_ = (t, d = 0) => later(d, () => say('STAFF', t, { dur: 4, mode: 'whisper' }));
+  H.talked = true; s.faceT = 2.5;
+  if (s.key === 'ward3' && H.linen && !H.linenDone) { H.linenDone = true; H.linen = 'given'; say_('Thank you.'); say_('Cold in here?', 2.2); stampForm37(); return; }
+  if (s.key === 'ward5' && H.iv && !H.ivDone) { H.ivDone = true; say_('Drip. Good.'); stampForm37(); return; }
+  if (s.key === 'nurse1' && H.chart && !H.chartDone) { H.chartDone = true; say_('Chart. Then form. Then stamp.'); say_('Pending. They\'re always pending at first.', 3.2); stampForm37(); return; }
+  if (s.key === 'hall2' && !H.lanyard) { H.lanyard = true; SFX5.jingle(P9({ x: PL.x, y: 1, z: PL.z })); toast('A LANYARD · PHARMACY', 2.4); say_('Lanyard. Pharmacy. Bring it back.'); hospTasks37(); setPhase37(); return; }
+  if (s.key === 'admit' && H.form && H.stamps >= 3 && !P37.keys.hosp) { dischargeDone37(); return; }
+  const L = { admit: ['Name? ...Camera. Surname Camera. Take a seat.', 'Your number is one. We are on zero.'], laundry: ['Ward three has been waiting since breakfast. Linen\'s on the shelf. Don\'t count it, it moves.'], pharm: ['Pharmacy is locked. The lanyard is on the one in the hall. Not me.'], nurse1: ['Chart, form, stamp. In that order.'],
+    records: ['Everyone\'s in here. Look under your own letter if you like. Most do. Nobody finds it.'], ward1: ['Shh.'], ward3: ['Cold in here?'], ward5: ['Drip.'], hall1: ['Excuse me.'], hall2: ['Mind the bed.'], theatre: ['Not today.'] }[s.key] || ['...'];
+  s.said = (s.said || 0); say_(L[Math.min(s.said, L.length - 1)]); s.said++;
+}
+function dischargeDone37() {
+  P37.keys.hosp = true; SFX37.stamp(P9({ x: PL.x, y: 1, z: PL.z })); SFX5.jingle(P9({ x: PL.x, y: 1, z: PL.z })); toast('THE DISCHARGE WRISTBAND', 3);
+  later(0.8, () => say('STAFF', 'Discharged.', { dur: 3, mode: 'whisper' })); later(3, () => say('STAFF', 'You\'ll want to leave the way you came. The water level is a formality.', { dur: 5, mode: 'whisper' }));
+  PL.san = Math.min(100, PL.san + 12); hospTasks37(); setPhase37(); cpSave('DISCHARGED');
+}
+function hospTasks37() {
+  const H = P37.hosp; if (!P37.told) return; if (!(H.seen || H.board || H.ticket || H.talked)) return;
+  task('chores', 'WELLBORN · THREE CHORES, THREE STAMPS · ' + H.stamps + '/3', { quiet: true, sub: 'THE STAFF ONLY SHOW UP IN NIGHT SHOT [N]' }); if (H.stamps >= 3) taskDone('chores', 'THREE STAMPS', true);
+  task('linen', 'LINEN FROM THE LAUNDRY · TO WARD 3', { quiet: true }); if (H.linen) task('linen', H.linenDone ? 'WARD 3 · LINEN' : 'LINEN · BRING IT TO WARD 3 (NIGHT SHOT)', { quiet: true }); if (H.linenDone) taskDone('linen', 'WARD 3 · LINEN', true);
+  task('iv', 'AN IV BAG · PHARMACY · TO WARD 5', { quiet: true, sub: H.lanyard ? 'YOU HAVE THE LANYARD' : 'THE LANYARD IS ON THE STAFF MEMBER IN THE HALL, EAST SIDE' }); if (H.ivDone) taskDone('iv', 'WARD 5 · IV BAG', true);
+  task('chart', 'THE CHART · RECORDS · TO THE NURSES\' STATION', { quiet: true }); if (H.chartDone) taskDone('chart', 'THE CHART · FILED', true);
+  if (H.stamps >= 3 && H.form) { task('discharge', 'HAND IN THE FORM · ADMISSIONS', { quiet: true }); if (P37.keys.hosp) taskDone('discharge', 'DISCHARGED', true); }
+  else if (!H.form) task('form', 'THE DISCHARGE FORM · THE NURSES\' STATION', { quiet: true }); if (H.form) taskDone('form', 'THE DISCHARGE FORM', true);
+}
+function hospEvents37(dt, z) {
+  const H = P37.hosp, inH = z === Z37.HOSP && LV.room[cell37(PL.x, PL.z)] !== LV.dry.th.id;
+  if (inH && !H.seen) { H.seen = true; toast('WELLBORN HOSPITAL', 2.8); SFX.beep(1100, 0.05); later(6, () => say(OUT9, 'Nine. You\'re on a camera feed we don\'t have. Somebody is watching it with you.', { radio: true })); hospTasks37(); }
+  if (!inH) return;
+  H.sayT += dt; if (H.sayT > 12 && !H.nv && !PL.nv && !H.nvTip) { H.nvTip = true; toast('THE STAFF ONLY SHOW UP IN NIGHT SHOT · [N]', 3.6); }
+  if (PL.nv && !H.nv) { H.nv = true; toast('SOMEONE IS AT THE DESK', 2.4); hospTasks37(); }
+  H.paT -= dt; if (H.paT <= 0) { H.paT = rnd(38, 64); say('PA', pick(['Visiting hours are over. Visiting hours are over.', 'Bed three, your linen is on its way.', 'Would the owner of a cream Hi-8 please return to Admissions.', 'Now serving number zero.', 'Please keep your voices down. Patients are resting.', 'Doctor to Records. Doctor to Records.']), { dur: 4 }); SFX37.pa({ x: PL.x, y: 3, z: PL.z, pl: { x: PL.x, z: PL.z } }); }
+  if (LV.room[cell37(PL.x, PL.z)] === LV.dry.theatre.id) PL.san = Math.max(0, PL.san - 0.5 * dt * [0.6, 1, 1.3][G.diff]);
+}
+// ---------- water world ----------
+function parkMap37() { P37.ww.map = true; SFX.click(); readDoc('map37', 'PARK MAP · YOU ARE HERE', ['1 · THE GATE (you are here)', '2 · MAIN BUILDING · GIFTS · FOOD', '3 · THE AQUARIUM · ALMOND WATER · PLEASE DO NOT TAP THE GLASS', '4 · STAFF · STAFF · STAFF', '5 · THE WAVE POOL · CLOSED FOR THE INCIDENT', '(over the whole map, in marker) the incident is ongoing'], { kind: 'board' }); wwTasks37(); }
+function tank37(t) { t.taken = true; P37.ww.tanks++; PL.water++; PL.san = Math.min(100, PL.san + 6); SFX.drink(); toast(t.name + ' · COLD, SWEET · ALMOND WATER +1', 2.6); if (P37.ww.tanks === 1) later(1.2, () => say('', '…you shouldn\'t…', { mode: 'whisper' })); }
+function generator37(it) {
+  if (holdBusy(it)) return; SFX37.pump(P9({ x: it.x, y: 1, z: it.z })); makeNoise(0.4);
+  holdStart(it, 3, () => { P37.ww.gen = true; toast('THE GENERATOR IS RUNNING', 2.6); say('PA', 'Power has been restored to the staff areas.', { dur: 4 }); SFX37.pa({ x: PL.x, y: 3, z: PL.z, pl: { x: PL.x, z: PL.z } }); wwTasks37(); setPhase37(); cpSave('THE GENERATOR'); }, { r: 2.4, cancel: 'IT STALLS', noise: 0.5 });
+}
+function ctrlNote37() {
+  P37.ww.note = true; SFX.click();
+  readDoc('ctrl37', 'CONTROL ROOM · NOTE ON THE MONITOR', ['NEW_VIDEO.AVI was on the screen when I came in. It was the first file on the drive.', 'It started the wave machine by itself. The wave machine does not do that.', 'I took the tape out and put it in the machine\'s sump so nobody would play it. I am not proud of how.', 'POOL ACCESS is the door in the staff room. Staff only. Everyone is staff.'], { kind: 'note' }); wwTasks37();
+}
+function breakNote37() { SFX.click(); readDoc('brk37', 'STAFF ROOM · NOTICES', ['SHIFT SWAPS: nobody wants Fridays.', 'Reminder: the Deep is not a ride.', 'Whoever keeps drawing on the whiteboard: it was funny once.', 'If you hear the PA say the park is open, it isn\'t. Do not go and check.'], { kind: 'board' }); }
+function takeVideo37() {
+  if (P37.keys.tape) return; P37.keys.tape = true; SFX.pickup(); toast('NEW_VIDEO.AVI · DO NOT PLAY IT IN FRONT OF THE POOL', 3.4); FX.glitch = 1.4; PL.shake = 0.8;
+  later(0.6, () => { SFX37.alarm({ x: PL.x, y: 2, z: PL.z, pl: { x: PL.x, z: PL.z } }); say('PA', 'The wave pool is now open.', { dur: 3.4 }); G37.waves = true; if (AI37.wwf) AI37.wwf.aggro(); });
+  wwTasks37(); setPhase37(); cpSave('NEW_VIDEO.AVI');
+}
+function wwTasks37() {
+  const W = P37.ww; if (!P37.told) return; if (!(W.seen || W.map)) return;
+  task('gen', 'THE GENERATOR · THE STAFF HALLS, WEST', { quiet: true, sub: 'THE CONTROL ROOM HAS NO POWER' }); if (W.gen) taskDone('gen', 'THE GENERATOR IS RUNNING', true);
+  if (W.gen) { task('ctrl', 'THE CONTROL ROOM · READ THE NOTE', { quiet: true }); if (W.note) taskDone('ctrl', 'THE NOTE ON THE MONITOR', true); }
+  if (W.note || W.gen) { task('video', 'NEW_VIDEO.AVI · THE WAVE MACHINE\'S SUMP · THE STAFF ROOM LEADS THERE', { quiet: true, sub: 'THREE METRES DOWN. SOMETHING SWIMS' }); if (P37.keys.tape) taskDone('video', 'NEW_VIDEO.AVI', true); }
+}
+function wwEvents37(dt, z) {
+  const W = P37.ww, inW = z === Z37.PARK || z === Z37.DOME || z === Z37.STAFF || z === Z37.WWF;
+  if (inW && !W.seen) { W.seen = true; toast('WATER WORLD', 2.8); SFX.beep(1100, 0.05); later(3, () => say('PA', 'Water World is now closed. Please make your way to the nearest exit. The nearest exit is behind you.', { dur: 6 })); wwTasks37(); }
+  if (!inW) return; W.paT -= dt;
+  if (W.paT <= 0) { W.paT = rnd(34, 58); say('PA', pick(['Please remember to take your belongings with you.', 'Lost children will be taken to the front gate. There are no lost children.', 'The Deep is closed due to weather.', 'Please do not tap on the glass.', 'Thank you for visiting Water World.']), { dur: 4.4 }); SFX37.pa({ x: PL.x, y: 3, z: PL.z, pl: { x: PL.x, z: PL.z } }); }
+}
+// ---------- where to go next ----------
+function wingTarget37() {
+  const P = W37.pos, pc = cell37(PL.x, PL.z), z = LV.zone[pc], H = P37.hotel, S = P37.hosp, W = P37.ww;
+  const inHotel = LV.reg[pc] === R37Z.HOTEL && z !== Z37.TUNNEL, inHosp = LV.reg[pc] === R37Z.HOSP && z === Z37.HOSP, inWW = LV.reg[pc] === R37Z.WW && z !== Z37.TUNNEL;
+  const hotelNext = () => { if (H.timed && !P37.keys.hotel) return P.vaultTable; if (H.timed) return null; if (H.sw) return AI37.teague; if (H.drawer) return P.nightstand; if (H.ask) return P.drawer; return AI37.teague || P.desk; };
+  const hospNext = () => { if (S.stamps >= 3 && S.form) return staff37('admit'); if (!S.form) return P.formDesk; if (!S.linen) return P.linen; if (!S.linenDone) return staff37('ward3'); if (!S.lanyard) return staff37('hall2'); if (!S.iv) return P.drip; if (!S.ivDone) return staff37('ward5'); if (!S.chart) return P.recordsDesk; return staff37('nurse1'); };
+  const wwNext = () => { if (!W.gen) return P.genSw; if (!W.note) return P.ctrl; return P.tapeSpot; };
+  if (inHotel && !P37.keys.hotel) return hotelNext(); if (inHosp && !P37.keys.hosp) return hospNext(); if (inWW && !P37.keys.tape) return wwNext();
+  // otherwise: the nearest wing still to do
+  const ent = { hotel: { x: cc37(34.5), z: 43.2 * CELL }, hosp: { x: 30.6 * CELL, z: cc37(19) }, park: { x: 65 * CELL - 0.5, z: cc37(34) } };
+  if (wingsDone37() >= 3) return P.panel || P.deskB;
+  if (!P37.keys.hotel) return ent.hotel; if (!P37.keys.hosp) return ent.hosp; return ent.park;
+}
+if (/[?&]debug/.test(location.search)) addEventListener('load', () => Object.assign(window.__BR || (window.__BR = {}), { talkTeague37, talkStaff37, staffLabel37, wingTarget37, timeTeague37 }));
 
 // ==== ai37.js ====
-// ---------- r8 · Level 37: the people and things in the water (stub; filled in below) ----------
-const AI37 = { npcs: [], staff: [], fish: null };
-function initAI37() { Object.assign(AI, { all: [], howlers: [], smilers: [], exps: [], crawler: null, mimic: null, flick: 0 }); AI37.npcs = []; AI37.staff = []; AI37.fish = null; }
+// ---------- r8 · Level 37: the people and things in the water ----------
+// Abara (relief team, camp), Teague (the swimmer in the hotel court), the Staff (only on night shot), and the Fish (wave pool; the Dive Well once the video plays).
+const AI37 = { npcs: [], staff: [], fish: null, wwf: null, abara: null, teague: null };
+const NPCI37 = [];
+function npc37Floor(a, y0 = 0) { a.rig.root.position.y = floorY37(a.x, a.z) + y0; }
+class Npc37 extends Agent {
+  constructor(tint, o = {}) {
+    super(buildExplorer({ tint }), 0.3); mergeRig(this.rig);
+    Object.assign(this, { shadowR: 0.5, home: null, lookT: 0, noSep: true }, o);
+    this.cellFn = c => LV.zone[c] > 0 && LV.bas[c] < 0; this.edgeFn = (x, y, d) => !doorClosed(x, y, d);
+  }
+  cull() { const d = this.d; this.shown = d < 40 && (d < 5 || los(PL.x, PL.z, this.x, this.z)); setRigVisible(this.rig, this.shown); }
+}
+// Abara: stands by her cot and turns toward you when you are near; never leaves camp
+class Abara37 extends Npc37 {
+  constructor() { super([0.35, 0.5, 0.42]); const P = W37.pos.abara; this.place(P.x, P.z, Math.PI * 0.5); this.home = P; }
+  update(dt) {
+    const d = this.d, want = d < 7 && G.state === 'play' ? Math.atan2(PL.x - this.x, PL.z - this.z) : this.yaw; this.face(want, 2.2, dt);
+    this.ph += dt * 0.6; if (this.rig.sk || this.rig.hip) animHuman(this.rig, 0, 0, { lean: 0.03, look: clamp(angDiff(this.yaw, want) * 0.4, -0.5, 0.5), armL: 0.1 + 0.05 * Math.sin(this.ph), armR: 0.05 });
+    this.sync(); npc37Floor(this);
+  }
+}
+// Teague: on the deck by lane four until you time her, then four lengths
+class Teague37 extends Npc37 {
+  constructor() {
+    super([0.75, 0.4, 0.4]); const S = W37.pos.swimmer; this.S = S; this.place(S.x, S.z, -Math.PI / 2); this.swimming = false; this.lapT = 0; this.dirn = -1; this.lx = S.x;
+    this.inter = { x: S.x, z: S.z, y: 0.8, r: 2.6, label: () => P37.hotel.timed ? 'TEAGUE' : holdBusy(this.inter) ? `TIMING TEAGUE… ${holdPct(this.inter)}%` : this.swimming ? 'KEEP THE WATCH' : 'SPEAK TO TEAGUE', ok: () => G.state === 'play', act: () => talkTeague37() };
+    W.interact.push(this.inter);
+  }
+  update(dt) {
+    const S = this.S;
+    if (this.swimming) {
+      this.lapT += dt; const spd = 3.3; this.lx += this.dirn * spd * dt;
+      if (this.lx < S.laneX0) { this.lx = S.laneX0; this.dirn = 1; } if (this.lx > S.laneX1) { this.lx = S.laneX1; this.dirn = -1; }
+      this.x = this.lx; this.z = S.laneZ; this.yaw = this.dirn < 0 ? -Math.PI / 2 : Math.PI / 2; this.ph += dt * 5.2;
+      const wy = waterY37(this.x, this.z); this.rig.root.position.y = wy - 0.2; this.rig.root.rotation.x = 1.45;
+      const s = Math.sin(this.ph); if (this.rig.hip) animHuman(this.rig, this.ph, 0.9, { armA: 1.7, legA: 0.28 });
+      if (Math.random() < dt * 5) SFX37.splashSoft && SFX37.splashSoft(P9({ x: this.x, y: wy, z: this.z }));
+      this.sync(); this.rig.root.position.y = wy - 0.2; this.rig.root.rotation.x = 1.45;
+    } else {
+      if (this.rig.root.rotation.x !== 0) { this.rig.root.rotation.x = 0; this.place(S.x, S.z, -Math.PI / 2); this.lx = S.x; }
+      const want = this.d < 7 ? Math.atan2(PL.x - this.x, PL.z - this.z) : -Math.PI / 2; this.face(want, 2, dt);
+      animHuman(this.rig, 0, 0, { lean: 0.1, look: clamp(angDiff(this.yaw, want) * 0.4, -0.5, 0.5), armL: -0.2, armR: -0.2 });
+      this.sync(); npc37Floor(this);
+    }
+  }
+  cull() { const d = this.d; this.shown = d < 44 && (this.swimming || d < 6 || los(PL.x, PL.z, this.x, this.z)); setRigVisible(this.rig, this.shown); }
+}
+// the Staff: pale, still, doing the one thing; they only exist on night shot
+class Staff37 extends Npc37 {
+  constructor(p) {
+    super([0.1, 0.12, 0.12]); this.key = p.key; this.task = p.task; this.ry = p.ry; this.place(p.x, p.z, p.ry); this.base = { x: p.x, z: p.z }; this.faceT = 0; this.tt = rnd(0, 6); this.shadowR = 0; this.present = true;
+    const it = { get x() { return a.x; }, get z() { return a.z; }, y: 1.1, r: 2.1, label: () => staffLabel37(a), ok: () => G.state === 'play' && FX.nv > 0.5, act: () => talkStaff37(a) }; const a = this; W.interact.push(it);
+  }
+  update(dt) {
+    this.tt += dt; let want = this.ry; if (this.faceT > 0) { this.faceT -= dt; want = Math.atan2(PL.x - this.x, PL.z - this.z); }
+    if (this.task === 'walk') { const t = this.tt * 0.12; const nx = this.base.x + Math.sin(t) * 2.6; this.step(nx, this.base.z, 0.5, dt); this.ph += dt * this.spd * 3; animHuman(this.rig, this.ph, clamp(this.spd / 1.2, 0, 1), { lean: 0.05, armA: 0.2 }); }
+    else { this.face(want, 3, dt); const w = Math.sin(this.tt * 0.9) * (this.task === 'bed' ? 0.02 : 0.08); animHuman(this.rig, 0, 0, { lean: 0.12 + w, look: Math.sin(this.tt * 0.4) * 0.3, armL: this.task === 'desk' || this.task === 'file' ? -0.7 + Math.sin(this.tt * 1.4) * 0.15 : -0.1, armR: this.task === 'desk' ? -0.6 : -0.1, elL: -0.9, elR: -0.9 }); }
+    this.sync(); npc37Floor(this);
+  }
+  cull() { const v = FX.nv > 0.5 && this.d < 36 && (this.d < 5 || los(PL.x, PL.z, this.x, this.z)); this.shown = v; setRigVisible(this.rig, v); }
+}
+// the Fish: a long dark thing in the water. Wanders its basin; hunts you if you are swimming in it
+function buildFish37() {
+  const mat = actMat('fish37', { spec: 0.4, shin: 40, wrap: 0.2 }), root = tnode(null), r = { root, mat, hipH: 0, kind: 'fish' }, c = [0.03, 0.05, 0.05];
+  r.body = tnode(root); part('Sphere', { diameter: 1, segments: 12 }, r.body, mat, c, 0, [0, 0, 0], null, [0.55, 0.5, 2.6]);
+  r.head = tnode(r.body, 0, 0, 1.2); part('Sphere', { diameter: 0.5, segments: 10 }, r.head, mat, c, 0, [0, 0, 0.15], null, [1, 0.9, 1.3]);
+  for (const s of [-1, 1]) { part('Sphere', { diameter: 0.07, segments: 6 }, r.head, mat, [0.95, 0.95, 0.8], 1, [s * 0.14, 0.08, 0.34]); part('Sphere', { diameter: 0.14, segments: 6 }, r.body, mat, c, 0, [s * 0.28, -0.05, 0.4], null, [0.3, 0.1, 1.6]); }
+  r.tail = tnode(r.body, 0, 0, -1.2); part('Box', { width: 0.05, height: 0.8, depth: 0.5 }, r.tail, mat, c, 0, [0, 0, -0.25]); part('Box', { width: 0.05, height: 0.55, depth: 0.7 }, r.body, mat, c, 0, [0, 0.4, 0.1]);
+  return r;
+}
+class Fish37 extends Agent {
+  constructor(basin) {
+    super(buildFish37(), 0.5); mergeRig(this.rig); this.basin = basin; this.cells = []; for (let c = 0; c < N * N; c++) if (LV.bas[c] === basin && LV.fh[c] < LV.basins[basin].y - 0.9) this.cells.push(c);
+    this.y = 0; this.aggroed = false; this.atkCd = 2; this.wp = null; this.shadowR = 0; this.st = 'lurk'; this.spd = 0;
+    const c = this.cells.length ? pick(this.cells) : 0; this.place(cellCenter(c % N), cellCenter((c / N) | 0), rnd(0, TAU)); this.y = LV.basins[basin].y - 1.2; this.sync();
+  }
+  aggro() { this.aggroed = true; this.st = 'hunt'; }
+  dispose() { const i = AI.all.indexOf(this); if (i >= 0) AI.all.splice(i, 1); try { this.rig.root.dispose(); } catch (e) {} }
+  inBasin(x, z) { return LV.bas[cell37(x, z)] === this.basin; }
+  update(dt) {
+    const B = LV.basins[this.basin], play = G.state === 'play', pIn = play && this.inBasin(PL.x, PL.z) && depth37(PL.x, PL.z) > 0.55, d = this.d;
+    if (!this.present || !B) return;
+    // the Well fish stays out until the flood is up
+    if (this.basin === BAS37.WELL && !G37.flood) { this.shown = false; setRigVisible(this.rig, false); return; }
+    if (pIn && (this.aggroed || d < 9)) this.st = 'hunt'; else if (!this.aggroed) this.st = 'lurk';
+    let tx, tz, ty, sp;
+    if (this.st === 'hunt' && pIn) { tx = PL.x; tz = PL.z; ty = clamp(G37.ey - 0.5, LV.fh[cell37(this.x, this.z)] + 0.4, B.y - 0.35); sp = [2.7, 3.1, 3.5][G.diff]; if (d > 2.6) sp *= 0.85 + 0.15 * Math.sin(FX.t * 5); }
+    else { if (!this.wp || dist2(this.x, this.z, this.wp.x, this.wp.z) < 1.2) { const c = this.cells.length ? pick(this.cells) : 0; this.wp = { x: cellCenter(c % N), z: cellCenter((c / N) | 0) }; } tx = this.wp.x; tz = this.wp.z; ty = B.y - rnd(1.2, 2.2); sp = 1.1; }
+    const ox = this.x, oz = this.z, dx = tx - this.x, dz = tz - this.z, dd = Math.hypot(dx, dz) || 1, k = Math.min(dd, sp * dt);
+    const nx = this.x + dx / dd * k, nz = this.z + dz / dd * k;
+    if (this.inBasin(nx, nz) && LV.fh[cell37(nx, nz)] < B.y - 0.5) { this.x = nx; this.z = nz; } else if (this.st === 'lurk') this.wp = null;
+    this.face(Math.atan2(dx, dz), 5, dt); this.spd = Math.hypot(this.x - ox, this.z - oz) / Math.max(dt, 1e-4); this.y = damp(this.y, ty, 2.4, dt);
+    this.ph += dt * (2 + this.spd * 1.6); this.rig.tail.rotation.y = Math.sin(this.ph) * 0.5; this.rig.body.rotation.y = Math.sin(this.ph) * 0.1; this.rig.head.rotation.y = Math.sin(this.ph + 1) * 0.12;
+    this.sync(); this.rig.root.position.y = this.y;
+    // seen as a long shadow: fear when it is near and you are in the water
+    if (pIn) { const k2 = clamp(1 - d / 12, 0, 0.7); PL.fear = Math.max(PL.fear, k2); if (this.st === 'hunt' && d < 7) G.chase = Math.max(G.chase, clamp(1 - d / 9, 0, 1)); }
+    this.atkCd -= dt;
+    if (play && pIn && this.st === 'hunt' && d < 1.5 && Math.abs(G37.ey - 0.5 - this.y) < 1.4 && this.atkCd <= 0) { this.atkCd = [2.6, 2.2, 1.8][G.diff]; knock(this, 13, 'fish', 3.2); SFX37.splash && SFX37.splash(P9({ x: PL.x, y: B.y, z: PL.z })); FX.glitch = Math.max(FX.glitch, 1.2); toast('SOMETHING HIT YOU IN THE WATER', 1.6); }
+    if (this.st === 'lurk' && !pIn) this.aggroed = this.aggroed;
+  }
+  cull() { const v = this.present && this.d < 32 && depth37(this.x, this.z) > 0; this.shown = v && (this.basin !== BAS37.WELL || G37.flood); setRigVisible(this.rig, this.shown); }
+}
+function spawnFish37(where) {
+  if (where === 'well' && !AI37.fish) { const f = new Fish37(BAS37.WELL); f.aggro(); AI37.fish = f; AI.all.push(f); }
+}
+function initAI37() {
+  Object.assign(AI, { all: [], howlers: [], smilers: [], exps: [], crawler: null, mimic: null, flick: 0 }); AI37.npcs = []; AI37.staff = []; AI37.fish = null; AI37.wwf = null;
+  const A = new Abara37(), T = new Teague37(); AI37.abara = A; AI37.teague = T; AI.all.push(A, T);
+  W.interact.push({ get x() { return A.x; }, get z() { return A.z; }, y: 1.1, r: 2.2, label: () => 'TALK TO ABARA', ok: () => G.state === 'play', act: () => talkAbara37() });
+  for (const p of W37.pos.staff || []) { const s = new Staff37(p); AI37.staff.push(s); AI.all.push(s); }
+  if (LV.basins[BAS37.WWF]) { const f = new Fish37(BAS37.WWF); AI37.wwf = f; AI.all.push(f); }
+}
 function updateAI37(dt) {
   PL.fear = 0; PL.interf = 0; AI.flick = 0; G.chase = 0;
   for (const a of AI.all) a.update(dt);
@@ -15064,7 +15686,7 @@ function updateAI37(dt) {
   const cs = []; for (const a of AI.all) if (a.shown && a.shadowR > 0) { const d = a.d; if (d < 20) cs.push([d, a]); } cs.sort((a, b) => a[0] - b[0]);
   for (let i = 0; i < 8; i++) { const a = cs[i] && cs[i][1]; if (a) setShadowCaster(i, a.x, a.z, a.shadowR, 0.45); else setShadowCaster(i, 0, 0, 0, 0); }
 }
-function foes37() { return []; }
+function foes37() { const o = []; for (const f of [AI37.fish, AI37.wwf]) if (f && f.shown && f.st === 'hunt' && f.d < 22) o.push({ kind: 'f', ang: Math.atan2(f.x - PL.x, f.z - PL.z), d: f.d, k: clamp(1 - f.d / 24, 0, 1), ch: true, fl: 0 }); return o; }
 
 // ==== main37.js ====
 // ---------- r8 · Level 37 · Sublimity: arrival, water physics (wading, swimming, diving, falling), breath, drift, flow and endings ----------
@@ -15246,6 +15868,7 @@ function worldFX37(dt) {
   FX.fog[0] = lerp(fc[0], 0.03, under); FX.fog[1] = lerp(fc[1], 0.3, under); FX.fog[2] = lerp(fc[2], 0.2, under);
   FX.envA[0] = lerp(zl.amb[0], 0.04, under); FX.envA[1] = lerp(zl.amb[1], 0.14, under); FX.envA[2] = lerp(zl.amb[2], 0.18, under);
   if (live) FX.exposure = 0.82 * S.bright * lerp(1, clamp(0.3 / Math.max(PL.light, 0.01), 0.22, 1), FX.nv);
+  FX.ambBoost *= 0.2; FX.exposure *= lerp(1, 0.22, FX.nv);   // the pool is already bright: night shot should not white out the tile
   if (W37.lensFl) setEmi(W37.lensFl, 3.2 * FX.flicker);
   if (W.itemMat) setEmi(W.itemMat, 0.4 + 0.8 * Math.max(0, Math.sin(t * 2.6)) ** 6);
   G37.doorT = (G37.doorT || 0) - dt; if (G37.doorT <= 0) { G37.doorT = 0.25; for (const d of W9.doors) { const on = dist2(d.mx, d.mz, cp.x, cp.z) < d.cull; if (d.vis !== on) { d.vis = on; d.mesh.setEnabled(on); } } } updateDoors9(dt);
@@ -15369,8 +15992,8 @@ function worldFX18(dt){
  for(const m of LV.chunkMeshes){const c=m.__c||(m.__c=m.getBoundingInfo().boundingBox.centerWorld.clone());m._sortD=Math.hypot(c.x-cp.x,c.z-cp.z);}
 }
 function win18(){if(G.state!=='play'||!W18.exitDoor.on)return;G.state='won';DEATH.t=0;DEATH.shown=false;clearSlot(0);$('prompt').classList.remove('show');G18.wc={x:CAM.position.x,z:CAM.position.z,yaw:CAM.rotation.y,pitch:CAM.rotation.x};for(const f of AI18.fog)f.goAway(99);SFX18.chime();}
-function wonCam18(dt){DEATH.t+=dt;const t=DEATH.t,X=W18.exitDoor,w=G18.wc,k=smooth(0,2.8,t);updateAI18(dt);CAM.position.set(lerp(w.x,X.fx-0.3,k),1.6,lerp(w.z,X.fz,k));CAM.rotation.set(lerp(w.pitch,0,k),w.yaw+angDiff(w.yaw,-Math.PI/2)*k,0);FX.fadeW=smooth(1.6,4,t);if(t>5&&!DEATH.shown){DEATH.shown=true;G18.endWon=true;flags18();goLevel37(carryFrom18());}}
-function showEnd18(won){if(document.pointerLockElement)document.exitPointerLock();$('osd').classList.add('hide');$('touch').classList.add('hide');G18.endWon=won;if(won)flags18();const [title,text]=won?['YOU REMEMBERED',endText18()]:(DEATH_TXT[G.cause]||DEATH_TXT.forgotten);$('endKicker').textContent=won?'WOKEN UP · END OF RECORDING':'■ SIGNAL LOST · LEVEL 18';$('endTitle').textContent=title;$('endText').textContent=text;const st=[['TIME ON TAPE',fmtTC(G.time)],['DISTANCE',Math.round(PL.dist)+' M'],['DRAWINGS',G18.pinned.length+'/4'],['LEVEL','18 · NOSTALGIC MEMORIES'],['DIFFICULTY',DIFFS[G.diff]]];$('endStats').innerHTML=st.map(([a,b])=>`<div><span>${a}</span><b>${b}</b></div>`).join('');$('btnAgain').textContent=won?'▶ PLAY AGAIN (LEVEL 0)':'▶ RETRY LEVEL 18';show('end');}
+function wonCam18(dt){DEATH.t+=dt;const t=DEATH.t,X=W18.exitDoor,w=G18.wc,k=smooth(0,2.8,t);updateAI18(dt);CAM.position.set(lerp(w.x,X.fx-0.3,k),1.6,lerp(w.z,X.fz,k));CAM.rotation.set(lerp(w.pitch,0,k),w.yaw+angDiff(w.yaw,-Math.PI/2)*k,0);FX.fadeW=smooth(1.6,4,t);if(t>5&&!DEATH.shown){DEATH.shown=true;showEnd18(true);}}
+function showEnd18(won){if(document.pointerLockElement)document.exitPointerLock();$('osd').classList.add('hide');$('touch').classList.add('hide');G18.endWon=won;if(won)flags18();const [title,text]=won?['YOU REMEMBERED',endText18()]:(DEATH_TXT[G.cause]||DEATH_TXT.forgotten);$('endKicker').textContent=won?'WOKEN UP · END OF RECORDING':'■ SIGNAL LOST · LEVEL 18';$('endTitle').textContent=title;$('endText').textContent=text;const st=[['TIME ON TAPE',fmtTC(G.time)],['DISTANCE',Math.round(PL.dist)+' M'],['DRAWINGS',G18.pinned.length+'/4'],['LEVEL','18 · NOSTALGIC MEMORIES'],['DIFFICULTY',DIFFS[G.diff]]];$('endStats').innerHTML=st.map(([a,b])=>`<div><span>${a}</span><b>${b}</b></div>`).join('');$('btnAgain').textContent=won?'▶ CONTINUE · LEVEL 37':'▶ RETRY LEVEL 18';show('end');}
 function target18(){let to=null;const pc=cell18(PL.x,PL.z),z=LV.zone[pc];if(G18.phase==='arrive')to=AI18.dino;else if(G18.phase==='exit')to=W18.exitDoor;else if(G18.phase==='name')to=targetMem18();else if(G18.phase==='color')to=P18.crayons||!W18.p18||!W18.p18.tub?W18.exitDoor:W18.p18.tub;else if(!G18.noteRead)to=W18.deskNote;else if(G18.carry.length&&(z===Z18.CLASS||G18.found===4))to=W18.board;else{const left=W18.drawings.filter(d=>!d.taken);to=left.sort((a,b)=>dist2(a.x,a.z,PL.x,PL.z)-dist2(b.x,b.z,PL.x,PL.z))[0]||W18.board;}if(!to)return null;const gc=cell18(to.x,to.z);if(gc===pc||los(PL.x,PL.z,to.x,to.z))return to;if(G18.targetCell!==gc||G18.targetVer!==LV.navVer){G18.targetCell=gc;G18.targetVer=LV.navVer;G18.targetField=bfs(gc%N,(gc/N)|0,c=>!LV.zone[c]);}const F=G18.targetField;let c=pc;if(F[c]<0)return to;for(let i=0;i<3;i++){let best=c;const x=c%N,y=(c/N)|0;for(let d=0;d<4;d++){const nx=x+DX[d],ny=y+DY[d],n=cIdx(nx,ny);if(inGrid(nx,ny)&&passable(x,y,d)&&F[n]>=0&&F[n]<F[best])best=n;}if(best===c)break;c=best;}return {x:cellCenter(c%N),z:cellCenter((c/N)|0)};}
 function hudObj18(){return G18.phase==='name'?'YOUR NAME':`DRAWINGS ${G18.found}/4`;}
 function hudItems18(){return `CARRYING ${G18.carry.length} · PINNED ${G18.pinned.length}/4`+(P18.crayons?' · CRAYONS':'');}

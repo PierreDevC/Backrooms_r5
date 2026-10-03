@@ -20,7 +20,7 @@ module.exports = async (page) => {
   assert(await vis('levels') && await st() === 'title' && !(await vis('brief')), 'Enter on SELECT LEVEL opens level list only');
   const labels = await page.$$eval('.lvPick', b => b.map(x => x.dataset.level + ':' + x.innerText.replace(/\s+/g, ' ').trim()));
   console.log('QA levels ' + JSON.stringify(labels));
-  assert(labels.length === 4 && labels[0].startsWith('0:') && labels[1].startsWith('9:') && labels[2].startsWith('5:') && labels[3].startsWith('18:'), 'four options: Level 0, 9, 5, 18');
+  assert(labels.length === 5 && labels[0].startsWith('0:') && labels[1].startsWith('9:') && labels[2].startsWith('5:') && labels[3].startsWith('18:') && labels[4].startsWith('37:'), 'five options: Level 0, 9, 5, 18, 37');
   assert(await page.evaluate(() => document.activeElement && document.activeElement.dataset.level === '0'), 'focus moves to Level 0 option');
   await page.screenshot({ path: out('levels.png') });
   await page.keyboard.press('Escape'); await page.waitForTimeout(150);
