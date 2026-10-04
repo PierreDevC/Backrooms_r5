@@ -42,7 +42,7 @@ function studyMap9() {
   if (!G9.mapSeen) {
     G9.mapSeen = true; SFX.beep(1320, 0.06); later(0.12, () => SFX.beep(1760, 0.06)); FX.glitch = Math.max(FX.glitch, 0.7);
     if (G9.phase === 'arrive') setPhase9('data');
-    later(0.8, () => radio9('map')); later(1.2, () => toast(IS_TOUCH ? 'MAP SAVED — TAP MAP TO VIEW' : 'MAP SNAPSHOT SAVED — [TAB] TO VIEW', 3));
+    later(0.8, () => radio9('map')); later(1.2, () => toast(IS_TOUCH ? 'MAP SAVED — TAP MAP TO VIEW' : 'MAP SNAPSHOT SAVED — [M] TO VIEW', 3));
     cpSave('M.E.G. MAP');
   }
 }
@@ -310,7 +310,7 @@ function beginPlay9() {
   $('osd').classList.remove('hide'); if (IS_TOUCH) $('touch').classList.remove('hide');
   setPhase9('arrive'); cpSave('LEVEL START', { x: PL.x, z: PL.z, yaw: PL.yaw, quiet: true });
   later(1.4, () => arrive9());   // r6: rewritten arrival (text only; the old voiced clip is unused)
-  later(26, () => toast(IS_TOUCH ? 'LATCH · MAP BUTTONS' : '[RIGHT-CLICK] LATCH DOORS   [TAB] MAP   [F] FLASHLIGHT', 3.6));
+  later(26, () => toast(IS_TOUCH ? 'LATCH · MAP BUTTONS' : '[RIGHT-CLICK] LATCH DOORS   [M] MAP   [F] FLASHLIGHT', 3.6));
 }
 
 // ----- per-frame story events -----

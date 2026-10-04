@@ -70,11 +70,13 @@ module.exports = async (page) => {
   check(r.watchSees !== 'patrol' && r.watchIgnores === 'patrol', `a Watch with a clear view notices you (${r.watchSees}) unless ENEMIES IGNORE ME (${r.watchIgnores})`);
   // ---- the TAB-hold menu with its virtual cursor ----
   await page.evaluate(() => { const B = window.__BR; B.G9.mapSeen = true; B.G9.mapOpen = false; for (const [k] of B.DEV_OPTS) B.S.devOpts[k] = false; B.PL.x = 20 * 3.6; B.PL.z = 16 * 3.6; B.G.state = 'play'; });
-  // a quick tap still opens the Level 9 map
-  await page.keyboard.down('Tab'); await page.waitForTimeout(80); await page.keyboard.up('Tab'); await page.evaluate(() => window.__BR.simStep(0.05));
-  const tap = await page.evaluate(() => ({ map: window.__BR.G9.mapOpen, menu: window.__BR.DEV.open, st: window.__BR.G.state, tab: window.__BR.DEV.tab, seen: window.__BR.G9.mapSeen })); console.log('QA tap', JSON.stringify(tap)); await page.evaluate(() => { window.__BR.closeMap9 && 0; window.__BR.toggleMap9(); });
-  check(tap.map && !tap.menu, 'a quick TAB tap still toggles the Level 9 map and does not open the menu');
-  await page.keyboard.down('Tab'); await page.waitForFunction(() => window.__BR.DEV.open, null, { timeout: 15000 });   // (the software renderer runs at 1-2 fps, so wait for a frame to notice the hold)
+  // M is the Level 9 map now (and no longer mutes); a quick Tab tap opens and closes the menu without touching the map
+  await page.keyboard.press('KeyM'); await page.evaluate(() => window.__BR.simStep(0.05));
+  const tap = await page.evaluate(() => ({ map: window.__BR.G9.mapOpen, menu: window.__BR.DEV.open, muted: window.__BR.AU.muted })); await page.evaluate(() => window.__BR.toggleMap9());
+  check(tap.map && !tap.menu && !tap.muted, 'M opens the Level 9 map and does not mute');
+  await page.keyboard.press('Tab'); const tt = await page.evaluate(() => ({ open: window.__BR.DEV.open, map: window.__BR.G9.mapOpen }));
+  check(!tt.open && !tt.map, 'a Tab tap leaves the menu closed and the map alone');
+  await page.keyboard.down('Tab'); await page.waitForFunction(() => window.__BR.DEV.open, null, { timeout: 5000 });
   const open = await page.evaluate(() => { const m = document.getElementById('devMenu'); return { open: window.__BR.DEV.open, vis: !m.classList.contains('hide'), rows: m.querySelectorAll('[data-devopt]').length, badge: getComputedStyle(document.getElementById('devBadge')).display }; });
   check(open.open && open.vis && open.rows === 9 && open.badge === 'none', 'holding TAB expands the badge into the menu of 9 options');
   const box = await page.evaluate(() => { const r = document.querySelector('[data-devopt="fly"]').getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; });

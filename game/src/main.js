@@ -256,7 +256,6 @@ async function restartGame(play) {
 }
 
 function onKey(code) {
-  if (code === 'KeyM') { AU.muted = !AU.muted; if (AU.master) AU.master.gain.value = AU.muted ? 0 : S.vol; toast(AU.muted ? 'MUTED' : 'SOUND ON', 1.2); return; }
   if (briefKey(code)) return;
   if (notesKey(code)) return;
   if (G.state === 'title' && code === 'Escape' && !$('levels').classList.contains('hide')) { show('title'); $('btnLevels').focus({ preventScroll: true }); return; }

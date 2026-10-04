@@ -32,7 +32,7 @@ python3 -m http.server 8000 --bind 127.0.0.1
 ```
 Visit `http://localhost:8000/The_Backrooms_Found_Footage.html`. Append `?debug&level=2` (or `level=7`, `level=37`, `level=18`, `level=9`, `level=5`) to start a level directly. In the title menu, SELECT LEVEL starts any of the seven.
 
-WASD/arrows move · mouse look · Shift sprint · C crouch (toggle) · F flashlight · N night vision · Z or hold right mouse zoom · E/Enter interact · Q almond water · R battery · Esc/P pause · M mute. Level 5: G sprays Mothex. Level 9: right-click a door (or X) to latch it (the deadbolt turns), Tab map, LOOK OUTSIDE at any window, V to look through a door's peephole. Touch controls appear on phones.
+WASD/arrows move · mouse look · Shift sprint · C crouch (toggle) · F flashlight · N night vision · Z or hold right mouse zoom · E/Enter interact · Q almond water · R battery · Esc/P pause · M map (Level 9) · hold Tab for the developer menu (Settings ▸ Developer mode). Level 5: G sprays Mothex. Level 9: right-click a door (or X) to latch it (the deadbolt turns), Tab map, LOOK OUTSIDE at any window, V to look through a door's peephole. Touch controls appear on phones.
 
 On Easy and Normal, dying lets you RETRY FROM CHECKPOINT: you keep everything already done in that level and respawn at the last checkpoint (level start, each tape / download / key / valve / drawing and other milestones). Nightmare restarts the level. Checkpoints last for the current run, not across reloads.
 

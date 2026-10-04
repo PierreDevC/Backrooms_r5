@@ -1,7 +1,7 @@
 // ---------- r12 · developer mode: in-game options (hold TAB) and a debug overlay with selectable engine stats ----------
 // Settings ▸ DEVELOPER MODE turns it on and reveals DEVELOPER SETTINGS (which options start enabled, the fast-move factor, debug mode, which stats to track and in which
-// corner each one appears). In game a small "DEV MODE · HOLD TAB" badge sits top right; holding TAB (about 0.3 s) expands it into a menu you click with the mouse
-// (a virtual cursor, so the pointer stays locked). A quick TAB tap still does what it did before (Level 9's map).
+// corner each one appears). In game a small "DEV MODE · HOLD TAB" badge sits top right; holding TAB expands it into a menu you click with the mouse
+// (a virtual cursor, so the pointer stays locked); letting go collapses it. (Level 9's map is on M now, mute is gone.)
 // Everything lives in S (saved with the other settings): S.dev, S.devOpts, S.devFast, S.dbg, S.dbgPos (one corner for all stats), S.dbgStats[id] = { on }.
 const DEV_OPTS = [
   ['hp', 'INFINITE VITALITY'], ['sta', 'INFINITE STAMINA'], ['san', 'INFINITE SANITY'], ['batt', 'INFINITE BATTERIES'],
@@ -63,11 +63,8 @@ updateAI = devAIWrap(updateAI); updateAI2 = devAIWrap(updateAI2); updateAI5 = de
 updateAI9 = devAIWrap(updateAI9); updateAI18 = devAIWrap(updateAI18); updateAI37 = devAIWrap(updateAI37);
 { const inner = sknTick; sknTick = function (dt) { const t = performance.now(); inner(dt); DEV.skin += performance.now() - t; }; }
 // ----- TAB: hold for the menu, tap for the old behaviour -----
-function devTabDown() { if (DEV.tab) return; DEV.tab = true; DEV.tabT = performance.now(); }
-function devTabUp() {
-  if (!DEV.tab) return; DEV.tab = false;
-  if (DEV.open) devClose(); else if (G.state === 'play') JUST.add('Tab');   // a tap: the Level 9 map
-}
+function devTabDown() { if (DEV.tab) return; DEV.tab = true; DEV.tabT = performance.now(); if (S.dev && G.state === 'play') devOpen(); }
+function devTabUp() { if (!DEV.tab) return; DEV.tab = false; devClose(); }
 function devOpen() {
   DEV.open = true; devMenuRefresh(); $('devMenu').classList.remove('hide'); $('devBadge').classList.add('open');
   const r = $('devMenu').getBoundingClientRect(); if (!DEV.cx) { DEV.cx = r.left + r.width / 2; DEV.cy = r.top + 60; }
@@ -183,7 +180,6 @@ function devTick(now) {
   const hud = $('devHud'); if (!hud) return;
   const play = G.state === 'play';
   hud.classList.toggle('hide', !S.dev || !(play || G.state === 'intro'));
-  if (S.dev && play && DEV.tab && !DEV.open && now - DEV.tabT > 300) devOpen();
   if (DEV.open && (!S.dev || !play)) devClose();
   if (DEV.open) document.body.classList.add('devopen'); else document.body.classList.remove('devopen');
   if (now - DEV.tStat > 250) { DEV.tStat = now; devStatsUpdate(); }

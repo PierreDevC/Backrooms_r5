@@ -124,7 +124,7 @@ function updatePlayer(dt) {
   if ((ALTCLICK || JUST.has('KeyX')) && hasAlt(PL.focus)) PL.focus.alt(); // right-click (or X) latches / unlatches
   if (JUST.has('KeyV') && LVL === 9) { if (PEEPH.dr) peepStop9(); else if (PL.focus && PL.focus.alt2 && PL.focus.alt2Label && PL.focus.alt2Label()) PL.focus.alt2(); }   // r6: the peephole
   ALTCLICK = false;
-  if (JUST.has('Tab') && LVL === 9) toggleMap9();
+  if (JUST.has('KeyM') && LVL === 9) toggleMap9();   // r12: M is the map (it was mute; Tab is the developer menu)
   if (JUST.has('KeyC') && !devOn('fly')) PL.crouch = !PL.crouch;   // (while flying C is down)
   if (JUST.has('KeyZ')) PL.zoomT = !PL.zoomT;
   if (JUST.has('KeyG') && LVL === 5) useSpray5();
@@ -239,7 +239,7 @@ function playerCamera(dt) {
 function bindInput(canvas) {
   addEventListener('keydown', e => {
     if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Tab'].includes(e.code) && G.state === 'play') e.preventDefault();
-    if (e.code === 'Tab' && S.dev && G.state === 'play') { if (!e.repeat) devTabDown(); return; }   // r12: developer mode: hold TAB for the menu, tap for the map
+    if (e.code === 'Tab' && S.dev && G.state === 'play') { if (!e.repeat) devTabDown(); return; }   // r12: developer mode: hold TAB for the menu
     if (e.repeat) return;
     K.add(e.code); if (G.state === 'play') JUST.add(e.code);
     onKey(e.code, e);
