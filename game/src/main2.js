@@ -29,7 +29,7 @@ async function goLevel2(from) {
   await buildWorld2(prog);
   setupPost(+S.qual); applySettings();
   Object.assign(PL, { x: WP2.pos.arrive.x, z: WP2.pos.arrive.z, yaw: Math.PI, pitch: 0, vx: 0, vz: 0, kx: 0, kz: 0, crouch: false, ck: 0, sta: 1, exh: false,
-    hp: Math.max(f.hp, 75), san: Math.max(f.san, 75), batt: Math.max(f.batt, 60), spare: f.spare, water: f.water, flash: false, fk: 0, nv: false, zoomT: false, zk: 0,
+    hp: Math.max(f.hp, 75), san: Math.max(f.san, 75), batt: Math.max(f.batt, 60), spare: f.spare, water: f.water, bars: f.bars ?? 0, drinks: f.drinks ?? 0, wiredT: 0, fedT: 0, flash: false, fk: 0, nv: false, zoomT: false, zk: 0,
     noise: 0, dist: f.dist, lastHurt: -99, shake: 0, cell: -1, fear: 0, lookAt: null, lookK: 0, focus: null, interf: 0, spdK: 1, load: false });
   updateField();
   Object.assign(G, { time: f.time, lost: f.lost, tapes: f.tapes, cause: '', blackout: 0, exitOn: false, chase: 0, hintT: 0, grace: 0 });

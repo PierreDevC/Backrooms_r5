@@ -438,6 +438,20 @@ function buildPortal() {
 
 // ================= pickups =================
 function itemModel(type, root, mat) {
+  if (type === 'bar') {   // r11: a wrapped energy bar
+    part('Box', { width: 0.13, height: 0.018, depth: 0.04 }, root, mat, [0.72, 0.12, 0.08], 0, [0, 0.009, 0]);
+    part('Box', { width: 0.05, height: 0.019, depth: 0.041 }, root, mat, [0.92, 0.72, 0.1], 0, [-0.02, 0.009, 0]);
+    for (const s of [-1, 1]) part('Box', { width: 0.012, height: 0.006, depth: 0.044 }, root, mat, [0.75, 0.75, 0.72], 0, [s * 0.069, 0.009, 0]);
+    part('Sphere', { diameter: 0.012, segments: 4 }, root, mat, [1, 0.95, 0.8], 1, [0.04, 0.025, 0.012]);
+    return;
+  }
+  if (type === 'drink') {   // r11: a can of energy drink
+    part('Cylinder', { diameter: 0.066, height: 0.122, tessellation: 16 }, root, mat, [0.08, 0.1, 0.09], 0, [0, 0.061, 0]);
+    part('Cylinder', { diameter: 0.0665, height: 0.05, tessellation: 16 }, root, mat, [0.35, 0.85, 0.12], 0, [0, 0.06, 0]);
+    part('Cylinder', { diameterTop: 0.054, diameterBottom: 0.066, height: 0.01, tessellation: 16 }, root, mat, [0.72, 0.74, 0.74], 0, [0, 0.127, 0]);
+    part('Sphere', { diameter: 0.012, segments: 4 }, root, mat, [1, 1, 1], 1, [0.02, 0.1, 0.03]);
+    return;
+  }
   if (type === 'battery') {
     part('Box', { width: 0.12, height: 0.036, depth: 0.07 }, root, mat, [0.14, 0.14, 0.15], 0, [0, 0.018, 0]);
     part('Box', { width: 0.121, height: 0.012, depth: 0.071 }, root, mat, [0.85, 0.62, 0.1], 0, [0, 0.02, 0]);

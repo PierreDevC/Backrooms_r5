@@ -99,6 +99,8 @@ const SFX = {
   flash(on) { shot((d, t) => { nz(d, t, 0.025, 'bandpass', on ? 3200 : 2200, 3, 0.35, 0.001); return 0.1; }); },
   battery() { shot((d, t) => { for (let i = 0; i < 3; i++) nz(d, t + i * 0.18, 0.04, 'bandpass', 1600 + i * 400, 4, 0.4, 0.001); tone(d, t + 0.6, 0.1, 'sine', 1200, 1200, 0.1); return 0.8; }); },
   drink() { shot((d, t) => { for (let i = 0; i < 6; i++) nz(d, t + i * 0.16, 0.12, 'bandpass', 500 + Math.random() * 300, 6, 0.3, 0.02); return 1.1; }); },
+  eat() { shot((d, t) => { for (let i = 0; i < 7; i++) nz(d, t + i * 0.06 + Math.random() * 0.03, 0.04, 'highpass', 3500 + Math.random() * 2500, 1, 0.22, 0.005); for (let i = 0; i < 4; i++) nz(d, t + 0.7 + i * 0.32, 0.12, 'lowpass', 380, 1, 0.35, 0.02); return 2.2; }); },
+  can() { shot((d, t) => { nz(d, t, 0.05, 'highpass', 2500, 1, 0.5, 0.002); nz(d, t + 0.03, 0.4, 'bandpass', 5200, 0.8, 0.28, 0.01); for (let i = 0; i < 5; i++) nz(d, t + 0.75 + i * 0.17, 0.12, 'bandpass', 520 + Math.random() * 260, 6, 0.3, 0.02); return 1.8; }); },
   tape() { shot((d, t) => { nz(d, t, 0.08, 'lowpass', 500, 1, 0.8); nz(d, t + 0.25, 0.06, 'lowpass', 700, 1, 0.6); tone(d, t + 0.35, 1.2, 'sawtooth', 55, 62, 0.08, 0.2); nz(d, t + 0.35, 1.2, 'highpass', 4000, 1, 0.06, 0.2); return 1.6; }); },
   beep(f = 1000, dur = 0.09) { shot((d, t) => { tone(d, t, dur, 'square', f, f, 0.1, 0.002); return dur + 0.1; }); },
   keypad(i) { shot((d, t) => { tone(d, t, 0.12, 'sine', 900 + i * 120, 900 + i * 120, 0.25); tone(d, t, 0.12, 'sine', 1400 + i * 90, 1400 + i * 90, 0.15); return 0.2; }); },

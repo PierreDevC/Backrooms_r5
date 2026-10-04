@@ -108,7 +108,8 @@ function updateHUD(dt) {
   $('batt').classList.toggle('low', PL.batt < 15);
   hset('battPct', Math.ceil(PL.batt) + '%');
   hset('spare', 'SPARE ×' + PL.spare);
-  hset('inv', 'WATER ×' + PL.water);
+  hset('inv', 'WATER ×' + PL.water + ((PL.bars || PL.drinks || LVL === 2) ? ` · BAR ×${PL.bars || 0} · CAN ×${PL.drinks || 0}` : ''));
+  $('stBar').parentNode.classList.toggle('boost', (PL.wiredT || 0) > 0 || (PL.fedT || 0) > 0);
   hset('tapes', LVL === 7 ? hudObj7() : LVL === 2 ? hudObj2() : LVL === 37 ? hudObj37() : LVL === 18 ? hudObj18() : LVL === 5 ? hudObj5() : LVL === 9 ? hudObj9() : `TAPES ${G.tapes}/4`);
   hset('code', LVL === 7 ? hudItems7() : LVL === 2 ? hudItems2() : LVL === 37 ? hudItems37() : LVL === 18 ? hudItems18() : LVL === 5 ? hudItems5() : LVL === 9 ? hudItems9() : 'CODE ' + [0, 1, 2, 3].map(i => G.code[i] ?? '_').join(' '));
   $('signal').classList.toggle('hide', LVL !== 0);

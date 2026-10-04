@@ -252,7 +252,7 @@ function buildStory2() {
 }
 function buildItems2(diff) {
   const mat = W.itemMat, spots = [];
-  for (const k of ['coldA', 'coldB', 'coldC', 'camp', 'valve', 'office', 'sump', 'lift']) { const r = LV.dry[k]; if (r) for (const c of r.cells) spots.push(c); }
+  for (const k of ['coldA', 'coldB', 'coldC', 'camp', 'valve', 'office', 'sump', 'lift', 'shop', 'tank']) { const r = LV.dry[k]; if (r) for (const c of r.cells) spots.push(c); }
   for (const s of LV.shelters2) spots.push(cIdx(s.x, s.y));
   shuffle(spots); const used = new Set();
   const place = type => {
@@ -262,12 +262,14 @@ function buildItems2(diff) {
       if (cellOf(p.x) !== c % N || cellOf(p.z) !== ((c / N) | 0)) continue;
       const root = tnode(null, p.x, 0, p.z); root.rotation.y = rnd(0, TAU); itemModel(type, root, mat);
       const it = { type, x: p.x, z: p.z, root, taken: false }; W.items.push(it);
-      W.interact.push({ x: p.x, z: p.z, y: 0.1, r: 1.9, it, label: () => type === 'battery' ? 'TAKE CAMCORDER BATTERY' : 'TAKE ALMOND WATER', ok: () => !it.taken, act: () => takeItem(it) });
+      W.interact.push({ x: p.x, z: p.z, y: 0.1, r: 1.9, it, label: () => type === 'battery' ? 'TAKE CAMCORDER BATTERY' : type === 'bar' ? 'TAKE ENERGY BAR' : type === 'drink' ? 'TAKE ENERGY DRINK' : 'TAKE ALMOND WATER', ok: () => !it.taken, act: () => takeItem(it) });
       return;
     }
   };
   for (let i = 0; i < [6, 5, 3][diff]; i++) place('battery');
   for (let i = 0; i < [9, 7, 4][diff]; i++) place('water');
+  for (let i = 0; i < [6, 5, 3][diff]; i++) place('bar');
+  for (let i = 0; i < [5, 4, 2][diff]; i++) place('drink');
 }
 // ----- per frame -----
 function places2Events(dt) {

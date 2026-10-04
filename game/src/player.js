@@ -18,7 +18,7 @@ function carpetWet(x, z) { if (LVL === 37) return depth37(x, z) > 0.04; if (LVL 
 
 function resetPlayer() {
   Object.assign(PL, { x: cellCenter(LV.spawn.x), z: cellCenter(LV.spawn.y), vx: 0, vz: 0, crouch: false, ck: 0, sta: 1, exh: false, hp: 100, san: 100,
-    batt: [100, 90, 75][G.diff], spare: [2, 1, 0][G.diff], water: [3, 1, 0][G.diff], flash: false, fk: 0, nv: false, zoomT: false, zk: 0,
+    batt: [100, 90, 75][G.diff], spare: [2, 1, 0][G.diff], water: [3, 1, 0][G.diff], bars: 0, drinks: 0, wiredT: 0, fedT: 0, flash: false, fk: 0, nv: false, zoomT: false, zk: 0,
     noise: 0, load: false, dist: 0, lastHurt: -99, shake: 0, cell: -1, fear: 0, pitch: 0, lookAt: null, lookK: 0 });
   // face the most open direction
   let bd = 0, best = 0;
@@ -51,9 +51,23 @@ function drinkWater() {
   if (PL.san > 97 && PL.hp > 97) { toast('YOU FEEL FINE'); return; }
   PL.water--; PL.san = Math.min(100, PL.san + 45); PL.hp = Math.min(100, PL.hp + 20); SFX.drink(); makeNoise(0.15); if (LVL === 2) GP2.heat = Math.max(0, GP2.heat - 0.45); toast('ALMOND WATER — SANITY RESTORED');
 }
+function eatBar() {
+  if (!(PL.bars > 0)) { SFX.click(); toast('NO ENERGY BARS'); return; }
+  PL.bars--; PL.sta = Math.min(1, PL.sta + 0.5); PL.exh = PL.sta > 0.4 ? false : PL.exh; PL.fedT = 60; PL.hp = Math.min(100, PL.hp + 8);
+  SFX.eat(); makeNoise(0.08); toast('ENERGY BAR · STAMINA RECOVERS FASTER');
+}
+function drinkEnergy() {
+  if (!(PL.drinks > 0)) { SFX.click(); toast('NO ENERGY DRINKS'); return; }
+  PL.drinks--; PL.sta = 1; PL.exh = false; PL.wiredT = 40;
+  SFX.can(); makeNoise(0.15); toast('ENERGY DRINK · SPRINTING COSTS LESS');
+}
 function takeItem(it) {
   it.taken = true; it.root.setEnabled(false); SFX.pickup();
-  if (it.type === 'battery') { PL.spare++; toast('CAMCORDER BATTERY +1'); } else { PL.water++; toast('ALMOND WATER +1'); }
+  const key = k => IS_TOUCH ? '' : ' · [' + k + ']';
+  if (it.type === 'battery') { PL.spare++; toast('CAMCORDER BATTERY +1'); }
+  else if (it.type === 'bar') { PL.bars = (PL.bars || 0) + 1; toast('ENERGY BAR +1' + key('B') + ' EAT'); }
+  else if (it.type === 'drink') { PL.drinks = (PL.drinks || 0) + 1; toast('ENERGY DRINK +1' + key('T') + ' DRINK'); }
+  else { PL.water++; toast('ALMOND WATER +1'); }
 }
 function findInteract() {
   const f = CAM.getDirection(BABYLON.Axis.Z), cy = CAM.position.y;
@@ -99,6 +113,8 @@ function updatePlayer(dt) {
   if (JUST.has('KeyN')) toggleNV();
   if (JUST.has('KeyR')) swapBattery();
   if (JUST.has('KeyQ')) drinkWater();
+  if (JUST.has('KeyB')) eatBar();
+  if (JUST.has('KeyT')) drinkEnergy();
   if (JUST.has('KeyE') || JUST.has('Enter')) interact();
   if ((ALTCLICK || JUST.has('KeyX')) && hasAlt(PL.focus)) PL.focus.alt(); // right-click (or X) latches / unlatches
   if (JUST.has('KeyV') && LVL === 9) { if (PEEPH.dr) peepStop9(); else if (PL.focus && PL.focus.alt2 && PL.focus.alt2Label && PL.focus.alt2Label()) PL.focus.alt2(); }   // r6: the peephole
@@ -133,7 +149,9 @@ function updatePlayer(dt) {
     PL.x = p.x; PL.z = p.z; PL.dist += moved;
   PL.run = wantRun && PL.spd > 3;
   // stamina
-  if (PL.run) PL.sta -= dt / [8, 6.5, 5.5][G.diff]; else PL.sta += dt * (PL.spd < 0.3 ? 0.2 : 0.11) * (crouch ? 1.2 : 1);
+  // r11: energy drinks (wired: sprinting costs 40%) and energy bars (fed: stamina comes back twice as fast)
+  PL.wiredT = Math.max(0, (PL.wiredT || 0) - dt); PL.fedT = Math.max(0, (PL.fedT || 0) - dt);
+  if (PL.run) PL.sta -= dt / [8, 6.5, 5.5][G.diff] * (PL.wiredT > 0 ? 0.4 : 1); else PL.sta += dt * (PL.spd < 0.3 ? 0.2 : 0.11) * (crouch ? 1.2 : 1) * (PL.fedT > 0 ? 2 : 1);
   if (PL.sta <= 0) { PL.sta = 0; if (!PL.exh) { PL.exh = true; toast('EXHAUSTED'); } }
   if (PL.exh && PL.sta > 0.4) PL.exh = false;
   PL.sta = clamp(PL.sta, 0, 1);
