@@ -204,9 +204,11 @@ function showEnd0(won) {
 }
 
 // ----- pause / restart -----
+const LEVEL_NAMES = { 0: 'LEVEL 0 · THE LOBBY', 9: 'LEVEL 9 · DARKENED SUBURBS', 5: 'LEVEL 5 · THE HOTEL', 18: 'LEVEL 18 · NOSTALGIC MEMORIES', 37: 'LEVEL 37 · SUBLIMITY', 2: 'LEVEL 2 · PIPE DREAMS', 7: 'LEVEL 7 · THALASSOPHOBIA' };
+function pauseLevel() { const el = $('pauseLvl'); if (!el) return; el.firstChild.textContent = LEVEL_NAMES[LVL] || 'LEVEL ' + LVL; const o = $('objective').textContent; el.lastChild.textContent = o ? 'OBJECTIVE · ' + o : ''; }
 function pauseGame() {
   if (G.state !== 'play') return;
-  G.state = 'paused'; show('pause'); if (AU.ctx) AU.ctx.suspend();
+  pauseLevel(); G.state = 'paused'; show('pause'); if (AU.ctx) AU.ctx.suspend();
   if (document.pointerLockElement) document.exitPointerLock();
 }
 function resumeGame() {

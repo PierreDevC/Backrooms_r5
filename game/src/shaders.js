@@ -531,7 +531,7 @@ void main(){
   float face = band(B.y, 1.58, 1.79, 0.012)*smoothstep(0.015, 0.05, B.z)*(1.0 - smoothstep(0.062, 0.085, ax));
   float mot = fbm(B*vec3(7.0, 4.0, 7.0) + oK.w);
   vec3 SK = oC1.rgb*oC1.rgb, A = oC2.rgb*oC2.rgb, C3 = oC3.rgb*oC3.rgb;
-  vec3 alb = SK*skinV;
+  vec3 alb = SK*skinV; float eyeOn = 1.0;
 #ifdef O_HAZMAT
   vec3 S = A*mix(0.8, 1.08, mot)*mix(0.7, 1.0, smoothstep(0.08, 0.75, B.y));
   float tape = max(max(band(ax, 0.6, 0.645, 0.006)*arm, band(B.y, 0.15, 0.2, 0.006)*leg), max(band(B.y, 0.99, 1.04, 0.006)*(1.0 - arm), band(B.y, 1.535, 1.565, 0.006)*(1.0 - arm)));
@@ -579,6 +579,58 @@ void main(){
   c = mix(c, A*mix(0.6, 1.1, mot), shirt); c = mix(c, C3*mix(0.6, 1.1, mot), pants*(1.0 - shirt));
   alb = c; rough = mix(tA.a*0.8, 0.92, max(shirt, pants)); nStr = mix(1.3, 0.4, max(shirt, pants)); wrk = aP.z*0.5; sMul = mix(1.0, 0.25, max(shirt, pants));
 #endif
+#ifdef O_COVERALL
+  // r11: a plant worker's boiler suit (oC2), reflective tape (oC3), rubber boots; oK.x = 1: faceless (no eyes, the face smoothed over)
+  float skin = max(hand*(1.0 - oK.y), head);
+  float boot = max(foot, 1.0 - smoothstep(0.17, 0.2, B.y));
+  float grime = smoothstep(0.55, 0.0, B.y)*0.45 + smoothstep(0.62, 0.8, fbm(B*6.0 + 2.0))*0.35;
+  vec3 S = A*mix(0.72, 1.08, mot)*(1.0 - grime*0.6);
+  float tape = max(max(band(B.y, 0.36, 0.41, 0.004)*leg, band(B.y, 1.06, 1.1, 0.004)*(1.0 - arm)), band(ax, 0.5, 0.54, 0.004)*arm);
+  float zip = (1.0 - smoothstep(0.004, 0.009, ax))*step(0.0, B.z)*band(B.y, 0.9, 1.48, 0.005);
+  float pocket = band(ax, 0.055, 0.125, 0.003)*band(B.y, 1.26, 1.36, 0.003)*step(0.05, B.z);
+  float collar = band(B.y, 1.44, 1.5, 0.006)*(1.0 - arm);
+  vec3 c = S; c = mix(c, S*0.6, max(zip, pocket*0.5)); c = mix(c, S*0.8, collar); c = mix(c, C3, tape*(1.0 - grime*0.5));
+  c = mix(c, vec3(0.008)*mix(0.8, 1.2, mot), boot);
+  c = mix(c, vec3(0.03, 0.028, 0.025), hand*oK.y);   // work gloves
+  c = mix(c, SK*mix(skinV, 1.0, oK.x), skin);
+  alb = c; rough = mix(mix(mix(0.78, 0.35, tape), 0.55, boot), mix(tA.a, 0.7, oK.x), skin); nStr = mix(0.4, mix(1.0, 0.05, oK.x*head), skin); wrk = aP.z*(1.0 - skin); sMul = mix(0.5, 1.0, skin);
+  emi = tape*0.12; emC = C3;
+  if(oK.x > 0.5){ eyeOn = 0.0; if(eye > 0.5) alb = SK; }
+#endif
+#ifdef O_ENGINEER
+  // r11: Ida: a navy work shirt and trousers, sleeves rolled, dark hair pinned back; oK.x fades her face (the photo that wore to white)
+  float skin = max(hand, head) + arm*step(B.y, 1.32)*smoothstep(0.42, 0.47, ax);
+  skin = clamp(skin, 0.0, 1.0);
+  float hair = head*max(smoothstep(1.738, 1.756, B.y + max(0.0, -B.z - 0.01)*0.9), smoothstep(-0.035, -0.06, B.z)*step(1.63, B.y))*(1.0 - face*0.9);
+  float trou = (1.0 - skin)*(1.0 - smoothstep(0.96, 1.0, B.y));
+  float shirt = (1.0 - skin)*(1.0 - trou);
+  float boot = max(foot, 1.0 - smoothstep(0.1, 0.13, B.y));
+  vec3 c = A*mix(0.75, 1.06, mot);
+  c = mix(c, C3*mix(0.7, 1.05, mot), trou);
+  c = mix(c, A*0.55, band(B.y, 1.44, 1.5, 0.006)*(1.0 - arm) + (1.0 - smoothstep(0.004, 0.009, ax))*step(0.0, B.z)*band(B.y, 1.0, 1.44, 0.004));
+  c = mix(c, vec3(0.02, 0.016, 0.012), boot);
+  vec3 fs = mix(SK*skinV, SK*1.05, oK.x*face);
+  c = mix(c, fs, skin*(1.0 - hair));
+  c = mix(c, vec3(0.05, 0.035, 0.028)*mix(0.7, 1.2, mot), hair);
+  alb = c; rough = mix(mix(0.72, 0.5, boot), mix(tA.a, 0.6, oK.x*face), skin); nStr = mix(0.35, mix(1.0, 0.2, oK.x*face), skin); wrk = aP.z*(1.0 - skin); sMul = mix(0.5, 1.0, skin);
+  if(oK.x > 0.6){ eyeOn = 0.0; if(eye > 0.5) alb = SK*1.02; }
+#endif
+#ifdef O_WORKER
+  // r11: Benny: a checked flannel shirt under a hi-vis vest with tape, jeans, work boots
+  float skin = max(hand, head);
+  float jeans = (1.0 - skin)*(1.0 - smoothstep(0.95, 0.99, B.y));
+  float vest = (1.0 - skin)*(1.0 - arm)*band(B.y, 0.98, 1.47, 0.006)*(1.0 - smoothstep(0.035, 0.045, ax)*step(0.08, B.z)*0.0);
+  float check = step(0.5, fract(B.x*22.0))*0.5 + step(0.5, fract(B.y*22.0))*0.5;
+  vec3 shirt = mix(A*0.55, A, check)*mix(0.8, 1.05, mot);
+  vec3 c = shirt;
+  c = mix(c, vec3(0.03, 0.06, 0.12)*mix(0.75, 1.1, fbm(B*14.0)), jeans);
+  vec3 vc = vec3(0.62, 0.72, 0.02)*mix(0.85, 1.05, mot); float vt = band(B.y, 1.06, 1.1, 0.003) + band(B.y, 1.2, 1.24, 0.003);
+  c = mix(c, mix(vc, vec3(0.7, 0.7, 0.66), clamp(vt, 0.0, 1.0)), vest);
+  float boot = max(foot, 1.0 - smoothstep(0.12, 0.15, B.y)); c = mix(c, vec3(0.06, 0.035, 0.02), boot);
+  c = mix(c, SK*skinV, skin);
+  alb = c; rough = mix(mix(0.85, 0.5, vest), tA.a, skin); nStr = mix(0.35, 1.0, skin); wrk = aP.z*(1.0 - skin); sMul = mix(0.5, 1.0, skin);
+  emi = vest*0.18*clamp(vt, 0.0, 1.0); emC = vec3(0.9, 0.9, 0.8);
+#endif
 #ifdef O_CREATURE
   alb = SK*mix(0.75, 1.25, mot)*clamp(texL/0.2, 0.7, 1.25);
   rough = 0.22 + 0.35*smoothstep(0.4, 0.8, mot); nStr = 1.4;
@@ -594,7 +646,7 @@ void main(){
     vec3 gr = vec3(vnoise(q + vec3(0.3, 0.0, 0.0)) - h0, vnoise(q + vec3(0.0, 0.3, 0.0)) - h0, vnoise(q + vec3(0.0, 0.0, 0.3)) - h0);
     n = normalize(n - (gr - dot(gr, n)*n)*wrk);
   }
-  if(eye > 0.5){ vec3 et = texture2D(eyeTex, vUV).rgb; alb = et*et*0.8; rough = 0.08; n = N; }
+  if(eye*eyeOn > 0.5){ vec3 et = texture2D(eyeTex, vUV).rgb; alb = et*et*0.8; rough = 0.08; n = N; }
   alb *= aTint.rgb;
   if(aP2.w > 0.0) alb *= mix(1.0, 0.7, smoothstep(0.35, 0.75, mot)*aP2.w);
   vec3 p = vPos, gn = N, V = normalize(camPos - p);

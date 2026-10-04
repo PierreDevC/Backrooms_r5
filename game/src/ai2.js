@@ -30,7 +30,7 @@ function animFace2(r, ph, amp, st = {}) {
 // ----- Ida: sits at her desk with her back to the door; she will not let you round the front -----
 class Ida2 extends Agent {
   constructor() {
-    super(buildFaceling2({ suit: [0.24, 0.3, 0.36], cap: [0.32, 0.24, 0.16], hair: [0.32, 0.26, 0.22] }), 0.3); mergeRig(this.rig);
+    super(sknOn() ? buildIdaSk() : buildFaceling2({ suit: [0.24, 0.3, 0.36], cap: [0.32, 0.24, 0.16], hair: [0.32, 0.26, 0.22] }), 0.3); if (!this.rig.sk) mergeRig(this.rig);
     const P = WP2.pos.ida; this.place(P.x, P.z, P.yaw); this.base = P.yaw; this.turn = 0; this.noSep = true; this.shadowR = 0.45; this.tt = 0;
   }
   update(dt) {
@@ -40,13 +40,14 @@ class Ida2 extends Agent {
     if (front && G.state === 'play') { this.turn = damp(this.turn, Math.sign(Math.sin(this.base) * dz - Math.cos(this.base) * dx || 1) * 2.4, 3, dt); if (!PP2.idaFront) { PP2.idaFront = true; idaFront2(); } }
     else this.turn = damp(this.turn, 0, 1.5, dt);
     this.yaw = this.base + this.turn; this.sync(); this.rig.root.position.y = 0;
-    animFace2(this.rig, 0, 0, { sit: true, lean: 0.12 + Math.sin(this.tt * 0.5) * 0.02, armL: -1.1 + Math.sin(this.tt * 0.8) * 0.06, armR: -1.0, look: Math.sin(this.tt * 0.23) * 0.25, lookX: 0.1 });
+    if (this.rig.sk) poseSit2(this.rig, { lean: 0.2 + Math.sin(this.tt * 0.5) * 0.02, armL: -0.95 + Math.sin(this.tt * 0.8) * 0.06, armR: -0.8 + Math.sin(this.tt * 1.3) * 0.08, look: Math.sin(this.tt * 0.23) * 0.3 + this.turn * 0.15, lookX: 0.12 });
+    else animFace2(this.rig, 0, 0, { sit: true, lean: 0.12 + Math.sin(this.tt * 0.5) * 0.02, armL: -1.1 + Math.sin(this.tt * 0.8) * 0.06, armR: -1.0, look: Math.sin(this.tt * 0.23) * 0.25, lookX: 0.1 });
   }
   cull() { const d = this.d; this.shown = d < 28 && (d < 5 || los(PL.x, PL.z, this.x, this.z)); setRigVisible(this.rig, this.shown); }
 }
 // ----- Benny: shut in the valve room; a man, a hard hat, too much talking -----
 class Benny2 extends Agent {
-  constructor() { super(buildExplorer({ tint: [0.36, 0.42, 0.5] }), 0.3); mergeRig(this.rig); const P = WP2.pos.benny; this.place(P.x, P.z, -Math.PI / 2); this.noSep = true; this.tt = 0; this.shadowR = 0.45; }
+  constructor() { super(sknOn() ? buildBennySk() : buildExplorer({ tint: [0.36, 0.42, 0.5] }), 0.3); if (!this.rig.sk) mergeRig(this.rig); const P = WP2.pos.benny; this.place(P.x, P.z, -Math.PI / 2); this.noSep = true; this.tt = 0; this.shadowR = 0.45; }
   update(dt) {
     this.tt += dt; const near = this.d < 6 && PP2.valveOpen, want = near ? Math.atan2(PL.x - this.x, PL.z - this.z) : -Math.PI / 2;
     this.face(want, 2.5, dt); animHuman(this.rig, 0, 0, { lean: 0.15, armL: -0.3 + Math.sin(this.tt * 1.7) * 0.15, armR: -0.2, look: Math.sin(this.tt * 0.6) * 0.3 }); this.sync();
@@ -56,7 +57,8 @@ class Benny2 extends Agent {
 // ----- Facelings: they work; they look away from your light -----
 class Faceling2 extends Agent {
   constructor(roomId, o = {}) {
-    super(buildFaceling2({ suit: pick([[0.28, 0.3, 0.26], [0.36, 0.3, 0.2], [0.24, 0.28, 0.34]]), cap: RNG() < 0.5 ? [0.7, 0.55, 0.1] : null }), 0.28); mergeRig(this.rig);
+    const suit = pick([[0.3, 0.34, 0.28], [0.5, 0.3, 0.14], [0.22, 0.28, 0.38], [0.42, 0.42, 0.4]]), hat = RNG() < 0.6 ? pick([[0.85, 0.66, 0.08], [0.85, 0.85, 0.82], [0.2, 0.35, 0.65]]) : null;
+    super(sknOn() ? buildFacelingSk(o.foreman ? { suit: [0.3, 0.3, 0.3], hat: [0.9, 0.9, 0.88], vest: true, clip: true, gloves: true } : { suit, hat, gloves: RNG() < 0.5 }) : buildFaceling2({ suit, cap: hat }), 0.28); if (!this.rig.sk) mergeRig(this.rig);
     this.roomId = roomId; this.cells = LV.rooms[roomId].cells.filter(c => !this.blocked(c)); this.cellFn = c => LV.room[c] !== this.roomId; this.edgeFn = (x, y, d) => !doorClosed(x, y, d);
     const c = o.at ? null : pick(this.cells); this.place(o.at ? o.at.x : cellCenter(c % N), o.at ? o.at.z : cellCenter((c / N) | 0), rnd(0, TAU));
     Object.assign(this, { st: o.still ? 'still' : 'walk', wp: null, wT: 0, shy: 0, tt: rnd(0, 9), stepT: 0, shadowR: 0.4, foreman: !!o.foreman, workYaw: o.yaw ?? 0 });
@@ -75,7 +77,8 @@ class Faceling2 extends Agent {
     } else if (this.st === 'work') { this.wT -= dt; if (this.wT <= 0) this.st = 'walk'; }
     this.ph += dt * this.spd * 3.2;
     const away = this.shy * 1.3 * (Math.sin(this.tt * 0.3) > 0 ? 1 : -1);
-    animFace2(this.rig, this.ph, amp, { lean: this.st === 'work' ? 0.25 : 0.05, armL: this.st === 'work' ? -1.3 + Math.sin(this.tt * 3) * 0.2 : 0, armR: this.st === 'work' ? -1.2 + Math.cos(this.tt * 2.6) * 0.2 : 0, look: away, lookX: this.shy * 0.35 });
+    if (this.rig.sk) { const wk = this.st === 'work' || this.st === 'still'; animHuman(this.rig, 0, 0, { lean: wk ? 0.3 : 0.06, armL: this.foreman ? -0.7 : wk ? -1.2 + Math.sin(this.tt * 3) * 0.2 : 0, armR: wk && !this.foreman ? -1.1 + Math.cos(this.tt * 2.6) * 0.2 : 0, elL: this.foreman ? -1.4 : undefined, look: away, lookX: this.shy * 0.45 + (wk ? 0.3 : 0) }); }
+    else animFace2(this.rig, this.ph, amp, { lean: this.st === 'work' ? 0.25 : 0.05, armL: this.st === 'work' ? -1.3 + Math.sin(this.tt * 3) * 0.2 : 0, armR: this.st === 'work' ? -1.2 + Math.cos(this.tt * 2.6) * 0.2 : 0, look: away, lookX: this.shy * 0.35 });
     this.sync();
   }
 }
@@ -95,9 +98,9 @@ function buildHound2() {
 }
 class Hound2 extends Agent {
   constructor() {
-    super(buildHound2(), 0.4); mergeRig(this.rig);
+    super(sknOn() ? buildHoundSk() : buildHound2(), 0.4); if (!this.rig.sk) mergeRig(this.rig);
     this.cellFn = c => LV.zone[c] !== ZP2.LONG; this.edgeFn = (x, y, d) => !doorClosed(x, y, d);
-    this.home = LV.dry.long.cells.filter(c => (c % N) === 44 && ((c / N) | 0) > 24); const c = pick(this.home); this.place(cellCenter(c % N), cellCenter((c / N) | 0), 0);
+    this.home = LV.dry.long.cells.filter(c => (c % N) === 51 && ((c / N) | 0) > 26); const c = pick(this.home); this.place(cellCenter(c % N), cellCenter((c / N) | 0), 0);
     Object.assign(this, { st: 'roam', wp: null, stare: 0, cool: 0, hitCd: 0, growlT: 3, shadowR: 0.5, alert: 0, chargeT: 0 });
   }
   goAway(t = 25) { this.st = 'gone'; this.cool = t; this.present = false; setRigVisible(this.rig, false); }
@@ -129,9 +132,12 @@ class Hound2 extends Agent {
     }
     if (seen && this.present) PL.fear = Math.max(PL.fear, clamp(1 - d / 16, 0, 0.9));
     this.ph += dt * (2 + this.spd * 3);
-    this.rig.legs.forEach((l, i) => l.rotation.x = Math.sin(this.ph + (i % 2 ? Math.PI : 0) + (i > 1 ? Math.PI / 2 : 0)) * 0.5 * amp);
-    this.rig.body.position.y = 0.62 + Math.abs(Math.sin(this.ph)) * 0.05 * amp - (this.st === 'hunt' && this.stare > 0 ? 0.15 : 0);
-    this.rig.head.rotation.y = Math.sin(this.ph * 0.37) * 0.3; this.rig.head.rotation.z = Math.sin(FX.t * 7) * 0.08 * (this.stare > 0 ? 1 : 0.3);
+    if (this.rig.sk) poseCrawl2(this.rig, this.ph, clamp(amp, 0, 1.3), { look: Math.sin(this.ph * 0.37) * 0.3, lookZ: Math.sin(FX.t * 7) * 0.12 * (this.stare > 0 ? 1 : 0.3), low: this.st === 'hunt' && this.stare > 0 ? 0.12 : 0 });
+    else {
+      this.rig.legs.forEach((l, i) => l.rotation.x = Math.sin(this.ph + (i % 2 ? Math.PI : 0) + (i > 1 ? Math.PI / 2 : 0)) * 0.5 * amp);
+      this.rig.body.position.y = 0.62 + Math.abs(Math.sin(this.ph)) * 0.05 * amp - (this.st === 'hunt' && this.stare > 0 ? 0.15 : 0);
+      this.rig.head.rotation.y = Math.sin(this.ph * 0.37) * 0.3; this.rig.head.rotation.z = Math.sin(FX.t * 7) * 0.08 * (this.stare > 0 ? 1 : 0.3);
+    }
     this.sync();
   }
 }

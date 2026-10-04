@@ -42,7 +42,8 @@ function wlights2(dt) {
   const t = FX.t, P = WP2.pos;
   const ring = WP2.phones.find(p => p.ring > 0 && dist2(PL.x, PL.z, p.x, p.z) < 18);
   if (ring) setSlot(3, { x: ring.x, y: 1.6, z: ring.z }, 0.5 * (Math.sin(t * 18) > 0 ? 1 : 0.2), null, 0, [1, 0.75, 0.3], 3, false, 1); else clearSlot(3);
-  if (LV.zone[cell2(PL.x, PL.z)] === ZP2.HALL) setSlot(4, { x: 31.5 * CELL, y: 1.3, z: 22.6 * CELL }, 0.45 * (0.85 + 0.15 * Math.sin(t * 9) * Math.sin(t * 3.1)), null, 0, [1, 0.45, 0.15], 14, false, 0.5); else clearSlot(4);
+  const fu = (P.furnace || []).slice().sort((a, b) => dist2(a.x, a.z, PL.x, PL.z) - dist2(b.x, b.z, PL.x, PL.z))[0];
+  if (fu && LV.zone[cell2(PL.x, PL.z)] === ZP2.HALL) setSlot(4, { x: fu.x, y: fu.y, z: fu.z }, 0.45 * (0.85 + 0.15 * Math.sin(t * 9) * Math.sin(t * 3.1)), null, 0, [1, 0.45, 0.15], 14, false, 0.5); else clearSlot(4);
   if (PP2.liftReady && P.liftPanel && dist2(PL.x, PL.z, P.liftPanel.x, P.liftPanel.z) < 16) setSlot(5, { x: P.liftPanel.x, y: 2.4, z: P.liftPanel.z }, 0.6, null, 0, [0.3, 1, 0.4], 6, false, 1); else clearSlot(5);
 }
 function loadVoice2() {

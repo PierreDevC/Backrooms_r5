@@ -120,7 +120,7 @@ function worldFX2(dt) {
   steam2(dt, sk);
   if (live) wlights2(dt);
   if (AU.ctx) audio2(dt, z);
-  for (const m of LV.chunkMeshes) { const cc = m.__c || (m.__c = m.getBoundingInfo().boundingBox.centerWorld.clone()); m._sortD = Math.hypot(cc.x - cp.x, cc.z - cp.z); }
+  r2Frame();
 }
 function steam2(dt, sk) {
   const t = FX.t, surge = GP2.surge ? GP2.surge.k : 0;
@@ -136,14 +136,14 @@ function steam2(dt, sk) {
 }
 function zoneLook2(z) {
   switch (z) {
-    case ZP2.GALL: case ZP2.WREG: return { fog: [0.14, 0.06, 0.04], den: 0.06, amb: [0.1, 0.05, 0.04] };
-    case ZP2.SWITCH: return { fog: [0.07, 0.08, 0.07], den: 0.03, amb: [0.08, 0.09, 0.08] };
-    case ZP2.HALL: return { fog: [0.18, 0.09, 0.04], den: 0.04, amb: [0.12, 0.07, 0.04] };
-    case ZP2.LONG: return { fog: [0.05, 0.045, 0.04], den: 0.05, amb: [0.05, 0.045, 0.04] };
-    case ZP2.COLD: return { fog: [0.5, 0.58, 0.62], den: 0.03, amb: [0.2, 0.24, 0.27] };
-    case ZP2.OFFICE: return { fog: [0.12, 0.1, 0.07], den: 0.03, amb: [0.14, 0.12, 0.09] };
-    case ZP2.SHELTER: return { fog: [0.05, 0.1, 0.06], den: 0.03, amb: [0.06, 0.11, 0.07] };
-    default: return { fog: [0.09, 0.07, 0.05], den: 0.045, amb: [0.08, 0.065, 0.05] };
+    case ZP2.GALL: case ZP2.WREG: return { fog: [0.12, 0.05, 0.035], den: 0.045, amb: [0.035, 0.018, 0.014] };
+    case ZP2.SWITCH: return { fog: [0.06, 0.07, 0.065], den: 0.018, amb: [0.03, 0.035, 0.033] };
+    case ZP2.HALL: case ZP2.TANK: return { fog: [0.14, 0.08, 0.04], den: 0.022, amb: [0.04, 0.026, 0.016] };
+    case ZP2.LONG: return { fog: [0.045, 0.04, 0.035], den: 0.04, amb: [0.02, 0.018, 0.016] };
+    case ZP2.COLD: return { fog: [0.4, 0.46, 0.5], den: 0.025, amb: [0.06, 0.07, 0.08] };
+    case ZP2.OFFICE: return { fog: [0.1, 0.085, 0.06], den: 0.02, amb: [0.045, 0.04, 0.032] };
+    case ZP2.SHELTER: return { fog: [0.04, 0.09, 0.05], den: 0.025, amb: [0.02, 0.04, 0.025] };
+    default: return { fog: [0.08, 0.065, 0.045], den: 0.032, amb: [0.025, 0.021, 0.017] };
   }
 }
 // ----- endings -----
