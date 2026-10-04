@@ -53,6 +53,10 @@ module.exports = async (page) => {
     o.spot = sp;
     const watchTest = ign => { G.grace = 0; set('ignore', ign); B.AI9.watch.length = 0; const w = B.spawnWatch(); PL.x = sp.px; PL.z = sp.z; PL.cell = -1; PL.yaw = -Math.PI / 2; PL.flash = false; w.place(sp.wx, sp.z, Math.PI / 2); w.st = 'patrol'; w.stT = 0; w.leaveT = 0; w.look = 0; for (let i = 0; i < 60; i++) { PL.x = sp.px; PL.z = sp.z; B.simStep(0.05); } const st = w.st, vis = w.rig.root.getChildMeshes(false).some(m => m.isVisible) && w.shown; B.AI9.watch.length = 0; return [st, vis]; };
     o.watchSees = ['patrol', true]; for (let i = 0; i < 4 && o.watchSees[0] === 'patrol'; i++) o.watchSees = watchTest(false); o.watchIgnores = ['patrol', false]; for (let i = 0; i < 4 && o.watchIgnores[0] === 'patrol' && !o.watchIgnores[1]; i++) o.watchIgnores = watchTest(true); set('ignore', false); G.grace = 1e9;
+    // and it still patrols: a Watch walks its streets for 30 s with the player far away and ignored
+    set('ignore', true); B.AI9.watch.length = 0; { const w = B.spawnWatch(); PL.x = 2 * 3.6; PL.z = 6.3 * 3.6; PL.cell = -1; w.place(30 * 3.6, 30.5 * 3.6, 0); w.st = 'patrol'; w.leaveT = 0; w.wp = null; let path = 0, lx = w.x, lz = w.z;
+      for (let i = 0; i < 600; i++) { PL.x = 2 * 3.6; PL.z = 6.3 * 3.6; B.simStep(0.05); path += Math.hypot(w.x - lx, w.z - lz); lx = w.x; lz = w.z; } o.patrol = [+path.toFixed(1), w.st]; B.AI9.watch.length = 0; }
+    set('ignore', false); G.grace = 1e9;
     o.after = G.state;
     return o;
   });
@@ -68,6 +72,7 @@ module.exports = async (page) => {
   check(r.landed < 0.5, 'switching FLY off brings you back to the ground');
   check(r.blocked < r.wall[0] + 0.05 && r.through > r.wall[1], `NOCLIP walks through a wall (blocked at z ${r.blocked.toFixed(2)}, through to ${r.through.toFixed(2)})`);
   check(r.watchSees[0] !== 'patrol' && r.watchIgnores[0] === 'patrol', `a Watch with a clear view notices you (${r.watchSees[0]}) unless ENEMIES IGNORE ME (${r.watchIgnores[0]})`);
+  check(r.patrol[0] > 25 && r.patrol[1] === 'patrol', `with ENEMIES IGNORE ME a Watch still wanders its streets (${r.patrol[0]} m in 30 s)`);
   check(r.watchIgnores[1] === true, 'with ENEMIES IGNORE ME the Watch is still there and visible 8 m away');
   // ---- the TAB-hold menu with its virtual cursor ----
   await page.evaluate(() => { const B = window.__BR; B.G9.mapSeen = true; B.G9.mapOpen = false; for (const [k] of B.DEV_OPTS) B.S.devOpts[k] = false; B.PL.x = 20 * 3.6; B.PL.z = 16 * 3.6; B.G.state = 'play'; });
