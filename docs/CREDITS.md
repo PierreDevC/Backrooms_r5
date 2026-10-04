@@ -87,3 +87,6 @@ Same pipeline as Level 37 (audio_pipeline/gen_vo2.py, Piper TTS, faster-whisper 
 
 ## r10 · Level 7 voice lines
 Same pipeline as Levels 37 and 2 (audio_pipeline/gen_vo7.py, Piper TTS, faster-whisper check). Models, CC0 or public domain: en_US-mike-medium (Kell, CC0), en_GB-cori-high (Wren, public domain), en_US-joe-medium (Fen, CC0), en_US-bryce-medium (Outpost 9) and en_US-john-medium (Dr. Hale) as in Level 9, en_US-ljspeech-high (PA and whispers, public domain). Synthetic speech, no human voice acting. Sound effects are synthesized in game/src/audio7.js; the sea, sky and tower bands are procedural.
+
+## r11 · Level 2 scanned materials (ambientCG, CC0 1.0)
+Concrete043B (tunnel walls), Concrete042A (rooms), Concrete042C (decayed walls), Concrete044C (floors), DiamondPlate008C, Bricks097 (gallery culverts), PaintedMetal006, Metal041B, Metal024, MetalWalkway014, Tiles107, PaintedMetal016, CorrugatedSteel007A. Downloaded from ambientcg.com as 1K-JPG sets; processed to WebP (albedo / DX normal / AO-roughness-height or metalness) and packed into assetpack.js under the keys l2conc, l2conc2, l2crack, l2flr, l2plate, l2brick, l2paint, l2rustm, l2steel, l2walk, l2tile, l2haz, l2corr.

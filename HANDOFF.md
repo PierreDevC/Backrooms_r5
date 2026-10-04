@@ -1,5 +1,8 @@
 # The Backrooms: Found Footage — Coding-Agent Handoff (r7.2)
 
+## r11 (branch agent/claude): Level 2 rebuilt — read docs/LEVEL2.md (Map, Rendering, Characters)
+Build order adds rt.js, kit2.js, render2.js, bake2.js before level2.js and chars2.js after story2.js. Level 2 geometry and props go through kit2 (k2Rect / k2Box / k2Pipe / k2PipeRun / k2Lathe / k2Extrude; colour alpha is the prop material id, PM2), then bake2() traces and bk2Meshes() makes the meshes; tune lamps in planLights2 (LV.l2Lights; LL scales I x 2.1 and range x 1.25). Textures: unpack with tools/unpack_assets.py, add sets, rebuild with tools/build_assets.py (needs numpy + Pillow). Characters: SKP profiles engineer / worker / faceling / hound2, outfits O_ENGINEER / O_WORKER / O_COVERALL in SH.skinF.
+
 ## r10.2 (branch agent/claude): route guidance and sequence-break fixes
 `nav.js` (built before ui.js): `navGuide(target)` turns any level's objective point into the next route waypoint for the compass mark; `guideTick` paints floor arrows after GUIDE_AFTER seconds without progress. The walk grid is rebuilt when a solid's `off` changes, a door locks/unlocks or `LV.navVer` bumps. Per-level teleports are listed in `navMakeLinks()`: add new ladders/stairs/portals there. Target functions may now return the real destination (the route finds ladders and stairs); don't stop a marker at a doorway. Phases in Levels 2 and 37 only move forward (`PH2`, `PH37`). Tests: `qa_r10/nav_walk.js`, `qa_r10/seq_fuzz.js` (BR_NAV_LEVEL, BR_SEED, BR_FUZZ).
 

@@ -1,5 +1,14 @@
 # CHANGELOG
 
+## r11 — 2026-10-04 · Level 2 rebuilt: ray-traced lighting, a real plant, new characters (branch agent/claude)
+- New renderer for Level 2: a CPU ray tracer (triangle BVH) bakes direct light with soft shadows from 168 lamps, ambient occlusion and one bounce into per-vertex light, directional so the scanned normal maps and GGX highlights still respond; lamp-lit haze along the view ray; the bake runs on a Web Worker pool (about 1.3 s). See docs/LEVEL2.md › Rendering.
+- New map (56 x 56): pump room, haunched service tunnels with painted dados and drain channels, boiler house with two fire-tube boilers, catwalks, feed pumps and a deaerator, a control room with a window onto it, a feedwater tank room, brick barrel-vaulted galleries, the switchgear hall with lineups and a transformer bay, the freight lift, the Long Pipe with a 1 m insulated main. Story anchors unchanged; story, reach, systems, death, sequence, route and floor-arrow tests pass.
+- Props modelled with a new kit (bevelled boxes, subdivided pipes with elbows, lathes, extrusions): pipe racks with brackets and cable trays, lamp fittings (bulkheads, high-bays, fluorescent battens, caged bulbs), valves, gauges, manifolds, switchgear, tanks, furniture.
+- Thirteen CC0 ambientCG scanned materials (docs/CREDITS.md).
+- Characters on the skinned body with new outfits: Ida (night engineer, seated), Benny (hi-vis, hard hat), the Faceling crew (boiler suits, reflective tape, smooth egg heads), the foreman (clipboard), and the Hound crawling on all fours.
+- The pause screen shows the current level and objective.
+- No human playthrough or real-GPU performance test. Notion sync pending.
+
 ## r10.2 — 2026-10-03 · Route guidance, floor arrows, sequence-break fixes (branch agent/claude)
 - The red compass mark follows the walkable route on every level instead of the straight line. `game/src/nav.js` rasterises the collision boxes into a 0.4 m walk grid (openable doors count as open; locked doors and gates only when nothing else reaches), grows a distance field from the objective through per-level links (Level 7 ladders, Level 37 tower, Level 18 slides, Level 5 portal doors and service stairs, Level 9 house stairs and the lab stairs), and points the mark at the farthest point along that route in plain sight, keeping clear of corners and through the middle of doorways. Behind a locked door it leads to the door; if the objective can't be reached at all, to the nearest place that can.
 - Floor arrows: after 60 / 120 / 210 s (Easy / Normal / Nightmare) without getting closer to the objective, faint painted chevrons appear along the next ~20 m of the route for about 20 s. Level 0 uses the route to the nearest tape before the exit is found.

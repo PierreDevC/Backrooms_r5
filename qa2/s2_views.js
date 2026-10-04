@@ -9,8 +9,9 @@ module.exports = async (page) => {
     const LV = B.LV2(); return { st: B.G.state, errs: B.ERRS.n, last: B.ERRS.last, rooms: LV.rooms.length, faces: B.AIP2.faces.length, phones: B.WP2.phones.length, vents: B.WP2.vents.length, obj: B.obj2() }; });
   console.log('A ' + JSON.stringify(a));
   const view = async (name, x, z, yaw, pitch = 0, fl = true) => { await page.evaluate(([x, z, yaw, pitch, fl]) => { const B = window.__BR, PL = B.PL; PL.x = x; PL.z = z; PL.cell = -1; PL.yaw = yaw; PL.pitch = pitch; PL.flash = fl; for (let i = 0; i < 24; i++) B.simStep(0.05); PL.yaw = yaw; PL.pitch = pitch; B.simStep(0.02); }, [x, z, yaw, pitch, fl]); await shot(name); };
-  const views = (process.env.V2 || 'sump,spine,office,hall,gall,camp,switch,long,valve,lift,cold').split(',');
-  const V = { sump: [23.5 * C, 41.8 * C, Math.PI], spine: [23.5 * C, 33 * C, Math.PI], office: [24.4 * C, 28.5 * C, Math.PI / 2], hall: [28.5 * C, 25.5 * C, Math.PI / 2 + 0.3], gall: [14.5 * C, 24 * C, Math.PI], camp: [5.5 * C, 27.3 * C, 0], switch: [23.5 * C, 13 * C, Math.PI], long: [26 * C, 18.5 * C, Math.PI / 2], valve: [34.5 * C, 41.5 * C, -Math.PI / 2], lift: [40 * C, 8.5 * C, Math.PI / 2], cold: [21.5 * C, 36 * C, Math.PI], camp2: [5 * C, 27.2 * C, 0.4], hall2: [31.5 * C, 32.6 * C, Math.PI], ida: [25.2 * C, 29.6 * C, 2.2], faces: [26 * C, 10 * C, -2.2], hound: [44.5 * C, 26 * C, 0] };
-  for (const v of views) if (V[v]) await view('l2_' + v, V[v][0], V[v][1], V[v][2], 0.05);
+  const views = (process.env.V2 || 'sump,spine,office,hall,gall,camp,switch,long,valve,lift,cold,tank').split(',');
+  const V = { sump: [26.5, 49.6, Math.PI * 0.9], spine: [27.5, 40, Math.PI], office: [29.3, 32.5, Math.PI / 2], hall: [37.7, 35.0, 3.3], gall: [3.5, 22.5, Math.PI], camp: [4.4, 30.2, 1.2],
+    switch: [27.5, 12.3, Math.PI], long: [30, 19.5, Math.PI / 2], valve: [40.6, 46.5, -Math.PI / 2], lift: [45.5, 8.5, Math.PI / 2], cold: [26.6, 42.6, -1.8], tank: [19.5, 24.5, Math.PI / 2] };
+  for (const v of views) if (V[v]) await view('l2_' + v, V[v][0] * C, V[v][1] * C, V[v][2], 0.05);
   const e = await page.evaluate(() => ({ errs: window.__BR.ERRS.n, last: window.__BR.ERRS.last })); console.log('E ' + JSON.stringify(e));
 };

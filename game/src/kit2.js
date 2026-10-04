@@ -1,7 +1,7 @@
 // ---------- r11 · Level 2 modelling kit: tessellated architecture and procedural props for the baked renderer ----------
 // Everything here writes into per-material, per-area buckets (vertex position / normal / tangent / uv / colour). The ray-traced
 // bake (bake2.js) then lights every vertex and the buckets become meshes. Colour: rgb = albedo tint, a = prop material id / 16.
-const K2 = { B: new Map(), occl: [], CH: 14.4, nV: 0 };
+const K2 = { B: new Map(), occl: [], CH: 21.6, nV: 0 };
 function k2Reset() { K2.B = new Map(); K2.occl = []; K2.nV = 0; }
 function k2Bucket(mat, x, z) {
   const k = mat + ':' + Math.floor(z / K2.CH) * 100 + Math.floor(x / K2.CH);

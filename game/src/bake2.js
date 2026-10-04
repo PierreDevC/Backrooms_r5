@@ -42,53 +42,104 @@ function bk2Direct(L, lis, px, py, pz, nx, ny, nz, vi, out, hq) {
 }
 // mean albedo of a bucket material (for the bounce): the scan's mean x gain x vertex tint
 function bk2Alb(mat) { if (mat === 'prop' || mat === 'glass') return [0.22, 0.22, 0.21]; const D = MAT2W[mat], m = (ASSET_TEX[D.k] && ASSET_TEX[D.k].m) || [0.2, 0.2, 0.2]; return m.map(v => v * D.g); }
+// per-vertex kernels (run in the workers, or here): pass 1 writes direct light, pass 2 writes bounce + ambient occlusion
+function bk2K1(L, LG, NN, CC, P, Nn, n, vi0, S, F, D) {
+  const o = { s: [0, 0, 0], f: [0, 0, 0], d: [0, 0, 0], w: 0 };
+  for (let i = 0; i < n; i++) {
+    const x = P[i * 3], y = P[i * 3 + 1], z = P[i * 3 + 2], cell = Math.min(NN - 1, Math.max(0, Math.floor(z / CC))) * NN + Math.min(NN - 1, Math.max(0, Math.floor(x / CC)));
+    bk2Direct(L, LG[cell], x, y, z, Nn[i * 3], Nn[i * 3 + 1], Nn[i * 3 + 2], vi0 + i, o, false);
+    S[i * 4] = o.s[0]; S[i * 4 + 1] = o.s[1]; S[i * 4 + 2] = o.s[2]; F[i * 4] = o.f[0]; F[i * 4 + 1] = o.f[1]; F[i * 4 + 2] = o.f[2];
+    const dl = Math.hypot(o.d[0], o.d[1], o.d[2]); D[i * 4] = dl > 1e-6 ? o.d[0] / dl : 0; D[i * 4 + 1] = dl > 1e-6 ? o.d[1] / dl : 1; D[i * 4 + 2] = dl > 1e-6 ? o.d[2] / dl : 0; D[i * 4 + 3] = o.w > 1e-6 ? Math.min(1, dl / (o.w * 1.02)) : 0;
+  }
+}
+function bk2K2(P, Nn, n, vi0, gS, GR, GX, GY, I) {
+  const K = 8, dirs = new Float32Array(K * 3), gi = (x, y, z) => { const i = Math.floor(x / GR), j = Math.floor(z / GR), k = Math.floor(y / GR); return i < 0 || j < 0 || k < 0 || i >= GX || j >= GX || k >= GY ? -1 : ((k * GX + j) * GX + i) * 4; };
+  for (let i = 0; i < n; i++) {
+    const x = P[i * 3], y = P[i * 3 + 1], z = P[i * 3 + 2], nx = Nn[i * 3], ny = Nn[i * 3 + 1], nz = Nn[i * 3 + 2], ox = x + nx * 0.03, oy = y + ny * 0.03, oz = z + nz * 0.03;
+    rtHemi(nx, ny, nz, K, (vi0 + i) * 0.618, dirs);
+    let occ = 0, br = 0, bg = 0, bb = 0;
+    for (let k = 0; k < K; k++) {
+      const dx = dirs[k * 3], dy = dirs[k * 3 + 1], dz = dirs[k * 3 + 2], t = rtHit(ox, oy, oz, dx, dy, dz, 6);
+      if (t < 0) continue;
+      const u = Math.min(1, Math.max(0, (t - 0.15) / 1.45)); occ += 1 - u * u * (3 - 2 * u);
+      const g = gi(ox + dx * t - dx * 0.05, oy + dy * t - dy * 0.05, oz + dz * t - dz * 0.05);
+      if (g >= 0 && gS[g + 3] > 0) { br += gS[g]; bg += gS[g + 1]; bb += gS[g + 2]; }
+    }
+    const kb = 1.15 / K; I[i * 4] = br * kb; I[i * 4 + 1] = bg * kb; I[i * 4 + 2] = bb * kb; I[i * 4 + 3] = Math.min(1, Math.max(0, 0.25 + 0.75 * (1 - occ / K)));
+  }
+}
+function bk2Job(kind, J, L, LG, C) {
+  const P = J.b.pf.subarray(J.s0 * 3, (J.s0 + J.c) * 3), Nn = J.b.nf.subarray(J.s0 * 3, (J.s0 + J.c) * 3);
+  if (kind === 'p1') { const S = new Float32Array(J.c * 4), F = new Float32Array(J.c * 4), D = new Float32Array(J.c * 4); bk2K1(L, LG, N, CELL, P, Nn, J.c, J.vi0, S, F, D); J.b.lS.set(S, J.s0 * 4); J.b.lF.set(F, J.s0 * 4); J.b.lD.set(D, J.s0 * 4); }
+  else { const I = new Float32Array(J.c * 4); bk2K2(P, Nn, J.c, J.vi0, C.gS, C.GR, C.GX, C.GY, I); const S = J.b.lS; for (let i = 0; i < J.c; i++) { const o = (J.s0 + i) * 4; S[o] += I[i * 4]; S[o + 1] += I[i * 4 + 1]; S[o + 2] += I[i * 4 + 2]; S[o + 3] = I[i * 4 + 3]; } }
+}
+// a pool of workers built from these very functions (no extra files: the game is a single HTML page)
+async function bk2Pool() {
+  if (typeof Worker === 'undefined' || /[?&]nobakeworkers/.test(location.search)) return null;
+  const n = Math.max(1, Math.min(8, (navigator.hardwareConcurrency || 4) - 1));
+  const src = ['"use strict";', 'const clamp = ' + clamp.toString() + ';', 'const smooth = ' + smooth.toString() + ';', 'const RT = {}; const _rtStack = new Int32Array(128);',
+    rtOccluded.toString(), rtHit.toString(), rtHemi.toString(), bk2Hash.toString(), bk2Direct.toString(), bk2K1.toString(), bk2K2.toString(),
+    `let L, LG, NN, CC, gS, G;
+onmessage = e => { const m = e.data;
+  if (m.t === 'init') { RT.tri = m.tri; RT.nodes = m.nodes; RT.meta = m.meta; L = m.L; LG = m.LG; NN = m.NN; CC = m.CC; postMessage({ t: 'ok' }); return; }
+  if (m.t === 'cache') { gS = m.gS; G = m.G; postMessage({ t: 'ok' }); return; }
+  if (m.t === 'p1') { const S = new Float32Array(m.n * 4), F = new Float32Array(m.n * 4), D = new Float32Array(m.n * 4); bk2K1(L, LG, NN, CC, m.P, m.Nn, m.n, m.vi0, S, F, D); postMessage({ t: 'r', id: m.id, S, F, D }, [S.buffer, F.buffer, D.buffer]); return; }
+  if (m.t === 'p2') { const I = new Float32Array(m.n * 4); bk2K2(m.P, m.Nn, m.n, m.vi0, gS, G[0], G[1], G[2], I); postMessage({ t: 'r', id: m.id, I }, [I.buffer]); }
+};`].join('\n');
+  let url, W = [];
+  try {
+    url = URL.createObjectURL(new Blob([src], { type: 'text/javascript' }));
+    for (let i = 0; i < n; i++) W.push(new Worker(url));
+    const LG = bk2LG2, init = { t: 'init', tri: RT.tri, nodes: RT.nodes, meta: RT.meta, L: LV.l2Lights, LG, NN: N, CC: CELL };
+    await Promise.all(W.map(w => new Promise((res, rej) => { w.onmessage = () => res(); w.onerror = er => rej(er); w.postMessage(init); })));
+  } catch (e) { W.forEach(w => w.terminate()); if (url) URL.revokeObjectURL(url); return null; }
+  const pool = { n,
+    cache: (gS, G) => Promise.all(W.map(w => new Promise(res => { w.onmessage = () => res(); w.postMessage({ t: 'cache', gS, G }); }))),
+    run: (tasks, onDone) => new Promise((res, rej) => {
+      let next = 0, live = 0;
+      const feed = w => { if (next >= tasks.length) { if (!live) res(); return; } const id = next++, T = tasks[id]; live++; w.__id = id; w.postMessage({ t: T.t, P: T.P, Nn: T.Nn, n: T.n, vi0: T.vi0, id }); };
+      W.forEach(w => { w.onmessage = e => { live--; onDone(tasks[e.data.id].J, e.data); feed(w); }; w.onerror = er => rej(er); feed(w); });
+    }),
+    close: () => { W.forEach(w => w.terminate()); URL.revokeObjectURL(url); } };
+  return pool;
+}
+let bk2LG2 = null;
 async function bake2(progress) {
   const t0 = performance.now(), L = LV.l2Lights;
   progress(0.66, 'TRACING THE LAMPS…'); await nextFrame();
   rtBuild(new Float32Array(K2.occl), K2.occM ? new Uint8Array(K2.occM) : null);
-  const LG = bk2LightGrid(L), buckets = [...K2.B.values()];
+  const LG = bk2LightGrid(L), buckets = [...K2.B.values()]; bk2LG2 = LG;
   let nv = 0; for (const b of buckets) { nv += b.p.length / 3; b.lS = new Float32Array(b.p.length / 3 * 4); b.lF = new Float32Array(b.p.length / 3 * 4); b.lD = new Float32Array(b.p.length / 3 * 4); }
-  // ---- pass 1: direct light ----
-  const GR = 0.75, GX = Math.ceil(LEVEL / GR), GY = 15, gS = new Float32Array(GX * GX * GY * 4);   // radiance cache: albedo x direct light, averaged per 0.75 m cell
+  // ---- pass 1: direct light (soft shadows) ----
+  const GR = 0.9, GX = Math.ceil(LEVEL / GR), GY = 12, gS = new Float32Array(GX * GX * GY * 4);   // radiance cache: albedo x direct light, averaged per 0.9 m cell
   const gi = (x, y, z) => { const i = Math.floor(x / GR), j = Math.floor(z / GR), k = Math.floor(y / GR); return i < 0 || j < 0 || k < 0 || i >= GX || j >= GX || k >= GY ? -1 : ((k * GX + j) * GX + i) * 4; };
-  let done = 0, vi = 0, rays0 = 0;
-  for (const b of buckets) {
-    const n = b.p.length / 3, P = b.p, Nn = b.n, C = b.c, A = bk2Alb(b.mat), prop = b.mat === 'prop';
-    for (let i = 0; i < n; i++, vi++) {
-      const x = P[i * 3], y = P[i * 3 + 1], z = P[i * 3 + 2], cell = clamp(Math.floor(z / CELL), 0, N - 1) * N + clamp(Math.floor(x / CELL), 0, N - 1);
-      const o = bk2Direct(L, LG[cell], x, y, z, Nn[i * 3], Nn[i * 3 + 1], Nn[i * 3 + 2], vi, _bkO, false);
-      b.lS[i * 4] = o.s[0]; b.lS[i * 4 + 1] = o.s[1]; b.lS[i * 4 + 2] = o.s[2];
-      b.lF[i * 4] = o.f[0]; b.lF[i * 4 + 1] = o.f[1]; b.lF[i * 4 + 2] = o.f[2];
-      const dl = Math.hypot(o.d[0], o.d[1], o.d[2]); b.lD[i * 4] = dl > 1e-6 ? o.d[0] / dl : 0; b.lD[i * 4 + 1] = dl > 1e-6 ? o.d[1] / dl : 1; b.lD[i * 4 + 2] = dl > 1e-6 ? o.d[2] / dl : 0; b.lD[i * 4 + 3] = o.w > 1e-6 ? clamp(dl / (o.w * 1.02), 0, 1) : 0;
-      // splat into the radiance cache (a little off the surface, so the hit point of a ray lands in the same cell)
-      const g = gi(x + Nn[i * 3] * 0.1, y + Nn[i * 3 + 1] * 0.1, z + Nn[i * 3 + 2] * 0.1);
-      if (g >= 0) { const tr = prop ? C[i * 4] * C[i * 4] * 1.4 : C[i * 4], tg = prop ? C[i * 4 + 1] * C[i * 4 + 1] * 1.4 : C[i * 4 + 1], tb = prop ? C[i * 4 + 2] * C[i * 4 + 2] * 1.4 : C[i * 4 + 2];
-        gS[g] += (o.s[0] + o.f[0] * 0.6) * A[0] * tr; gS[g + 1] += (o.s[1] + o.f[1] * 0.6) * A[1] * tg; gS[g + 2] += (o.s[2] + o.f[2] * 0.6) * A[2] * tb; gS[g + 3] += 1; }
+  // jobs: slices of buckets, so the work spreads over the worker pool (or runs here when workers are unavailable)
+  const jobs = []; let vi0 = 0;
+  for (const b of buckets) { b.pf = new Float32Array(b.p); b.nf = new Float32Array(b.n); const n = b.p.length / 3; for (let s0 = 0; s0 < n; s0 += 6000) { const c = Math.min(6000, n - s0); jobs.push({ b, s0, c, vi0: vi0 + s0 }); } vi0 += n; }
+  const pool = await bk2Pool(), runJobs = async (kind, label, p0, p1) => {
+    let done = 0; const doneAt = () => progress(p0 + (p1 - p0) * done / jobs.length, label);
+    if (!pool) { for (const J of jobs) { bk2Job(kind, J, L, LG, { gS, GR, GX, GY }); done++; if (done % 6 === 0) { doneAt(); await nextFrame(); } } return; }
+    await pool.run(jobs.map(J => ({ t: kind, P: J.b.pf.slice(J.s0 * 3, (J.s0 + J.c) * 3), Nn: J.b.nf.slice(J.s0 * 3, (J.s0 + J.c) * 3), n: J.c, vi0: J.vi0, J })), (J, r) => {
+      if (kind === 'p1') { J.b.lS.set(r.S, J.s0 * 4); J.b.lF.set(r.F, J.s0 * 4); J.b.lD.set(r.D, J.s0 * 4); }
+      else { const S = J.b.lS; for (let i = 0; i < J.c; i++) { const o = (J.s0 + i) * 4; S[o] += r.I[i * 4]; S[o + 1] += r.I[i * 4 + 1]; S[o + 2] += r.I[i * 4 + 2]; S[o + 3] = r.I[i * 4 + 3]; } }
+      done++; doneAt();
+    });
+  };
+  await runJobs('p1', 'TRACING THE LAMPS…', 0.66, 0.78);
+  for (const b of buckets) {   // splat into the radiance cache (a little off the surface, so a ray's hit point lands in the same cell)
+    const n = b.p.length / 3, P = b.p, Nn = b.n, C = b.c, A = bk2Alb(b.mat), prop = b.mat === 'prop', S = b.lS, F = b.lF;
+    for (let i = 0; i < n; i++) {
+      const g = gi(P[i * 3] + Nn[i * 3] * 0.1, P[i * 3 + 1] + Nn[i * 3 + 1] * 0.1, P[i * 3 + 2] + Nn[i * 3 + 2] * 0.1); if (g < 0) continue;
+      const tr = prop ? C[i * 4] * C[i * 4] * 1.4 : C[i * 4], tg = prop ? C[i * 4 + 1] * C[i * 4 + 1] * 1.4 : C[i * 4 + 1], tb = prop ? C[i * 4 + 2] * C[i * 4 + 2] * 1.4 : C[i * 4 + 2];
+      gS[g] += (S[i * 4] + F[i * 4] * 0.6) * A[0] * tr; gS[g + 1] += (S[i * 4 + 1] + F[i * 4 + 1] * 0.6) * A[1] * tg; gS[g + 2] += (S[i * 4 + 2] + F[i * 4 + 2] * 0.6) * A[2] * tb; gS[g + 3] += 1;
     }
-    done += n; if (done - rays0 > 25000) { rays0 = done; progress(0.66 + 0.12 * done / nv, 'TRACING THE LAMPS…'); await nextFrame(); }
   }
   for (let g = 0; g < gS.length; g += 4) if (gS[g + 3] > 0) { const w = 1 / gS[g + 3]; gS[g] *= w; gS[g + 1] *= w; gS[g + 2] *= w; }
   // ---- pass 2: ambient occlusion and one bounce (cosine-weighted rays into the cache) ----
-  progress(0.78, 'BOUNCING THE LIGHT…'); await nextFrame();
-  const K = 8, dirs = new Float32Array(K * 3); done = 0; rays0 = 0; vi = 0;
-  for (const b of buckets) {
-    const n = b.p.length / 3, P = b.p, Nn = b.n;
-    for (let i = 0; i < n; i++, vi++) {
-      const x = P[i * 3], y = P[i * 3 + 1], z = P[i * 3 + 2], nx = Nn[i * 3], ny = Nn[i * 3 + 1], nz = Nn[i * 3 + 2], ox = x + nx * 0.03, oy = y + ny * 0.03, oz = z + nz * 0.03;
-      rtHemi(nx, ny, nz, K, vi * 0.618, dirs);
-      let occ = 0, br = 0, bg = 0, bb = 0;
-      for (let k = 0; k < K; k++) {
-        const dx = dirs[k * 3], dy = dirs[k * 3 + 1], dz = dirs[k * 3 + 2], t = rtHit(ox, oy, oz, dx, dy, dz, 6);
-        if (t < 0) continue;
-        occ += 1 - smooth(0.15, 1.6, t);
-        const g = gi(ox + dx * t - dx * 0.05, oy + dy * t - dy * 0.05, oz + dz * t - dz * 0.05);
-        if (g >= 0 && gS[g + 3] > 0) { br += gS[g]; bg += gS[g + 1]; bb += gS[g + 2]; }
-      }
-      const ao = 1 - occ / K, kb = 1.15 / K;
-      b.lS[i * 4] += br * kb; b.lS[i * 4 + 1] += bg * kb; b.lS[i * 4 + 2] += bb * kb; b.lS[i * 4 + 3] = clamp(0.25 + 0.75 * ao, 0, 1);
-    }
-    done += n; if (done - rays0 > 25000) { rays0 = done; progress(0.78 + 0.1 * done / nv, 'BOUNCING THE LIGHT…'); await nextFrame(); }
-  }
+  if (pool) await pool.cache(gS, [GR, GX, GY]);
+  await runJobs('p2', 'BOUNCING THE LIGHT…', 0.78, 0.88);
+  if (pool) pool.close();
+  BK2.workers = pool ? pool.n : 0;
   // ---- the 2D light texture (characters, doors, items, the sanity meter): sphere irradiance at 1.1 m, with shadows ----
   progress(0.88, 'LIGHTING THE PEOPLE…'); await nextFrame();
   const R = LMR, D4 = 4, RG = Math.ceil(R / D4), eS = new Float32Array(RG * RG), eF = new Float32Array(RG * RG);

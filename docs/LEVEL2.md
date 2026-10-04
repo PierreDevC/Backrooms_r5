@@ -7,15 +7,26 @@ Files: `textures2.js`, `level2.js` (layout, walls, geometry, lights), `world2.js
 ## Premise (wiki: Level 2, "Pipe Dreams")
 Dark, hot maintenance tunnels, pipes on every wall and ceiling, steam, the hum of machinery; Facelings (faceless, mostly harmless) and Hounds (crawling, hunt by fear and noise). Here: the tunnels are one pressure system that "surges" every few minutes; between surges you work.
 
-## Map (48 x 48 cells, CELL 3.6 m)
-- SUMP (22-24, 40-42): you climb out of a floor drain. Phone.
-- THE SPINE (x 23, y 14-39): the main tunnel, north from the sump. Steam shelters (1-cell alcoves with a green lamp) along it.
-- BOILER OFFICE (24-27, 27-30): Ida. Door (23,28)->(24,28). Gauges wall, a window onto the BOILER HALL (28-34, 24-32).
-- COLD ROOM A (21-22, 35-36), door from the Spine.
-- WEST · THE LOW GALLERIES (x 2-14, y 18-36, entered along y 22 from the Spine): hot standing water, red bulbs. The Gamma Team camp (4-6, 27-30): crowbar, three Gamma logs, Ida's ID card. Cold room B (9-10, 28-29). West regulator room (1-3, 33-35).
-- NORTH · THE SWITCHYARD (16-30, 4-13, 6 m high): breaker cabinets, Facelings on shift, the foreman's tap pipe, four breaker levers, the time clock, the north regulator cage.
-- EAST · THE LONG PIPE: y 18 from x 24 to 44, then x 44 from y 18 to 41, then y 41 back west to the jammed valve-room door (36,41). Cold room C (45-46, 28-29). The Hound lives here. Valve room (33-35, 40-42): Benny, the east regulator (its wheel is missing; Benny has it).
-- GAMMA LIFT (41-43, 6-9), reached from the Switchyard along y 8. Needs power (breakers) and pressure down (three regulators).
+## Map (r11: 56 x 56 cells, CELL 3.6 m; floors all at 0)
+- PUMP ROOM (25-28, 47-50, 5 m): you climb out of the floor drain at (26, 49). Two vertical sump pumps over a railed pit, the pump control panel, a phone.
+- THE SPINE (x 27, y 16-46, 3.6 m): the service tunnel north from the pump room: a haunched (chamfered) ceiling, a painted dado with a yellow line, a steel-grated drain channel down the middle, the insulated steam main and the condensate return on the east wall, service water, cable tray and conduit on the west wall, bulkhead lamps every other cell. Six steam refuges.
+- BOILER CONTROL ROOM (29-31, 31-33, reached by a short passage at (28, 32)): Ida at her desk under a wired-glass window onto the boiler house; the instrument board (chart recorders, a field of gauges), a terminal, lockers, a cot, the calendar, the shift board.
+- BOILER HOUSE (32-43, 23-36, 9.5 m), door at (31, 27): two horizontal fire-tube boilers (3 m shells, 8 m long) on saddles with red burners at the north end, water columns, safety valves, outlets into a steam header at 6.4 m, square flues through the roof, a yellow catwalk with a caged ladder along each; three feedwater pumps, a deaerator on a steel stand, a blowdown tank, the chemical dosing skid, floor walkway markings, high-bay sodium lamps.
+- COLD STORE A (25-26, 42-43) and the WORKSHOP (24-26, 37-39) off the Spine.
+- WEST: the FEEDWATER TANK ROOM (19-24, 22-26, 6.5 m; two 3.1 m tanks with ladders) leads into THE LOW GALLERIES: brick culverts with barrel vaults (springing 2.0 m, crown 3.0 m) on lines y 20 / 27 / 34 and x 3 / 10 / 17, standing hot water, red lamps, duckboards. STORE 9, the Gamma Team camp (4-6, 29-31), door (3, 30). Cold store B (11-12, 30-31). The west regulator room (2-4, 39-41).
+- NORTH: the SWITCHGEAR HALL (18-36, 3-13, 7.5 m): two lineups of metal-clad switchgear back to back, a transformer bay behind a yellow partition, roof steel, fluorescent battens; the breaker bank on the north wall at x 27, the foreman's pipe at x 25, the time clock by the way in, the north regulator caged in the north-east corner. The lift corridor (37-46, 8) to the GAMMA LIFT (47-50, 6-10), a freight car behind a folding gate.
+- EAST: THE LONG PIPE: y 19 from x 28 to 51, x 51 from y 19 to 46, y 46 back west to x 41; a 1 m insulated main on saddles with elbows at the corners; the dark stretch (x 51, y 27-41; y 19, x 41-48). Cold store C (49-50, 32-33). VALVE ROOM 4 (38-40, 45-47), jammed door at (41, 46).
+
+## Rendering (r11)
+Level 2 has its own renderer (game/src/rt.js, kit2.js, bake2.js, render2.js):
+- Everything static is modelled through kit2.js into tessellated buckets (vertex spacing about 0.4 m on architecture, subdivided pipes and lathed props), so light can vary across every surface.
+- At load, a JavaScript ray tracer (a binned-SAH triangle BVH, about 1.5 M rays/s per core) bakes per vertex: direct light from all 168 lamps with soft shadows (bulbs sampled as spheres, fluorescent tubes as lines, high-bays as downward cones), ambient occlusion, and one bounce of coloured light through a radiance cache. The work is spread over a Web Worker pool built from the same functions (about 1.3 s for 800 k vertices on 8 cores; ?nobakeworkers forces the single-thread path).
+- Each vertex stores steady light, flickering-lamp light (scaled by the flicker at runtime), the dominant light direction and how directional it is. The shaders re-light the scanned normal maps against that direction, add a GGX highlight from it (wet floors and metal catch the lamps), add the torch and the other dynamic lights, then in-scattering from the eight nearest lamps along the view ray (haze that thickens in a surge).
+- Materials are CC0 scans from ambientCG (see CREDITS.md): formwork concrete with a painted dado for the tunnels, plain concrete for rooms, old brick for the culverts, worn floor concrete, diamond plate, perforated walkway, white tile, painted metal, rusty painted metal, worn steel, hazard stripes, corrugated steel. Props are textured triplanar from the metal scans by a material id; glass is drawn blended.
+- Characters, doors, items and the sanity meter still read the 2D light texture; bake2 refills it with ray-traced irradiance at 1.1 m (with shadows).
+
+## Characters (r11)
+On the skinned Quaternius body (game/src/chars2.js; outfits are painted in the skin shader): IDA, seated at her board in a navy work shirt, hair pinned up, ear defenders round her neck, her face fading smooth (oK.x); BENNY, a checked shirt under a hi-vis vest, jeans, a yellow hard hat, a tool belt; the FACELING crew in boiler suits with reflective tape and work gloves, hard hats on some, and smooth egg heads with nothing on the front; the FOREMAN in white with a vest and a clipboard; the HOUND, a long thin grey body that goes about on all fours (posed on the skeleton's proxies), its jaw hanging. ?noskin falls back to the old procedural figures.
 
 ## Spine of the story
 1. A phone rings in the sump. IDA (Boiler Office) talks you up the Spine.
@@ -58,4 +69,5 @@ Speakers: IDA (phone and in person), BENNY (through the valve-room door, then in
 - The lift comes up into Level 0 ("yellow wallpaper and a hum you know").
 
 ## Verified (headless)
-qa2/s2_story.js (whole chain to THE LIFT, with Ida's card), qa2/s2_systems.js (surge damage in a tunnel vs a shelter, heat, the Hound chasing a noisy player and backing off a steady light, ON SHIFT ending), qa2/s2_death.js (death and checkpoint retry), qa2/s2_reach.js (solid-aware flood fill: every room, phone and quest target reachable), qa2/s2_views.js (screenshots). No human playthrough, audio, performance, touch or difficulty review.
+r11: s2_story.js, s2_reach.js, s2_systems.js, s2_death.js, qa_r10/seq_fuzz.js (level 2), nav_walk.js and guide_arrows.js pass on the rebuilt map; lineup and room screenshots inspected. No human playthrough, no real-GPU performance test (the headless software renderer runs it at 18 fps against Level 37's 6).
+r9: qa2/s2_story.js (whole chain to THE LIFT, with Ida's card), qa2/s2_systems.js (surge damage in a tunnel vs a shelter, heat, the Hound chasing a noisy player and backing off a steady light, ON SHIFT ending), qa2/s2_death.js (death and checkpoint retry), qa2/s2_reach.js (solid-aware flood fill: every room, phone and quest target reachable), qa2/s2_views.js (screenshots). No human playthrough, audio, performance, touch or difficulty review.

@@ -9,7 +9,7 @@ async function buildWorld2(progress) {
   registerShaders();
   SCN = new BABYLON.Scene(ENG);
   SCN.clearColor = new BABYLON.Color4(0.03, 0.025, 0.02, 1); SCN.skipPointerMovePicking = true; SCN.blockMaterialDirtyMechanism = false;
-  CAM = new BABYLON.FreeCamera('cam', V3(10, 1.6, 10), SCN); CAM.inputs.clear(); CAM.minZ = 0.05; CAM.maxZ = 90; CAM.fov = 1.0;
+  CAM = new BABYLON.FreeCamera('cam', V3(10, 1.6, 10), SCN); CAM.inputs.clear(); CAM.minZ = 0.05; CAM.maxZ = 70; CAM.fov = 1.0;
   resetW9(); resetWP2(); r2Reset(); k2Reset();
   progress(0.04, 'FOLLOWING THE PIPES…'); await nextFrame();
   genLayout2(); collectPieces5(side2, opening2); planLights2();
