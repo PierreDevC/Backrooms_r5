@@ -195,6 +195,7 @@ function buildItems(diff) {
   const nb = [14, 11, 8][diff], nw = [14, 9, 5][diff];   // almond water: Easy gets the most (r4.4)
   for (let i = 0; i < nb; i++) place('battery');
   for (let i = 0; i < nw; i++) place('water');
+  buildLoot(Array.from({ length: N * N }, (_, c) => c).filter(c => LV.spawnD[c] >= 2), diff);   // r12: bars, drinks, drawers, the lockbox and its key
 }
 
 // ----- tape sites: tripod camcorder, VHS tape, sometimes a dead explorer -----

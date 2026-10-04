@@ -452,6 +452,13 @@ function itemModel(type, root, mat) {
     part('Sphere', { diameter: 0.012, segments: 4 }, root, mat, [1, 1, 1], 1, [0.02, 0.1, 0.03]);
     return;
   }
+  if (type === 'cells') {   // r12: a blister pack of two D cells on a card
+    part('Box', { width: 0.1, height: 0.008, depth: 0.17 }, root, mat, [0.8, 0.82, 0.86], 0, [0, 0.004, 0]);
+    for (const s of [-1, 1]) part('Cylinder', { diameter: 0.034, height: 0.1, tessellation: 12 }, root, mat, [0.16, 0.3, 0.16], 0, [s * 0.026, 0.025, 0], [Math.PI / 2, 0, 0]);
+    for (const s of [-1, 1]) part('Cylinder', { diameter: 0.014, height: 0.012, tessellation: 8 }, root, mat, [0.8, 0.78, 0.7], 0, [s * 0.026, 0.025, 0.056], [Math.PI / 2, 0, 0]);
+    part('Sphere', { diameter: 0.012, segments: 4 }, root, mat, [1, 0.95, 0.8], 1, [0.04, 0.035, 0.05]);
+    return;
+  }
   if (type === 'battery') {
     part('Box', { width: 0.12, height: 0.036, depth: 0.07 }, root, mat, [0.14, 0.14, 0.15], 0, [0, 0.018, 0]);
     part('Box', { width: 0.121, height: 0.012, depth: 0.071 }, root, mat, [0.85, 0.62, 0.1], 0, [0, 0.02, 0]);
@@ -482,6 +489,7 @@ function buildItems9(diff) {
   };
   for (let i = 0; i < [14, 11, 9][diff]; i++) place('battery');
   for (let i = 0; i < [15, 10, 6][diff]; i++) place('water');   // r4.4: more almond water the easier it is
+  buildLoot(cells, diff, { skipCell: c => W9.busy.has(c) });   // r12
 }
 
 // ================= assemble =================

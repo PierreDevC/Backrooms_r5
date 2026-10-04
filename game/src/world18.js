@@ -530,6 +530,7 @@ function buildItems18(diff) {
   };
   for (let i = 0; i < [6, 5, 3][diff]; i++) place('battery');
   for (let i = 0; i < [10, 7, 3][diff]; i++) place('water');   // r4.4: more almond water the easier it is
+  buildLoot([LV.cls, LV.nap, LV.play, LV.slide, LV.mead, LV.bed, LV.kit, LV.yel].flatMap(r => r.cells), diff, { ok: (x, z) => !(x > PIT18.x0 - 0.8 && x < PIT18.x1 + 0.8 && z > PIT18.z0 - 0.8 && z < PIT18.z1 + 0.8) });   // r12
 }
 async function buildWorld18(progress) {
   registerShaders();

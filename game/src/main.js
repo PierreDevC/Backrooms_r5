@@ -347,7 +347,7 @@ function frameSim(dt) {
   }
   if (G.state !== 'loading') {
     try { LVL === 7 ? worldFX7(dt) : LVL === 2 ? worldFX2(dt) : LVL === 37 ? worldFX37(dt) : LVL === 18 ? worldFX18(dt) : LVL === 5 ? worldFX5(dt) : LVL === 9 ? worldFX9(dt) : worldFX(dt); } catch (e) { frameErr('world', e); }   // kept apart so the HUD still updates
-    cpTick(dt); holdTick(dt); docTick(dt);
+    cpTick(dt); holdTick(dt); docTick(dt); lootTick(dt);
     if (G.state === 'play' || G.state === 'dead') updateHUD(dt);
     updateSubs(dt);
   }
@@ -360,7 +360,7 @@ function simStep(dt) {
     case 'dead': LVL === 7 ? updateAI7(dt) : LVL === 2 ? updateAI2(dt) : LVL === 37 ? updateAI37(dt) : LVL === 18 ? updateAI18(dt) : LVL === 5 ? updateAI5(dt) : LVL === 9 ? updateAI9(dt) : updateAI(dt); deathCam(dt); break;
     case 'won': LVL === 7 ? wonCam7(dt) : LVL === 2 ? wonCam2(dt) : LVL === 37 ? wonCam37(dt) : LVL === 18 ? wonCam18(dt) : LVL === 5 ? wonCam5(dt) : LVL === 9 ? wonCam9(dt) : wonCam(dt); break;
   }
-  LVL === 7 ? worldFX7(dt) : LVL === 2 ? worldFX2(dt) : LVL === 37 ? worldFX37(dt) : LVL === 18 ? worldFX18(dt) : LVL === 5 ? worldFX5(dt) : LVL === 9 ? worldFX9(dt) : worldFX(dt); cpTick(dt); holdTick(dt); docTick(dt); updateSubs(dt);
+  LVL === 7 ? worldFX7(dt) : LVL === 2 ? worldFX2(dt) : LVL === 37 ? worldFX37(dt) : LVL === 18 ? worldFX18(dt) : LVL === 5 ? worldFX5(dt) : LVL === 9 ? worldFX9(dt) : worldFX(dt); cpTick(dt); holdTick(dt); docTick(dt); lootTick(dt); updateSubs(dt);
 }
 async function buildScene() {
   const prog = (p, m) => { $('loadFill').style.width = (p * 100).toFixed(0) + '%'; $('loadMsg').textContent = m; };

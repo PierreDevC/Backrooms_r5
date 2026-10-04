@@ -300,6 +300,7 @@ function buildItems37(diff) {
   };
   for (let i = 0; i < [6, 5, 3][diff]; i++) place('battery');
   for (let i = 0; i < [9, 6, 3][diff]; i++) place('water');
+  buildLoot(cells, diff, { y: floorY37, ok: (x, z) => LV.bas[cell37(x, z)] < 0 });   // r12
 }
 // ----- endings -----
 function flags37() { flag('ending37', G37.ending); flag('wings37', wingsDone37()); }

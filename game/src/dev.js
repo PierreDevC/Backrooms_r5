@@ -191,4 +191,4 @@ function devTick(now) {
   if (now - DEV.tStat > 250) { DEV.tStat = now; devStatsUpdate(); }
 }
 frame = devFrameWrap(frame);
-if (window.__BR) Object.assign(window.__BR, { DEV, devOn, devToggle, devTick, devStatsText, devOpen, devClose, devTabDown, devTabUp, DEV_OPTS, DBG_STATS, hpMax, playerCamera, toggleMap9, closeMap9, ERRS });
+if (window.__BR) Object.assign(window.__BR, { DEV, devOn, devToggle, devTick, devStatsText, devOpen, devClose, devTabDown, devTabUp, DEV_OPTS, DBG_STATS, hpMax, playerCamera, toggleMap9, closeMap9, ERRS, goLevel5, goLevel18, goLevel37, goLevel2, goLevel7, startGame, lootOpenDrawer, lootOpenChest, lootWallSpot, lootRectFree, edgeVal, wallPt, eKey, giveLoot, buildLoot, lootTick, task, taskOf, TASKS });

@@ -270,6 +270,8 @@ function buildItems2(diff) {
   for (let i = 0; i < [9, 7, 4][diff]; i++) place('water');
   for (let i = 0; i < [6, 5, 3][diff]; i++) place('bar');
   for (let i = 0; i < [5, 4, 2][diff]; i++) place('drink');
+  const more = []; for (const k of ['spine', 'hall', 'sw', 'tank', 'gall', 'long', 'lcorr']) { const r = LV.dry[k]; if (r) more.push(...r.cells); }
+  buildLoot(spots.concat(more), diff, { noFloor: true });   // r12: bars and drinks are already spread here; drawers, the tool chest and its key
 }
 // ----- per frame -----
 function places2Events(dt) {

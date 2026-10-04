@@ -162,4 +162,5 @@ function buildItems5(diff) {
   };
   for (let i = 0; i < [7, 6, 4][diff]; i++) place('battery');
   for (let i = 0; i < [12, 8, 5][diff]; i++) place('water');   // r4.4: more almond water the easier it is
+  buildLoot(cells.concat(LV.rooms.filter(r => r.t === 'lobby' || r.t === 'hall').flatMap(r => r.cells)), diff);   // r12
 }

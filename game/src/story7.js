@@ -280,6 +280,7 @@ function buildItems7(diff) {
   };
   for (let i = 0; i < [6, 5, 3][diff]; i++) place('battery');
   for (let i = 0; i < [9, 7, 4][diff]; i++) place('water');
+  buildLoot(cells, diff, { y: floorY37, ok: (x, z) => LV.bas[cell7(x, z)] < 0 });   // r12
 }
 // ----- endings -----
 function flags7() { flag('ending7', GS7.ending); flag('parts7', partsDone7()); flag('logs7', logCount7()); flag('fen7', PS7.fenMet ? 'met' : ''); }
