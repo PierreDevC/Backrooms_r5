@@ -130,7 +130,7 @@ function updateHUD(dt) {
 }
 
 // ----- screens -----
-const SCREENS = ['loading', 'title', 'levels', 'brief', 'controls', 'settings', 'pause', 'notes', 'end'];
+const SCREENS = ['loading', 'title', 'levels', 'brief', 'controls', 'settings', 'devset', 'pause', 'notes', 'end'];
 let backTo = 'title';
 function show(id) { for (const s of SCREENS) $(s).classList.toggle('hide', s !== id); }
 function openLevels() {
@@ -182,6 +182,7 @@ function bindUI() {
   $('sInv').checked = !!S.inv; $('sInv').addEventListener('change', () => { S.inv = $('sInv').checked; saveSettings(); });
   document.querySelectorAll('button').forEach(b => b.addEventListener('mouseenter', () => { if (AU.ctx) SFX.click(); }));
   try { const b = +localStorage.getItem('br_best'); if (b > 0) $('bestTime').textContent = 'BEST ESCAPE ' + fmtTC(b); } catch (e) {}
+  bindDev();   // r12: developer mode
   if (IS_TOUCH) { document.body.classList.add("tui"); bindTouch(); }
 }
 function bindTouch() {

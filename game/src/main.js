@@ -168,6 +168,7 @@ function useExit() {
 }
 function die(src) {
   if (G.state !== 'play') return;
+  if (devOn('god') || devOn('hp')) { PL.hp = Math.max(PL.hp, 1); return; }   // r12: developer mode
   G.state = 'dead'; G.cause = src; DEATH.t = 0; DEATH.y0 = CAM.position.y; DEATH.r0 = CAM.rotation.z; DEATH.p0 = CAM.rotation.x; DEATH.shown = false;
   clearSlot(0); $('prompt').classList.remove('show');
   later(1.9, () => SFX.staticBurst(0.55, 2.2));

@@ -14,6 +14,12 @@
 <canvas id="c" tabindex="0" aria-label="The Backrooms 3D game view"></canvas>
 
 <!-- camcorder viewfinder HUD -->
+<div id="devHud" class="hide" aria-hidden="true">
+  <div id="devBadge"><b>DEV MODE</b> · hold TAB</div>
+  <div id="devMenu" class="hide"><div class="dvTitle">DEV MODE · click to toggle</div><div id="devMenuList"></div></div>
+  <i id="devCur" class="hide"></i>
+</div>
+<div id="dbg_tl" class="dbg tl hide"></div><div id="dbg_tr" class="dbg tr hide"></div><div id="dbg_bl" class="dbg bl hide"></div><div id="dbg_br" class="dbg br hide"></div>
 <div id="osd" class="hide" aria-hidden="true">
   <div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div>
   <div id="osdTL"><span id="rec"><i></i>REC</span><span id="tc">0:00:00</span><span class="sp">SP</span></div>
@@ -129,7 +135,7 @@
       <div><kbd>F</kbd> Flashlight</div><div><kbd>N</kbd> Night shot (IR)</div>
       <div><kbd>E</kbd> Interact / pick up</div><div><kbd>R</kbd> Swap battery</div>
       <div><kbd>WHEEL</kbd> Pick a stored item</div><div><kbd>Q</kbd> / <kbd>WHEEL CLICK</kbd> Use it (almond water by default)</div><div><kbd>B</kbd> / <kbd>T</kbd> Energy bar / energy drink</div><div><kbd>RMB</kbd> hold / <kbd>Z</kbd> Zoom</div>
-      <div><kbd>RMB</kbd>/<kbd>X</kbd> Latch door</div><div><kbd>Tab</kbd> Map snapshot (Level 9)</div>
+      <div><kbd>RMB</kbd>/<kbd>X</kbd> Latch door</div><div><kbd>Tab</kbd> Map snapshot (Level 9) · hold for the developer menu (Developer mode)</div>
       <div><kbd>J</kbd> Field notes</div><div><kbd>E</kbd> Close a document</div>
       <div><kbd>G</kbd> Put down the battery (Level 0) / spray / flare</div><div><kbd>V</kbd> Door peephole (Level 9)</div><div><kbd>E</kbd> Look outside (at a window)</div>
         <div><kbd>Esc</kbd> Pause</div><div><kbd>M</kbd> Mute</div>
@@ -161,7 +167,25 @@
     <label class="row">VOLUME <input id="sVol" type="range" min="0" max="1" step="0.05" value="0.8"></label>
     <label class="row">QUALITY <select id="sQual"><option value="0">LOW</option><option value="1" selected>MEDIUM</option><option value="2">HIGH</option></select></label>
     <label class="row chk">INVERT Y <input id="sInv" type="checkbox"></label>
+    <label class="row chk">DEVELOPER MODE <input id="sDev" type="checkbox"></label>
+    <button class="mi hide" id="btnDevSet">DEVELOPER SETTINGS</button>
     <button class="mi primary back">BACK</button>
+  </div>
+</div>
+
+<!-- developer settings (r12) -->
+<div id="devset" class="screen hide">
+  <div class="panel">
+    <div class="kicker">MENU · DEVELOPER</div>
+    <h2>DEVELOPER</h2>
+    <p class="devnote">In game, hold <kbd>TAB</kbd> (top-right DEV MODE badge) and click an option with the mouse. The boxes below are the saved state of those options.</p>
+    <div id="devOptList"></div>
+    <label class="row">FAST MOVE FACTOR <span id="devFastV">×3.0</span> <input id="sDevFast" type="range" min="1.5" max="10" step="0.5" value="3"></label>
+    <h3>Debug mode</h3>
+    <label class="row chk">SHOW DEBUG STATS <input id="sDbg" type="checkbox"></label>
+    <label class="row">DEBUG STATS POSITION <select id="sDbgPos"></select></label>
+    <div id="dbgStatList"></div>
+    <button class="mi primary" id="btnDevBack">BACK</button>
   </div>
 </div>
 

@@ -95,6 +95,7 @@ function hurt(dmg, src) {
   if (G.state !== 'play') return;
   dmg *= [0.7, 1, 1.3][G.diff];
   PL.hp -= dmg; PL.lastHurt = FX.t; FX.hurt = 1; FX.glitch = Math.max(FX.glitch, 1.4); PL.shake = 1.2; PL.san = Math.max(0, PL.san - dmg * 0.35);
+  if (devOn('hp') || devOn('god')) PL.hp = Math.max(PL.hp, 1);
   if (PL.hp <= 0) { PL.hp = 0; die(src); }
 }
 
@@ -124,7 +125,7 @@ function updatePlayer(dt) {
   if (JUST.has('KeyV') && LVL === 9) { if (PEEPH.dr) peepStop9(); else if (PL.focus && PL.focus.alt2 && PL.focus.alt2Label && PL.focus.alt2Label()) PL.focus.alt2(); }   // r6: the peephole
   ALTCLICK = false;
   if (JUST.has('Tab') && LVL === 9) toggleMap9();
-  if (JUST.has('KeyC')) PL.crouch = !PL.crouch;
+  if (JUST.has('KeyC') && !devOn('fly')) PL.crouch = !PL.crouch;   // (while flying C is down)
   if (JUST.has('KeyZ')) PL.zoomT = !PL.zoomT;
   if (JUST.has('KeyG') && LVL === 5) useSpray5();
   if (JUST.has('KeyG') && LVL === 0) dropBattery0();
@@ -140,13 +141,13 @@ function updatePlayer(dt) {
   const runKey = K.has('ShiftLeft') || K.has('ShiftRight');
   const wantRun = runKey && iz > 0.3 && !crouch && !PL.exh && !PL.load;   // r6: carrying Brandt's battery: no sprint
   if (runKey && PL.crouch && iz > 0.3) PL.crouch = false;
-  const sp = (crouch ? 1.25 : wantRun ? 4.4 : 2.35) * (PL.hp < 30 ? 0.86 : 1) * (PL.exh ? 0.85 : 1) * (PL.spdK ?? 1) * (PL.load ? 0.74 : 1);
+  const sp = (crouch ? 1.25 : wantRun ? 4.4 : 2.35) * (PL.hp < 30 ? 0.86 : 1) * (PL.exh ? 0.85 : 1) * (PL.spdK ?? 1) * (PL.load ? 0.74 : 1) * (devOn('fast') ? S.devFast : 1);
   const sy = Math.sin(PL.yaw), cyw = Math.cos(PL.yaw);
   const tx = (sy * iz + cyw * ix) * sp, tz = (cyw * iz - sy * ix) * sp;
   const acc = il > 0.01 ? 8 : 11;
   PL.vx = damp(PL.vx, tx, acc, dt); PL.vz = damp(PL.vz, tz, acc, dt);
   const mvx = (PL.vx + PL.kx) * dt, mvz = (PL.vz + PL.kz) * dt, ns = Math.min(6, Math.ceil(Math.hypot(mvx, mvz) / 0.1) || 1), p = { x: PL.x, z: PL.z };
-  for (let i = 0; i < ns; i++) { p.x += mvx / ns; p.z += mvz / ns; collide(p, 0.28); }   // r5: substeps (<= 10 cm) so walls and props are never skipped
+  for (let i = 0; i < ns; i++) { p.x += mvx / ns; p.z += mvz / ns; if (!devNoclip()) collide(p, 0.28); }   // r5: substeps (<= 10 cm) so walls and props are never skipped
   PL.kx = damp(PL.kx, 0, 6, dt); PL.kz = damp(PL.kz, 0, 6, dt);
   const moved = Math.hypot(p.x - PL.x, p.z - PL.z);
   PL.spd = damp(PL.spd, moved / Math.max(dt, 1e-4), 12, dt);
@@ -164,7 +165,7 @@ function updatePlayer(dt) {
   // footsteps
   const stepLen = PL.run ? 0.95 : crouch ? 0.55 : 0.72, prevPh = PL.ph;
   PL.ph += moved / stepLen * Math.PI;
-  if (Math.floor(PL.ph / Math.PI) !== Math.floor(prevPh / Math.PI)) SFX.step(PL.run ? 2 : crouch ? 0 : 1, carpetWet(PL.x, PL.z));
+  if (DEV.fy < 0.3 && Math.floor(PL.ph / Math.PI) !== Math.floor(prevPh / Math.PI)) SFX.step(PL.run ? 2 : crouch ? 0 : 1, carpetWet(PL.x, PL.z));
   // noise: Level 9 scales it with speed (crouching ≈ silent, a slow walk is quieter than a brisk one, sprinting is loud)
   const l9 = LVL === 9;
   const nl = PL.spd < 0.25 ? 0 : PL.run ? 1 : crouch ? (l9 ? 0.04 * clamp(PL.spd / 1.25, 0, 1) : 0.08) : l9 ? 0.12 + 0.3 * clamp((PL.spd - 0.25) / 2.1, 0, 1) : 0.4;
@@ -191,6 +192,7 @@ function updatePlayer(dt) {
   PL.san = clamp(PL.san + ds * dt * (ds < 0 ? [0.6, 1, 1.3][G.diff] * (PL.focusT > 0 ? 0.5 : 1) : 1), 0, sanMax());
   if (PL.san <= 0) { PL.hp -= dt * 3.5; if (PL.hp <= 0) { PL.hp = 0; die('sanity'); } }
   FX.san = damp(FX.san, Math.pow(clamp(1 - PL.san / 100, 0, 1), 1.5), 2, dt);
+  devPlayerTick(dt);   // r12: developer options
   // interaction focus
   PL.focus = findInteract();
 }
@@ -207,7 +209,7 @@ function playerCamera(dt) {
   PL.shake = Math.max(0, PL.shake - dt * 1.4);
   const strafe = (PL.vx * Math.cos(PL.yaw) - PL.vz * Math.sin(PL.yaw));
   PL.roll = damp(PL.roll, -strafe * 0.006 + noise1(t * 0.5 + 70) * 0.014 + bobX * 0.35 + FX.san * Math.sin(t * 0.7) * 0.05, 6, dt);
-  CAM.position.set(PL.x + Math.cos(PL.yaw) * bobX, eye + bobY, PL.z - Math.sin(PL.yaw) * bobX);
+  CAM.position.set(PL.x + Math.cos(PL.yaw) * bobX, eye + bobY + DEV.fy, PL.z - Math.sin(PL.yaw) * bobX);
   CAM.rotation.set(PL.pitch + np + bobY * 0.25, PL.yaw + ny, PL.roll);
   PL.fovK = damp(PL.fovK, PL.run ? 1 : 0, 4, dt);
   const base = S.fov * Math.PI / 180, zf = lerp(1, 2.4, PL.zk) * lerp(1, LVL === 9 && HACK9.on ? 3.6 : 2.6, LVL === 9 ? PL.tz || 0 : 0);   // r6: Level 9 terminals push in
@@ -237,11 +239,12 @@ function playerCamera(dt) {
 function bindInput(canvas) {
   addEventListener('keydown', e => {
     if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Tab'].includes(e.code) && G.state === 'play') e.preventDefault();
+    if (e.code === 'Tab' && S.dev && G.state === 'play') { if (!e.repeat) devTabDown(); return; }   // r12: developer mode: hold TAB for the menu, tap for the map
     if (e.repeat) return;
     K.add(e.code); if (G.state === 'play') JUST.add(e.code);
     onKey(e.code, e);
   });
-  addEventListener('keyup', e => K.delete(e.code));
+  addEventListener('keyup', e => { K.delete(e.code); if (e.code === 'Tab') devTabUp(); });
   addEventListener('blur', () => { K.clear(); RMB = false; });
   addEventListener('mousemove', e => { if (document.pointerLockElement === canvas || (G.state === 'play' && (e.buttons & 1) && !IS_TOUCH)) { MDX += clamp(e.movementX, -250, 250); MDY += clamp(e.movementY, -250, 250); } });
   canvas.addEventListener('mousedown', e => {

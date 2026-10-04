@@ -333,3 +333,23 @@ body:not(.lvl2) .tbtns .l2{display:none}
 #fbatt .cells b.off{background:transparent}
 #fbatt.low .cells b{background:var(--red)}#fbatt.low{animation:blink .8s steps(1) infinite}
 @media (max-width:700px){#belt .slot{font-size:13px}#belt .slot svg{width:13px;height:13px}#beltName{font-size:13px}.ef{width:14px;height:14px}.ef svg{width:9px;height:9px}.gain{left:calc(40px + 84px * var(--k,1))}}
+
+/* r12 developer mode */
+#devHud{position:fixed;inset:0;z-index:50;pointer-events:none;font-family:var(--vcr)}
+#devBadge{position:absolute;top:6px;right:10px;padding:2px 10px;font-size:15px;letter-spacing:.08em;color:#9fe6a8;background:rgba(0,0,0,.55);border:1px solid rgba(159,230,168,.5)}
+#devBadge b{font-weight:400;color:#c8ffd0}
+#devBadge.open{display:none}
+#devMenu{pointer-events:auto;position:absolute;top:6px;right:10px;min-width:330px;padding:8px 10px 10px;background:rgba(4,10,6,.9);border:1px solid rgba(159,230,168,.65);color:#c8ffd0;font-size:21px;letter-spacing:.05em}
+#devMenu .dvTitle{font-size:15px;color:#7fbf88;margin-bottom:6px;border-bottom:1px solid rgba(159,230,168,.3);padding-bottom:4px}
+#devMenu .dvRow{padding:3px 8px;border-left:3px solid transparent;color:#8aa68e}
+#devMenu .dvRow i{font-style:normal;display:inline-block;width:1.4em;color:#6c8a70}
+#devMenu .dvRow.on{color:#c8ffd0}#devMenu .dvRow.on i{color:#7dff95}
+#devMenu .dvRow.hov{background:rgba(159,230,168,.16);border-left-color:#9fe6a8}
+#devCur{position:absolute;left:0;top:0;width:0;height:0;border-left:11px solid #fff;border-top:8px solid transparent;border-bottom:8px solid transparent;margin-top:-8px;filter:drop-shadow(0 0 2px #000);transform-origin:0 0}
+.dbg{position:fixed;z-index:49;pointer-events:none;padding:4px 8px;font:12px/1.35 ui-monospace,Menlo,Consolas,monospace;color:#d6ffd9;background:rgba(0,0,0,.6);white-space:nowrap;text-shadow:none}
+.dbg span{color:#8fbf95}.dbg .bad{color:#ff9d8a}
+.dbg.tl{top:6px;left:6px}.dbg.tr{top:34px;right:6px;text-align:right}.dbg.bl{bottom:6px;left:6px}.dbg.br{bottom:6px;right:6px;text-align:right}
+.devnote{font-size:20px;opacity:.8;margin:0 0 12px}
+#dbgStatList .row.st{min-height:38px;font-size:22px}#dbgStatList label{display:flex;gap:10px;align-items:center}
+#dbgStatList input[type=checkbox],#devOptList input[type=checkbox]{accent-color:var(--amber)}
+#devFastV{margin-left:auto;opacity:.8}
