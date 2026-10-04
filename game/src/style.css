@@ -73,7 +73,7 @@ body.lvl18.pianoactive #subs{left:74%;width:38vw;bottom:25%;font-size:18px}
 .meters{display:flex;flex-direction:column;gap:5px;margin-bottom:8px}
 .m{display:flex;align-items:center;gap:8px;font-size:18px}
 .m label{width:34px;color:var(--dim)}
-.bar{width:128px;height:7px;border:1px solid rgba(244,241,230,.7);padding:1px}
+.bar{width:calc(128px * var(--k,1));height:7px;border:1px solid rgba(244,241,230,.7);padding:1px;transition:width .6s ease-out}
 .bar div{height:100%;width:100%;background:var(--osd);transition:width .12s linear}
 #hpBar{background:#ffd9d2!important}
 .bar.warn div{background:var(--red)!important}
@@ -151,7 +151,7 @@ kbd{display:inline-block;min-width:26px;padding:0 6px;border:1px solid rgba(244,
   .corner{width:26px;height:20px}
   #osdTL{left:calc(4.5% + 32px);gap:10px}#osdTR{right:calc(4.5% + 32px)}
   #cpNote{font-size:14px;margin-top:4px}
-  #date,#clock{font-size:20px}.bar{width:84px}.m{font-size:14px}
+  #date,#clock{font-size:20px}.bar{width:calc(84px * var(--k,1))}.m{font-size:14px}
   #osdBL{bottom:calc(6% + 150px)}#osdBR{bottom:calc(6% + 128px);font-size:18px}
   #subs{font-size:19px;bottom:36%;width:80vw}#objective{font-size:16px;top:calc(6% + 34px)}
   #compass,#compassFoes{width:52vw}
@@ -304,3 +304,32 @@ body:not(.lvl2) .tbtns .l2{display:none}
 .bar.boost{box-shadow:0 0 6px rgba(255,190,60,.8)}.bar.boost #stBar{background:#ffc53a}
 
 #heat2.burn{animation:br37 .35s steps(2) infinite;color:#ff6a40}#heat2.burn #heatFill{background:#ff4a20}
+
+/* r12: the item belt, timed-effect rings beside the meters, lasting-gain pops, Level 9's flashlight batteries */
+.m{position:relative}
+.fxs{display:flex;gap:4px;align-items:center;min-height:18px}
+.ef{position:relative;display:grid;place-items:center;width:18px;height:18px;border-radius:50%;background:conic-gradient(var(--c,#f4f1e6) var(--p,100%),rgba(244,241,230,.16) 0)}
+.ef:before{content:"";position:absolute;inset:2px;border-radius:50%;background:rgba(0,0,0,.72)}
+.ef svg{position:relative;width:11px;height:11px;fill:none;stroke:var(--c,#f4f1e6);stroke-width:1.5;stroke-linejoin:round}
+.ef.hp{--c:#ffb8aa}.ef.st{--c:#ffc53a}.ef.sa{--c:#9fd7ff}
+.ef.end{animation:blink .5s steps(1) infinite}
+.gain{position:absolute;left:calc(42px + 128px * var(--k,1));top:-4px;font-size:15px;color:#ffe9a6;pointer-events:none;animation:gainUp 1.9s ease-out forwards}
+@keyframes gainUp{0%{opacity:0;transform:translateY(6px)}15%{opacity:1}70%{opacity:1}100%{opacity:0;transform:translateY(-16px)}}
+#inv{display:none}
+#beltWrap{display:flex;flex-direction:column;align-items:flex-end;gap:3px}
+#belt{display:flex;gap:5px}
+#belt .slot{display:flex;align-items:center;gap:2px;padding:2px 5px 2px 3px;border:1px solid rgba(244,241,230,.28);font-size:17px;color:var(--dim);line-height:1}
+#belt .slot svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.3;stroke-linejoin:round}
+#belt .slot b{font-weight:400}
+#belt .slot.none{opacity:.38}
+#belt .slot.sel{border-color:var(--osd);color:var(--osd);background:rgba(0,0,0,.35)}
+#beltName{font-size:17px;color:var(--amber);opacity:0;transition:opacity .25s;white-space:nowrap}
+#beltWrap.open #beltName{opacity:1}
+#beltWrap.open #belt .slot.sel{box-shadow:0 0 6px rgba(244,241,230,.5)}
+#fbatt{display:flex;align-items:center;gap:8px;font-size:18px;color:var(--dim)}
+#fbatt .cells{display:flex;gap:2px;padding:2px;border:1px solid var(--osd);height:14px;position:relative}
+#fbatt .cells:after{content:"";position:absolute;right:-5px;top:3px;width:3px;height:6px;background:var(--osd)}
+#fbatt .cells b{display:block;width:6px;height:100%;background:var(--osd)}
+#fbatt .cells b.off{background:transparent}
+#fbatt.low .cells b{background:var(--red)}#fbatt.low{animation:blink .8s steps(1) infinite}
+@media (max-width:700px){#belt .slot{font-size:13px}#belt .slot svg{width:13px;height:13px}#beltName{font-size:13px}.ef{width:14px;height:14px}.ef svg{width:9px;height:9px}.gain{left:calc(40px + 84px * var(--k,1))}}

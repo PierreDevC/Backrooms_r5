@@ -18,7 +18,7 @@ function carpetWet(x, z) { if (LVL === 37) return depth37(x, z) > 0.04; if (LVL 
 
 function resetPlayer() {
   Object.assign(PL, { x: cellCenter(LV.spawn.x), z: cellCenter(LV.spawn.y), vx: 0, vz: 0, crouch: false, ck: 0, sta: 1, exh: false, hp: 100, san: 100,
-    batt: [100, 90, 75][G.diff], spare: [2, 1, 0][G.diff], water: [3, 1, 0][G.diff], bars: 0, drinks: 0, wiredT: 0, fedT: 0, flash: false, fk: 0, nv: false, zoomT: false, zk: 0,
+    batt: [100, 90, 75][G.diff], spare: [2, 1, 0][G.diff], water: [3, 1, 0][G.diff], bars: 0, drinks: 0, wiredT: 0, fedT: 0, mendT: 0, focusT: 0, cells: 0, fbatt: 100, up: upZero(), sel: 'water', flash: false, fk: 0, nv: false, zoomT: false, zk: 0,
     noise: 0, load: false, dist: 0, lastHurt: -99, shake: 0, cell: -1, fear: 0, pitch: 0, lookAt: null, lookK: 0 });
   // face the most open direction
   let bd = 0, best = 0;
@@ -34,7 +34,9 @@ function updateField() {
 // ----- actions -----
 function toggleFlash() {
   if (PL.nv) { toggleNV(); }
-  if (PL.batt <= 0) { SFX.click(); toast('BATTERY EMPTY — PRESS R'); return; }
+  if (flashOwn()) {   // r12: Level 9's flashlight has its own batteries; a dead one takes a fresh pack if you carry one
+    if (!PL.flash && PL.fbatt <= 0) { if (PL.cells > 0) loadCells(); else { SFX.click(); toast('FLASHLIGHT DEAD — FIND BATTERIES', 2.2); return; } }
+  } else if (PL.batt <= 0) { SFX.click(); toast('BATTERY EMPTY — PRESS R'); return; }
   PL.flash = !PL.flash; SFX.flash(PL.flash);
 }
 function toggleNV() {
@@ -48,18 +50,18 @@ function swapBattery() {
 }
 function drinkWater() {
   if (PL.water <= 0) { SFX.click(); toast('NO ALMOND WATER'); return; }
-  if (PL.san > 97 && PL.hp > 97) { toast('YOU FEEL FINE'); return; }
-  PL.water--; PL.san = Math.min(100, PL.san + 45); PL.hp = Math.min(100, PL.hp + 20); SFX.drink(); makeNoise(0.15); if (LVL === 2) GP2.heat = Math.max(0, GP2.heat - 0.45); toast('ALMOND WATER — SANITY RESTORED');
+  if (PL.san > sanMax() - 3 && PL.hp > hpMax() - 3) { toast('YOU FEEL FINE'); return; }
+  PL.water--; PL.san = Math.min(sanMax(), PL.san + 45); PL.hp = Math.min(hpMax(), PL.hp + 20); SFX.drink(); makeNoise(0.15); if (LVL === 2) GP2.heat = Math.max(0, GP2.heat - 0.45); toast('ALMOND WATER — SANITY RESTORED');
 }
 function eatBar() {
   if (!(PL.bars > 0)) { SFX.click(); toast('NO ENERGY BARS'); return; }
-  PL.bars--; PL.sta = Math.min(1, PL.sta + 0.5); PL.exh = PL.sta > 0.4 ? false : PL.exh; PL.fedT = 60; PL.hp = Math.min(100, PL.hp + 8);
-  SFX.eat(); makeNoise(0.08); toast('ENERGY BAR · STAMINA RECOVERS FASTER');
+  PL.bars--; PL.sta = Math.min(1, PL.sta + 0.5); PL.exh = PL.sta > 0.4 ? false : PL.exh; addFx('fed'); addFx('mend'); PL.hp = Math.min(hpMax(), PL.hp + 4);
+  SFX.eat(); makeNoise(0.08); toast('ENERGY BAR · VIT AND STAMINA COME BACK FASTER'); gainUp('bar');   // r12: timed effects + a lasting gain
 }
 function drinkEnergy() {
   if (!(PL.drinks > 0)) { SFX.click(); toast('NO ENERGY DRINKS'); return; }
-  PL.drinks--; PL.sta = 1; PL.exh = false; PL.wiredT = 40;
-  SFX.can(); makeNoise(0.15); toast('ENERGY DRINK · SPRINTING COSTS LESS');
+  PL.drinks--; PL.sta = 1; PL.exh = false; addFx('wired'); addFx('focus');
+  SFX.can(); makeNoise(0.15); toast('ENERGY DRINK · SPRINTING COSTS LESS · STEADIER NERVES'); gainUp('drink');
 }
 function takeItem(it) {
   it.taken = true; it.root.setEnabled(false); SFX.pickup();
@@ -67,6 +69,7 @@ function takeItem(it) {
   if (it.type === 'battery') { PL.spare++; toast('CAMCORDER BATTERY +1'); }
   else if (it.type === 'bar') { PL.bars = (PL.bars || 0) + 1; toast('ENERGY BAR +1' + key('B') + ' EAT'); }
   else if (it.type === 'drink') { PL.drinks = (PL.drinks || 0) + 1; toast('ENERGY DRINK +1' + key('T') + ' DRINK'); }
+  else if (it.type === 'cells') { PL.cells = (PL.cells || 0) + 1; toast('FLASHLIGHT BATTERIES +1'); }
   else { PL.water++; toast('ALMOND WATER +1'); }
 }
 function findInteract() {
@@ -112,7 +115,8 @@ function updatePlayer(dt) {
   if (JUST.has('KeyF')) toggleFlash();
   if (JUST.has('KeyN')) toggleNV();
   if (JUST.has('KeyR')) swapBattery();
-  if (JUST.has('KeyQ')) drinkWater();
+  if (JUST.has('KeyQ')) useSel();   // r12: Q uses the item picked on the belt (almond water unless you scrolled)
+  if (JUST.has('ItemNext')) beltStep(1);
   if (JUST.has('KeyB')) eatBar();
   if (JUST.has('KeyT')) drinkEnergy();
   if (JUST.has('KeyE') || JUST.has('Enter')) interact();
@@ -150,8 +154,9 @@ function updatePlayer(dt) {
   PL.run = wantRun && PL.spd > 3;
   // stamina
   // r11: energy drinks (wired: sprinting costs 40%) and energy bars (fed: stamina comes back twice as fast)
-  PL.wiredT = Math.max(0, (PL.wiredT || 0) - dt); PL.fedT = Math.max(0, (PL.fedT || 0) - dt);
-  if (PL.run) PL.sta -= dt / [8, 6.5, 5.5][G.diff] * (PL.wiredT > 0 ? 0.4 : 1); else PL.sta += dt * (PL.spd < 0.3 ? 0.2 : 0.11) * (crouch ? 1.2 : 1) * (PL.fedT > 0 ? 2 : 1);
+  PL.wiredT = Math.max(0, (PL.wiredT || 0) - dt); PL.fedT = Math.max(0, (PL.fedT || 0) - dt); itemsTick(dt);
+  // r12: lasting stamina gains make the tank bigger
+  if (PL.run) PL.sta -= dt / [8, 6.5, 5.5][G.diff] * (PL.wiredT > 0 ? 0.4 : 1) / staCap(); else PL.sta += dt * (PL.spd < 0.3 ? 0.2 : 0.11) * (crouch ? 1.2 : 1) * (PL.fedT > 0 ? 2 : 1);
   if (PL.sta <= 0) { PL.sta = 0; if (!PL.exh) { PL.exh = true; toast('EXHAUSTED'); } }
   if (PL.exh && PL.sta > 0.4) PL.exh = false;
   PL.sta = clamp(PL.sta, 0, 1);
@@ -167,24 +172,25 @@ function updatePlayer(dt) {
   updateField();
   // camcorder / flashlight
   const drainK = [0.75, 1, 1.2][G.diff];
-  if (PL.nv) PL.batt -= dt * 0.95 * drainK; else if (PL.flash) PL.batt -= dt * 0.42 * drainK;
-  if (PL.batt <= 0) { PL.batt = 0; if (PL.flash || PL.nv) { PL.flash = PL.nv = false; SFX.flash(false); toast('BATTERY DEPLETED — [R] SWAP'); } }
-  let fl = 1;
-  if (PL.batt < 15 && hash1(Math.floor(t * 11)) < (15 - PL.batt) / 45) fl = 0.12;
+  const own = flashOwn();
+  if (PL.nv) PL.batt -= dt * 0.95 * drainK; else if (PL.flash && !own) PL.batt -= dt * 0.42 * drainK;
+  if (PL.batt <= 0) { PL.batt = 0; if (PL.nv || (PL.flash && !own)) { PL.nv = false; if (!own) PL.flash = false; SFX.flash(false); toast('BATTERY DEPLETED — [R] SWAP'); } }
+  let fl = own ? flashDrain(dt) : 1;
+  if (!own && PL.batt < 15 && hash1(Math.floor(t * 11)) < (15 - PL.batt) / 45) fl = 0.12;
   if (PL.interf > 0 && hash1(Math.floor(t * 17) + 3.3) < PL.interf * 0.6) fl *= 0.08;
   PL.fk = damp(PL.fk, PL.flash && !PL.nv ? fl : 0, 30, dt);
   FX.nv = damp(FX.nv, PL.nv ? 1 : 0, 9, dt);
   PL.zk = damp(PL.zk, PL.zoomT || RMB ? 1 : 0, 7, dt);
   // survival
-  if (FX.t - PL.lastHurt > 10 && PL.hp < 100) PL.hp = Math.min(100, PL.hp + dt * 1.4);
+  if (FX.t - PL.lastHurt > 10 && PL.hp < hpMax()) PL.hp = Math.min(hpMax(), PL.hp + dt * 1.4);
   PL.light = LVL === 7 ? Math.max(lightAt(PL.x, PL.z), 0.4 - Math.min(0.4, Math.max(0, G37.under ? depth37(PL.x, PL.z) * 0.06 : 0))) : lightAt(PL.x, PL.z);   // r10: the moonlit sea is not a dark zone; the deep is
   let ds = 0;
   if (LVL !== 18 && PL.light < 0.12) ds -= ((PL.fk > 0.5 || PL.nv) ? 0.3 : 1.1) * (LVL !== 0 ? 0.5 : 1);
   else if (LVL !== 18 && PL.light > 0.3 && PL.san < 70) ds += 0.25;
   ds -= PL.fear * 2.6;
-  PL.san = clamp(PL.san + ds * dt * (ds < 0 ? [0.6, 1, 1.3][G.diff] : 1), 0, 100);
+  PL.san = clamp(PL.san + ds * dt * (ds < 0 ? [0.6, 1, 1.3][G.diff] * (PL.focusT > 0 ? 0.5 : 1) : 1), 0, sanMax());
   if (PL.san <= 0) { PL.hp -= dt * 3.5; if (PL.hp <= 0) { PL.hp = 0; die('sanity'); } }
-  FX.san = damp(FX.san, Math.pow(1 - PL.san / 100, 1.5), 2, dt);
+  FX.san = damp(FX.san, Math.pow(clamp(1 - PL.san / 100, 0, 1), 1.5), 2, dt);
   // interaction focus
   PL.focus = findInteract();
 }
@@ -246,6 +252,7 @@ function bindInput(canvas) {
   });
   addEventListener('mouseup', e => { if (e.button === 2) RMB = false; });
   canvas.addEventListener('contextmenu', e => e.preventDefault());
+  bindItems(canvas);   // r12: the mouse wheel and wheel click work the item belt
 }
 function hasAlt(f) { return !!(f && f.alt && f.altLabel && f.altLabel()); }
 function lockPointer() { const c = $('c'); if (IS_TOUCH || document.pointerLockElement === c) return; try { const p = c.requestPointerLock(); if (p && p.catch) p.catch(() => {}); } catch (e) {} }

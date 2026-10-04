@@ -115,7 +115,8 @@ function updateHUD(dt) {
   $('signal').classList.toggle('hide', LVL !== 0);
   $('nvTag').classList.toggle('hide', !PL.nv);
   $('zoomTag').classList.toggle('hide', PL.zk < 0.1); hset('zoomTag', `ZOOM ${lerp(1, 2.4, PL.zk).toFixed(1)}×`);
-  const bars = [['hpBar', PL.hp / 100], ['stBar', PL.sta], ['saBar', PL.san / 100]];
+  const bars = [['hpBar', PL.hp / hpMax()], ['stBar', PL.sta], ['saBar', PL.san / sanMax()]];
+  fxHUD();   // r12: timed-effect rings beside the meters, longer meters from lasting gains, the belt, Level 9's flashlight batteries
   for (const [id, v] of bars) { hset(id, (v * 100).toFixed(0) + '%', '__w'); $(id).style.width = (v * 100).toFixed(0) + '%'; $(id).parentNode.classList.toggle('warn', v < 0.3); }
   // tape signal: nearest untaken tape
   let nd = 1e9; for (const s of W.tapes) if (!s.taken) nd = Math.min(nd, dist2(s.x, s.z, PL.x, PL.z));

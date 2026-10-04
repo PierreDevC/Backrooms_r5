@@ -149,7 +149,7 @@ function takeDrawing18(d) {
 function pinDrawings18() {
   if (!G18.carry.length) { SFX18.paper(); toast(G18.found ? 'YOUR DRAWINGS ARE ALREADY UP' : 'FOUR EMPTY SPACES · FIND YOUR DRAWINGS', 2.4); if (G18.phase === 'arrive') setPhase18('memories'); return; }
   const n = G18.carry.length; G18.pinned.push(...G18.carry); G18.carry = [];
-  SFX18.pin(); later(0.3, () => SFX18.pin()); PL.san = Math.min(100, PL.san + 6 * n);
+  SFX18.pin(); later(0.3, () => SFX18.pin()); PL.san = Math.min(sanMax(), PL.san + 6 * n);
   const S = W18.board.S; drawBoard18(S.ctx, 512, 304); S.dt.update();
   toast(`PINNED · ${G18.pinned.length}/4`, 2); cpSave(`PINNED ${G18.pinned.length}/4`);
   if (G18.pinned.length >= 4) doorReady18(); else setPhase18();   // r6: the door may still need its colors
@@ -171,7 +171,7 @@ function openDoor18() {
 }
 function windBox18() {
   if (G18.musicT > 0) { toast("THE MUSIC BOX IS STILL PLAYING", 2); return; }
-  SFX18.wind(P9(W18.musicBox)); G18.musicT = 40; PL.san = Math.min(100, PL.san + 10);
+  SFX18.wind(P9(W18.musicBox)); G18.musicT = 40; PL.san = Math.min(sanMax(), PL.san + 10);
   if (!G18.boxTip) { G18.boxTip = true; later(1.6, () => toast('THE LULLABY STEADIES YOU', 2.4)); }
 }
 function openCloset18() {

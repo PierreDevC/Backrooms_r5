@@ -93,7 +93,7 @@ function takeCrayons18() {
 }
 function takeCamera18() {
   P18.camera = true; const S = W18.p18.cam.S; S.mesh.setEnabled(false);
-  SFX18.paper(); SFX18.chime(); FX.fadeW = Math.max(FX.fadeW, 0.45); G18.flash = 0.45; PL.san = Math.min(100, PL.san + 10);
+  SFX18.paper(); SFX18.chime(); FX.fadeW = Math.max(FX.fadeW, 0.45); G18.flash = 0.45; PL.san = Math.min(sanMax(), PL.san + 10);
   toast('A FIFTH DRAWING · DAD\'S CAMERA · YOU KEEP THIS ONE', 3);
   later(0.6, () => say('MEMORY', 'Christmas. Dad\'s camera, the heavy one. Keep it rolling, kiddo.', { dur: 6 }));
   task('camera', 'A DRAWING THAT ISN\'T ONE OF THE FOUR', { opt: true, quiet: true }); taskDone('camera', 'DAD\'S CAMERA · YOU KEPT IT', true);

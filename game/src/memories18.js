@@ -194,7 +194,7 @@ function pianoNote18(i, auto) {
   else if (!auto && M18.seq.length === SONG18.length && !M18.song && !M18.hintT) { M18.hintT = 1; later(1, () => toast('IT DOESN\'T SOUND LIKE ANYTHING YET', 2)); }
 }
 function songDone18() {
-  M18.played = true; M18.seq.length = 0; SFX18.chime(); later(0.5, () => SFX18.chime()); FX.fadeW = Math.max(FX.fadeW, 0.3); G18.flash = 0.3; PL.san = Math.min(100, PL.san + 8);
+  M18.played = true; M18.seq.length = 0; SFX18.chime(); later(0.5, () => SFX18.chime()); FX.fadeW = Math.max(FX.fadeW, 0.3); G18.flash = 0.3; PL.san = Math.min(sanMax(), PL.san + 8);
   toast('THE TOY BOX CLICKS OPEN', 2.6); later(1.0, () => say('THE CHILDREN', 'You remembered our song.', { dur: 4, mode: 'whisper' }));
   taskDone('piano18', 'OUR SONG · PLAYED', true); setPhase18(); cpSave('OUR SONG');
 }
@@ -210,11 +210,11 @@ function card18() {
   if (first) { taskDone('song18', 'THE SONG · FROM YOUR BIRTHDAY CARD', true); memTasks18(); setPhase18(); cpSave('YOUR BIRTHDAY'); }
 }
 function wish18() {
-  M18.wish = true; if (M18.flames) M18.flames.setEnabled(false); SFX18.whoosh(); PL.san = Math.min(100, PL.san + 12); FX.glitch = Math.max(FX.glitch, 0.3);
+  M18.wish = true; if (M18.flames) M18.flames.setEnabled(false); SFX18.whoosh(); PL.san = Math.min(sanMax(), PL.san + 12); FX.glitch = Math.max(FX.glitch, 0.3);
   later(1.0, () => say('', '…you wished you could go home…', { mode: 'whisper' })); toast('YOU BLOW OUT THE CANDLES', 2);
 }
 function lunch18() {
-  if (!M18.lunch) { M18.lunch = true; PL.san = Math.min(100, PL.san + 15); PL.water++; SFX.pickup(); toast('A JUICE BOX OF ALMOND WATER · AND A NOTE', 2.6); task('bus18', 'THE FIELD TRIP', { opt: true, quiet: true }); taskDone('bus18', 'THE FIELD TRIP · YOUR LUNCHBOX', true); }
+  if (!M18.lunch) { M18.lunch = true; PL.san = Math.min(sanMax(), PL.san + 15); PL.water++; SFX.pickup(); toast('A JUICE BOX OF ALMOND WATER · AND A NOTE', 2.6); task('bus18', 'THE FIELD TRIP', { opt: true, quiet: true }); taskDone('bus18', 'THE FIELD TRIP · YOUR LUNCHBOX', true); }
   SFX18.paper();
   readDoc('lunch18', 'A NOTE IN YOUR LUNCHBOX', ['Have a good trip. Stay with your buddy.', 'Don\'t trade the cookies.', 'I\'ll be at the gate at three.', '— Mom'], { kind: 'note' });
 }

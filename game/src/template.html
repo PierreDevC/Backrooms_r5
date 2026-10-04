@@ -20,6 +20,7 @@
   <div id="osdTR">
     <div id="batt"><div class="cells"><b></b><b></b><b></b><b></b><b></b></div><span id="battPct">100%</span></div>
     <div id="spare">SPARE ×0</div>
+    <div id="fbatt" class="hide"><span class="fl">LIGHT</span><div class="cells"><b></b><b></b><b></b><b></b><b></b></div><span id="fbattPct">100%</span></div>
     <div id="nvTag" class="tag hide">NIGHT SHOT</div>
     <div id="zoomTag" class="tag hide">ZOOM 2.0×</div>
     <div id="cpNote" role="status"></div>
@@ -34,9 +35,9 @@
   <div id="doc" class="hide"><div id="docT"></div><div id="docB"></div><div id="docHint"></div></div>
   <div id="osdBL">
     <div class="meters">
-      <div class="m"><label>VIT</label><div class="bar"><div id="hpBar"></div></div></div>
-      <div class="m"><label>STA</label><div class="bar"><div id="stBar"></div></div></div>
-      <div class="m"><label>SAN</label><div class="bar"><div id="saBar"></div></div></div>
+      <div class="m"><label>VIT</label><div class="bar"><div id="hpBar"></div></div><span class="fxs" id="fx_hp"></span></div>
+      <div class="m"><label>STA</label><div class="bar"><div id="stBar"></div></div><span class="fxs" id="fx_st"></span></div>
+      <div class="m"><label>SAN</label><div class="bar"><div id="saBar"></div></div><span class="fxs" id="fx_sa"></span></div>
     </div>
     <div id="date">SEP. 29 1996</div>
     <div id="clock">11:47:03 PM</div>
@@ -47,6 +48,7 @@
     <div id="breath37" class="hide"><span>AIR</span><div class="nz"><i id="breathFill"></i></div><span id="breathTxt"></span></div>
     <div id="noise9" class="hide"><span>NOISE</span><div class="nz"><i id="nzFill"></i><b id="nzMark" class="hide"></b></div><span id="nzTxt">SILENT</span></div>
     <div id="signal"><span id="sigLbl">TAPE SIGNAL</span><i id="sigDir" class="hide">▲</i><div class="sig"><b></b><b></b><b></b><b></b><b></b></div></div>
+    <div id="beltWrap"><div id="beltName"></div><div id="belt"></div></div>
     <div id="inv">WATER ×0</div>
     <div id="tapes">TAPES 0/4</div>
     <div id="code">CODE _ _ _ _</div>
@@ -126,7 +128,7 @@
       <div><kbd>Shift</kbd> Sprint (loud)</div><div><kbd>C</kbd> Crouch (quiet)</div>
       <div><kbd>F</kbd> Flashlight</div><div><kbd>N</kbd> Night shot (IR)</div>
       <div><kbd>E</kbd> Interact / pick up</div><div><kbd>R</kbd> Swap battery</div>
-      <div><kbd>Q</kbd> Drink almond water</div><div><kbd>B</kbd> / <kbd>T</kbd> Energy bar / energy drink (Level 2)</div><div><kbd>RMB</kbd> hold / <kbd>Z</kbd> Zoom</div>
+      <div><kbd>WHEEL</kbd> Pick a stored item</div><div><kbd>Q</kbd> / <kbd>WHEEL CLICK</kbd> Use it (almond water by default)</div><div><kbd>B</kbd> / <kbd>T</kbd> Energy bar / energy drink</div><div><kbd>RMB</kbd> hold / <kbd>Z</kbd> Zoom</div>
       <div><kbd>RMB</kbd>/<kbd>X</kbd> Latch door</div><div><kbd>Tab</kbd> Map snapshot (Level 9)</div>
       <div><kbd>J</kbd> Field notes</div><div><kbd>E</kbd> Close a document</div>
       <div><kbd>G</kbd> Put down the battery (Level 0) / spray / flare</div><div><kbd>V</kbd> Door peephole (Level 9)</div><div><kbd>E</kbd> Look outside (at a window)</div>
@@ -217,10 +219,9 @@
     <button data-k="KeyC">CRCH</button>
     <button data-k="KeyF">LIGHT</button>
     <button data-k="KeyE">USE</button>
-    <button data-k="KeyQ">DRINK</button>
+    <button data-k="KeyQ">ITEM</button>
     <button data-k="KeyR">BATT</button>
-    <button data-k="KeyB" class="l2">BAR</button>
-    <button data-k="KeyT" class="l2">CAN</button>
+    <button data-k="ItemNext">NEXT</button>
     <button data-k="KeyN">NV</button>
     <button data-k="KeyX" class="l9">LATCH</button>
     <button data-k="KeyV" class="l9">PEEP</button>

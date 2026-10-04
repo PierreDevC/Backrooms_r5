@@ -133,7 +133,7 @@ function beginPlay() {
 function takeTape(site) {
   site.taken = true; site.tape.setEnabled(false); G.tapes++; G.hintT = 0; HINT.stage = 0; HINT.site = null; beaconOff();
   const n = G.tapes, dig = G.digits[G.code.length]; G.code.push(dig);
-  SFX.tape(); FX.glitch = Math.max(FX.glitch, 1.6); PL.san = Math.min(100, PL.san + 10);
+  SFX.tape(); FX.glitch = Math.max(FX.glitch, 1.6); PL.san = Math.min(sanMax(), PL.san + 10);
   say('TAPE ' + n, TAPE_LOGS[n - 1], { vo: 'tape' + n, mode: 'tape', delay: 1.15 });
   later(0.6, () => toast(`CODE DIGIT ${n}: ${dig}`, 3));
   setObj0();

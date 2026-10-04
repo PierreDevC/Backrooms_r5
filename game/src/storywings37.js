@@ -129,7 +129,7 @@ function talkStaff37(s) {
 function dischargeDone37() {
   P37.keys.hosp = true; SFX37.stamp(P9({ x: PL.x, y: 1, z: PL.z })); SFX5.jingle(P9({ x: PL.x, y: 1, z: PL.z })); toast('THE DISCHARGE WRISTBAND', 3);
   later(0.8, () => say('STAFF', 'Discharged.', { dur: 3, mode: 'whisper' })); later(3, () => say('STAFF', 'Leave the way you came. Mind the wet floor.', { dur: 5, mode: 'whisper' }));
-  PL.san = Math.min(100, PL.san + 12); hospTasks37(); setPhase37(); cpSave('DISCHARGED');
+  PL.san = Math.min(sanMax(), PL.san + 12); hospTasks37(); setPhase37(); cpSave('DISCHARGED');
 }
 function hospTasks37() {
   const H = P37.hosp; if (!P37.told) return; if (!(H.seen || H.board || H.ticket || H.talked)) return;
@@ -151,7 +151,7 @@ function hospEvents37(dt, z) {
 }
 // ---------- water world ----------
 function parkMap37() { P37.ww.map = true; SFX.click(); readDoc('map37', 'PARK MAP · YOU ARE HERE', ['1 · THE GATE (you are here)', '2 · MAIN BUILDING · GIFTS · FOOD', '3 · THE AQUARIUM · ALMOND WATER · PLEASE DO NOT TAP THE GLASS', '4 · STAFF · STAFF · STAFF', '5 · THE WAVE POOL · CLOSED FOR THE INCIDENT', '(over the whole map, in marker) the incident is ongoing'], { kind: 'board' }); wwTasks37(); }
-function tank37(t) { t.taken = true; P37.ww.tanks++; PL.water++; PL.san = Math.min(100, PL.san + 6); SFX.drink(); toast(t.name + ' · COLD, SWEET · ALMOND WATER +1', 2.6); if (P37.ww.tanks === 1) later(1.2, () => say('', '…you shouldn\'t…', { mode: 'whisper' })); }
+function tank37(t) { t.taken = true; P37.ww.tanks++; PL.water++; PL.san = Math.min(sanMax(), PL.san + 6); SFX.drink(); toast(t.name + ' · COLD, SWEET · ALMOND WATER +1', 2.6); if (P37.ww.tanks === 1) later(1.2, () => say('', '…you shouldn\'t…', { mode: 'whisper' })); }
 function generator37(it) {
   if (holdBusy(it)) return; SFX37.pump(P9({ x: it.x, y: 1, z: it.z })); makeNoise(0.4);
   holdStart(it, 3, () => { P37.ww.gen = true; toast('THE GENERATOR IS RUNNING', 2.6); say('PA', 'Power has been restored to the staff areas.', { dur: 4 }); SFX37.pa({ x: PL.x, y: 3, z: PL.z, pl: { x: PL.x, z: PL.z } }); wwTasks37(); setPhase37(); cpSave('THE GENERATOR'); }, { r: 2.4, cancel: 'IT STALLS', noise: 0.5 });

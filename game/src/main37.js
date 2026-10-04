@@ -32,7 +32,7 @@ async function goLevel37(from) {
   Object.assign(PL, { x: W37.pos.arrive.x, z: W37.pos.arrive.z, yaw: 0, pitch: 0, vx: 0, vz: 0, kx: 0, kz: 0, crouch: false, ck: 0, sta: 1, exh: false,
     hp: Math.max(f.hp, 75), san: Math.max(f.san, 75), batt: Math.max(f.batt, 60), spare: f.spare, water: f.water, flash: false, fk: 0, nv: false, zoomT: false, zk: 0,
     noise: 0, dist: f.dist, lastHurt: -99, shake: 0, cell: -1, fear: 0, lookAt: null, lookK: 0, focus: null, interf: 0, spdK: 1, load: false });
-  updateField();
+  carryIn(f); updateField();
   Object.assign(G, { time: f.time, lost: f.lost, tapes: f.tapes, cause: '', blackout: 0, exitOn: false, chase: 0, hintT: 0, grace: 0 });
   HINT.stage = 0; HINT.site = null;
   initAI37();
@@ -150,7 +150,7 @@ const W37_WHISPER = ['…you can put it down for a minute…', '…the water is 
 function drift37(dt, z) {
   const moving = PL.spd > 0.45, inWater = depth37(PL.x, PL.z) > 0.2 && !G37.under, k = [0.7, 1, 1.35][G.diff];
   if (G.state !== 'play') return;
-  if (inWater && !moving && !G37.flood) { G37.drift = Math.min(1, G37.drift + dt / 38 * k); PL.san = Math.min(100, PL.san + dt * 1.4); }
+  if (inWater && !moving && !G37.flood) { G37.drift = Math.min(1, G37.drift + dt / 38 * k); PL.san = Math.min(sanMax(), PL.san + dt * 1.4); }
   else G37.drift = Math.max(0, G37.drift - dt / 14);
   if (G37.drift > 0.6 && !G37.warns.drift) { G37.warns.drift = true; toast('IT IS VERY PLEASANT HERE · KEEP MOVING', 3); }
   if (G37.drift < 0.3) G37.warns.drift = false;

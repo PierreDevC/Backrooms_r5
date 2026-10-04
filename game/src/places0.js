@@ -411,7 +411,7 @@ function reyesTalk0(e) {
   if (P0.reyes === 'asked' && PL.water > 0) {
     PL.water--; P0.reyes = 'helped'; SFX.drink(); flag('reyes0', 'helped');
     say(e.name, 'Oh. Thank you. Okay.', { pos: e });
-    later(2.6, () => { if (!e.alive) return; PL.hp = Math.min(100, PL.hp + 50); PL.san = Math.min(100, PL.san + 15); SFX.pickup(); toast('REYES\'S MED KIT · HEALTH +50', 2.6); say(e.name, 'Take the kit. I can\'t carry it on one leg anyway.', { pos: e }); });
+    later(2.6, () => { if (!e.alive) return; PL.hp = Math.min(hpMax(), PL.hp + 50); PL.san = Math.min(sanMax(), PL.san + 15); SFX.pickup(); toast('REYES\'S MED KIT · HEALTH +50', 2.6); say(e.name, 'Take the kit. I can\'t carry it on one leg anyway.', { pos: e }); });
     later(7.5, () => { if (!e.alive) return; say(e.name, 'One more thing. If I call you from somewhere I can\'t be, it isn\'t me.', { pos: e }); });
     later(12, () => { if (!e.alive) return; e.hurt = false; e.st = 'idle'; e.stT = 0; e.dur = 3; if (e.rig.sk) rigWant(e.rig, null, { fade: 0.6 }); });
     later(25, () => sayExp(0, 'Marsh. Reyes is walking. Badly, but walking.'));

@@ -96,7 +96,7 @@ function termZoom9(dt) {
 function finishDownload(T) {
   T.done = true; T.active = false; G9.data++; T.drawK = ''; drawTerm(T);
   if (T.h.beacon) setEmi(T.h.beacon.mat, 0.1, 3, 0.35);
-  SFX9.dlDone(P9({ x: T.x, z: T.z, y: 0.96 })); FX.glitch = Math.max(FX.glitch, 1); PL.san = Math.min(100, PL.san + 8);
+  SFX9.dlDone(P9({ x: T.x, z: T.z, y: 0.96 })); FX.glitch = Math.max(FX.glitch, 1); PL.san = Math.min(sanMax(), PL.san + 8);
   toast(`M.E.G. DATA ${G9.data}/3 RECEIVED`, 2.6);
   if (G9.data === 1) radio9('term1', 0.8);
   else if (G9.data === 2) radio9('term2', 0.8);
@@ -194,7 +194,7 @@ function releaseCure() {
   later(4.2, () => playS(bpick('scrLo'), { pos: s.pos(1.2), vol: 0.9, rate: 0.7 }));
   later(8.0, () => {
     W9.vapor.want = 0; const h = new Hale(s.x, s.z, Math.atan2(PL.x - s.x, PL.z - s.z)); AI9.hale = h; AI.all.push(h);
-    setPhase9('hale'); PL.san = Math.min(100, PL.san + 25);
+    setPhase9('hale'); PL.san = Math.min(sanMax(), PL.san + 25);
     W.interact.push({ get x() { return h.x; }, get z() { return h.z; }, y: 1.2, r: 2.3, label: () => 'TAKE THE KEYCARD', ok: () => h.st === 'give', act: () => takeKeycard() });
   });
   later(11.5, () => { C.trapped = false; raiseCage(); P.cd = 1e9; });
@@ -247,7 +247,7 @@ function showEnd9(won) {
 }
 
 // ----- level transition -----
-function carryFromL0() { return { hp: PL.hp, san: PL.san, batt: PL.batt, spare: PL.spare, water: PL.water, time: G.time, dist: PL.dist, lost: G.lost, tapes: G.tapes }; }
+function carryFromL0() { return Object.assign({ hp: PL.hp, san: PL.san, batt: PL.batt, spare: PL.spare, water: PL.water, time: G.time, dist: PL.dist, lost: G.lost, tapes: G.tapes }, carryOut()); }
 // positional audio across floors: move a source into the listener's frame using the physical house positions
 function remap9(x, y, z) {
   const c = CAM.position, L = phys9(c.x, c.z), S = phys9(x, z);
@@ -276,7 +276,7 @@ async function goLevel9(from) {
   Object.assign(PL, { x: 2 * CELL, z: 6.3 * CELL, yaw: 0, pitch: 0, vx: 0, vz: 0, kx: 0, kz: 0, crouch: false, ck: 0, sta: 1, exh: false,
     hp: Math.max(f.hp, 75), san: Math.max(f.san, 75), batt: Math.max(f.batt, 60), spare: f.spare, water: f.water, flash: false, fk: 0, nv: false, zoomT: false, zk: 0,
     noise: 0, dist: f.dist, lastHurt: -99, shake: 0, cell: -1, fear: 0, lookAt: null, lookK: 0, focus: null, interf: 0, tz: 0 });
-  updateField();
+  carryIn(f); updateField();
   Object.assign(G, { time: f.time, lost: f.lost, tapes: f.tapes, cause: '', blackout: 0, exitOn: false, chase: 0, hintT: 0, grace: 0 });
   HINT.stage = 0; HINT.site = null;
   initAI9();

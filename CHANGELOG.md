@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## r12 (in progress) — 2026-10-04 · stored items, timed effects, lasting gains; Level 9 rebuild planned (branch agent/claude)
+- Item belt on every level: the mouse wheel picks a stored item (almond water, energy bar, energy drink, flashlight batteries, camcorder battery); Q or a wheel click uses it; B / T / R stay as shortcuts; touch ITEM / NEXT buttons.
+- Energy bars: MEND (+0.5 VIT/s for 40 s) and FED (stamina back twice as fast for 60 s); energy drinks: WIRED (sprinting at 40% cost for 40 s) and FOCUS (sanity loss halved for 40 s). Each shows as a ring icon with a countdown beside the VIT / STA / SAN meter it affects.
+- Lasting gains that carry to the next level: each bar raises max VIT by 2 and stamina by 1%, each drink raises stamina by 3% and max SAN by 2 (caps +40 / +40% / +40); the meters grow longer.
+- Level 9: the flashlight runs on its own batteries (LIGHT meter; 80% and one spare pack on Normal); F on a dead light loads a pack; night shot still uses the camcorder battery.
+- qa_r12/items.js. Level 9 map / renderer / objectives rebuild: see docs/LEVEL9_R12_PLAN.md (not started).
+
 ## r11 — 2026-10-04 · Level 2 rebuilt: ray-traced lighting, a real plant, new characters (branch agent/claude)
 - New renderer for Level 2: a CPU ray tracer (triangle BVH) bakes direct light with soft shadows from 168 lamps, ambient occlusion and one bounce into per-vertex light, directional so the scanned normal maps and GGX highlights still respond; lamp-lit haze along the view ray; the bake runs on a Web Worker pool (about 1.3 s). See docs/LEVEL2.md › Rendering.
 - New map (56 x 56): pump room, haunched service tunnels with painted dados and drain channels, boiler house with two fire-tube boilers, catwalks, feed pumps and a deaerator, a control room with a window onto it, a feedwater tank room, brick barrel-vaulted galleries, the switchgear hall with lineups and a transformer bay, the freight lift, the Long Pipe with a 1 m insulated main. Story anchors unchanged; story, reach, systems, death, sequence, route and floor-arrow tests pass.
