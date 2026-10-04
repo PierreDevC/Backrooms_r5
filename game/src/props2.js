@@ -231,6 +231,22 @@ function furnishHub2() {
     for (let i = 0; i < 4; i++) emi2(i < 2 ? WP2.BGrn : WP2.BRed, k2Sub(T, -0.3 + i * 0.2, 1.75, 0.31), 'Cylinder', { diameter: 0.04, height: 0.02, tessellation: 8 }, i < 2 ? [0.4, 1, 0.5] : [1, 0.3, 0.2], [0, 0, 0], [Math.PI / 2, 0, 0]);
     F2.gauge(k2Sub(T, -0.2, 0, 0.3), 1.35); F2.gauge(k2Sub(T, 0.2, 0, 0.3), 1.35); solidT2(T, -0.5, 0, 0.5, 0.35);
     sign2('SUMP PUMPS 2-A / 2-B\nDO NOT ENTER PIT WHEN RUNNING', twin(wallAt2(25, 48, 2, 0.2)), [0, 2.35, 0.03], 1.3, 0.4, SGW2); }
+  // the discharge header: both pumps into one main that climbs the wall and runs off up the Spine
+  { const px = cc2(28) - 0.3, pz = cc2(49) + 0.2, top = 3.6;
+    k2PipeRun([[px - 0.9, top, pz - 2.4], [px - 0.9, top, cc2(47) - 1.6], [cc2(27), top, cc2(47) - 1.6], [cc2(27), top, 46 * CELL + 0.4]], 0.16, pp2('green', 'paint'), { flange: true, bend: 0.35 });
+    for (const zz of [pz - 1.0, cc2(47) - 0.4]) k2Pipe([px - 0.9, top + 0.16, zz], [px - 0.9, 5.0, zz], 0.018, pp2('steel', 'steel'), { seg: 6 });
+    // a chain hoist on an I-beam over the pit
+    k2Extrude([px - 1.8, 4.55, pz], [px + 1.6, 4.55, pz], PROF2.ibeam(0.16, 0.24), pp2('yellow', 'paint'), { caps: true });
+    k2Box(k2T(px + 0.2, 4.3, pz), [0.22, 0.26, 0.18], pp2('yellow', 'paint'), { bevel: 0.02 });
+    for (let i = 0; i < 18; i++) k2Torus(k2Sub(k2T(px + 0.2, 4.12 - i * 0.07, pz), 0, 0, 0, 0, (i % 2) * Math.PI / 2, Math.PI / 2), 0.025, 0.007, 8, 4, pp2('steel', 'steel'));
+    k2Torus(k2Sub(k2T(px + 0.2, 2.78, pz), 0, 0, 0, 0, 0, Math.PI / 2), 0.06, 0.014, 12, 6, pp2('yellow', 'paint')); }
+  // the motor control centre along the west wall
+  { const T = wallT2(25, 49, 2, 0.4); for (let i = 0; i < 4; i++) F2.switchgear(k2Sub(T, -1.2 + i * 0.8, 0, 0.5), i, i % 2 === 0); solidT2(T, -1.65, 0, 1.65, 1.0);
+    sign2('MCC 2 · SUMP PUMPS', twin(wallAt2(25, 49, 2, 0.4)), [0, 2.55, 0.03], 1.4, 0.24, SGW2); }
+  // a spare pump on a pallet, a coil of hose
+  { const T = k2T(cc2(28) - 0.2, 0, cc2(50) + 1.0, 0.3); k2Box(k2Sub(T, 0, 0.07, 0), [1.2, 0.14, 1.0], pp2('wood', 'wood'), { bevel: 0.01 });
+    k2Lathe(k2Sub(T, 0, 0.14, 0), [[0, 0], [0.26, 0], [0.3, 0.1], [0.3, 0.5], [0.22, 0.6], [0, 0.62]], 18, pp2('blue', 'paint')); solidT2(T, -0.62, -0.52, 0.62, 0.52);
+    for (let i = 0; i < 6; i++) k2Torus(k2T(cc2(26) + 1.4, 0.04 + i * 0.045, cc2(47) - 1.3), 0.32 - i * 0.012, 0.022, 20, 6, pp2('black', 'rubber')); }
   for (const [x, z] of [[cc2(25) - 1.1, cc2(50) + 1.2], [cc2(25) - 0.45, cc2(50) + 1.25], [cc2(25) - 1.15, cc2(50) + 0.55]]) { F2.barrel(k2T(x, 0, z), pick(['blue', 'red', 'green'])); solidAround2(x, z, 0.33, 0.33); }
   { const r = pr2(cc2(26) + 1.2, cc2(50) + 0.8, 0.6); WP2.B.mdl('wetsign', r, [0, 0, 0], [0, 0, 0], 1) || k2Box(k2T(r.position.x, 0.3, r.position.z), [0.3, 0.6, 0.05], pp2('yellow', 'plastic')); }
   phone2(28, 50, 0, 'sump', -0.6);

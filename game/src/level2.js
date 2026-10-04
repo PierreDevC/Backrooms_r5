@@ -220,7 +220,7 @@ function vault2(x, y, ns, h, cm) {
 function buildWater2(scene) {
   if (!BABYLON.Effect.ShadersStore.water2FragmentShader) {
     BABYLON.Effect.ShadersStore.water2VertexShader = BABYLON.Effect.ShadersStore.water37VertexShader;
-    BABYLON.Effect.ShadersStore.water2FragmentShader = BABYLON.Effect.ShadersStore.water37FragmentShader.replace('vec3(0.03, 0.4, 0.26)', 'vec3(0.05, 0.05, 0.03)').replace('vec3(0.72, 0.9, 0.7)', 'vec3(0.42, 0.33, 0.24)').replace('vec3(0.7, 0.95, 0.7)', 'vec3(1.0, 0.75, 0.45)').replace('vec3(0.8, 1.0, 0.85)', 'vec3(1.0, 0.8, 0.5)');
+    BABYLON.Effect.ShadersStore.water2FragmentShader = BABYLON.Effect.ShadersStore.water37FragmentShader.replace('vec3(0.03, 0.4, 0.26)', 'vec3(0.05, 0.05, 0.03)').replace('vec3(0.72, 0.9, 0.7)', 'vec3(0.42, 0.33, 0.24)').replace('vec3(0.7, 0.95, 0.7)', 'vec3(1.0, 0.75, 0.45)').replace('vec3(0.8, 1.0, 0.85)', 'vec3(1.0, 0.8, 0.5)').replace('*(sp*0.5 + sp2*0.9)', '*(sp*0.05 + sp2*0.12)');
   }
   const g = new Geo(true);
   for (let c = 0; c < N * N; c++) if (LV.wet2[c] && LV.zone[c] === ZP2.GALL || (LV.wet2[c] && LV.zone[c] === ZP2.WREG)) { const x0 = (c % N) * CELL, z0 = ((c / N) | 0) * CELL; g.face(x0, 0, z0 + CELL, [1, 0, 0], [0, 0, -1], CELL, CELL, [0, 1, 0], 1, true, [1, 1, 1, 1]); }
