@@ -50,13 +50,19 @@ function devPlayerTick(dt) {   // end of updatePlayer: the infinite things, then
   if (devNoclip()) { PL.x = clamp(PL.x, 0.4, LEVEL - 0.4); PL.z = clamp(PL.z, 0.4, LEVEL - 0.4); }
 }
 // enemies ignore the player: while they think, the player stands at a decoy point on the far side of the map (nothing can see or hear it from there, so chases drop to
-// "lost" and patrols carry on); PL.noise reads silent. Restored straight after.
+// "lost" and patrols carry on); PL.noise reads silent. Restored straight after. Enemies must stay visible, though, and their visibility pass (Agent.cull) measures
+// distance and line of sight to the player, so once the real position is back every agent culls again against the real player; their sounds are placed against it too.
+const _agentPos = Agent.prototype.pos;
+Agent.prototype.pos = function (y = 1.4) { const p = _agentPos.call(this, y); if (DEV.real) p.pl = DEV.real; return p; };
 function devAIWrap(fn) {
   return function (dt) {
     if (!(S.dev && S.devOpts.ignore) || G.state === 'loading') return fn(dt);
     const x = PL.x, z = PL.z, n = PL.noise, kx = PL.kx, kz = PL.kz;
-    PL.x = x < LEVEL / 2 ? LEVEL - 2.5 : 2.5; PL.z = z < LEVEL / 2 ? LEVEL - 2.5 : 2.5; PL.noise = 0;
-    try { return fn(dt); } finally { PL.x = x; PL.z = z; PL.noise = n; PL.kx = kx; PL.kz = kz; }
+    DEV.real = { x, z }; PL.x = x < LEVEL / 2 ? LEVEL - 2.5 : 2.5; PL.z = z < LEVEL / 2 ? LEVEL - 2.5 : 2.5; PL.noise = 0;
+    try { return fn(dt); } finally {
+      PL.x = x; PL.z = z; PL.noise = n; PL.kx = kx; PL.kz = kz; DEV.real = null;
+      for (const a of AI.all) { try { a.cull(); } catch (e) {} }
+    }
   };
 }
 updateAI = devAIWrap(updateAI); updateAI2 = devAIWrap(updateAI2); updateAI5 = devAIWrap(updateAI5); updateAI7 = devAIWrap(updateAI7);
