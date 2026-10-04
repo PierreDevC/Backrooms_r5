@@ -38,7 +38,7 @@ On the skinned Quaternius body (game/src/chars2.js; outfits are painted in the s
 
 ## Systems
 - HEAT meter: rises in hot zones (galleries water, long pipe, switchyard), falls in cold rooms, the office, shelters; full heat hurts. Almond water drops it.
-- SURGES: warning (three knocks, Ida on every phone, a klaxon), then steam fills every corridor cell that is not a shelter/cold room/office for ~12 s; each regulator weakens them; all three stop them.
+- SURGES (r11 rework): warning (three knocks, Ida on every phone, a klaxon, 11 s), then steam fills every cell that is not cover (refuges, cold stores, control room, camp, valve room, lift, pump room) for 11 / 13 / 15 s. Outside cover the steam fills the HEAT bar fast (0.14 / 0.22 / 0.30 per second: full about 4 s after the steam arrives on Normal), and a FULL heat bar burns 8 / 14 / 22 VIT per second (Easy / Normal / Nightmare): a whole surge in the open is survivable on Easy and fatal on Normal and Nightmare. Coughing, a red burn overlay and a flashing bar while it happens. The tunnels' own heat stops at 90%: only steam fills the bar. Each regulator cuts the heating and the duration by a quarter; all three stop the surges.
 - PIPE PHONES: ring when Ida has something to say; pick up for a context hint.
 - ENERGY BARS and ENERGY DRINKS (r11): pick-ups in the rooms and refuges (Easy 6 + 5, Normal 5 + 4, Nightmare 3 + 2). B eats a bar: half your stamina back, stamina recovers twice as fast for 60 s, +8 VIT. T drinks a can: full stamina, sprinting costs 40% for 40 s. The STA bar glows while either works; the inventory line shows BAR / CAN counts. Counts reset when Level 2 starts.
 - THE HOUND: noise and fear; light-and-stand-still stare-down; contact damage; retreats.

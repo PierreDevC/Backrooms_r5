@@ -7,6 +7,7 @@
 - Thirteen CC0 ambientCG scanned materials (docs/CREDITS.md).
 - Characters on the skinned body with new outfits: Ida (night engineer, seated), Benny (hi-vis, hard hat), the Faceling crew (boiler suits, reflective tape, smooth egg heads), the foreman (clipboard), and the Hound crawling on all fours.
 - The pause screen shows the current level and objective.
+- Level 2 surges reworked: steam fills the HEAT bar in about 4 s outside cover (Normal) and a full bar burns 8 / 14 / 22 VIT per second, so a whole surge in the open kills on Normal and Nightmare; coughing, a burn overlay and a flashing bar; the tunnels' own heat stops at 90%. qa2/s2_steam.js.
 - Energy bars (B: half stamina back, double recovery for 60 s, +8 VIT) and energy drinks (T: full stamina, sprinting at 40% cost for 40 s) placed through Level 2's rooms and refuges; touch buttons BAR / CAN; qa2/s2_energy.js.
 - No human playthrough or real-GPU performance test. Notion sync pending.
 

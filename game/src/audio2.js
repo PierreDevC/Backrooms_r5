@@ -23,6 +23,7 @@ const SFX2 = {
   far(pos) { shot((d, t) => { const k = Math.random(); if (k < 0.45) { for (let i = 0; i < 3; i++) { nz(d, t + i * 0.5, 0.1, 'lowpass', 350, 1, 0.5, 0.003); tone(d, t + i * 0.5, 0.9, 'triangle', 300 + Math.random() * 40, 290, 0.05, 0.004); } } else if (k < 0.75) { const f = nz(d, t, 2.5, 'bandpass', 300, 4, 0.25, 0.5); f.frequency.linearRampToValueAtTime(140, t + 2.5); } else { tone(d, t, 2.2, 'sawtooth', 90, 70, 0.05, 0.6); nz(d, t, 2, 'bandpass', 900, 6, 0.08, 0.4); } return 3; }, pos, 1.6); },
 };
 // the tunnels' bed: a low machine drone, a pipe resonance that beats against it, heat ticks
+SFX2.cough = () => shot((d, t) => { for (let i = 0; i < 2; i++) { nz(d, t + i * 0.32, 0.18, 'bandpass', 420 + Math.random() * 120, 2.5, 0.55, 0.01); nz(d, t + i * 0.32 + 0.02, 0.12, 'lowpass', 900, 1, 0.3, 0.01); } return 0.9; });
 function audio2(dt, z) {
   const C = AU.ctx, now = C.currentTime, mute = AU.muted, live = G.state === 'play' || G.state === 'intro' || G.state === 'won';
   if (AU.uw) AU.uw.frequency.setTargetAtTime(22000, now, 0.05);

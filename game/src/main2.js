@@ -1,6 +1,6 @@
 // ---------- r9 · Level 2 · Pipe Dreams: arrival, heat, surges, the per-frame look, endings ----------
 const GP2 = { from: null };
-const SURGE2 = { every: [200, 160, 125], warn: 11, steam: [11, 13, 15], dmg: [3, 4.5, 6.5] };
+const SURGE2 = { every: [200, 160, 125], warn: 11, steam: [11, 13, 15], heatUp: [0.14, 0.22, 0.3], full: [8, 14, 22], ambientMax: 0.9 };   // r11: steam fills the heat bar; a full bar burns
 function resetGP2() {
   const from = GP2.from; for (const k of Object.keys(GP2)) delete GP2[k];
   Object.assign(GP2, { from, phase: 'arrive', heat: 0, regs: 0, surge: null, surgeT: 9999, surges: 0, endWon: false, ending: '', ambT: 10, voiceT: 50, warns: {}, hum: null, amb: null, lift: null });
@@ -64,15 +64,23 @@ function beginPlay2() {
 // ----- heat: the tunnels cook you slowly; cold rooms, the office and shelters let you cool down -----
 function heat2(dt) {
   if (G.state !== 'play') return;
-  const c = cell2(PL.x, PL.z), r = LV.rooms[LV.room[c]], k = [0.7, 1, 1.3][G.diff], hot = LV.hot2[c] * (1 - GP2.regs * 0.18);
+  const c = cell2(PL.x, PL.z), r = LV.rooms[LV.room[c]], k = [0.7, 1, 1.3][G.diff], hot = LV.hot2[c] * (1 - GP2.regs * 0.18), Sg = GP2.surge, steam = Sg && Sg.st === 'steam' && !LV.safe2[c];
   let d = 0;
-  if (r && r.cold) d = -0.07; else if (LV.safe2[c]) d = -0.025; else d = hot * 0.012 * k * (PL.run ? 1.8 : 1) - 0.002;
-  if (GP2.surge && GP2.surge.st === 'steam' && !LV.safe2[c]) d += 0.03 * k;
-  GP2.heat = clamp(GP2.heat + d * dt, 0, 1);
-  if (GP2.heat > 0.75) { FX.glitch = Math.max(FX.glitch, (GP2.heat - 0.75) * 1.2); PL.fear = Math.max(PL.fear, 0.25); if (!GP2.warns.heat) { GP2.warns.heat = true; toast('TOO HOT · FIND A COLD STORE OR A SHELTER', 3); } }
+  if (r && r.cold) d = -0.07; else if (LV.safe2[c]) d = -0.04; else d = hot * 0.012 * k * (PL.run ? 1.8 : 1) - 0.002;
+  if (steam) d += SURGE2.heatUp[G.diff] * (1 - GP2.regs * 0.25) * Sg.k;
+  let h = GP2.heat + d * dt;
+  // only steam can fill the bar: the tunnels' own heat stops just short of full, and above that it bleeds off once the steam clears
+  if (!steam && h > SURGE2.ambientMax) h = Math.max(SURGE2.ambientMax, GP2.heat - 0.12 * dt);
+  GP2.heat = clamp(h, 0, 1);
+  if (GP2.heat > 0.75) { FX.glitch = Math.max(FX.glitch, (GP2.heat - 0.75) * 1.2); PL.fear = Math.max(PL.fear, 0.25); if (!GP2.warns.heat) { GP2.warns.heat = true; toast(steam ? 'GET INTO A SHELTER' : 'TOO HOT · FIND A COLD STORE OR A SHELTER', 3); } }
   if (GP2.heat < 0.5) GP2.warns.heat = false;
-  if (GP2.heat >= 1) { PL.hp -= dt * 3.5 * k; FX.hurt = Math.max(FX.hurt, 0.4); if (PL.hp <= 0) { PL.hp = 0; die('heat'); } }
+  if (steam) { FX.hurt = Math.max(FX.hurt, 0.25 + 0.35 * GP2.heat); PL.shake = Math.max(PL.shake, 0.15 + 0.25 * GP2.heat); if ((GP2.coughT = (GP2.coughT || 0) - dt) <= 0 && GP2.heat > 0.55) { GP2.coughT = rnd(1.1, 2.0); SFX2.cough && SFX2.cough(); } }
+  if (GP2.heat >= 0.999) {   // a full bar burns, hard
+    PL.hp -= dt * SURGE2.full[G.diff]; FX.hurt = Math.max(FX.hurt, 0.85); PL.shake = Math.max(PL.shake, 0.45); FX.glitch = Math.max(FX.glitch, 0.6);
+    if (PL.hp <= 0) { PL.hp = 0; die(Sg && Sg.st === 'steam' ? 'steam' : 'heat'); }
+  }
   const f = $('heatFill'); if (f) { f.style.width = (GP2.heat * 100).toFixed(0) + '%'; f.parentNode.classList.toggle('low', GP2.heat > 0.75); }
+  const hb = $('heat2'); if (hb) hb.classList.toggle('burn', GP2.heat >= 0.999);
 }
 // ----- surges: three knocks, a klaxon, then steam fills every tunnel that is not a shelter -----
 function surge2(dt) {
@@ -88,7 +96,7 @@ function surge2(dt) {
   else if (S_.st === 'steam') {
     const dur = SURGE2.steam[G.diff] * (1 - GP2.regs * 0.25);
     S_.k = Math.min(1, S_.t / 1.5) * (1 - smooth(dur - 2, dur, S_.t));
-    if (!safe) { PL.hp -= dt * SURGE2.dmg[G.diff] * (1 - GP2.regs * 0.3) * S_.k; FX.hurt = Math.max(FX.hurt, 0.5 * S_.k); PL.shake = Math.max(PL.shake, 0.2 * S_.k); if (!GP2.warns.scald) { GP2.warns.scald = true; toast('GET INTO A SHELTER', 2); } if (PL.hp <= 0) { PL.hp = 0; die('steam'); } }
+    if (!safe && !GP2.warns.scald) { GP2.warns.scald = true; toast('GET INTO A SHELTER', 2); }   // the burning itself is the heat bar (heat2)
     if (S_.t >= dur) endSurge2();
   }
 }

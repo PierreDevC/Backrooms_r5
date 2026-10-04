@@ -302,3 +302,5 @@ body.hacking #toast,body.peeping #toast{top:9%}body.hacking #subs,body.peeping #
 
 body:not(.lvl2) .tbtns .l2{display:none}
 .bar.boost{box-shadow:0 0 6px rgba(255,190,60,.8)}.bar.boost #stBar{background:#ffc53a}
+
+#heat2.burn{animation:br37 .35s steps(2) infinite;color:#ff6a40}#heat2.burn #heatFill{background:#ff4a20}
