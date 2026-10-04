@@ -22,9 +22,19 @@ Work in the worktree `/Volumes/crucial/Downloads/Backrooms_claude`, branch `agen
   - The `#fbatt` meter appears under SPARE.
 - Test: `qa_r12/items.js` (14 checks). `qa2/s2_energy.js` still passes.
 
+## Done (step 2): Level 9 renders through the ray-traced bake — `game/src/arch9.js`
+- `buildWorld9` now runs: `genLayout9 → planWindows9 → collectPieces9 → planLights9 → planBake9 → buildLightmap (fixtures hidden; masks and wall distances only) → buildCollision → buildArch9 → buildProps9 → car occluders → doors / story / items (story9 ends with W9.finishProps()) → bake2 → bk2Meshes → buildSky9`.
+- `KGeo` (arch9.js) is a `Geo` look-alike that writes into the kit buckets, so `buildArch9` is the old `buildGeometry9` unchanged apart from the output: pieces, floors, ceilings, roofs, stairs, trims all come out tessellated per material (`MAT9W.step`) and ray-traced. Edit a material's look in `MAT9W` (scan key, repeats per metre, `t255` target colour, `va` vertex wetness, `step`).
+- Generalised: `R2.W` is the world-material table (`l2Tab()`; MAT9W for Level 9, which also sets `__sub` so props use the `#define SUB` shader with painted-metal / planks / steel / concrete scans); `mP3` per-material albedo gain; `l2H.x` scales all baked light (Level 9's `FX.lightScale` stutter); `r2Frame` only reads `GP2.surge` on Level 2; `R2.hazeK` is the haze density (0.003 on Level 9). `R2.lights` is assigned for Level 9 only; Level 2's haze is still unassigned (lamp haze is off there; assign `R2.lights = LV.l2Lights` after `planLights2` to turn it on and recheck the look).
+- `bake2.js`: `kind: 'sun'` (the moon, `MOON9`: direction, colour, irradiance, angular radius for soft shadows, 400 m shadow rays, `noProbe` keeps it out of the 2D light texture because props take moonlight from the sky mask), sky radiance for pass-2 rays that leave the scene (`LV.l2Sky`, upward rays only, passed to the workers in `init`), lightTex alpha = `LV.sky` mask.
+- Lights (`planBake9`): sodium cobra-head spots on the live street lamps (flickering or dead as in `planLights9`), warm point lamps in the lit houses, porch lights, fluorescent line lights in the outpost and lab, the compound flood, a faint spill from the lit windows of sealed houses.
+- New: alpha-cut materials (`chain` link fence, `leaf` cards with a procedural leaf mask) as `CUT_CHAIN` / `CUT_LEAF` variants of the world shader; kit trees and shrubs (`kitTree9`, `kitShrub9`); night sky dome (`buildSky9`, `sky9` shader: sodium horizon glow, fbm clouds, stars, moon; `skyFrame9` follows the camera); cars cast shadows (`k2OccBox`).
+- The scans were already in the pack (asph, grass, conc, siding, roof, planks, wood9, paper9, plaster, l0ceil, ktile, kwall, block, l2brick, chain), so nothing new was downloaded; carpet and wallpaper variants for step 3 are in the pack too (gcarpet, hcarpet, kcarpet, hpaper).
+- Test: `qa_r12/l9_bake.js`. Screenshots: docs/screenshots/l9_r12_*.png.
+
 ## To do
 
-### 2. Renderer: port Level 9 to the r11 ray-traced bake (`rt.js`, `kit2.js`, `bake2.js`, `render2.js`)
+### 2. (done, see above) Renderer: port Level 9 to the r11 ray-traced bake (`rt.js`, `kit2.js`, `bake2.js`, `render2.js`)
 - Generalise these Level 2-only pieces:
   - `l2Mat` / `bk2Alb` use `MAT2W` → switch to a per-level table pointer (MAT9W for Level 9);
   - `r2Frame` reads `GP2.surge` → guard it with `LVL === 2`;

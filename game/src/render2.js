@@ -3,7 +3,7 @@
 //   lS = steady light (rgb, direct + one bounce), a = ambient occlusion;  lF = light from flickering lamps (rgb);  lD = dominant light direction (xyz), w = how directional.
 // The fragment shader re-lights the scanned normal maps against lD, adds a GGX highlight from it (wet floors and metal catch the lamps),
 // adds the player's torch and the other dynamic lights, then lamp-lit haze along the view ray (in-scattering from the eight nearest lamps).
-const R2 = { mats: {}, haze: null, vL: new Float32Array(32), vC: new Float32Array(32), list: [] };
+const R2 = { W: null, hazeK: 0.0045, mats: {}, haze: null, vL: new Float32Array(32), vC: new Float32Array(32), list: [] };
 const L2_GLSL_V = `precision highp float;
 attribute vec3 position; attribute vec3 normal; attribute vec4 tangent; attribute vec2 uv; attribute vec4 color; attribute vec4 lS; attribute vec4 lF; attribute vec4 lD;
 uniform mat4 world; uniform mat4 viewProjection;
@@ -14,12 +14,17 @@ varying vec3 vPos; varying vec3 vN; varying vec3 vT; varying vec2 vUV; varying v
 uniform vec4 mP;     // x uv scale, y normal strength, z roughness multiplier, w metalness
 uniform vec4 mP2;    // x wet response, y spec multiplier, z albedo gain, w ao strength
 uniform vec4 bandC;  // painted dado: rgb colour (alpha 0 = none), band top in w
+uniform vec4 mP3;    // rgb: per-material albedo gain (tints a scan onto the level's palette)
+uniform vec4 l2H;    // x: scale on all baked light (Level 9's stutter when the Wretch is near)
 uniform vec4 l2G;    // x flicker, y haze density, z time, w steam (surge)
 uniform vec4 vL[8]; uniform vec4 vC8[8];
 #ifdef PROP
 uniform sampler2D t0A; uniform sampler2D t0N; uniform sampler2D t0R;
 uniform sampler2D t1A; uniform sampler2D t1N; uniform sampler2D t1R;
 uniform sampler2D t2A; uniform sampler2D t2N; uniform sampler2D t2R;
+#ifdef SUB
+uniform sampler2D t3A; uniform sampler2D t3N; uniform sampler2D t3R;
+#endif
 #else
 uniform sampler2D albT; uniform sampler2D nrmT; uniform sampler2D ormT;
 #endif
@@ -46,6 +51,27 @@ void main(){
   // triplanar on world position, three scanned sets chosen by the material id in vertex alpha
   float id = floor(vC.a*16.0); vec3 w = triW(gn); vec2 ux = p.zy*uvs, uy = p.xz*uvs, uz = p.xy*uvs;
   vec3 a0, n0, r0;
+#ifdef SUB
+  // Level 9 sets: 0 painted metal / plastic, 1 wood grain (wood, paper, cloth), 2 steel, 3 concrete
+  float ps = (id < 0.5 || id > 3.5 && id < 4.5 || id > 8.5 && id < 9.5 || id > 10.5 && id < 11.5) ? 0.0 : (id > 4.5 && id < 5.5 || id > 9.5 && id < 10.5 || id > 11.5) ? 1.0 : (id > 5.5 && id < 6.5) ? 3.0 : 2.0;
+  if(ps < 0.5){
+    a0 = texture2D(t0A, ux).rgb*w.x + texture2D(t0A, uy).rgb*w.y + texture2D(t0A, uz).rgb*w.z;
+    n0 = texture2D(t0N, ux).xyz*w.x + texture2D(t0N, uy).xyz*w.y + texture2D(t0N, uz).xyz*w.z;
+    r0 = texture2D(t0R, ux).rgb*w.x + texture2D(t0R, uy).rgb*w.y + texture2D(t0R, uz).rgb*w.z;
+  } else if(ps < 1.5){
+    a0 = texture2D(t1A, ux).rgb*w.x + texture2D(t1A, uy).rgb*w.y + texture2D(t1A, uz).rgb*w.z;
+    n0 = texture2D(t1N, ux).xyz*w.x + texture2D(t1N, uy).xyz*w.y + texture2D(t1N, uz).xyz*w.z;
+    r0 = texture2D(t1R, ux).rgb*w.x + texture2D(t1R, uy).rgb*w.y + texture2D(t1R, uz).rgb*w.z;
+  } else if(ps < 2.5){
+    a0 = texture2D(t2A, ux).rgb*w.x + texture2D(t2A, uy).rgb*w.y + texture2D(t2A, uz).rgb*w.z;
+    n0 = texture2D(t2N, ux).xyz*w.x + texture2D(t2N, uy).xyz*w.y + texture2D(t2N, uz).xyz*w.z;
+    r0 = texture2D(t2R, ux).rgb*w.x + texture2D(t2R, uy).rgb*w.y + texture2D(t2R, uz).rgb*w.z;
+  } else {
+    a0 = texture2D(t3A, ux).rgb*w.x + texture2D(t3A, uy).rgb*w.y + texture2D(t3A, uz).rgb*w.z;
+    n0 = texture2D(t3N, ux).xyz*w.x + texture2D(t3N, uy).xyz*w.y + texture2D(t3N, uz).xyz*w.z;
+    r0 = texture2D(t3R, ux).rgb*w.x + texture2D(t3R, uy).rgb*w.y + texture2D(t3R, uz).rgb*w.z;
+  }
+#else
   if(id < 0.5 || id > 10.5 && id < 11.5){        // painted steel (machinery, cabinets) / hazard stripes reuse the paint scan
     a0 = texture2D(t0A, ux).rgb*w.x + texture2D(t0A, uy).rgb*w.y + texture2D(t0A, uz).rgb*w.z;
     n0 = texture2D(t0N, ux).xyz*w.x + texture2D(t0N, uy).xyz*w.y + texture2D(t0N, uz).xyz*w.z;
@@ -59,6 +85,7 @@ void main(){
     n0 = texture2D(t2N, ux).xyz*w.x + texture2D(t2N, uy).xyz*w.y + texture2D(t2N, uz).xyz*w.z;
     r0 = texture2D(t2R, ux).rgb*w.x + texture2D(t2R, uy).rgb*w.y + texture2D(t2R, uz).rgb*w.z;
   }
+#endif
   a0 *= a0; float lum0 = dot(a0, vec3(0.3, 0.59, 0.11));
   vec3 tint = vC.rgb*vC.rgb;
   float metal = r0.b, rough = r0.g;
@@ -82,7 +109,26 @@ void main(){
   float ao = mix(1.0, r0.r, 0.6);
 #else
   vec2 uv = vUV*uvs;
-  alb = texture2D(albT, uv).rgb; alb *= alb; alb *= vC.rgb*mP2.z;
+#ifdef CUT_CHAIN
+  { float d0 = length(camPos - p); vec2 dg = vec2(vUV.x + vUV.y, vUV.x - vUV.y)/0.085; vec2 fr = abs(fract(dg) - 0.5);
+    float exact = step(0.5 - max(fr.x, fr.y), 0.09 + d0*0.004);
+    float farK = step(hash13(vec3(gl_FragCoord.xy, 7.0)), 0.3*(1.0 - smoothstep(18.0, 36.0, d0)));
+    if(mix(exact, farK, smoothstep(3.5, 8.0, d0)) < 0.5) discard;
+    if(!gl_FrontFacing) gn = -gn; }
+#endif
+#ifdef CUT_LEAF
+  float leafV;
+  { vec2 lq = vUV*4.0; vec2 cl = floor(lq), f = fract(lq) - 0.5; float h1 = hash13(vec3(cl, 3.0)), h2 = hash13(vec3(cl, 9.0)), a = h1*6.2832;
+    vec2 rq = vec2(cos(a)*f.x + sin(a)*f.y, -sin(a)*f.x + cos(a)*f.y);
+    float lf = 1.0 - length(rq*vec2(1.0, 2.4)*(1.5 + h2*0.9));
+    float cluster = fbm(vec3(vUV*0.9, 5.0));
+    if(lf < 0.0 || cluster < 0.34) discard;
+    leafV = 0.55 + 0.8*h1; if(!gl_FrontFacing) gn = -gn; }
+#endif
+  alb = texture2D(albT, uv).rgb; alb *= alb; alb *= vC.rgb*mP2.z*mP3.rgb;
+#ifdef CUT_LEAF
+  alb = vC.rgb*vC.rgb*leafV*mP2.z;
+#endif
   vec3 tn = texture2D(nrmT, uv).xyz*2.0 - 1.0; tn.y = -tn.y; tn.xy *= mP.y;
   orm = texture2D(ormT, uv).rgb;
   float rough = orm.g*mP.z, metal = mP.w*orm.b;
@@ -106,7 +152,7 @@ void main(){
 #endif
   rough = clamp(rough, 0.05, 1.0);
   // baked light, re-lit against the normal map along the dominant direction
-  vec3 E = vS.rgb + vF.rgb*l2G.x;
+  vec3 E = (vS.rgb + vF.rgb*l2G.x)*l2H.x;
   vec3 Ld = vD.xyz; float dk = vD.w; float ll = length(Ld); Ld = ll > 0.001 ? Ld/ll : gn;
   float g0 = max(dot(gn, Ld), 0.18), g1 = max(dot(n, Ld), 0.0);
   vec3 Edir = E*mix(1.0, g1/g0, dk*0.9);
@@ -132,8 +178,11 @@ void main(){
 }`;
 BABYLON.Effect.ShadersStore.l2wVertexShader = L2_GLSL_V; BABYLON.Effect.ShadersStore.l2wFragmentShader = L2_GLSL_F;
 BABYLON.Effect.ShadersStore.l2pVertexShader = L2_GLSL_V; BABYLON.Effect.ShadersStore.l2pFragmentShader = '#define PROP\n' + L2_GLSL_F;
+BABYLON.Effect.ShadersStore.l2cVertexShader = L2_GLSL_V; BABYLON.Effect.ShadersStore.l2cFragmentShader = '#define CUT_CHAIN\n' + L2_GLSL_F;
+BABYLON.Effect.ShadersStore.l2lVertexShader = L2_GLSL_V; BABYLON.Effect.ShadersStore.l2lFragmentShader = '#define CUT_LEAF\n' + L2_GLSL_F;
+BABYLON.Effect.ShadersStore.l2sVertexShader = L2_GLSL_V; BABYLON.Effect.ShadersStore.l2sFragmentShader = '#define PROP\n#define SUB\n' + L2_GLSL_F;
 BABYLON.Effect.ShadersStore.l2gVertexShader = L2_GLSL_V; BABYLON.Effect.ShadersStore.l2gFragmentShader = '#define PROP\n#define GLASS\n' + L2_GLSL_F;
-const L2U = ['world', 'viewProjection', ...COMMON_UNIFORMS, 'mP', 'mP2', 'bandC', 'l2G', 'vL', 'vC8'];
+const L2U = ['world', 'viewProjection', ...COMMON_UNIFORMS, 'mP', 'mP2', 'bandC', 'mP3', 'l2H', 'l2G', 'vL', 'vC8'];
 const L2A = ['position', 'normal', 'tangent', 'uv', 'color', 'lS', 'lF', 'lD'];
 // world materials: scan key, uv repeats per metre, normal strength, roughness multiplier, metalness, wet response, spec, albedo gain, ao strength, painted band
 const MAT2W = {
@@ -151,9 +200,11 @@ const MAT2W = {
   corr: { k: 'l2corr', s: 1 / 1.6, nS: 1.0, r: 1.0, m: 1, wet: 0, sp: 0.8, g: 0.55, ao: 0.8 },
   haz: { k: 'l2haz', s: 1 / 0.8, nS: 0.6, r: 1.0, m: 0.5, wet: 0.3, sp: 0.6, g: 1.0, ao: 0.6 },
 };
+const l2Tab = () => R2.W || MAT2W;   // the world-material table of the level being built (Level 9 supplies MAT9W)
 function l2Mat(key) {
   if (R2.mats[key]) return R2.mats[key];
-  const D = MAT2W[key], m = new BABYLON.ShaderMaterial('l2w_' + key, SCN, { vertex: 'l2w', fragment: 'l2w' }, { attributes: L2A, uniforms: L2U, samplers: ['lightTex', 'albT', 'nrmT', 'ormT'] });
+  const D = l2Tab()[key], sh = D.cut === 'chain' ? 'l2c' : D.cut === 'leaf' ? 'l2l' : 'l2w', m = new BABYLON.ShaderMaterial('l2w_' + key, SCN, { vertex: sh, fragment: sh }, { attributes: L2A, uniforms: L2U, samplers: ['lightTex', 'albT', 'nrmT', 'ormT'] });
+  m.setVector4('mP3', D.tint ? new BABYLON.Vector4(D.tint[0], D.tint[1], D.tint[2], 0) : new BABYLON.Vector4(1, 1, 1, 0)); if (D.cut) m.backFaceCulling = false;
   m.setTexture('lightTex', LV.lightTex); m.setTexture('albT', pbrTex(D.k, 'a')); m.setTexture('nrmT', pbrTex(D.k, 'n')); m.setTexture('ormT', pbrTex(D.k, 'r'));
   m.setVector4('mP', new BABYLON.Vector4(D.s, D.nS, D.r, D.m)); m.setVector4('mP2', new BABYLON.Vector4(D.wet, D.sp, D.g, D.ao));
   const b = D.band; m.setVector4('bandC', b ? new BABYLON.Vector4(b[0], b[1], b[2], b[3]) : new BABYLON.Vector4(0, 0, 0, 0)); if (!b) m.setVector4('bandC', new BABYLON.Vector4(0, 0, 0, -1));
@@ -161,29 +212,31 @@ function l2Mat(key) {
 }
 function l2PropMat() {
   if (R2.mats.prop) return R2.mats.prop;
-  const m = new BABYLON.ShaderMaterial('l2p', SCN, { vertex: 'l2p', fragment: 'l2p' }, { attributes: L2A, uniforms: L2U, samplers: ['lightTex', 't0A', 't0N', 't0R', 't1A', 't1N', 't1R', 't2A', 't2N', 't2R'] });
-  m.setTexture('lightTex', LV.lightTex);
-  for (const [s, k] of [['t0', 'l2paint'], ['t1', 'l2rustm'], ['t2', 'l2steel']]) { m.setTexture(s + 'A', pbrTex(k, 'a')); m.setTexture(s + 'N', pbrTex(k, 'n')); m.setTexture(s + 'R', pbrTex(k, 'r')); }
+  const sub = !!(R2.W && R2.W.__sub), sets = sub ? [['t0', 'l2paint'], ['t1', 'planks'], ['t2', 'l2steel'], ['t3', 'block']] : [['t0', 'l2paint'], ['t1', 'l2rustm'], ['t2', 'l2steel']];
+  const m = new BABYLON.ShaderMaterial('l2p', SCN, { vertex: sub ? 'l2s' : 'l2p', fragment: sub ? 'l2s' : 'l2p' }, { attributes: L2A, uniforms: L2U, samplers: ['lightTex', ...sets.flatMap(([s]) => [s + 'A', s + 'N', s + 'R'])] });
+  m.setTexture('lightTex', LV.lightTex); m.setVector4('mP3', new BABYLON.Vector4(1, 1, 1, 0));
+  for (const [s, k] of sets) { m.setTexture(s + 'A', pbrTex(k, 'a')); m.setTexture(s + 'N', pbrTex(k, 'n')); m.setTexture(s + 'R', pbrTex(k, 'r')); }
   m.setVector4('mP', new BABYLON.Vector4(0.9, 1.0, 1.0, 0)); m.setVector4('mP2', new BABYLON.Vector4(0, 0.9, 1.0, 0.6)); m.setVector4('bandC', new BABYLON.Vector4(0, 0, 0, -1));
   R2.list.push(m); MATS.list.push(m); R2.mats.prop = m; return m;
 }
 function l2GlassMat() {
   if (R2.mats.glass) return R2.mats.glass;
   const m = new BABYLON.ShaderMaterial('l2g', SCN, { vertex: 'l2g', fragment: 'l2g' }, { attributes: L2A, uniforms: L2U, samplers: ['lightTex', 't0A', 't0N', 't0R', 't1A', 't1N', 't1R', 't2A', 't2N', 't2R'], needAlphaBlending: true });
-  m.setTexture('lightTex', LV.lightTex);
+  m.setTexture('lightTex', LV.lightTex); m.setVector4('mP3', new BABYLON.Vector4(1, 1, 1, 0));
   for (const [s, k] of [['t0', 'l2paint'], ['t1', 'l2rustm'], ['t2', 'l2steel']]) { m.setTexture(s + 'A', pbrTex(k, 'a')); m.setTexture(s + 'N', pbrTex(k, 'n')); m.setTexture(s + 'R', pbrTex(k, 'r')); }
   m.setVector4('mP', new BABYLON.Vector4(0.9, 1.0, 1.0, 0)); m.setVector4('mP2', new BABYLON.Vector4(0, 1.2, 1.0, 0)); m.setVector4('bandC', new BABYLON.Vector4(0, 0, 0, -1));
   m.alphaMode = BABYLON.Engine.ALPHA_COMBINE; m.backFaceCulling = false; m.disableDepthWrite = true;
   R2.list.push(m); MATS.list.push(m); R2.mats.glass = m; return m;
 }
-function r2Reset() { R2.mats = {}; R2.list = []; R2.lights = []; }
+function r2Reset() { R2.mats = {}; R2.list = []; R2.lights = []; R2.W = null; R2.hazeK = 0.0045; R2.near = null; }
 // per frame: flicker, haze density, and the eight lamps nearest the camera for in-scattering
 function r2Frame() {
   if (!R2.list.length) return;
-  const cp = CAM.position, Ls = R2.lights || [], sk = GP2.surge ? GP2.surge.k : 0;
-  if ((R2.sortT = (R2.sortT || 0) - 1) <= 0) { R2.sortT = 6; R2.near = Ls.map(l => [(l.p[0] - cp.x) ** 2 + (l.p[1] - cp.y) ** 2 + (l.p[2] - cp.z) ** 2, l]).filter(a => a[0] < 900).sort((a, b) => a[0] - b[0]).slice(0, 8).map(a => a[1]); }
+  const cp = CAM.position, Ls = R2.lights || [], sk = LVL === 2 && GP2.surge ? GP2.surge.k : 0;
+  if ((R2.sortT = (R2.sortT || 0) - 1) <= 0) { R2.sortT = 6; R2.near = Ls.filter(l => l.p && l.hz > 0).map(l => [(l.p[0] - cp.x) ** 2 + (l.p[1] - cp.y) ** 2 + (l.p[2] - cp.z) ** 2, l]).filter(a => a[0] < 900).sort((a, b) => a[0] - b[0]).slice(0, 8).map(a => a[1]); }
   const vL = R2.vL, vC = R2.vC; vL.fill(0); vC.fill(0);
   (R2.near || []).forEach((l, i) => { const f = l.flick ? FX.flicker : 1, k = l.hz * f; vL[i * 4] = l.p[0]; vL[i * 4 + 1] = l.p[1]; vL[i * 4 + 2] = l.p[2]; vL[i * 4 + 3] = l.hr || 0.25; vC[i * 4] = l.c[0] * k; vC[i * 4 + 1] = l.c[1] * k; vC[i * 4 + 2] = l.c[2] * k; });
-  const g = R2.g || (R2.g = new BABYLON.Vector4(0, 0, 0, 0)); g.set(FX.flicker, 0.0045 * (1 + sk * 9) * (S.qual >= 1 ? 1 : 0.7), FX.t, sk);
-  for (const m of R2.list) { m.setVector4('l2G', g); m.setArray4('vL', vL); m.setArray4('vC8', vC); }
+  const g = R2.g || (R2.g = new BABYLON.Vector4(0, 0, 0, 0)); g.set(FX.flicker, R2.hazeK * (1 + sk * 9) * (S.qual >= 1 ? 1 : 0.7), FX.t, sk);
+  const h = R2.h || (R2.h = new BABYLON.Vector4(1, 0, 0, 0)); h.x = LVL === 9 ? FX.lightScale : 1;
+  for (const m of R2.list) { m.setVector4('l2G', g); m.setVector4('l2H', h); m.setArray4('vL', vL); m.setArray4('vC8', vC); }
 }

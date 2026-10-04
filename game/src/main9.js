@@ -389,6 +389,7 @@ function gameEvents9(dt) {
 const _t9 = new BABYLON.Vector4(1, 1, 1, 1);
 function approach(v, want, up, down, dt) { return want > v ? Math.min(want, v + dt * up) : Math.max(want, v - dt * down); }
 function worldFX9(dt) {
+  skyFrame9(); r2Frame();
   const t = FX.t, live = G.state === 'play' || G.state === 'dead' || G.state === 'won', cp = CAM.position;
   const n = noise1(t * 5.3) + 0.5 * noise1(t * 23.1 + 4);
   FX.flicker = n > -0.15 ? 0.82 + 0.18 * hash1(Math.floor(t * 60)) : 0.06;

@@ -1,5 +1,8 @@
 # The Backrooms: Found Footage — Coding-Agent Handoff (r7.2)
 
+## r12 (branch agent/claude): Level 9 rebuild, step 2 done (renderer) — read docs/LEVEL9_R12_PLAN.md
+Build order: arch9.js follows bake2.js. `buildWorld9` is the bake pipeline (see docs/ARCHITECTURE.md › Level 9 renderer): `buildArch9` is the old `buildGeometry9` writing through `KGeo`; lamps, moon and sky are in `planBake9` / `MOON9` / `SKY9`; materials in `MAT9W`. Steps 3 (4x4 map, house fidelity), 4 (objectives) and 5 (tests, docs) are still to do; the vertex count is already near 1 M, so raise `MAT9W.step` before adding detail. `qa_r6/l9_watch.js` is flaky on the old and the new renderer alike (random layout, thresholds minD < 13 and nearFrac > 0.25); everything else in the Level 9 suites passes.
+
 ## r11 (branch agent/claude): Level 2 rebuilt — read docs/LEVEL2.md (Map, Rendering, Characters)
 Build order adds rt.js, kit2.js, render2.js, bake2.js before level2.js and chars2.js after story2.js. Level 2 geometry and props go through kit2 (k2Rect / k2Box / k2Pipe / k2PipeRun / k2Lathe / k2Extrude; colour alpha is the prop material id, PM2), then bake2() traces and bk2Meshes() makes the meshes; tune lamps in planLights2 (LV.l2Lights; LL scales I x 2.1 and range x 1.25). Textures: unpack with tools/unpack_assets.py, add sets, rebuild with tools/build_assets.py (needs numpy + Pillow). Characters: SKP profiles engineer / worker / faceling / hound2, outfits O_ENGINEER / O_WORKER / O_COVERALL in SH.skinF.
 

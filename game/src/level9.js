@@ -317,154 +317,7 @@ function boxFaces(g, p, s, faceSel) {  // emit only faces whose material matches
   for (const [bit, f] of F) if (faceSel(bit)) f();
 }
 const MAT9_S = { siding: 1 / 2.4, wallin: 1 / 0.9, labwall: 1 / 1.6, block: 1 / 1.6, wood: 1 / 2.4, case: 1, asph: 1 / 4.8, grass: 1 / 3.2, conc: 1 / 2.8, floor: 1 / 2.4, tile: 1 / 1.2, plaster: 1 / 2.5, ceil: 1 / 1.2, roof: 1 / 2.2, fence: 1 / 2.4 };
-function buildGeometry9(scene, mats) {
-  const CH = 8, NC = Math.ceil(N / CH), G = {};
-  const geo = (m, ci) => { const k = m + ':' + ci; return G[k] || (G[k] = new Geo(true)); };
-  const chunkOf = (x, z) => clamp(Math.floor(z / CELL / CH), 0, NC - 1) * NC + clamp(Math.floor(x / CELL / CH), 0, NC - 1);
-  const C4 = c => [c[0], c[1], c[2], 1];
-  for (const p of LV.pieces) {
-    const ci = chunkOf((p.x0 + p.x1) / 2, (p.z0 + p.z1) / 2);
-    if (p.fence) {
-      if (p.k === 'wood') { const g = geo('fence', ci); boxFaces(g, p, MAT9_S.fence, b => b === 32 ? null : [0.62, 0.5, 0.38, 1]); }
-      if (p.k === 'picket') {
-        const g = geo('fence', ci), C = [0.86, 0.85, 0.8, 1], s = MAT9_S.fence;
-        const bx = (a0, a1, y0, y1, t) => p.horiz ? g.box(a0, y0, p.c - t, a1, y1, p.c + t, s, 31, C) : g.box(p.c - t, y0, a0, p.c + t, y1, a1, s, 31, C);
-        bx(p.l0 - 0.05, p.l0 + 0.05, 0, 1.12, 0.05);
-        for (const y of [0.32, 0.82]) bx(p.l0, p.l1, y, y + 0.07, 0.022);
-        for (let t = p.l0 + 0.15; t < p.l1 - 0.05; t += 0.3) bx(t - 0.045, t + 0.045, 0.03, 1.02, 0.011);
-      }
-      continue;
-    }
-    const neg = p.sa, pos = p.sb, cap = p.cap;
-    // faces: along x (horiz): -z face (8) looks into A (neg), +z face (4) into B (pos); along z: -x (2) -> A, +x (1) -> B
-    const pick = bit => {
-      if (p.horiz) { if (bit === 8) return neg; if (bit === 4) return pos; } else { if (bit === 2) return neg; if (bit === 1) return pos; }
-      if (bit === 16) return p.k === 'l' ? null : cap;
-      if (bit === 32) return p.k === 'l' ? (neg && (neg.m === 'wallin' || neg.m === 'labwall') ? neg : pos) : null;
-      return cap;
-    };
-    for (const mname of new Set([neg, pos, cap].filter(Boolean).map(s => s.m))) {
-      const g = geo(mname, ci);
-      boxFaces(g, p, MAT9_S[mname], bit => { const s = pick(bit); return s && s.m === mname ? C4(s.c) : null; });
-    }
-  }
-  for (const t of LV.trims) { const g = geo('case', chunkOf((t[0] + t[3]) / 2, (t[2] + t[5]) / 2)); g.box(t[0], t[1], t[2], t[3], t[4], t[5], 1, 31, [0.82, 0.8, 0.74, 1]); }
-  // ---- ground, sidewalks, floors, ceilings ----
-  const skipFloor = new Set([cIdx(LV.base.stair.x, LV.base.stair.y)]), skipCeil = new Set([cIdx(LV.lab.arrive.x, LV.lab.arrive.y)]);
-  // house stairs: a hole in the ground-floor ceiling above the upper flight, and in the upstairs floor over the whole flight
-  const holeF = new Map(), holeC = new Map();
-  for (const h of LV.houses) if (h.stair) { const S = h.stair; holeC.set(cIdx(S.g.x, S.g.y), S.rect(S.g, -0.6, 1.8, 0.58, 1.8)); holeF.set(cIdx(S.u.x, S.u.y), S.rect(S.u, -1.8, 1.8, 0.58, 1.8)); }
-  const rectMinus = (x0, z0, x1, z1, r) => {
-    if (!r) return [[x0, z0, x1, z1]];
-    const a0 = clamp(r.x0, x0, x1), a1 = clamp(r.x1, x0, x1), b0 = clamp(r.z0, z0, z1), b1 = clamp(r.z1, z0, z1), out = [];
-    if (b0 - z0 > 0.01) out.push([x0, z0, x1, b0]); if (z1 - b1 > 0.01) out.push([x0, b1, x1, z1]);
-    if (a0 - x0 > 0.01) out.push([x0, b0, a0, b1]); if (x1 - a1 > 0.01) out.push([a1, b0, x1, b1]);
-    return out;
-  };
-  const zOf = (x, y) => inGrid(x, y) ? LV.zone[cIdx(x, y)] : ZN.VOID;
-  const up = (g, x0, z0, x1, z1, y, s, col) => g.face(x0, y, z1, [1, 0, 0], [0, 0, -1], x1 - x0, z1 - z0, [0, 1, 0], s, false, col);
-  const dn = (g, x0, z0, x1, z1, y, s, col) => g.face(x0, y, z0, [1, 0, 0], [0, 0, 1], x1 - x0, z1 - z0, [0, -1, 0], s, false, col);
-  const SW = 1.35, SWH = 0.1;
-  for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
-    const c = cIdx(x, y), z = LV.zone[c], x0 = x * CELL, z0 = y * CELL, x1 = x0 + CELL, z1 = z0 + CELL, ci = chunkOf(x0 + 1, z0 + 1);
-    const hv = hash1(x * 31.7 + y * 17.3), W1 = [1, 1, 1, 1];
-    if (z === ZN.VOID) continue;
-    if (z === ZN.STREET) {
-      up(geo('asph', ci), x0, z0, x1, z1, 0, MAT9_S.asph, W1);
-      const g = geo('conc', ci), nb = [0, 1, 2, 3].map(d => { const t = zOf(x + DX[d], y + DY[d]); return t !== ZN.STREET && t !== ZN.VOID; });
-      const strip = (a0, b0, a1, b1, d) => {
-        up(g, a0, b0, a1, b1, SWH, MAT9_S.conc, W1);
-        const cf = 0.9;
-        if (d === 0) g.face(a0, 0, b0, [0, 0, 1], [0, 1, 0], b1 - b0, SWH, [-1, 0, 0], 1, false, [cf, cf, cf, 1]);
-        if (d === 2) g.face(a1, 0, b1, [0, 0, -1], [0, 1, 0], b1 - b0, SWH, [1, 0, 0], 1, false, [cf, cf, cf, 1]);
-        if (d === 1) g.face(a1, 0, b0, [-1, 0, 0], [0, 1, 0], a1 - a0, SWH, [0, 0, -1], 1, false, [cf, cf, cf, 1]);
-        if (d === 3) g.face(a0, 0, b1, [1, 0, 0], [0, 1, 0], a1 - a0, SWH, [0, 0, 1], 1, false, [cf, cf, cf, 1]);
-      };
-      if (nb[0]) strip(x1 - SW, z0, x1, z1, 0); if (nb[2]) strip(x0, z0, x0 + SW, z1, 2);
-      if (nb[1]) strip(x0, z1 - SW, x1, z1, 1); if (nb[3]) strip(x0, z0, x1, z0 + SW, 3);
-      // outer corners of blocks
-      for (const [sx, sy] of [[1, 1], [1, -1], [-1, 1], [-1, -1]]) {
-        const dz = zOf(x + sx, y + sy), ox = zOf(x + sx, y), oy = zOf(x, y + sy);
-        if (dz !== ZN.STREET && dz !== ZN.VOID && ox === ZN.STREET && oy === ZN.STREET) {
-          const a0 = sx > 0 ? x1 - SW : x0, b0 = sy > 0 ? z1 - SW : z0; up(g, a0, b0, a0 + SW, b0 + SW, SWH, MAT9_S.conc, W1);
-        }
-      }
-      continue;
-    }
-    if (z === ZN.LAWN || z === ZN.VERGE) { const k = 0.85 + 0.3 * hv; up(geo('grass', ci), x0, z0, x1, z1, 0, MAT9_S.grass, [k, k, 0.9 + 0.2 * hv, 1]); continue; }
-    if (z === ZN.DRIVE || z === ZN.YARD) { const k = z === ZN.YARD ? 0.8 : 0.95; up(geo('conc', ci), x0, z0, x1, z1, 0.004, MAT9_S.conc, [k, k, k, 1]); continue; }
-    const hf = holeF.get(c), hc = holeC.get(c);
-    if (skipFloor.has(c)) { /* stair hole */ } else if (z === ZN.HOUSE) for (const q of rectMinus(x0, z0, x1, z1, hf)) up(geo('floor', ci), q[0], q[1], q[2], q[3], 0, MAT9_S.floor, W1);
-    else up(geo('tile', ci), x0, z0, x1, z1, 0, MAT9_S.tile, z === ZN.LAB ? [0.86, 0.92, 0.92, 1] : [0.95, 0.92, 0.84, 1]);
-    if (!skipCeil.has(c)) { if (z === ZN.HOUSE) for (const q of rectMinus(x0, z0, x1, z1, hc)) dn(geo('plaster', ci), q[0], q[1], q[2], q[3], CEIL, MAT9_S.plaster, W1); else dn(geo('ceil', ci), x0, z0, x1, z1, CEIL, MAT9_S.ceil, z === ZN.LAB ? [0.8, 0.86, 0.88, 1] : [0.9, 0.9, 0.86, 1]); }
-  }
-  // void beyond the fence: dark ground so the fog has something to swallow
-  const vg = geo('grass', 0); up(vg, -60, -60, LEVEL + 60, 0, -0.02, MAT9_S.grass, [0.5, 0.5, 0.5, 1]); up(vg, -60, 0, 0, LEVEL + 60, -0.02, MAT9_S.grass, [0.5, 0.5, 0.5, 1]);
-  up(vg, 0, L9_NB * CELL, LEVEL + 60, LEVEL + 60, -0.02, MAT9_S.grass, [0.5, 0.5, 0.5, 1]); up(vg, L9_NB * CELL, 0, LEVEL + 60, L9_NB * CELL, -0.02, MAT9_S.grass, [0.5, 0.5, 0.5, 1]);
-  // ---- upper storey shell, roofs, chimneys ----
-  for (const h of LV.houses) {
-    const y0 = CEIL + FLH + 0.02, rh = 2.2, W = HS * CELL;
-    const x0 = h.hx * CELL - 0.4, x1 = (h.hx + HS) * CELL + 0.4, z0 = h.hz * CELL - 0.4, z1 = (h.hz + HS) * CELL + 0.4;
-    const ci = chunkOf(h.hx * CELL + W / 2, h.hz * CELL + W / 2), g = geo('roof', ci), gs = geo('siding', ci), T = [h.tint[0] * 0.9, h.tint[1] * 0.9, h.tint[2] * 0.9, 1], T1 = [...h.tint, 1], R1 = [1, 1, 1, 1];
-    const wx0 = h.hx * CELL - WT / 2, wx1 = (h.hx + HS) * CELL + WT / 2, wz0 = h.hz * CELL - WT / 2, wz1 = (h.hz + HS) * CELL + WT / 2, ya = CEIL - 0.02, hh = y0 - ya;
-    gs.face(wx1, ya, wz1, [0, 0, -1], [0, 1, 0], wz1 - wz0, hh, [1, 0, 0], MAT9_S.siding, false, T1);
-    gs.face(wx0, ya, wz0, [0, 0, 1], [0, 1, 0], wz1 - wz0, hh, [-1, 0, 0], MAT9_S.siding, false, T1);
-    gs.face(wx0, ya, wz1, [1, 0, 0], [0, 1, 0], wx1 - wx0, hh, [0, 0, 1], MAT9_S.siding, false, T1);
-    gs.face(wx1, ya, wz0, [-1, 0, 0], [0, 1, 0], wx1 - wx0, hh, [0, 0, -1], MAT9_S.siding, false, T1);
-    const gd = geo('case', ci), DK = [0.18, 0.17, 0.16, 1], TR = [0.8, 0.79, 0.74, 1];
-    gd.box(wx0 - 0.06, CEIL, wz0 - 0.06, wx1 + 0.06, CEIL + 0.18, wz1 + 0.06, 1, 15, TR);      // band between the storeys
-    for (const [cx, cz] of [[wx0, wz0], [wx1, wz0], [wx0, wz1], [wx1, wz1]]) gd.box(cx - 0.08, 0, cz - 0.08, cx + 0.08, y0, cz + 0.08, 1, 15, TR);   // corner boards
-    const zm = (z0 + z1) / 2, yr = y0 + rh;
-    g.quad([x1, y0, z0], [x0, y0, z0], [x1, yr, zm], MAT9_S.roof, R1);
-    g.quad([x0, y0, z1], [x1, y0, z1], [x0, yr, zm], MAT9_S.roof, R1);
-    gs.tri([wx0, y0, wz0], [wx0, y0, wz1], [wx0, yr - 0.1, zm], MAT9_S.siding, T);
-    gs.tri([wx1, y0, wz1], [wx1, y0, wz0], [wx1, yr - 0.1, zm], MAT9_S.siding, T);
-    gd.box(x0, y0 - 0.14, z0, x1, y0, z0 + 0.4, 1, 63, DK); gd.box(x0, y0 - 0.14, z1 - 0.4, x1, y0, z1, 1, 63, DK);
-    gd.box(x0, y0 - 0.14, z0, x0 + 0.4, y0, z1, 1, 63, DK); gd.box(x1 - 0.4, y0 - 0.14, z0, x1, y0, z1, 1, 63, DK);
-    if (hash1(h.id * 7.3) < 0.7) {   // brick chimney
-      const cx = hash1(h.id * 3.1) < 0.5 ? wx0 + 1.6 : wx1 - 1.6, cz = zm + (hash1(h.id * 5.7) < 0.5 ? -1.4 : 1.4), gb = geo('block', ci), BR = [0.5, 0.3, 0.24, 1];
-      gb.box(cx - 0.4, y0 + 0.3, cz - 0.35, cx + 0.4, yr + 0.9, cz + 0.35, MAT9_S.block, 31, BR); gd.box(cx - 0.46, yr + 0.9, cz - 0.41, cx + 0.46, yr + 1.0, cz + 0.41, 1, 63, DK);
-    }
-  }
-  // ---- house stairs ----
-  for (const h of LV.houses) if (h.stair) buildHouseStair9(h, geo, chunkOf);
-  // base: flat roof slab with parapet
-  { const o = BX - 14, x0 = (15 + o) * CELL - 0.2, x1 = (22 + o) * CELL + 0.2, z0 = (15 + o) * CELL - 0.2, z1 = (21 + o) * CELL + 0.2, g = geo('block', chunkOf((18 + o) * CELL, (18 + o) * CELL)), c = [0.62, 0.62, 0.6, 1];
-    g.box(x0, CEIL, z0, x1, CEIL + 0.35, z1, MAT9_S.block, 63, c);
-    for (const [a0, b0, a1, b1] of [[x0, z0, x1, z0 + 0.25], [x0, z1 - 0.25, x1, z1], [x0, z0, x0 + 0.25, z1], [x1 - 0.25, z0, x1, z1]]) g.box(a0, CEIL + 0.35, b0, a1, CEIL + 0.8, b1, MAT9_S.block, 63, c); }
-  // ---- stairwells ----
-  { // base: steps down into the dark
-    const s = LV.base.stair, x0 = s.x * CELL + WT / 2, x1 = (s.x + 1) * CELL - WT / 2, z0 = s.y * CELL + WT / 2, z1 = (s.y + 1) * CELL - WT / 2, ci = chunkOf(x0, z0), g = geo('labwall', ci), c = [0.7, 0.7, 0.66, 1];
-    for (let i = 0; i < 12; i++) { const zz = z0 + i * (z1 - z0) / 12; g.box(x0, -0.25 * (i + 1), zz, x1, -0.25 * i, z1, MAT9_S.labwall, 16 | 4, c); }
-    g.face(x0, -3.2, z0, [0, 0, 1], [0, 1, 0], z1 - z0, 3.2, [1, 0, 0], MAT9_S.labwall, false, c);
-    g.face(x1, -3.2, z1, [0, 0, -1], [0, 1, 0], z1 - z0, 3.2, [-1, 0, 0], MAT9_S.labwall, false, c);
-    g.face(x1, -3.2, z0, [-1, 0, 0], [0, 1, 0], x1 - x0, 3.2, [0, 0, 1], MAT9_S.labwall, false, c);
-    g.face(x0, -3.2, z1, [1, 0, 0], [0, 1, 0], x1 - x0, 3.2, [0, 0, -1], MAT9_S.labwall, false, c);
-  }
-  { // lab: steps up toward a black shaft
-    const s = LV.lab.arrive, x0 = s.x * CELL - 0.55, x1 = s.x * CELL + CELL + 0.55, z0 = s.y * CELL + WT / 2, z1 = s.y * CELL + 1.9, ci = chunkOf(x0, z0), g = geo('labwall', ci), c = [0.66, 0.68, 0.68, 1];
-    const X0 = s.x * CELL + WT / 2, X1 = (s.x + 1) * CELL - WT / 2;
-    for (let i = 0; i < 12; i++) { const zz = z1 - (i + 1) * (z1 - z0) / 12; g.box(X0, 0, zz, X1, 0.24 * (i + 1), zz + (z1 - z0) / 12, MAT9_S.labwall, 16 | 4, c); }
-    const dk = [0.25, 0.25, 0.25, 1];
-    g.face(X0, CEIL, z0, [0, 0, 1], [0, 1, 0], CELL - WT, 3, [1, 0, 0], 1, false, dk); g.face(X1, CEIL, CELL - WT / 2, [0, 0, -1], [0, 1, 0], CELL - WT, 3, [-1, 0, 0], 1, false, dk);
-    g.face(X1, CEIL, z0, [-1, 0, 0], [0, 1, 0], X1 - X0, 3, [0, 0, 1], 1, false, dk); g.face(X0, CEIL + 3, z0, [1, 0, 0], [0, 0, 1], X1 - X0, CELL - WT, [0, -1, 0], 1, false, [0.05, 0.05, 0.05, 1]);
-  }
-  LV.chunkMeshes = [];
-  for (const [k, g] of Object.entries(G)) {
-    if (!g.p.length) continue; const [m] = k.split(':');
-    const mesh = g.mesh('l9_' + k, scene); mesh.material = mats[m];
-    if (['asph', 'grass', 'conc', 'floor', 'tile'].includes(m)) mesh._sortD = 900; else if (m === 'plaster' || m === 'ceil') mesh._sortD = 950; else LV.chunkMeshes.push(mesh);
-  }
-  // lab / base ceiling fixtures (reuse the troffer look)
-  const xg = new Geo(true);
-  for (const f of LV.fixtures) {
-    if (!f.troffer) continue;
-    const col = [f.state === 0 ? 0 : 1, f.state === 2 ? 1 : 0, f.seed, 1], y = CEIL - 0.018, x0 = f.x - 0.6, z0 = f.z - 0.3;
-    xg.face(x0, y, z0, [1, 0, 0], [0, 0, 1], 1.2, 0.6, [0, -1, 0], 1, true, col);
-  }
-  if (xg.p.length) { const fx = xg.mesh('fixtures', scene); fx.material = mats.fixture; fx._sortD = 920; }
-}
-
+// (r12: the architecture itself is built by buildArch9 in arch9.js, through the modelling kit)
 // a house staircase: the lower flight downstairs (rising into a dark shaft) and the matching well upstairs (steps falling away)
 function buildHouseStair9(h, geo, chunkOf) {
   const S = h.stair, U = S.U, Sd = S.S, n = 12, w = 2.9 / n, r = CEIL / n;
@@ -530,9 +383,9 @@ function planLights9() {
   // porch lights for lit houses, dim lamps inside
   for (const h of LV.houses) {
     if (!h.lit) continue;
-    for (const r of shuffle(h.rooms.filter(r => r.t !== 'bath')).slice(0, 4)) { const c = pick(r.cells); F(cellCenter(c % N), cellCenter((c / N) | 0), { rad: 6.5, sc: 2.2, I: 0.42, state: RNG() < 0.3 ? 2 : 1 }); }
+    for (const r of shuffle(h.rooms.filter(r => r.t !== 'bath')).slice(0, 4)) { const c = pick(r.cells); F(cellCenter(c % N), cellCenter((c / N) | 0), { kind: 'room', rad: 6.5, sc: 2.2, I: 0.42, state: RNG() < 0.3 ? 2 : 1 }); }
     const [mx, mz] = edgeMid(h.front.x, h.front.y, h.front.d);
-    F(mx + DX[h.front.d] * 0.8, mz + DY[h.front.d] * 0.8, { rad: 5, sc: 1.6, I: 0.35 });
+    F(mx + DX[h.front.d] * 0.8, mz + DY[h.front.d] * 0.8, { kind: 'porch', rad: 5, sc: 1.6, I: 0.35 });
   }
   // base & lab: fluorescent troffers
   for (const r of LV.rooms) {
@@ -542,11 +395,11 @@ function planLights9() {
       const lab = r.bld === 101, rr = RNG();
       if (!lab && (x + y) % 2) continue;
       const state = lab ? (rr < 0.75 ? 1 : rr < 0.92 ? 2 : 0) : (rr < 0.35 ? 1 : rr < 0.6 ? 2 : 0);
-      F(cellCenter(x), cellCenter(y) + 0.3, { state, troffer: true, I: lab ? 0.46 : 0.5 });
+      F(cellCenter(x), cellCenter(y) + 0.3, { state, troffer: true, lab, I: lab ? 0.46 : 0.5 });
     }
   }
   // the compound's flood light by the gate (dim, flickering)
-  F((BX + 4.5) * CELL, (BX + 8.3) * CELL, { rad: 10, sc: 3.5, I: 0.5, state: 2 });
+  F((BX + 4.5) * CELL, (BX + 8.3) * CELL, { kind: 'flood', rad: 10, sc: 3.5, I: 0.5, state: 2 });
   // sky openness mask (alpha channel): 0 under roofs, 1 outside
   const R = LMR, sky = new Uint8Array(R * R);
   for (let j = 0; j < R; j++) for (let i = 0; i < R; i++) {

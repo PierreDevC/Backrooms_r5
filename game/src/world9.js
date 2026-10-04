@@ -176,34 +176,25 @@ async function buildWorld9(progress) {
   SCN = new BABYLON.Scene(ENG);
   SCN.clearColor = new BABYLON.Color4(0.01, 0.012, 0.018, 1); SCN.skipPointerMovePicking = true; SCN.blockMaterialDirtyMechanism = false;
   CAM = new BABYLON.FreeCamera('cam', V3(10, 1.6, 10), SCN); CAM.inputs.clear(); CAM.minZ = 0.05; CAM.maxZ = 85; CAM.fov = 1.0;
-  resetW9();
+  resetW9(); r2Reset(); k2Reset(); R2.W = MAT9W; R2.hazeK = 0.0030; prepMat9();
   progress(0.06, 'SURVEYING LEVEL 9…'); await nextFrame();
-  genLayout9(); planWindows9(); collectPieces9(); planLights9();   // r6: windows decided before the walls are cut
-  const T = {};
+  genLayout9(); planWindows9(); collectPieces9(); planLights9(); planBake9();   // r6: windows decided before the walls are cut; r12: the lamps and the moon for the bake
   progress(0.14, 'PAVING THE STREETS…'); await nextFrame();
-  for (const k of ['asph', 'grass', 'conc']) T[k] = TEX9[k](SCN, 512);
-  progress(0.26, 'NAILING UP SIDING…'); await nextFrame();
-  for (const k of ['siding', 'roof', 'block']) T[k] = TEX9[k](SCN, 512);
-  progress(0.36, 'PAPERING THE WALLS…'); await nextFrame();
-  for (const k of ['wood', 'tile', 'paper']) T[k] = TEX9[k](SCN, 512);
-  T.ceil = genCeiling(SCN, 512);
-  progress(0.48, 'WIRING STREET LAMPS…'); await nextFrame();
-  buildLightmap(SCN); buildCollision();
-  progress(0.62, 'RAISING HOUSES…'); await nextFrame();
+  { const fx = LV.fixtures; LV.fixtures = []; buildLightmap(SCN); LV.fixtures = fx; }   // masks, wall distances and the light texture; the bake lights it
+  buildCollision();
+  const T = {}; T.conc = TEX9.conc(SCN, 512);   // the gate's chain mesh (story9) still uses the env shader
   const fm = new BABYLON.ShaderMaterial('fixMat', SCN, { vertex: 'fix', fragment: 'fix' }, { attributes: ['position', 'uv', 'color'], uniforms: ['world', 'viewProjection', ...COMMON_UNIFORMS], samplers: ['lightTex'] });
   fm.setTexture('lightTex', LV.lightTex); MATS.list.push(fm);
-  const mats = {
-    asph: envMat9('asph', ['MAT_ASPH'], T.asph), grass: envMat9('grass', ['MAT_GRASS'], T.grass), conc: envMat9('conc', ['MAT_CONC'], T.conc),
-    siding: envMat9('siding', ['MAT_SIDING'], T.siding), wallin: envMat9('wallin', ['MAT_WALLIN'], T.paper), labwall: envMat9('labwall', ['MAT_LABWALL'], T.block),
-    block: envMat9('block', ['MAT_BLOCK'], T.block), fence: envMat9('fence9', ['MAT_FENCE', 'ROTUV'], T.wood), case: envMat9('case', ['MAT_CASE'], T.conc),
-    floor: envMat9('floor9', ['MAT_WOOD'], T.wood), tile: envMat9('tile', ['MAT_TILE'], T.tile), plaster: envMat9('plaster', ['MAT_PLASTER'], T.conc),
-    ceil: envMat9('ceil9', ['MAT_CEIL'], T.ceil), roof: envMat9('roof', ['MAT_ROOF', 'SKY1'], T.roof), fixture: fm };
   W9.chainMat = envMat9('chain', ['MAT_CHAIN', 'TWOSIDE'], T.conc, { twoSided: true });
-  buildGeometry9(SCN, mats);
-  progress(0.74, 'PARKING CARS…'); await nextFrame();
+  progress(0.24, 'RAISING HOUSES…'); await nextFrame();
+  buildArch9(fm);
+  progress(0.34, 'PARKING CARS…'); await nextFrame();
   buildProps9();
-  progress(0.84, 'HANGING DOORS…'); await nextFrame();
-  buildDoors9(); buildStory9(); buildItems9(G.diff); buildDust();
+  progress(0.46, 'HANGING DOORS…'); await nextFrame();
+  for (const c of W9.cars || []) k2OccBox(c.x, 0.15, c.z, c.W, 1.3, c.L, c.ry);   // cars throw shadows in the bake
+  buildDoors9(); buildStory9(); buildItems9(G.diff); buildDust();   // (buildStory9 ends with W9.finishProps())
+  await bake2(progress);
+  bk2Meshes(SCN); buildSky9(); k2Reset(); RT.tri = RT.nodes = RT.meta = null;
   SCN.setRenderingOrder(0, (a, b) => (a.getMesh()._sortD ?? 400) - (b.getMesh()._sortD ?? 400));
   progress(0.94, 'SPOOLING TAPE…'); await nextFrame();
 }
@@ -285,8 +276,8 @@ function buildProps9() {
     const c = cIdx(x, y), z = LV.zone[c];
     if ((z !== ZN.LAWN && z !== ZN.VERGE) || keep.has(c)) continue;
     const pr = z === ZN.VERGE ? 0.5 : 0.2;
-    if (RNG() < pr) buildTree(B, cellCenter(x) + rnd(-1.1, 1.1), cellCenter(y) + rnd(-1.1, 1.1), RNG() < 0.3);
-    else if (RNG() < 0.25) { const bx = cellCenter(x) + rnd(-1.2, 1.2), bz = cellCenter(y) + rnd(-1.2, 1.2), r = propRoot(bx, bz, 0); for (let i = 0; i < 3; i++) B.add(r, 'Sphere', { diameter: rnd(0.6, 1.0), segments: 5 }, [0.09, 0.13, 0.07].map(v => v * rnd(0.8, 1.3)), 0, [rnd(-0.3, 0.3), 0.3, rnd(-0.3, 0.3)]); addSolid(bx - 0.4, bz - 0.4, bx + 0.4, bz + 0.4, 'prop'); }
+    if (RNG() < pr) kitTree9(cellCenter(x) + rnd(-1.1, 1.1), cellCenter(y) + rnd(-1.1, 1.1), RNG() < 0.3);
+    else if (RNG() < 0.25) kitShrub9(cellCenter(x) + rnd(-1.2, 1.2), cellCenter(y) + rnd(-1.2, 1.2));
   }
   // cars parked along the curbs, the crashed M.E.G. van
   const streetCells = [];
@@ -318,7 +309,7 @@ function buildProps9() {
     W9.van = { x: vx, z: vz, ry, root: r, cell: vanC };
   }
   // chain-link compound fence posts / rails (the mesh itself is a separate alpha-tested material)
-  const cg = new Geo(true), post = (x, z) => { const r = propRoot(x, z, 0); B.add(r, 'Cylinder', { diameter: 0.07, height: 2.45, tessellation: 8 }, COL9.metal, 0, [0, 1.22, 0]); };
+  const cg = KG('chain'), post = (x, z) => { const r = propRoot(x, z, 0); B.add(r, 'Cylinder', { diameter: 0.07, height: 2.45, tessellation: 8 }, COL9.metal, 0, [0, 1.22, 0]); };
   for (const e0 of LV.ek.values()) {
     if (e0.kind !== 'chain') continue;
     const e = e0.d === 0 ? { x: e0.x + 1, y: e0.y, d: 2 } : e0.d === 1 ? { x: e0.x, y: e0.y + 1, d: 3 } : e0;
@@ -329,7 +320,6 @@ function buildProps9() {
     B.add(rr, 'Cylinder', { diameter: 0.045, height: CELL, tessellation: 6 }, COL9.metal, 0, [0, 2.36, 0], [Math.PI / 2, 0, 0]);
     for (const k of [0, 1]) B.add(rr, 'Cylinder', { diameter: 0.012, height: CELL, tessellation: 4 }, [0.35, 0.35, 0.34], 0, [0.12 + k * 0.12, 2.5 + k * 0.12, 0], [Math.PI / 2, 0, 0]);
   }
-  const chainMesh = cg.mesh('chain', SCN); chainMesh.material = W9.chainMat; chainMesh._sortD = 350;
   // cage bars in the lab
   for (const e0 of LV.ek.values()) {
     if (e0.kind !== 'bars') continue;
