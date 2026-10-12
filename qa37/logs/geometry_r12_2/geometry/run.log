@@ -1,0 +1,124 @@
+warning: [.WebGL-0x10c000c6600]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+warning: [.WebGL-0x10c000c6600]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+warning: [.WebGL-0x10c000c6600]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+warning: [.WebGL-0x10c000c6600]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)
+QA load ms 771
+QA PASS all mesh attributes, indices, parents and transforms are valid
+QA PASS shallows floor agrees with collision height
+QA PASS shallows ceiling agrees with height field
+QA PASS gatev floor agrees with collision height
+QA PASS gatev ceiling agrees with height field
+QA PASS well floor agrees with collision height
+QA PASS well ceiling agrees with height field
+QA PASS booth floor agrees with collision height
+QA PASS booth ceiling agrees with height field
+QA PASS cabana floor agrees with collision height
+QA PASS cabana ceiling agrees with height field
+QA PASS plant floor agrees with collision height
+QA PASS plant ceiling agrees with height field
+QA PASS lap floor agrees with collision height
+QA PASS lap ceiling agrees with height field
+QA PASS lapv floor agrees with collision height
+QA PASS lapv ceiling agrees with height field
+QA PASS tunnelW floor agrees with collision height
+QA PASS tunnelW ceiling agrees with height field
+QA PASS hcorr floor agrees with collision height
+QA PASS hcorr ceiling agrees with height field
+QA PASS tunnelH floor agrees with collision height
+QA PASS tunnelH ceiling agrees with height field
+QA PASS lobby floor agrees with collision height
+QA PASS lobby ceiling agrees with height field
+QA PASS cafe floor agrees with collision height
+QA PASS cafe ceiling agrees with height field
+QA PASS rooms floor agrees with collision height
+QA PASS rooms ceiling agrees with height field
+QA PASS hroom201 floor agrees with collision height
+QA PASS hroom201 ceiling agrees with height field
+QA PASS hroom202 floor agrees with collision height
+QA PASS hroom202 ceiling agrees with height field
+QA PASS hroom203 floor agrees with collision height
+QA PASS hroom203 ceiling agrees with height field
+QA PASS hroom204 floor agrees with collision height
+QA PASS hroom204 ceiling agrees with height field
+QA PASS vault floor agrees with collision height
+QA PASS vault ceiling agrees with height field
+QA PASS court floor agrees with collision height
+QA PASS court ceiling agrees with height field
+QA PASS hstair floor agrees with collision height
+QA PASS hstair ceiling agrees with height field
+QA PASS admissions floor agrees with collision height
+QA PASS admissions ceiling agrees with height field
+QA PASS hcorr floor agrees with collision height
+QA PASS hcorr ceiling agrees with height field
+QA PASS ward1 floor agrees with collision height
+QA PASS ward1 ceiling agrees with height field
+QA PASS ward2 floor agrees with collision height
+QA PASS ward2 ceiling agrees with height field
+QA PASS ward3 floor agrees with collision height
+QA PASS ward3 ceiling agrees with height field
+QA PASS ward4 floor agrees with collision height
+QA PASS ward4 ceiling agrees with height field
+QA PASS ward5 floor agrees with collision height
+QA PASS ward5 ceiling agrees with height field
+QA PASS ward6 floor agrees with collision height
+QA PASS ward6 ceiling agrees with height field
+QA PASS laundry floor agrees with collision height
+QA PASS laundry ceiling agrees with height field
+QA PASS pharmacy floor agrees with collision height
+QA PASS pharmacy ceiling agrees with height field
+QA PASS nurses floor agrees with collision height
+QA PASS nurses ceiling agrees with height field
+QA PASS records floor agrees with collision height
+QA PASS records ceiling agrees with height field
+QA PASS theatre floor agrees with collision height
+QA PASS theatre ceiling agrees with height field
+QA PASS plaza floor agrees with collision height
+QA PASS plaza ceiling agrees with height field
+QA PASS foyer floor agrees with collision height
+QA PASS foyer ceiling agrees with height field
+QA PASS dome floor agrees with collision height
+QA PASS dome ceiling agrees with height field
+QA PASS scorr floor agrees with collision height
+QA PASS scorr ceiling agrees with height field
+QA PASS gen floor agrees with collision height
+QA PASS gen ceiling agrees with height field
+QA PASS control floor agrees with collision height
+QA PASS control ceiling agrees with height field
+QA PASS brk floor agrees with collision height
+QA PASS brk ceiling agrees with height field
+QA PASS wavepool floor agrees with collision height
+QA PASS wavepool ceiling agrees with height field
+GEO TUNNEL hospital_tunnel {"floor":-6,"ceiling":-4.800000190734863,"eye":-4.920000190734863,"camera":-4.920000190734863,"under":true}
+QA PASS hospital_tunnel buoyancy stays inside submerged roof
+GEO TUNNEL park_tunnel {"floor":-1.5,"ceiling":-0.3499999940395355,"eye":-0.4699999940395355,"camera":-0.4699999940395355,"under":true}
+QA PASS park_tunnel buoyancy stays inside submerged roof
+QA PASS shallow_arch view is inside rendered room
+QA PASS spiral view is inside rendered room
+QA PASS pit_drained view is inside rendered room
+QA PASS hotel_stairs view is inside rendered room
+QA PASS well_boards view is inside rendered room
+QA PASS tower_base view is inside rendered room
+QA PASS cabana_props view is inside rendered room
+QA PASS plant_wheels view is inside rendered room
+QA PASS lobby_counter view is inside rendered room
+QA PASS cafeteria view is inside rendered room
+QA PASS room204 view is inside rendered room
+QA PASS vault view is inside rendered room
+QA PASS admissions view is inside rendered room
+QA PASS ward3 view is inside rendered room
+QA PASS pharmacy view is inside rendered room
+QA PASS theatre view is inside rendered room
+QA PASS dome view is inside rendered room
+QA PASS generator view is inside rendered room
+QA PASS control view is inside rendered room
+QA PASS wave_ghosts view is inside rendered room
+GEO WALK {"start":[124.2,160.20000000000002],"end":[124.2,178.76109373814842],"room":"lobby","floor":0,"eye":1.6199999999994739,"state":"play","errors":0}
+QA PASS player walks pit corridor stairs into hotel without teleport
+GEO SWIM {"hospital":{"name":"hospital","x":89.17926456754422,"z":70.2,"room":"admissions","eye":-4.920000190734863,"ceiling":-4.800000190734863,"state":"play","end":[88.82000000000001,41.87780277301194]},"park":{"name":"park","x":243,"z":124.2,"room":"plaza","eye":-0.4699999940395355,"ceiling":-0.3499999940395355,"state":"play","end":[250.2360414206526,152.17]},"air":[{"eye":0.2032782319431408,"ceiling":1.5,"under":false},{"eye":0.23131377065691588,"ceiling":1.600000023841858,"under":false}],"errors":0}
+QA PASS swim hospital tunnel and ascend exit stairs through collision
+QA PASS swim park tunnel into plaza through collision
+QA PASS both air pockets still permit surfacing below their ceilings
+GEO TOWER {"railHit":false,"top":{"on":true,"eye":11.620000000000001,"gap":true},"on":false,"eye":-2.006254551719418,"under":true,"gap":false,"errors":0}
+QA PASS open diving edge has no visible rail crossing
+QA PASS tower climb, open edge, fall and collision reset work
+QA PAGE CLOSE

@@ -1,0 +1,111 @@
+{
+  "version": "r12.2",
+  "date": "2026-10-04",
+  "files": 1263,
+  "artifacts": {
+    "Backrooms_Release_and_Handoff_2026-10-04_r12.2.zip": {
+      "bytes": 398004332,
+      "sha256": "7370e76d245bccadf3ec4f81b2bf3a56be10f6831ae3e2d0a91507c42fbec361"
+    },
+    "Backrooms_r12.2_volume_01_of_21.zip": {
+      "bytes": 19633643,
+      "sha256": "8940e864a3aa3c5cd96dc78f700a80dc7fe84b5bb44d4837c7b14d729dc4a72a"
+    },
+    "Backrooms_r12.2_volume_02_of_21.zip": {
+      "bytes": 19823674,
+      "sha256": "95fc29e389c82466b1cfe35307f285099ec7f4da5bdc1c7cac2d822be167477a"
+    },
+    "Backrooms_r12.2_volume_03_of_21.zip": {
+      "bytes": 18850580,
+      "sha256": "061221bc215ca8b124fd8617f1330496a9995d4cfde1f24a52f4833c4623db47"
+    },
+    "Backrooms_r12.2_volume_04_of_21.zip": {
+      "bytes": 19735810,
+      "sha256": "51e19c4cf0c8fd247693bac2814dc77c2e82f9cf8d2eafe58b45f764ca0f87aa"
+    },
+    "Backrooms_r12.2_volume_05_of_21.zip": {
+      "bytes": 19533195,
+      "sha256": "99d456503518610fa73106c8321a4210141418cf83923fd12316fa6e969e1808"
+    },
+    "Backrooms_r12.2_volume_06_of_21.zip": {
+      "bytes": 19763610,
+      "sha256": "0c0f2e9bc5f1fb5a78d4b2f28508916132f430d1e5aef47383963ed5a1097a6e"
+    },
+    "Backrooms_r12.2_volume_07_of_21.zip": {
+      "bytes": 18704440,
+      "sha256": "82fca3620e076b804a9acf4caada75a7d66c145b16f23c224eea9df64238cd26"
+    },
+    "Backrooms_r12.2_volume_08_of_21.zip": {
+      "bytes": 19411883,
+      "sha256": "406acbcb63dee91ddde5adc13c4e932f4a10a9657d696ff379884d284269a075"
+    },
+    "Backrooms_r12.2_volume_09_of_21.zip": {
+      "bytes": 19460368,
+      "sha256": "808da335e894b82f6201565eab373838bbfbff750ef76373abf797079abe3417"
+    },
+    "Backrooms_r12.2_volume_10_of_21.zip": {
+      "bytes": 19280046,
+      "sha256": "69950ef1f4fac04f9ee1fbb9be4f93292c08988bee6f63640bd9c7a102311edc"
+    },
+    "Backrooms_r12.2_volume_11_of_21.zip": {
+      "bytes": 19608302,
+      "sha256": "e82cf826624e7f7fee91e830afda82e135bf0897fb161d064ff4225a74fff3e8"
+    },
+    "Backrooms_r12.2_volume_12_of_21.zip": {
+      "bytes": 19560292,
+      "sha256": "a2c3e9ced7a944baca6cd390d3172316f64abd1f9fc32223efc62b8a7e72e400"
+    },
+    "Backrooms_r12.2_volume_13_of_21.zip": {
+      "bytes": 19614876,
+      "sha256": "bd21509c31ebe3b3f6561abd8354f4170cb36160156b0ad0781a10b5a60061ed"
+    },
+    "Backrooms_r12.2_volume_14_of_21.zip": {
+      "bytes": 19254026,
+      "sha256": "19fa3c3b20d286d2c0635ac3c78083d66e8b6f9e303609a71d6c207250c41818"
+    },
+    "Backrooms_r12.2_volume_15_of_21.zip": {
+      "bytes": 19005634,
+      "sha256": "bde14ddf5b46f92f5df7713932f8b4d3f2aea63ef2f9cb7b88fef9beb1c24d3b"
+    },
+    "Backrooms_r12.2_volume_16_of_21.zip": {
+      "bytes": 19526752,
+      "sha256": "8e7c81b9416e30fd88fba2c603610c3b9d50b3154793e726c5bfa4f8c6158dc0"
+    },
+    "Backrooms_r12.2_volume_17_of_21.zip": {
+      "bytes": 19254772,
+      "sha256": "5ef1932c68ae3385ee3dd78dcb3c41e3a089ed1e2912e206fb4a3d999601d92b"
+    },
+    "Backrooms_r12.2_volume_18_of_21.zip": {
+      "bytes": 19550180,
+      "sha256": "eb1d8f660049b4f1ae2b48e7562d3d5ef2d1022163828b03e248d0f371d1b944"
+    },
+    "Backrooms_r12.2_volume_19_of_21.zip": {
+      "bytes": 19688944,
+      "sha256": "209d95209c35c173ad321eadcc091f3c421bd6d605a53238042fa282cd7f0181"
+    },
+    "Backrooms_r12.2_volume_20_of_21.zip": {
+      "bytes": 19420809,
+      "sha256": "c0a185fbd784e5a570acd35eb493825173f522e2ac3cc06654b4bc0949f2cd75"
+    },
+    "Backrooms_r12.2_volume_21_of_21.zip": {
+      "bytes": 9322936,
+      "sha256": "ae8dd9704fb96bfc232efb817a03721e95483edf2ddde08f5f9483fdc7c649e0"
+    },
+    "The_Backrooms_Found_Footage_r12.2.html": {
+      "bytes": 23911463,
+      "sha256": "9d2a8b0f1196fe1ef6f8d094ee939e1f97ec9f5150b94c5ff73e359d8e3c1a91"
+    },
+    "HANDOFF_2026-10-04_r12.2.md": {
+      "bytes": 35677,
+      "sha256": "d6683fceafe966fc1ce97a009761e119583fe07646c871265a4876c8e37f6f38"
+    },
+    "RELEASE_README.md": {
+      "bytes": 602,
+      "sha256": "c1f540aabf65c096e5b90c7c47cb33eac5c9e1786f134cda202b97bce4bcd997"
+    },
+    "The_Backrooms_Found_Footage_r12.2_HTML.zip": {
+      "bytes": 16331223,
+      "sha256": "f4ae17417b96c9d240f1be836b0ca9d38f768e98c1db486959ebc13517d4672f"
+    }
+  }
+}

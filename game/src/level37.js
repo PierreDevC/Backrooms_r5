@@ -223,7 +223,10 @@ function buildWater37(scene, mat) {
   for (const B of LV.basins) {
     if (!B.cells.length) continue;
     const g = new Geo(true);
-    for (const c of B.cells) { const x0 = (c % N) * CELL, z0 = ((c / N) | 0) * CELL; g.face(x0, 0, z0 + CELL, [1, 0, 0], [0, 0, -1], CELL, CELL, [0, 1, 0], 1, true, [1, 1, 1, 1]); }
+    // The Well's water eventually covers its deck. Below deck height these
+    // extra faces are occluded by the floor; initial physics stays unchanged.
+    const cells = LVL === 37 && B.id === BAS37.WELL ? LV.dry.well.cells : B.cells;
+    for (const c of cells) { const x0 = (c % N) * CELL, z0 = ((c / N) | 0) * CELL; g.face(x0, 0, z0 + CELL, [1, 0, 0], [0, 0, -1], CELL, CELL, [0, 1, 0], 1, true, [1, 1, 1, 1]); }
     const m = g.mesh('water37_' + B.name, scene); m.material = mat; m.position.y = B.y; m.isPickable = false; m.alphaIndex = 5; m._sortD = 100; m.__noPortal = true; B.mesh = m; LV.waterMeshes.push(m);
   }
 }

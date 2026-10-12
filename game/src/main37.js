@@ -84,8 +84,12 @@ function waterPhys37(dt) {
     if (ey > surf) { ey = damp(ey, surf, 12, dt); if (vy > 0) vy = 0; }
     ey = Math.max(ey, floorMin);
   } else { G37.falling = false; ey = damp(ey, standEye, 11, dt); vy = 0; }
+  // The flooded passages have real low roofs. Buoyancy must not lift the
+  // camera through them; air bells use their higher per-cell ceilings.
+  const roofEye = LVL === 37 && !devOn('fly') ? LV.ch[c] - 0.12 : Infinity;
+  if (play && ey > roofEye) { ey = Math.max(floorMin, roofEye); vy = Math.min(vy, 0); }
   G37.ey = ey; G37.vy = vy;
-  CAM.position.y = ey + bobY * (swim ? 0.3 : 1);
+  CAM.position.y = Math.min(ey + bobY * (swim ? 0.3 : 1), roofEye);
   G37.wasDepth = depth;
   // under the surface?
   const wasUnder = G37.under, under = b >= 0 && CAM.position.y < W0 - 0.03;

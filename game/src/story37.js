@@ -131,7 +131,9 @@ function gate37(g, it) {
   SFX37.pump(P9(g)); SFX9.rattle && SFX9.rattle(P9(g)); makeNoise(0.3);
   holdStart(it, 3, () => { g.busy = false; B.tgt = low; B.speed = g.id === 'well' ? 0.2 : 0.11; SFX37[low < 0 ? 'drain' : 'fill'](P9({ x: PL.x, y: 1, z: PL.z })); makeNoise(0.4);
     toast(low < 0 ? `${g.name} · DRAINING` : `${g.name} · FILLING`, 2.6); P37.gatesUsed[g.id] = true;
-    if (g.id === 'sh' && low < 0) { later(26, () => { P37.drained = true; toast('THE SHALLOWS ARE EMPTY', 2.6); setPhase37(); cpSave('THE SHALLOWS DRAINED'); if (!P37.cass) later(2, () => say(OUT9, 'Nine. Your carrier just cleared. First time all hour.', { radio: true })); }); }
+    const run = g.run = (g.run || 0) + 1;
+    if (g.id === 'sh') P37.drained = false;
+    if (g.id === 'sh' && low < 0) { later(26, () => { if (g.run !== run || B.tgt !== low) return; P37.drained = true; toast('THE SHALLOWS ARE EMPTY', 2.6); setPhase37(); cpSave('THE SHALLOWS DRAINED'); if (!P37.cass) later(2, () => say(OUT9, 'Nine. Your carrier just cleared. First time all hour.', { radio: true })); }); }
     if (g.id === 'well' && low < 0) later(1, () => toast('THE STAIR AT THE BOTTOM OF THE WELL IS DRY', 2.6)); }, { r: 2.4, cancel: 'YOU LET GO OF THE WHEEL', noise: 0.2, tick: dt => { g.mesh.rotation.z += dt * (low < 0 ? 2.4 : -2.4); } });
 }
 function takePellCam37() { P37.cam = true; W37.pit.cam.setEnabled(false); SFX.pickup(); toast('PELL\'S CAMCORDER · TAPE SEVEN INSIDE', 2.6); pitCheck37(); }
@@ -216,17 +218,29 @@ function panel37() {
 // ----- the flood -----
 function startFlood37() {
   if (G37.flood) return; P37.played = true; G37.flood = 1; G37.hatchReady = false; G37.floodT = 0;
+  G37.wellY0 = LV.basins[BAS37.WELL].tgt;
+  const run = G37.floodRun = (G37.floodRun || 0) + 1;
+  const beat = (sec, fn) => later(sec, () => { if (G37.flood && G37.floodRun === run) fn(); });
   SFX37.vcr(P9(W37.pos.tv ? { x: W37.pos.tv.x, y: 1.1, z: W37.pos.tv.z } : { x: PL.x, y: 1, z: PL.z })); drawTv37(true); toast('NEW_VIDEO.AVI · PLAYING', 2.4); setPhase37(); cpSave('THE VIDEO');
-  later(2.6, () => { SFX37.alarm({ x: PL.x, y: 2, z: PL.z, pl: { x: PL.x, z: PL.z } }); say('PA', 'The Deep is now open.', { dur: 3.6 }); FX.glitch = 1.6; });
-  later(3.6, () => { sluice37(true); const B = LV.basins[BAS37.WELL]; G37.wellY0 = B.tgt; B.tgt = LV.dry.well.h - 0.9; B.speed = 0.15; for (const c of LV.dry.well.cells) if (LV.bas[c] < 0 && LV.fh[c] < 9) { LV.bas[c] = BAS37.WELL; } });
-  later(4.2, () => { for (const d of W9.doors) if (d.dk === 'booth') { setDoor(d, false); d.locked = true; } SFX37.slam(P9({ x: PL.x, y: 1, z: PL.z })); });
-  later(8, () => sayAb37('Camera. Swim up. Not across.', { radio: true, dur: 3.2 }));
-  later(14, () => spawnFish37('well'));
+  beat(2.6, () => { SFX37.alarm({ x: PL.x, y: 2, z: PL.z, pl: { x: PL.x, z: PL.z } }); say('PA', 'The Deep is now open.', { dur: 3.6 }); FX.glitch = 1.6; });
+  beat(3.6, () => { sluice37(true); const B = LV.basins[BAS37.WELL]; B.tgt = LV.dry.well.h - 0.9; B.speed = 0.15; for (const c of LV.dry.well.cells) if (LV.bas[c] < 0 && LV.fh[c] < 9) { LV.bas[c] = BAS37.WELL; } });
+  beat(4.2, () => { sealBooth37(); SFX37.slam(P9({ x: PL.x, y: 1, z: PL.z })); });
+  beat(8, () => sayAb37('Camera. Swim up. Not across.', { radio: true, dur: 3.2 }));
+  beat(14, () => spawnFish37('well'));
   W37.hatchIt && null;
+}
+function sealBooth37() {
+  const inside = LV.room[cell37(PL.x, PL.z)] === LV.dry.booth.id;
+  for (const d of W9.doors) if (d.dk === 'booth') {
+    // The booth has a single exit. Seal it only after the player crosses it.
+    if (inside) { d.locked = false; setDoor(d, true); }
+    else if (!d.locked) { setDoor(d, false); d.locked = true; }
+  }
 }
 function sluice37(close) { for (const d of W9.doors) if (d.e && d.e.sign === 'DEEP END') ; W37.sluice = W37.sluice || { x: 35 * CELL - 0.1, z: 26 * CELL + 0.5 }; if (close) { if (W37.sluiceI === undefined) { W37.sluiceI = LV.solids.length; addSolid(34.5 * CELL, 26 * CELL + 0.3, 36.5 * CELL + 0.1, 26 * CELL + 0.9, 'sluice'); } else LV.solids[W37.sluiceI].off = false; SFX37.slam(P9(W37.sluice)); } else if (W37.sluiceI !== undefined) LV.solids[W37.sluiceI].off = true; }
 function floodTick37(dt) {
   G37.floodT += dt; const B = LV.basins[BAS37.WELL], top = LV.dry.well.h;
+  if (G37.floodT >= 4.2) sealBooth37();
   // the hatch can be opened once the surface is within reach of it
   G37.hatchReady = B.y > top - 1.6 && !G37.onTower;
   if (G37.hatchReady && !G37.warns.hatch) { G37.warns.hatch = true; toast('THE HATCH IS WITHIN REACH', 2.6); setPhase37(); }
@@ -325,6 +339,7 @@ function endCard37() {
 }
 function cpRespawnFlood37() {
   if (!G37.flood) return;
+  G37.floodRun = (G37.floodRun || 0) + 1;
   G37.flood = 0; G37.hatchReady = false; G37.warns.hatch = false; const B = LV.basins[BAS37.WELL]; B.tgt = G37.wellY0 ?? 0; B.speed = 0.2; sluice37(false);
   P37.played = false; for (const d of W9.doors) if (d.dk === 'booth') d.locked = false; if (AI37.fish) { AI37.fish.dispose && AI37.fish.dispose(); AI37.fish = null; }
   drawTv37(false);

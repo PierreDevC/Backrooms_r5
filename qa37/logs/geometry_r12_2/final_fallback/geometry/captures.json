@@ -1,0 +1,225 @@
+{
+  "captures": [
+    "hospital_tunnel_normal",
+    "hospital_tunnel_nv",
+    "park_tunnel_normal",
+    "park_tunnel_nv",
+    "shallow_arch",
+    "spiral",
+    "pit_drained",
+    "hotel_stairs",
+    "well_boards",
+    "tower_base",
+    "cabana_props",
+    "plant_wheels",
+    "lobby_counter",
+    "cafeteria",
+    "room204",
+    "vault",
+    "admissions",
+    "ward3",
+    "pharmacy",
+    "theatre",
+    "dome",
+    "generator",
+    "control",
+    "wave_ghosts",
+    "tower_top"
+  ],
+  "views": [
+    {
+      "name": "shallow_arch",
+      "room": "shallows",
+      "camera": 1.0699999880790714,
+      "ceiling": 7.400000095367432
+    },
+    {
+      "name": "spiral",
+      "room": "shallows",
+      "camera": 1.0699999880790714,
+      "ceiling": 7.400000095367432
+    },
+    {
+      "name": "pit_drained",
+      "room": "shallows",
+      "camera": -0.7800000953674314,
+      "ceiling": 7.400000095367432
+    },
+    {
+      "name": "hotel_stairs",
+      "room": "hcorr",
+      "camera": -0.7800000953674314,
+      "ceiling": 0.6000000238418579
+    },
+    {
+      "name": "well_boards",
+      "room": "well",
+      "camera": 0.2075627366896166,
+      "ceiling": 12.800000190734863
+    },
+    {
+      "name": "tower_base",
+      "room": "well",
+      "camera": 0.2191954574520393,
+      "ceiling": 12.800000190734863
+    },
+    {
+      "name": "cabana_props",
+      "room": "cabana",
+      "camera": 1.7600000005960463,
+      "ceiling": 3.200000047683716
+    },
+    {
+      "name": "plant_wheels",
+      "room": "plant",
+      "camera": 1.7600000005960463,
+      "ceiling": 4.599999904632568
+    },
+    {
+      "name": "lobby_counter",
+      "room": "lobby",
+      "camera": 1.62,
+      "ceiling": 4.300000190734863
+    },
+    {
+      "name": "cafeteria",
+      "room": "cafe",
+      "camera": 0.41999995231628423,
+      "ceiling": 4
+    },
+    {
+      "name": "room204",
+      "room": "hroom204",
+      "camera": 1.62,
+      "ceiling": 3.0999999046325684
+    },
+    {
+      "name": "vault",
+      "room": "vault",
+      "camera": 1.62,
+      "ceiling": 3
+    },
+    {
+      "name": "admissions",
+      "room": "admissions",
+      "camera": 1.62,
+      "ceiling": 3.4000000953674316
+    },
+    {
+      "name": "ward3",
+      "room": "ward3",
+      "camera": 1.62000000000109,
+      "ceiling": 3
+    },
+    {
+      "name": "pharmacy",
+      "room": "pharmacy",
+      "camera": 1.62,
+      "ceiling": 3
+    },
+    {
+      "name": "theatre",
+      "room": "theatre",
+      "camera": 1.62,
+      "ceiling": 3.4000000953674316
+    },
+    {
+      "name": "dome",
+      "room": "dome",
+      "camera": 1.6199999999999999,
+      "ceiling": 6
+    },
+    {
+      "name": "generator",
+      "room": "gen",
+      "camera": 1.62,
+      "ceiling": 3.200000047683716
+    },
+    {
+      "name": "control",
+      "room": "control",
+      "camera": 1.62,
+      "ceiling": 3.200000047683716
+    },
+    {
+      "name": "wave_ghosts",
+      "room": "wavepool",
+      "camera": 0.24066790064589902,
+      "ceiling": 5.400000095367432
+    }
+  ],
+  "walk": {
+    "start": [
+      124.2,
+      160.20000000000002
+    ],
+    "end": [
+      124.2,
+      178.76109373814842
+    ],
+    "room": "lobby",
+    "floor": 0,
+    "eye": 1.6199999999994739,
+    "state": "play",
+    "errors": 0
+  },
+  "swim": {
+    "hospital": {
+      "name": "hospital",
+      "x": 89.17926456754422,
+      "z": 70.2,
+      "room": "admissions",
+      "eye": -4.920000190734863,
+      "ceiling": -4.800000190734863,
+      "state": "play",
+      "end": [
+        88.82000000000001,
+        41.87780277301194
+      ]
+    },
+    "park": {
+      "name": "park",
+      "x": 243,
+      "z": 124.2,
+      "room": "plaza",
+      "eye": -0.4699999940395355,
+      "ceiling": -0.3499999940395355,
+      "state": "play",
+      "end": [
+        250.2360414206526,
+        152.17
+      ]
+    },
+    "air": [
+      {
+        "eye": 0.2032782319431408,
+        "ceiling": 1.5,
+        "under": false
+      },
+      {
+        "eye": 0.23131377065691588,
+        "ceiling": 1.600000023841858,
+        "under": false
+      }
+    ],
+    "errors": 0
+  },
+  "tower": {
+    "railHit": false,
+    "top": {
+      "on": true,
+      "eye": 11.620000000000001,
+      "gap": true
+    },
+    "on": false,
+    "eye": -2.006254551719418,
+    "under": true,
+    "gap": false,
+    "errors": 0
+  },
+  "fly": {
+    "camera": 2.566712866565996,
+    "ceiling": -4.800000190734863,
+    "errors": 0
+  }
+}

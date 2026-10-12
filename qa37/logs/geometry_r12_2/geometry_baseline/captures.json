@@ -1,0 +1,43 @@
+{
+  "captures": [
+    "hospital_tunnel_normal",
+    "hospital_tunnel_nv",
+    "park_tunnel_normal",
+    "park_tunnel_nv",
+    "shallow_arch",
+    "spiral",
+    "pit_drained",
+    "hotel_stairs",
+    "well_boards",
+    "tower_base",
+    "cabana_props",
+    "plant_wheels",
+    "lobby_counter",
+    "cafeteria",
+    "room204",
+    "vault",
+    "admissions",
+    "ward3",
+    "pharmacy",
+    "theatre",
+    "dome",
+    "generator",
+    "control",
+    "wave_ghosts"
+  ],
+  "walk": {
+    "start": [
+      124.2,
+      160.20000000000002
+    ],
+    "end": [
+      124.2,
+      178.76109373814842
+    ],
+    "room": "lobby",
+    "floor": 0,
+    "eye": 1.6199999999994739,
+    "state": "play",
+    "errors": 0
+  }
+}

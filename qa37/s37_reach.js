@@ -15,7 +15,10 @@ module.exports = async (page) => {
       st() { return { phase: B.G37.phase, errs: B.ERRS.n, last: B.ERRS.last, wings: B.wingsDone37(), keys: JSON.stringify(B.P37.keys), flood: B.G37.flood, state: B.G.state }; }
     };
   });
-  const run = async (name, fn) => { const r = await page.evaluate(fn); console.log(name + ' ' + JSON.stringify(r)); };
+  const run = async (name, fn) => { const r = await page.evaluate(fn); console.log(name + ' ' + JSON.stringify(r));
+    if (r.un.length || Object.values(r.pts).some(v => !v) || Object.entries(r).some(([k,v]) => !['un','pts','tags','cells'].includes(k) && !v)) throw new Error('QA FAIL unreachable Level 37 room or quest anchor');
+    console.log('QA PASS all 42 rooms and quest anchors are collision-reachable (quest doors treated as open)');
+  };
   await run('reach', () => { const B = window.__BR, LV = B.LV37(), H = 4, R = 0.3, STEP = 0.45, SZ = 72 * 3.6, NH = Math.ceil(SZ / H); const hash = Array.from({ length: NH * NH }, () => []);
     const tags = {}; for (const s of LV.solids) tags[s.tag] = (tags[s.tag] || 0) + 1; window.__tags = tags; for (const s of LV.solids) { if (s.off || s.tag === 'door') continue; for (let bz = Math.max(0, Math.floor((s.z0 - R) / H)); bz <= Math.min(NH - 1, Math.floor((s.z1 + R) / H)); bz++) for (let bx = Math.max(0, Math.floor((s.x0 - R) / H)); bx <= Math.min(NH - 1, Math.floor((s.x1 + R) / H)); bx++) hash[bz * NH + bx].push(s); }
     const blocked = (x, z) => { if (x < 0 || z < 0 || x >= SZ || z >= SZ) return true; for (const s of hash[Math.floor(z / H) * NH + Math.floor(x / H)]) { const cx = Math.max(s.x0, Math.min(x, s.x1)), cz = Math.max(s.z0, Math.min(z, s.z1)); if ((x - cx) ** 2 + (z - cz) ** 2 < R * R) return true; } return false; };

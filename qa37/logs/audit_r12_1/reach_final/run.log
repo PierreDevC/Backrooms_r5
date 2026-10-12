@@ -1,0 +1,8 @@
+warning: [.WebGL-0x11c000c6600]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+warning: [.WebGL-0x11c000c6600]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+warning: [.WebGL-0x11c000c6600]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+warning: [.WebGL-0x11c000c6600]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)
+QA load ms 1531
+reach {"un":[],"pts":{"c46":true,"c47":true,"c47b":true,"l48":true,"hs13":true,"hs12":true,"hs11":true,"hs10":true,"pit":true,"pitS":true,"hc1":true,"hc2":true,"lobby":true,"well":true,"chan":true,"th":true,"th2":true,"adm":true,"lap":true,"tunW":true,"plaza":true},"tags":{"undefined":864,"prop":156,"tower":4,"door":24},"cells":112633,"abara":true,"kettle":true,"plantLog":true,"panel":true,"guestbook":true,"swimmer":true,"vault":true,"adm":true,"ticket":true,"linen":true,"records":true,"theatre":true,"map":true,"gen":true,"ctrl":true,"tape":true,"tvdesk":true}
+QA PASS all 42 rooms and quest anchors are collision-reachable (quest doors treated as open)
+QA PAGE CLOSE

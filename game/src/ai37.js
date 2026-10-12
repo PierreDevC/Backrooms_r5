@@ -29,12 +29,15 @@ class Teague37 extends Npc37 {
   }
   update(dt) {
     const S = this.S;
+    // A hold can be cancelled by walking away or dying. Return to the lane end
+    // so the same stopwatch can start another attempt.
+    if (this.swimming && (!holdBusy(this.inter) || !['play', 'paused'].includes(G.state))) this.resetTiming();
     if (this.swimming) {
       this.lapT += dt; const spd = 3.3; this.lx += this.dirn * spd * dt;
       if (this.lx < S.laneX0) { this.lx = S.laneX0; this.dirn = 1; } if (this.lx > S.laneX1) { this.lx = S.laneX1; this.dirn = -1; }
       this.x = this.lx; this.z = S.laneZ; this.yaw = this.dirn < 0 ? -Math.PI / 2 : Math.PI / 2; this.ph += dt * 5.2;
       const wy = waterY37(this.x, this.z); this.rig.root.position.y = wy - 0.2; this.rig.root.rotation.x = 1.45;
-      const s = Math.sin(this.ph); if (this.rig.hip) animHuman(this.rig, this.ph, 0.9, { armA: 1.7, legA: 0.28 });
+      const s = Math.sin(this.ph); if (this.rig.sk || this.rig.hip) animHuman(this.rig, this.ph, 0.9, { armA: 1.7, legA: 0.28 });
       if (Math.random() < dt * 5) SFX37.splashSoft && SFX37.splashSoft(P9({ x: this.x, y: wy, z: this.z }));
       this.sync(); this.rig.root.position.y = wy - 0.2; this.rig.root.rotation.x = 1.45;
     } else {
@@ -44,6 +47,7 @@ class Teague37 extends Npc37 {
       this.sync(); npc37Floor(this);
     }
   }
+  resetTiming() { this.swimming = false; this.lapT = 0; this.dirn = -1; this.lx = this.S.x; this.rig.root.rotation.x = 0; this.place(this.S.x, this.S.z, -Math.PI / 2); npc37Floor(this); }
   cull() { const d = this.d; this.shown = d < 44 && (this.swimming || d < 6 || los(PL.x, PL.z, this.x, this.z)); setRigVisible(this.rig, this.shown); }
 }
 // the Staff: pale, still, doing the one thing; they only exist on night shot

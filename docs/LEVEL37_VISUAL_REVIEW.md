@@ -1,3 +1,7 @@
+> Current geometry evidence: [r12.2 report, screenshots and limits](LEVEL37_GEOMETRY.md). The r8 findings below are historical.
+
+> Historical r8 review. Current r12.1 screenshots and remaining limits are in [LEVEL37_AUDIT.md](LEVEL37_AUDIT.md).
+
 # Level 37 visual and layout review (build copy review37.html, 960x540)
 Shots: SCR = /private/tmp/claude-501/-Volumes-crucial-Downloads-Backrooms-r5/e549f242-1f73-4657-828b-a9671490d7ac/scratchpad/qa37v/ (montages m1..m15.png; singles named below). Coordinates are grid cells (x,y), CELL 3.6 m; yaw 0 looks +z (south).
 Method: ~95 scripted views of every room, plus the LV37() graph. Zero runtime errors. No z-fighting or texture stretching seen. All 42 rooms are connected through arches/doors; no unreachable room.

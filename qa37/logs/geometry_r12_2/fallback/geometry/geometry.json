@@ -1,0 +1,429 @@
+{
+  "invalid": [],
+  "vertices": 230548,
+  "triangles": 236407.3333333333,
+  "rooms": [
+    {
+      "room": "shallows",
+      "id": 0,
+      "x": 124.2,
+      "z": 127.8,
+      "floor": -0.550000011920929,
+      "ceiling": 7.400000095367432,
+      "floorHit": -0.550000011920929,
+      "ceilingHit": 7.400000095367432
+    },
+    {
+      "room": "gatev",
+      "id": 1,
+      "x": 127.8,
+      "z": 95.4,
+      "floor": 0.14000000059604645,
+      "ceiling": 3.799999952316284,
+      "floorHit": 0.14000000059604645,
+      "ceilingHit": 3.799999952316284
+    },
+    {
+      "room": "well",
+      "id": 2,
+      "x": 127.8,
+      "z": 70.2,
+      "floor": -6,
+      "ceiling": 12.800000190734863,
+      "floorHit": -6,
+      "ceilingHit": 12.800000190734863
+    },
+    {
+      "room": "booth",
+      "id": 3,
+      "x": 156.6,
+      "z": 66.60000000000001,
+      "floor": 0.14000000059604645,
+      "ceiling": 3,
+      "floorHit": 0.14000000059604645,
+      "ceilingHit": 3
+    },
+    {
+      "room": "cabana",
+      "id": 4,
+      "x": 81,
+      "z": 124.2,
+      "floor": 0.14000000059604645,
+      "ceiling": 3.200000047683716,
+      "floorHit": 0.14000000059604645,
+      "ceilingHit": 3.200000047683716
+    },
+    {
+      "room": "plant",
+      "id": 5,
+      "x": 48.6,
+      "z": 120.60000000000001,
+      "floor": 0.14000000059604645,
+      "ceiling": 4.599999904632568,
+      "floorHit": 0.14000000059604645,
+      "ceilingHit": 4.599999904632568
+    },
+    {
+      "room": "lap",
+      "id": 6,
+      "x": 199.8,
+      "z": 124.2,
+      "floor": -1.5,
+      "ceiling": 6.400000095367432,
+      "floorHit": -1.5,
+      "ceilingHit": 6.400000095367432
+    },
+    {
+      "room": "lapv",
+      "id": 7,
+      "x": 160.20000000000002,
+      "z": 120.60000000000001,
+      "floor": 0.14000000059604645,
+      "ceiling": 3.5999999046325684,
+      "floorHit": 0.14000000059604645,
+      "ceilingHit": 3.5999999046325684
+    },
+    {
+      "room": "tunnelW",
+      "id": 8,
+      "x": 250.20000000000002,
+      "z": 135,
+      "floor": -1.5,
+      "ceiling": 1.600000023841858,
+      "floorHit": -1.5,
+      "ceilingHit": 1.600000023841858
+    },
+    {
+      "room": "hcorr",
+      "id": 9,
+      "x": 124.2,
+      "z": 163.8,
+      "floor": -2.4000000953674316,
+      "ceiling": 0.6000000238418579,
+      "floorHit": -2.4000000953674316,
+      "ceilingHit": 0.6000000238418579
+    },
+    {
+      "room": "tunnelH",
+      "id": 10,
+      "x": 95.4,
+      "z": 70.2,
+      "floor": -6,
+      "ceiling": -4.800000190734863,
+      "floorHit": -6,
+      "ceilingHit": -4.800000190734863
+    },
+    {
+      "room": "lobby",
+      "id": 11,
+      "x": 127.8,
+      "z": 185.4,
+      "floor": 0,
+      "ceiling": 4.300000190734863,
+      "floorHit": 6.938893903907228e-18,
+      "ceilingHit": 4.300000190734863
+    },
+    {
+      "room": "cafe",
+      "id": 12,
+      "x": 163.8,
+      "z": 189,
+      "floor": -1.2000000476837158,
+      "ceiling": 4,
+      "floorHit": -1.2000000476837158,
+      "ceilingHit": 4
+    },
+    {
+      "room": "rooms",
+      "id": 13,
+      "x": 91.8,
+      "z": 185.4,
+      "floor": 0,
+      "ceiling": 3.0999999046325684,
+      "floorHit": 6.938893903907228e-18,
+      "ceilingHit": 3.0999999046325684
+    },
+    {
+      "room": "hroom201",
+      "id": 14,
+      "x": 77.4,
+      "z": 178.20000000000002,
+      "floor": 0,
+      "ceiling": 3.0999999046325684,
+      "floorHit": 6.938893903907228e-18,
+      "ceilingHit": 3.0999999046325684
+    },
+    {
+      "room": "hroom202",
+      "id": 15,
+      "x": 84.60000000000001,
+      "z": 178.20000000000002,
+      "floor": 0,
+      "ceiling": 3.0999999046325684,
+      "floorHit": 6.938893903907228e-18,
+      "ceilingHit": 3.0999999046325684
+    },
+    {
+      "room": "hroom203",
+      "id": 16,
+      "x": 95.4,
+      "z": 178.20000000000002,
+      "floor": 0,
+      "ceiling": 3.0999999046325684,
+      "floorHit": 6.938893903907228e-18,
+      "ceilingHit": 3.0999999046325684
+    },
+    {
+      "room": "hroom204",
+      "id": 17,
+      "x": 99,
+      "z": 178.20000000000002,
+      "floor": 0,
+      "ceiling": 3.0999999046325684,
+      "floorHit": 6.938893903907228e-18,
+      "ceilingHit": 3.0999999046325684
+    },
+    {
+      "room": "vault",
+      "id": 18,
+      "x": 102.60000000000001,
+      "z": 192.6,
+      "floor": 0,
+      "ceiling": 3,
+      "floorHit": 6.938893903907228e-18,
+      "ceilingHit": 3
+    },
+    {
+      "room": "court",
+      "id": 19,
+      "x": 138.6,
+      "z": 217.8,
+      "floor": -1.7999999523162842,
+      "ceiling": 5.599999904632568,
+      "floorHit": -1.7999999523162842,
+      "ceilingHit": 5.599999904632568
+    },
+    {
+      "room": "hstair",
+      "id": 20,
+      "x": 88.2,
+      "z": 48.6,
+      "floor": -4.400000095367432,
+      "ceiling": 2,
+      "floorHit": -4.400000095367432,
+      "ceilingHit": 2
+    },
+    {
+      "room": "admissions",
+      "id": 21,
+      "x": 88.2,
+      "z": 34.2,
+      "floor": 0,
+      "ceiling": 3.4000000953674316,
+      "floorHit": 0,
+      "ceilingHit": 3.4000000953674316
+    },
+    {
+      "room": "hcorr",
+      "id": 22,
+      "x": 91.8,
+      "z": 23.400000000000002,
+      "floor": 0,
+      "ceiling": 3.200000047683716,
+      "floorHit": 0,
+      "ceilingHit": 3.200000047683716
+    },
+    {
+      "room": "ward1",
+      "id": 23,
+      "x": 45,
+      "z": 16.2,
+      "floor": 0,
+      "ceiling": 3,
+      "floorHit": 6.938893903907228e-18,
+      "ceilingHit": 3
+    },
+    {
+      "room": "ward2",
+      "id": 24,
+      "x": 55.800000000000004,
+      "z": 16.2,
+      "floor": 0,
+      "ceiling": 3,
+      "floorHit": 6.938893903907228e-18,
+      "ceilingHit": 3
+    },
+    {
+      "room": "ward3",
+      "id": 25,
+      "x": 66.60000000000001,
+      "z": 16.2,
+      "floor": 0,
+      "ceiling": 3,
+      "floorHit": 0,
+      "ceilingHit": 3
+    },
+    {
+      "room": "ward4",
+      "id": 26,
+      "x": 109.8,
+      "z": 16.2,
+      "floor": 0,
+      "ceiling": 3,
+      "floorHit": 0,
+      "ceilingHit": 3
+    },
+    {
+      "room": "ward5",
+      "id": 27,
+      "x": 120.60000000000001,
+      "z": 16.2,
+      "floor": 0,
+      "ceiling": 3,
+      "floorHit": 0,
+      "ceilingHit": 3
+    },
+    {
+      "room": "ward6",
+      "id": 28,
+      "x": 131.4,
+      "z": 16.2,
+      "floor": 0,
+      "ceiling": 3,
+      "floorHit": 0,
+      "ceilingHit": 3
+    },
+    {
+      "room": "laundry",
+      "id": 29,
+      "x": 48.6,
+      "z": 30.6,
+      "floor": 0,
+      "ceiling": 3,
+      "floorHit": 6.938893903907228e-18,
+      "ceilingHit": 3
+    },
+    {
+      "room": "pharmacy",
+      "id": 30,
+      "x": 63,
+      "z": 30.6,
+      "floor": 0,
+      "ceiling": 3,
+      "floorHit": 0,
+      "ceilingHit": 3
+    },
+    {
+      "room": "nurses",
+      "id": 31,
+      "x": 113.4,
+      "z": 30.6,
+      "floor": 0,
+      "ceiling": 3,
+      "floorHit": 0,
+      "ceilingHit": 3
+    },
+    {
+      "room": "records",
+      "id": 32,
+      "x": 127.8,
+      "z": 30.6,
+      "floor": 0,
+      "ceiling": 3,
+      "floorHit": 0,
+      "ceilingHit": 3
+    },
+    {
+      "room": "theatre",
+      "id": 33,
+      "x": 142.20000000000002,
+      "z": 23.400000000000002,
+      "floor": 0,
+      "ceiling": 3.4000000953674316,
+      "floorHit": 0,
+      "ceilingHit": 3.4000000953674316
+    },
+    {
+      "room": "plaza",
+      "id": 34,
+      "x": 228.6,
+      "z": 160.20000000000002,
+      "floor": 0,
+      "ceiling": 9,
+      "floorHit": 6.938893903907228e-18,
+      "ceilingHit": 9
+    },
+    {
+      "room": "foyer",
+      "id": 35,
+      "x": 228.6,
+      "z": 181.8,
+      "floor": 0,
+      "ceiling": 5,
+      "floorHit": 6.938893903907228e-18,
+      "ceilingHit": 5
+    },
+    {
+      "room": "dome",
+      "id": 36,
+      "x": 228.6,
+      "z": 207,
+      "floor": 0,
+      "ceiling": 6,
+      "floorHit": 6.938893903907228e-18,
+      "ceilingHit": 6
+    },
+    {
+      "room": "scorr",
+      "id": 37,
+      "x": 228.6,
+      "z": 221.4,
+      "floor": 0,
+      "ceiling": 3,
+      "floorHit": 6.938893903907228e-18,
+      "ceilingHit": 3
+    },
+    {
+      "room": "gen",
+      "id": 38,
+      "x": 210.6,
+      "z": 228.6,
+      "floor": 0,
+      "ceiling": 3.200000047683716,
+      "floorHit": 6.938893903907228e-18,
+      "ceilingHit": 3.200000047683716
+    },
+    {
+      "room": "control",
+      "id": 39,
+      "x": 228.6,
+      "z": 228.6,
+      "floor": 0,
+      "ceiling": 3.200000047683716,
+      "floorHit": 6.938893903907228e-18,
+      "ceilingHit": 3.200000047683716
+    },
+    {
+      "room": "brk",
+      "id": 40,
+      "x": 246.6,
+      "z": 228.6,
+      "floor": 0,
+      "ceiling": 3.200000047683716,
+      "floorHit": 6.938893903907228e-18,
+      "ceilingHit": 3.200000047683716
+    },
+    {
+      "room": "wavepool",
+      "id": 41,
+      "x": 221.4,
+      "z": 246.6,
+      "floor": -3,
+      "ceiling": 5.400000095367432,
+      "floorHit": -3,
+      "ceilingHit": 5.400000095367432
+    }
+  ],
+  "solids": 1048,
+  "errors": 0
+}

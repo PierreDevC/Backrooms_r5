@@ -1,0 +1,151 @@
+{
+  "version": "r12.2",
+  "geometry_assertions": 114,
+  "screenshots_reviewed": 35,
+  "shared_first_run": "11/12; Level 0 story failed after Reyes death",
+  "shared_level0_repeat": "PASS unchanged",
+  "results": {
+    "closeups/run.log": {
+      "closed": true,
+      "assertions": 10,
+      "failure_markers": []
+    },
+    "geometry_fixed/run.log": {
+      "closed": true,
+      "assertions": 112,
+      "failure_markers": []
+    },
+    "geometry_baseline/run.log": {
+      "closed": true,
+      "assertions": 0,
+      "failure_markers": []
+    },
+    "geometry/run.log": {
+      "closed": true,
+      "assertions": 113,
+      "failure_markers": []
+    },
+    "l0_story_repeat/run.log": {
+      "closed": true,
+      "assertions": 23,
+      "failure_markers": []
+    },
+    "geometry_probe/run.log": {
+      "closed": true,
+      "assertions": 0,
+      "failure_markers": []
+    },
+    "regression/chain/run.log": {
+      "closed": true,
+      "assertions": 2,
+      "failure_markers": []
+    },
+    "regression/downstream/run.log": {
+      "closed": true,
+      "assertions": 3,
+      "failure_markers": []
+    },
+    "regression/progression/run.log": {
+      "closed": true,
+      "assertions": 18,
+      "failure_markers": []
+    },
+    "regression/branches/run.log": {
+      "closed": true,
+      "assertions": 14,
+      "failure_markers": []
+    },
+    "regression/reach/run.log": {
+      "closed": true,
+      "assertions": 1,
+      "failure_markers": []
+    },
+    "final/downstream/run.log": {
+      "closed": true,
+      "assertions": 3,
+      "failure_markers": []
+    },
+    "final/progression/run.log": {
+      "closed": true,
+      "assertions": 18,
+      "failure_markers": []
+    },
+    "final/geometry/run.log": {
+      "closed": true,
+      "assertions": 114,
+      "failure_markers": []
+    },
+    "final_fallback/geometry/run.log": {
+      "closed": true,
+      "assertions": 114,
+      "failure_markers": []
+    },
+    "shared/l9_story/run.log": {
+      "closed": true,
+      "assertions": 16,
+      "failure_markers": []
+    },
+    "shared/cp9/run.log": {
+      "closed": true,
+      "assertions": 0,
+      "failure_markers": []
+    },
+    "shared/checkpoints/run.log": {
+      "closed": true,
+      "assertions": 0,
+      "failure_markers": []
+    },
+    "shared/l5_state/run.log": {
+      "closed": true,
+      "assertions": 19,
+      "failure_markers": []
+    },
+    "shared/piano_clues/run.log": {
+      "closed": true,
+      "assertions": 20,
+      "failure_markers": []
+    },
+    "shared/l0_story/run.log": {
+      "closed": true,
+      "assertions": 20,
+      "failure_markers": [
+        "QA FAIL"
+      ]
+    },
+    "shared/l18_name/run.log": {
+      "closed": true,
+      "assertions": 15,
+      "failure_markers": []
+    },
+    "shared/levels_mobile/run.log": {
+      "closed": true,
+      "assertions": 0,
+      "failure_markers": []
+    },
+    "shared/transitions/run.log": {
+      "closed": true,
+      "assertions": 0,
+      "failure_markers": []
+    },
+    "shared/levels/run.log": {
+      "closed": true,
+      "assertions": 17,
+      "failure_markers": []
+    },
+    "shared/l18_final/run.log": {
+      "closed": true,
+      "assertions": 10,
+      "failure_markers": []
+    },
+    "shared/howler/run.log": {
+      "closed": true,
+      "assertions": 15,
+      "failure_markers": []
+    },
+    "fallback/geometry/run.log": {
+      "closed": true,
+      "assertions": 113,
+      "failure_markers": []
+    }
+  }
+}

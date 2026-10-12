@@ -1,5 +1,9 @@
 # Story — r6 + r7 + r7.1 + r7.2
 
+## r12.2 geometry follow-up
+
+No dialogue, branching rules or canon changed. Submerged tunnel head clearance and the tower jump edge now agree with rendered geometry; progression/branch evidence is linked from [LEVEL37_GEOMETRY.md](LEVEL37_GEOMETRY.md).
+
 ## r7.2 Level 18 piano clue pass
 Brief: MUSIC room floor piano and the existing birthday card, classroom-sign/document and objective-UI channels. Must-know: where the melody is, how to repeat a note, and how to avoid accidental notes while changing keys. The sign teaches an activity; the UI repeats mechanical facts and records input, without a new speaker or explanation of the preschool. Written/reviewed with backrooms-dialogue; all new lines are text-only.
 

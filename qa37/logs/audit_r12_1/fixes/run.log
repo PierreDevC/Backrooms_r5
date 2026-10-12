@@ -1,0 +1,27 @@
+warning: [.WebGL-0x11c00116c00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+warning: [.WebGL-0x11c00116c00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+warning: [.WebGL-0x11c00116c00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+warning: [.WebGL-0x11c00116c00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)
+QA load ms 726
+QA PASS stopwatch cancellation: started
+QA PASS stopwatch cancellation: walking away resets the swimmer
+QA PASS stopwatch cancellation: retry earns the brass key
+AUDIT stopwatch cancellation {"label":"TEAGUE","timed":true,"key":true,"errors":0}
+QA PASS stopwatch checkpoint: checkpoint resets incomplete timing
+QA PASS stopwatch checkpoint: checkpoint retry completes timing
+QA PASS stopwatch checkpoint: inventory retained
+AUDIT stopwatch checkpoint {"state":"play","timed":true,"key":true,"errors":0}
+QA PASS booth escape: video leaves an escape while inside
+QA PASS booth escape: player walks out through booth door
+QA PASS booth escape: booth locks behind the player
+AUDIT booth escape {"locked":true,"target":0,"cell":2,"booth":3,"position":[150.46683962091927,66.71746255524056],"errors":0}
+QA PASS flood checkpoint timers: cancelled flood has no delayed locks or fish
+QA PASS flood checkpoint timers: pre-flood drained target restored
+QA PASS flood checkpoint timers: video can be replayed
+AUDIT flood checkpoint timers {"flood":0,"fish":false,"locked":false,"water":-6.3,"target":-6.3,"errors":0}
+QA PASS drain reversal: refilling does not claim the shallows are drained
+AUDIT drain reversal {"drained":false,"y":0,"target":0,"objective":"FIND DRY GROUND · THE CABANA, WEST OF THE SHALLOWS","errors":0}
+QA PASS level restart clears scene-owned flood state
+AUDIT restart {"oldIndex":1048,"clean":true,"flood":0,"keys":0,"errors":0}
+AUDIT SUMMARY {"passed":14,"total":14}
+QA PAGE CLOSE

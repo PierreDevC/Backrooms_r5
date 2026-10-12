@@ -1,0 +1,7 @@
+warning: [.WebGL-0x12c000c6600]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+warning: [.WebGL-0x12c000c6600]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+warning: [.WebGL-0x12c000c6600]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+warning: [.WebGL-0x12c000c6600]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)
+QA load ms 755
+GEOMETRY [{"name":"hospital_tunnel","floor":-6,"ceiling":-4.800000190734863,"eye":0.23568226310822674,"camera":0.23568226310822674,"under":false,"state":"play"},{"name":"park_tunnel","floor":-1.5,"ceiling":-0.3499999940395355,"eye":0.20287704791029443,"camera":0.20287704791029443,"under":false,"state":"play"},{"name":"hospital_airbell","floor":-6,"ceiling":1.5,"eye":0.20640058522751323,"camera":0.20640058522751323,"under":false,"state":"play"},{"name":"park_airbell","floor":-1.5,"ceiling":1.600000023841858,"eye":0.23982864695090977,"camera":0.23982864695090977,"under":false,"state":"play"}]
+QA PAGE CLOSE

@@ -1,0 +1,22 @@
+warning: [.WebGL-0x134000c7200]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+warning: [.WebGL-0x134000c7200]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+warning: [.WebGL-0x134000c7200]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+warning: [.WebGL-0x134000c7200]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)
+QA load ms 730
+QA PASS Level 0 starts through the normal forced-briefing-skip path
+QA PASS Crawler is absent; other Level 0 enemies remain
+QA PASS first territorial calls are scheduled 35–55 seconds into play
+QA PASS all three calls and three screams decode
+QA PASS briefing and controls no longer teach the Crawler mechanic
+QA PASS missing, suspended and undecoded audio safely fall back without throwing
+QA calls {"early":0,"count":1,"next":89.32869132142514,"paused":true,"deferred":true,"recorded":[{"x":12.828094118164985,"z":95.22089521386009,"owner":true,"atOwner":true},{"x":12.883889355130451,"z":95.22493792198169,"owner":true,"atOwner":true}],"before":{"x":12.808645103964954,"z":95.21948601314799},"voice":{"ref":24,"roll":0.3,"occF":1100}}
+QA PASS territorial call pauses the entity and resets its Normal 70–95 second timer
+QA PASS a chasing Howler defers its territorial call
+QA PASS calls originate from the actual Howler
+QA PASS distant calls use long-range positional attenuation and wall muffling
+QA PASS chase scream has a seven-second cooldown and camera feedback
+QA PASS scream plays and its panner follows the moving Howler
+QA PASS checkpoint retains the tape, stops Howler audio and resets its timing without a Crawler
+QA PASS detailed camcorder keeps its tally beacon and tape interaction
+QA PASS scene teardown stops positional samples with no recovered errors
+QA PAGE CLOSE

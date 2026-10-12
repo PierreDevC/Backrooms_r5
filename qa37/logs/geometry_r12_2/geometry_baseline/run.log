@@ -1,0 +1,97 @@
+warning: [.WebGL-0x11c000c6600]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+warning: [.WebGL-0x11c000c6600]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+warning: [.WebGL-0x11c000c6600]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+warning: [.WebGL-0x11c000c6600]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)
+QA load ms 721
+BASELINE PASS all mesh attributes, indices, parents and transforms are valid
+BASELINE PASS shallows floor agrees with collision height
+BASELINE PASS shallows ceiling agrees with height field
+BASELINE PASS gatev floor agrees with collision height
+BASELINE PASS gatev ceiling agrees with height field
+BASELINE PASS well floor agrees with collision height
+BASELINE PASS well ceiling agrees with height field
+BASELINE PASS booth floor agrees with collision height
+BASELINE PASS booth ceiling agrees with height field
+BASELINE PASS cabana floor agrees with collision height
+BASELINE PASS cabana ceiling agrees with height field
+BASELINE PASS plant floor agrees with collision height
+BASELINE PASS plant ceiling agrees with height field
+BASELINE PASS lap floor agrees with collision height
+BASELINE PASS lap ceiling agrees with height field
+BASELINE PASS lapv floor agrees with collision height
+BASELINE PASS lapv ceiling agrees with height field
+BASELINE PASS tunnelW floor agrees with collision height
+BASELINE PASS tunnelW ceiling agrees with height field
+BASELINE PASS hcorr floor agrees with collision height
+BASELINE PASS hcorr ceiling agrees with height field
+BASELINE PASS tunnelH floor agrees with collision height
+BASELINE PASS tunnelH ceiling agrees with height field
+BASELINE PASS lobby floor agrees with collision height
+BASELINE PASS lobby ceiling agrees with height field
+BASELINE PASS cafe floor agrees with collision height
+BASELINE PASS cafe ceiling agrees with height field
+BASELINE PASS rooms floor agrees with collision height
+BASELINE PASS rooms ceiling agrees with height field
+BASELINE PASS hroom201 floor agrees with collision height
+BASELINE PASS hroom201 ceiling agrees with height field
+BASELINE PASS hroom202 floor agrees with collision height
+BASELINE PASS hroom202 ceiling agrees with height field
+BASELINE PASS hroom203 floor agrees with collision height
+BASELINE PASS hroom203 ceiling agrees with height field
+BASELINE PASS hroom204 floor agrees with collision height
+BASELINE PASS hroom204 ceiling agrees with height field
+BASELINE PASS vault floor agrees with collision height
+BASELINE PASS vault ceiling agrees with height field
+BASELINE PASS court floor agrees with collision height
+BASELINE PASS court ceiling agrees with height field
+BASELINE PASS hstair floor agrees with collision height
+BASELINE PASS hstair ceiling agrees with height field
+BASELINE PASS admissions floor agrees with collision height
+BASELINE PASS admissions ceiling agrees with height field
+BASELINE PASS hcorr floor agrees with collision height
+BASELINE PASS hcorr ceiling agrees with height field
+BASELINE PASS ward1 floor agrees with collision height
+BASELINE PASS ward1 ceiling agrees with height field
+BASELINE PASS ward2 floor agrees with collision height
+BASELINE PASS ward2 ceiling agrees with height field
+BASELINE PASS ward3 floor agrees with collision height
+BASELINE PASS ward3 ceiling agrees with height field
+BASELINE PASS ward4 floor agrees with collision height
+BASELINE PASS ward4 ceiling agrees with height field
+BASELINE PASS ward5 floor agrees with collision height
+BASELINE PASS ward5 ceiling agrees with height field
+BASELINE PASS ward6 floor agrees with collision height
+BASELINE PASS ward6 ceiling agrees with height field
+BASELINE PASS laundry floor agrees with collision height
+BASELINE PASS laundry ceiling agrees with height field
+BASELINE PASS pharmacy floor agrees with collision height
+BASELINE PASS pharmacy ceiling agrees with height field
+BASELINE PASS nurses floor agrees with collision height
+BASELINE PASS nurses ceiling agrees with height field
+BASELINE PASS records floor agrees with collision height
+BASELINE PASS records ceiling agrees with height field
+BASELINE PASS theatre floor agrees with collision height
+BASELINE PASS theatre ceiling agrees with height field
+BASELINE PASS plaza floor agrees with collision height
+BASELINE PASS plaza ceiling agrees with height field
+BASELINE PASS foyer floor agrees with collision height
+BASELINE PASS foyer ceiling agrees with height field
+BASELINE PASS dome floor agrees with collision height
+BASELINE PASS dome ceiling agrees with height field
+BASELINE PASS scorr floor agrees with collision height
+BASELINE PASS scorr ceiling agrees with height field
+BASELINE PASS gen floor agrees with collision height
+BASELINE PASS gen ceiling agrees with height field
+BASELINE PASS control floor agrees with collision height
+BASELINE PASS control ceiling agrees with height field
+BASELINE PASS brk floor agrees with collision height
+BASELINE PASS brk ceiling agrees with height field
+BASELINE PASS wavepool floor agrees with collision height
+BASELINE PASS wavepool ceiling agrees with height field
+GEO TUNNEL hospital_tunnel {"floor":-6,"ceiling":-4.800000190734863,"eye":0.23907422648103283,"camera":0.23907422648103283,"under":false}
+BASELINE MISMATCH hospital_tunnel buoyancy stays inside submerged roof
+GEO TUNNEL park_tunnel {"floor":-1.5,"ceiling":-0.3499999940395355,"eye":0.23994564366172821,"camera":0.23994564366172821,"under":false}
+BASELINE MISMATCH park_tunnel buoyancy stays inside submerged roof
+GEO WALK {"start":[124.2,160.20000000000002],"end":[124.2,178.76109373814842],"room":"lobby","floor":0,"eye":1.6199999999994739,"state":"play","errors":0}
+BASELINE PASS player walks pit corridor stairs into hotel without teleport
+QA PAGE CLOSE

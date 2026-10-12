@@ -1,0 +1,112 @@
+[
+  {
+    "name": "kettle",
+    "key": "kettle",
+    "x": 88,
+    "z": 123.60000000000001,
+    "room": "cabana",
+    "camera": 1.7600000005960466,
+    "ceiling": 3.200000047683716,
+    "errors": 0,
+    "frame": 0
+  },
+  {
+    "name": "plant_log",
+    "key": "plantLog",
+    "x": 41.4,
+    "z": 108.185,
+    "room": "plant",
+    "camera": 1.7600000005960466,
+    "ceiling": 4.599999904632568,
+    "errors": 0,
+    "frame": 8
+  },
+  {
+    "name": "booth_tv",
+    "key": "tv",
+    "x": 159.60000000000002,
+    "z": 61.785,
+    "room": "booth",
+    "camera": 1.7600000005960466,
+    "ceiling": 3,
+    "errors": 0,
+    "frame": 14
+  },
+  {
+    "name": "admissions_desk",
+    "key": "admDesk",
+    "x": 84.5999984741211,
+    "z": 29.38499984741211,
+    "room": "admissions",
+    "camera": 1.62,
+    "ceiling": 3.4000000953674316,
+    "errors": 0,
+    "frame": 20
+  },
+  {
+    "name": "pharmacy_shelves",
+    "key": "drip",
+    "x": 63.39999847412109,
+    "z": 35.91499938964844,
+    "room": "pharmacy",
+    "camera": 1.62,
+    "ceiling": 3,
+    "errors": 0,
+    "frame": 26
+  },
+  {
+    "name": "nurses_desk",
+    "key": "nursesDesk",
+    "x": 113.4000015258789,
+    "z": 28.98499984741211,
+    "room": "nurses",
+    "camera": 1.62,
+    "ceiling": 3,
+    "errors": 0,
+    "frame": 32
+  },
+  {
+    "name": "generator_machine",
+    "key": "genSw",
+    "x": 207,
+    "z": 233.21499938964843,
+    "room": "gen",
+    "camera": 1.62,
+    "ceiling": 3.200000047683716,
+    "errors": 0,
+    "frame": 38
+  },
+  {
+    "name": "control_console",
+    "key": "ctrl",
+    "x": 225,
+    "z": 233.71499938964843,
+    "room": "control",
+    "camera": 1.62,
+    "ceiling": 3.200000047683716,
+    "errors": 0,
+    "frame": 44
+  },
+  {
+    "name": "fountain",
+    "key": "fountain",
+    "x": 228.6,
+    "z": 167.60000000000002,
+    "room": "plaza",
+    "camera": 1.62,
+    "ceiling": 9,
+    "errors": 0,
+    "frame": 50
+  },
+  {
+    "name": "ward3_bed",
+    "key": "ward3",
+    "x": 66.60000000000001,
+    "z": 19,
+    "room": "ward3",
+    "camera": 1.62,
+    "ceiling": 3,
+    "errors": 0,
+    "frame": 56
+  }
+]

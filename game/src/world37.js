@@ -1,6 +1,7 @@
 // ---------- r8 · Level 37 world assembly: materials, water, caustics, signage, the hub's props ----------
 const W37 = {};
 function resetW37() {
+  for (const k of Object.keys(W37)) delete W37[k];
   Object.assign(W37, { B: null, BOn: null, BFl: null, propMat: null, waterMat: null, caustMat: null, signs: [], used: new Map(), bob: [], finishProps: null, lensFl: null, glass: [], stand: null, caust: [] });
 }
 const COL37 = { white: [0.92, 0.94, 0.94], tile: [0.86, 0.95, 0.97], steel: [0.62, 0.64, 0.66], chrome: [0.78, 0.8, 0.82], wood: [0.5, 0.34, 0.2], wood2: [0.66, 0.5, 0.32], teal: [0.2, 0.6, 0.66], red: [0.78, 0.16, 0.12], yellow: [0.95, 0.78, 0.15],

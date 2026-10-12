@@ -1,0 +1,16 @@
+warning: [.WebGL-0x104000c6000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+warning: [.WebGL-0x104000c6000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+warning: [.WebGL-0x104000c6000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+warning: [.WebGL-0x104000c6000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)
+QA load ms 1534
+QA PASS kettle prop view cabana
+QA PASS plant_log prop view plant
+QA PASS booth_tv prop view booth
+QA PASS admissions_desk prop view admissions
+QA PASS pharmacy_shelves prop view pharmacy
+QA PASS nurses_desk prop view nurses
+QA PASS generator_machine prop view gen
+QA PASS control_console prop view control
+QA PASS fountain prop view plaza
+QA PASS ward3_bed prop view ward3
+QA PAGE CLOSE

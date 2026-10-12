@@ -1,0 +1,8 @@
+warning: [.WebGL-0x114000c6600]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+warning: [.WebGL-0x114000c6600]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+warning: [.WebGL-0x114000c6600]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+warning: [.WebGL-0x114000c6600]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)
+QA load ms 731
+A {"st":"play","errs":0,"last":"","rooms":42,"fh":-0.550000011920929,"depth":0.550000011920929,"ey":1.070000163642392,"cam":1.070000163642392}
+E {"errs":0,"last":""}
+QA PAGE CLOSE

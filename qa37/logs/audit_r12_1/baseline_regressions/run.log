@@ -1,0 +1,61 @@
+warning: [.WebGL-0x134000c6600]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+warning: [.WebGL-0x134000c6600]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+warning: [.WebGL-0x134000c6600]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+warning: [.WebGL-0x134000c6600]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)
+QA load ms 729
+QA PASS stopwatch cancellation: started
+QA FAIL stopwatch cancellation: walking away resets the swimmer
+QA FAIL stopwatch cancellation: retry earns the brass key
+AUDIT stopwatch cancellation {"label":"KEEP THE WATCH","timed":false,"key":false,"errors":0}
+QA FAIL stopwatch checkpoint: checkpoint resets incomplete timing
+QA FAIL stopwatch checkpoint: checkpoint retry completes timing
+QA PASS stopwatch checkpoint: inventory retained
+AUDIT stopwatch checkpoint {"state":"play","timed":false,"key":false,"errors":0}
+QA FAIL booth escape: video leaves an escape while inside
+QA FAIL booth escape: player walks out through booth door
+QA FAIL booth escape: booth locks behind the player
+AUDIT booth escape {"locked":true,"target":0,"cell":3,"booth":3,"position":[151.56000000000003,66.59999999999988],"errors":0}
+error: [recovered timer] TypeError: Cannot set properties of undefined (setting 'off')
+    at sluice37 (file:///Volumes/crucial/Downloads/Backrooms_claude/game/The_Backrooms_Found_Footage.html?debug:16005:361)
+    at file:///Volumes/crucial/Downloads/Backrooms_claude/game/The_Backrooms_Found_Footage.html?debug:15999:22
+    at runTimers (file:///Volumes/crucial/Downloads/Backrooms_claude/game/The_Backrooms_Found_Footage.html?debug:13298:147)
+    at Object.simStep (file:///Volumes/crucial/Downloads/Backrooms_claude/game/The_Backrooms_Found_Footage.html?debug:13858:15)
+    at step (eval at evaluate (:31
+QA FAIL flood checkpoint timers: cancelled flood has no delayed locks or fish
+QA FAIL flood checkpoint timers: pre-flood drained target restored
+QA FAIL flood checkpoint timers: video can be replayed
+AUDIT flood checkpoint timers {"flood":0,"fish":true,"locked":true,"water":-3.3000000000000638,"target":0,"errors":1}
+QA FAIL drain reversal: refilling does not claim the shallows are drained
+AUDIT drain reversal {"drained":true,"y":0,"target":0,"objective":"FIND DRY GROUND · THE CABANA, WEST OF THE SHALLOWS","errors":1}
+QA FAIL level restart clears scene-owned flood state
+AUDIT restart {"oldIndex":1048,"clean":false,"flood":0,"keys":0,"errors":2}
+AUDIT SUMMARY {"passed":2,"total":14}
+QA PAGE CLOSE
+Error: QA failures: QA FAIL stopwatch cancellation: walking away resets the swimmer
+QA FAIL stopwatch cancellation: retry earns the brass key
+QA FAIL stopwatch checkpoint: checkpoint resets incomplete timing
+QA FAIL stopwatch checkpoint: checkpoint retry completes timing
+QA FAIL booth escape: video leaves an escape while inside
+QA FAIL booth escape: player walks out through booth door
+QA FAIL booth escape: booth locks behind the player
+[recovered timer] TypeError: Cannot set properties of undefined (setting 'off')
+    at sluice37 (file:///Volumes/crucial/Downloads/Backrooms_claude/game/The_Backrooms_Found_Footage.html?debug:16005:361)
+    at file:///Volumes/crucial/Downloads/Backrooms_claude/game/The_Backrooms_Found_Footage.html?debug:15999:22
+    at runTimers (file:///Volumes/crucial/Downloads/Backrooms_claude/game/The_Backrooms_Found_Footage.html?debug:13298:147)
+    at Object.simStep (file:///Volumes/crucial/Downloads/Backrooms_claude/game/The_Backrooms_Found_Footage.html?debug:13858:15)
+    at step (eval at evaluate (:311:30), <anonymous>:3:60)
+    at eval (eval at evaluate (:311:30), <anonymous>:7:63)
+    at UtilityScript.evaluate (<anonymous>:313:16)
+    at UtilityScript.<anonymous> (<anonymous>:1:44)
+error: [recovered timer] TypeError: Cannot set properties of undefined (setting 'off')
+    at sluice37 (file:///Volumes/crucial/Downloads/Backrooms_claude/game/The_Backrooms_Found_Footage.html?debug:16005:361)
+    at file:///Volumes/crucial/Downloads/Backrooms_claude/game/The_Backrooms_Found_Footage.html?debug:15999:22
+    at runTimers (file:///Volumes/crucial/Downloads/Backrooms_claude/game/The_Backrooms_Found_Footage.html?debug:13298:147)
+    at Object.simStep (file:///Volumes/crucial/Downloads/Backrooms_claude/game/The_Backrooms_Found_Footage.html?debug:13858:15)
+    at step (eval at evaluate (:31
+QA FAIL flood checkpoint timers: cancelled flood has no delayed locks or fish
+QA FAIL flood checkpoint timers: pre-flood drained target restored
+QA FAIL flood checkpoint timers: video can be replayed
+QA FAIL drain reversal: refilling does not claim the shallows are drained
+QA FAIL level restart clears scene-owned flood state
+    at /Volumes/crucial/Downloads/Backrooms_claude/qa18/run18.js:30:30

@@ -1,0 +1,55 @@
+warning: [.WebGL-0x12c000c6c00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+warning: [.WebGL-0x12c000c6c00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+warning: [.WebGL-0x12c000c6c00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+warning: [.WebGL-0x12c000c6c00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)
+QA load ms 857
+talk [{"phase":"dry","errs":0,"last":"","wings":0,"keys":"{\"hotel\":false,\"hosp\":false,\"tape\":false}","flood":0,"state":"play"},true]
+quest [{"phase":"dry","errs":0,"last":"","wings":0,"keys":"{\"hotel\":false,\"hosp\":false,\"tape\":false}","flood":0,"state":"play"},["ok /KETTLE/ | obj: THE PLANT KEY · UNDER THE KETTLE","ok /UNLOCK THE PLANT/ | obj: DRAIN THE SHALLOWS · THE PUMP ROOM"]]
+gate [{"phase":"dry","errs":0,"last":"","wings":0,"keys":"{\"hotel\":false,\"hosp\":false,\"tape\":false}","flood":0,"state":"play"},["ok /UNLOCK THE PLANT/ | obj: DRAIN THE SHALLOWS · THE PUMP ROOM","ok /SHALLOWS GATE/ | obj: DRAIN THE SHALLOWS · THE PUMP ROOM"],true]
+pit [{"phase":"dry","errs":0,"last":"","wings":0,"keys":"{\"hotel\":false,\"hosp\":false,\"tape\":false}","flood":0,"state":"play"},["ok /CAMCORDER/ | obj: THE PIT · THE CASSETTE, TAPE FOUR","ok /CASSETTE/ | obj: BRING THEM BACK TO ABARA · THE CABANA"],false]
+plant2 [true,true,true,false,"dry"]
+told [true,true,true,"wings","THE THREE WINGS · 0/3 · EACH KEEPS ONE THING"]
+hotel [{"book":true,"bell":0,"drawer":true,"sw":true,"timed":true,"vaultKey":true,"card":false,"seen":true,"t":57.749999999998856,"warn":false,"draw":false,"entered":true,"met":true,"ask":true,"given":true},{"phase":"wings","errs":0,"last":"","wings":0,"keys":"{\"hotel\":false,\"hosp\":false,\"tape\":false}","flood":0,"state":"play"}]
+vault [{"hotel":true,"hosp":false,"tape":false},"THE THREE WINGS · 1/3 · EACH KEEPS ONE THING",["ok /TAKE THE STOPWATCH/ | obj: THE THREE WINGS · 0/3 · EACH KEEPS ONE THING","ok /UNLOCK 233/ | obj: THE THREE WINGS · 0/3 · EACH KEEPS ONE THING","ok /ROOM 233 CARD/ | obj: THE THREE WINGS · 1/3 · EACH KEEPS ONE THING"]]
+hosp [{"seen":true,"nv":true,"ticket":true,"linen":"given","linenDone":true,"lanyard":true,"iv":true,"ivDone":true,"chart":true,"chartDone":true,"stamps":3,"form":true,"roster":false,"board":true,"sayT":14.300000000000068,"paT":44.62088568182743,"talked":true},{"hotel":true,"hosp":true,"tape":false},["ok /UNLOCK THE PHARMACY/ | obj: THE THREE WINGS · 1/3 · EACH KEEPS ONE THING","ok /IV BAG/ | obj: THE THREE WINGS · 1/3 · EACH KEEPS ONE THING","ok /GIVE THE IV/ | obj: THE THREE WINGS · 1/3 · EACH KEEPS ONE THING","ok /TAKE THE CHART/ | obj: THE THREE WINGS · 1/3 · EACH KEEPS ONE THING","ok /FILE THE CHART/ | obj: THE THREE WINGS · 1/3 · EACH KEEPS ONE THING","ok /HAND IN/ | obj: THE THREE WINGS · 2/3 · EACH KEEPS ONE THING"]]
+ww [{"seen":true,"map":true,"gen":true,"ctrl":false,"tape":false,"tanks":1,"note":true,"paT":40.76783840432812},{"hotel":true,"hosp":true,"tape":true},true]
+panel ["finale",{"phase":"finale","errs":0,"last":"","wings":3,"keys":"{\"hotel\":true,\"hosp\":true,\"tape\":true}","flood":1,"state":"play"},"SWIM UP · THE HATCH IS AT THE TOP",true]
+hatch [5.497500000000019,11.9,12.8,false,11.9,true,12.780000000000001,152.19500000000002,73.81,1.7600000005960463]
+log: QA PASS full objective chain and focused hatch E input
+win ["won","surface",["ok /PLAY THE VIDEO/ | obj: SWIM UP · THE HATCH IS AT THE TOP"]]
+ok /KETTLE/ | obj: THE PLANT KEY · UNDER THE KETTLE
+ok /UNLOCK THE PLANT/ | obj: DRAIN THE SHALLOWS · THE PUMP ROOM
+ok /SHALLOWS GATE/ | obj: DRAIN THE SHALLOWS · THE PUMP ROOM
+ok /CAMCORDER/ | obj: THE PIT · THE CASSETTE, TAPE FOUR
+ok /CASSETTE/ | obj: BRING THEM BACK TO ABARA · THE CABANA
+ok /GUEST BOOK/ | obj: THE THREE WINGS · 0/3 · EACH KEEPS ONE THING
+ok /SPEAK TO TEAGUE/ | obj: THE THREE WINGS · 0/3 · EACH KEEPS ONE THING
+ok /OPEN THE DRAWER/ | obj: THE THREE WINGS · 0/3 · EACH KEEPS ONE THING
+ok /UNLOCK 204/ | obj: THE THREE WINGS · 0/3 · EACH KEEPS ONE THING
+ok /TAKE THE STOPWATCH/ | obj: THE THREE WINGS · 0/3 · EACH KEEPS ONE THING
+ok /UNLOCK 233/ | obj: THE THREE WINGS · 0/3 · EACH KEEPS ONE THING
+ok /ROOM 233 CARD/ | obj: THE THREE WINGS · 1/3 · EACH KEEPS ONE THING
+ok /TAKE A NUMBER/ | obj: THE THREE WINGS · 1/3 · EACH KEEPS ONE THING
+ok /WHITEBOARD/ | obj: THE THREE WINGS · 1/3 · EACH KEEPS ONE THING
+ok /DISCHARGE FORM/ | obj: THE THREE WINGS · 1/3 · EACH KEEPS ONE THING
+ok /TAKE THE LINEN/ | obj: THE THREE WINGS · 1/3 · EACH KEEPS ONE THING
+ok /GIVE THE LINEN/ | obj: THE THREE WINGS · 1/3 · EACH KEEPS ONE THING
+ok /ASK FOR THE LANYARD/ | obj: THE THREE WINGS · 1/3 · EACH KEEPS ONE THING
+ok /UNLOCK THE PHARMACY/ | obj: THE THREE WINGS · 1/3 · EACH KEEPS ONE THING
+ok /IV BAG/ | obj: THE THREE WINGS · 1/3 · EACH KEEPS ONE THING
+ok /GIVE THE IV/ | obj: THE THREE WINGS · 1/3 · EACH KEEPS ONE THING
+ok /TAKE THE CHART/ | obj: THE THREE WINGS · 1/3 · EACH KEEPS ONE THING
+ok /FILE THE CHART/ | obj: THE THREE WINGS · 1/3 · EACH KEEPS ONE THING
+ok /HAND IN/ | obj: THE THREE WINGS · 2/3 · EACH KEEPS ONE THING
+ok /PARK MAP/ | obj: THE THREE WINGS · 2/3 · EACH KEEPS ONE THING
+ok /DRINK FROM/ | obj: THE THREE WINGS · 2/3 · EACH KEEPS ONE THING
+ok /START THE GENERATOR/ | obj: THE THREE WINGS · 2/3 · EACH KEEPS ONE THING
+ok /UNLOCK CONTROL/ | obj: THE THREE WINGS · 2/3 · EACH KEEPS ONE THING
+ok /NOTE ON THE MONITOR/ | obj: THE THREE WINGS · 2/3 · EACH KEEPS ONE THING
+ok /TAKE THE TAPE/ | obj: THE LIFEGUARD BOOTH · SEAT ALL THREE IN THE PANEL
+ok /SEAT/ | obj: THE LIFEGUARD BOOTH · SEAT ALL THREE IN THE PANEL
+ok /SEAT/ | obj: THE LIFEGUARD BOOTH · SEAT ALL THREE IN THE PANEL
+ok /SEAT/ | obj: THE LIFEGUARD BOOTH · SEAT ALL THREE IN THE PANEL
+ok /PLAY THE VIDEO/ | obj: SWIM UP · THE HATCH IS AT THE TOP
+QA PASS surface ending continues to playable Level 2 {"state":"play","errors":0,"hp":100,"speed":1,"oldOverlay":false,"checkpoint":2}
+QA PAGE CLOSE

@@ -1,4 +1,12 @@
 # CHANGELOG
+## r12.2 · 2026-10-04 · Level 37 geometry follow-up
+
+Fixed buoyancy/head-bob clipping through both submerged tunnel roofs and removed the visual rail across the tower's open jump edge. Geometry survey: 84 floor/ceiling samples across 42 rooms, 114 assertions (normal and noassets), actual tunnel/stair movement, air pockets and tower climb/dive; 35 screenshots inspected. Level 37 progression/branches/reach and continuation through Levels 2/7 pass. The wider Level 0 story test failed on a Reyes death in its first run and passed unchanged on repeat; both logs retained. Underwater haze, dark service-prop contrast, HUD crowding and human/GPU/touch review remain limits. See docs/LEVEL37_GEOMETRY.md. Release: releases/r12.2/; prior releases preserved. No dialogue, assets, RNG draws or architecture changes.
+
+
+## r12.1 · 2026-10-04 · Level 37 progression audit
+
+Fixed the booth flood escape, cancelled/dead Teague timing, stale flood callbacks on checkpoint/replay, scene-owned W37 restart state, and reversed-drain milestone. The Well surface now covers its flooded deck; the CRT has a persistent live screen; Teague swimming supports skinned animation. Strict quest tests earn the brass key, unlock 233, aim/use E at the hatch, and click Continue into playable Level 2. Both Level 37 endings, all six wing/panel orders, 18 targeted regressions, 14 branch/geometry assertions, all 42 rooms/quest anchors, and 12 shared regression suites pass. Detailed findings, screenshots and evidence limits: docs/LEVEL37_AUDIT.md. Headless/debug assistance is not human difficulty, hardware GPU, actual touch or audio-quality evidence. Heavy underwater haze and long HUD objectives remain visual review items. No new dialogue, canon, assets or voice clips. Release: releases/r12.1/; prior releases preserved.
 
 ## r12 (in progress) — 2026-10-04 · stored items, timed effects, lasting gains; Level 9 rebuild planned (branch agent/claude)
 - Item belt on every level: the mouse wheel picks a stored item (almond water, energy bar, energy drink, flashlight batteries, camcorder battery); Q or a wheel click uses it; B / T / R stay as shortcuts; touch ITEM / NEXT buttons.

@@ -69,7 +69,7 @@ function furnishWell37(B) {
   { const T = LV.tower, bx = cc37(T.x), bz = cc37(T.y), r = pr37(bx, bz, 0, T.top);
     B.add(r, 'Box', { width: 3.4, height: 0.2, depth: 3.4 }, [0.9, 0.95, 0.96], 0, [0, 0.1, 0]); for (const [x, z] of [[-1.6, -1.6], [1.6, -1.6], [-1.6, 1.6], [1.6, 1.6]]) B.add(r, 'Cylinder', { diameter: 0.07, height: 1.1, tessellation: 6 }, COL37.chrome, 0, [x, 0.7, z]);
     for (const y of [0.7, 1.15]) { B.add(r, 'Box', { width: 3.2, height: 0.05, depth: 0.05 }, COL37.chrome, 0, [0, y, -1.6]); B.add(r, 'Box', { width: 0.05, height: 0.05, depth: 3.2 }, COL37.chrome, 0, [-1.6, y, 0]); B.add(r, 'Box', { width: 3.2, height: 0.05, depth: 0.05 }, COL37.chrome, 0, [0, y, 1.6]); }
-    B.add(r, 'Box', { width: 0.05, height: 0.05, depth: 3.2 }, COL37.chrome, 0, [1.6, 1.15, 0]);   // (the east edge is open: that's where you jump)
+    // No rail across the east edge: it is the open jump route in collision.
     B.add(r, 'Box', { width: 1.2, height: 0.05, depth: 3.2 }, COL37.teal, 0, [1.7, 0.1, 0]);
     // the tower's collision: a ring so nobody walks in at ground level (the east gap is switched off while you are on top)
     const x0 = T.x * CELL, z0 = T.y * CELL; W37.tower = { top: T.top, cx: bx, cz: bz, edge: [addSolid(x0, z0, x0 + CELL, z0 + 0.3, 'tower'), addSolid(x0, z0 + CELL - 0.3, x0 + CELL, z0 + CELL, 'tower'), addSolid(x0, z0, x0 + 0.3, z0 + CELL, 'tower')], gap: addSolid(x0 + CELL - 0.3, z0, x0 + CELL, z0 + CELL, 'tower') };
@@ -160,7 +160,10 @@ function furnishBooth37(B) {
   { const r = wallAt37(44, 16, 3, 0); B.add(r, 'Box', { width: 2.4, height: 0.05, depth: 0.8 }, COL37.wood2, 0, [0, 0.76, 0.45]); for (const x of [-1.1, 1.1]) B.add(r, 'Box', { width: 0.06, height: 0.74, depth: 0.7 }, COL37.wood, 0, [x, 0.37, 0.45]); solidLocal(r, -1.25, 0, 1.25, 0.9);
     B.add(r, 'Box', { width: 0.7, height: 0.56, depth: 0.6 }, [0.62, 0.6, 0.55], 0, [-0.6, 1.07, 0.4]); B.add(r, 'Box', { width: 0.54, height: 0.4, depth: 0.02 }, [0.05, 0.06, 0.08], 0.1, [-0.6, 1.09, 0.71]);
     B.add(r, 'Box', { width: 0.6, height: 0.1, depth: 0.5 }, [0.12, 0.12, 0.13], 0, [0.35, 0.84, 0.5]); B.add(r, 'Box', { width: 0.34, height: 0.03, depth: 0.012 }, [0.03, 0.03, 0.03], 0, [0.35, 0.86, 0.76]); B.add(r, 'Box', { width: 0.02, height: 0.02, depth: 0.015 }, [1, 0.1, 0.05], 0.3, [0.58, 0.87, 0.76]);
-    W37.pos.tv = { x: r.position.x - 0.6 + 0, z: r.position.z + 1.3, y: 1.1, r, vx: 0.35 }; W37.pos.deskB = { x: r.position.x, z: r.position.z + 1.2 }; W37.pos.tvRoot = r; }
+    W37.pos.tv = { x: r.position.x - 0.6 + 0, z: r.position.z + 1.3, y: 1.1, r, vx: 0.35 }; W37.pos.deskB = { x: r.position.x, z: r.position.z + 1.2 }; W37.pos.tvRoot = r;
+    // Keep the live screen on its own root: the furniture batch disposes r.
+    W37.tvScreen = dynTexPlane('boothTV37', 0.5, 0.36, 256, 192, twin(r), [-0.6, 1.09, 0.725], 0.7);
+    W37.signs.push(W37.tvScreen); drawTv37(false); }
   { const r = wallAt37(42, 20, 2, 0); B.add(r, 'Box', { width: 1.0, height: 1.2, depth: 0.1 }, [0.26, 0.28, 0.28], 0, [0, 1.4, 0.05]); W37.pos.panelR = r; W37.pos.panel = { x: r.position.x + Math.sin(r.rotation.y) * 0.9, z: r.position.z + Math.cos(r.rotation.y) * 0.9 }; }
   { const r = pr37(bx + 1.2, bz + 3.5, 2.6, DECK37); B.add(r, 'Cylinder', { diameter: 0.4, height: 0.05, tessellation: 12 }, COL37.black, 0, [0, 0.5, 0]); B.add(r, 'Cylinder', { diameter: 0.05, height: 0.5, tessellation: 6 }, COL37.steel, 0, [0, 0.25, 0]); B.add(r, 'Box', { width: 0.4, height: 0.55, depth: 0.06 }, COL37.black, 0, [0, 0.82, -0.2]); addSolid(r.position.x - 0.3, r.position.z - 0.3, r.position.x + 0.3, r.position.z + 0.3, 'prop'); }
   { const r = wallAt37(45, 19, 0, 0); B.add(r, 'Box', { width: 1.1, height: 1.9, depth: 0.5 }, COL37.wood, 0, [0, 0.95, 0.25]); for (const y of [0.55, 1.1, 1.65]) B.add(r, 'Box', { width: 1.0, height: 0.03, depth: 0.46 }, COL37.wood2, 0, [0, y, 0.25]); solidLocal(r, -0.6, 0, 0.6, 0.55); }

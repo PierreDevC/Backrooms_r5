@@ -1,0 +1,9 @@
+warning: [.WebGL-0x104000c6000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+warning: [.WebGL-0x104000c6000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+warning: [.WebGL-0x104000c6000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+warning: [.WebGL-0x104000c6000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)
+QA load ms 1613
+QA PASS render tv_idle {"enabled":true,"disposed":false,"ready":true,"errors":0}
+QA PASS render tv_playing {"enabled":true,"disposed":false,"ready":true,"errors":0}
+QA PASS render well_flood {"water":11.9,"camera":12.13239420843031,"ready":true,"bad":[],"errors":0}
+QA PAGE CLOSE

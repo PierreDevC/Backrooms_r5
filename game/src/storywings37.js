@@ -61,11 +61,11 @@ function talkTeague37() {
 }
 function timeTeague37() {
   const N = AI37.teague; if (!N || N.swimming) return; const it = N.inter;
-  holdStart(it, 20, () => { N.swimming = false; N.lapT = 0; P37.hotel.timed = true; SFX37.stamp(P9({ x: PL.x, y: 1.2, z: PL.z })); toast('TEAGUE · 2:04.1 · 4 LENGTHS', 3);
+  const started = holdStart(it, 20, () => { N.swimming = false; N.lapT = 0; P37.hotel.timed = true; SFX37.stamp(P9({ x: PL.x, y: 1.2, z: PL.z })); toast('TEAGUE · 2:04.1 · 4 LENGTHS', 3);
     swS37('Slow.'); swS37('He\'d have said slow.', { delay: 2.6 }); swS37('He would have been wrong. But he\'d have said it.', { delay: 5.6 });
     swS37('Reception. There\'s a door beside the escalator that isn\'t a door. Here.', { delay: 10 }); later(11.6, () => { P37.hotel.vaultKey = true; SFX5.jingle(P9({ x: PL.x, y: 1.2, z: PL.z })); toast('A BRASS KEY · 233', 2.6); hotelTasks37(); setPhase37(); cpSave('THE BRASS KEY'); });
     swS37('Don\'t read the card. I always read the card.', { delay: 14.5 }); }, { r: 3.2, cancel: 'YOU STOPPED THE WATCH EARLY', noise: 0.04 });
-  N.swimming = true; N.lapT = 0; swS37('Go.', { dur: 1.4 });
+  if (started) { N.swimming = true; N.lapT = 0; swS37('Go.', { dur: 1.4 }); }
 }
 function takeCard37() {
   P37.keys.hotel = true; SFX.pickup(); SFX5.jingle(P9({ x: PL.x, y: 1, z: PL.z })); PL.san = Math.max(0, PL.san - 8); FX.glitch = Math.max(FX.glitch, 0.8); toast('THE ROOM 233 CARD', 3);

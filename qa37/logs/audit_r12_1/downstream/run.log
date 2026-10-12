@@ -1,0 +1,99 @@
+warning: [.WebGL-0x12c000c6600]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+warning: [.WebGL-0x12c000c6600]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+warning: [.WebGL-0x12c000c6600]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+warning: [.WebGL-0x12c000c6600]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)
+QA load ms 720
+phone [{"obj":"THE BOILER OFFICE · NORTH ALONG THE PIPE","errs":0,"last":"","regs":0,"state":"play","hp":100,"heat":0,"surges":0},true]
+ida [{"obj":"SHUT THE REGULATORS · 0/3","errs":0,"last":"","regs":0,"state":"play","hp":100,"heat":0,"surges":0},3,true]
+west [{"obj":"SHUT THE REGULATORS · 1/3","errs":0,"last":"","regs":1,"state":"play","hp":100,"heat":0.03,"surges":0},{"w":true,"n":false,"e":false},true,true]
+north [{"obj":"SHUT THE REGULATORS · 2/3","errs":0,"last":"","regs":2,"state":"play","hp":100,"heat":0.03,"surges":0},[3,2,4,1],true,true,{"w":true,"n":true,"e":false}]
+east [{"obj":"THE GAMMA LIFT · NORTH-EAST OF THE SWITCHYARD","errs":0,"last":"","regs":3,"state":"play","hp":100,"heat":0,"surges":0},true,true,{"w":true,"n":true,"e":true},true]
+card [true]
+lift [{"obj":"RIDE THE LIFT UP","errs":0,"last":"","regs":3,"state":"won","hp":100,"heat":0,"surges":0},"lift",["THE LIFT","The cage rattles up through a hundred metres of pipe. The heat falls away a degree at a time. There is a field engineer's card in your pocket, photo side down. Somewhere under you, a man is telling nobody about a crowbar. The doors open on salt air, and a horn a long way off."]]
+ok /ANSWER THE PHONE/ | THE BOILER OFFICE · NORTH ALONG THE PIPE
+ok /TALK TO IDA/ | TALK TO IDA · THE BOILER OFFICE
+ok /TALK TO IDA/ | TALK TO IDA · THE BOILER OFFICE
+ok /TALK TO IDA/ | TALK TO IDA · THE BOILER OFFICE
+ok /TAKE THE CROWBAR/ | SHUT THE REGULATORS · 0/3
+ok /READ THE LOGBOOK/ | SHUT THE REGULATORS · 0/3
+ok /READ THE TEAM BOARD/ | SHUT THE REGULATORS · 0/3
+ok /PICK UP THE PAGE/ | SHUT THE REGULATORS · 0/3
+ok /TAKE THE ID CARD/ | SHUT THE REGULATORS · 0/3
+ok /SHUT REGULATOR W/ | SHUT THE REGULATORS · 1/3
+ok /WATCH THE FOREMAN/ | SHUT THE REGULATORS · 1/3
+ok /THROW BREAKER 3/ | SHUT THE REGULATORS · 1/3
+ok /THROW BREAKER 2/ | SHUT THE REGULATORS · 1/3
+ok /THROW BREAKER 4/ | SHUT THE REGULATORS · 1/3
+ok /THROW BREAKER 1/ | SHUT THE REGULATORS · 1/3
+ok /TAKE THE TIME CARD/ | SHUT THE REGULATORS · 1/3
+ok /SHUT REGULATOR N/ | SHUT THE REGULATORS · 2/3
+ok /PRY THE DOOR/ | SHUT THE REGULATORS · 2/3
+ok /TALK TO BENNY/ | SHUT THE REGULATORS · 2/3
+ok /FIT THE VALVE WHEEL/ | SHUT THE REGULATORS · 2/3
+ok /SHUT REGULATOR E/ | SHUT THE REGULATORS · 3/3
+ok /SHOW IDA THE ID CARD/ | THE GAMMA LIFT · NORTH-EAST OF THE SWITCHYARD
+ok /CALL THE LIFT/ | RIDE THE LIFT UP
+ok /RIDE UP/ | RIDE THE LIFT UP
+QA PASS downstream Level 2 lift chain
+QA PASS Level 2 Continue reaches Level 7
+ladder [3,{"obj":"CLIMB TO THE RIG · FOLLOW THE LIGHTS","errs":0,"last":"","state":"play","hp":100,"parts":0}]
+kell [{"obj":"START THE GENERATOR · THE GREY HOUSE, EAST SIDE OF THE DECK","errs":0,"last":"","state":"play","hp":100,"parts":0},true,true]
+gen [{"obj":"HABITAT ORCA-2 · THE SEABED NORTH OF THE RIG","errs":0,"last":"","state":"play","hp":100,"parts":0},true,true,0.8,17]
+flares [3]
+tide [["tide","kelllog"]]
+fen [{"obj":"THE LAMP PARTS · 0/3 · FUEL · MOTOR · CABLE","errs":0,"last":"","state":"play","hp":100,"parts":0},true,true,{"lamp":true,"fen":true,"flare":true,"safe":true,"dark":true}]
+ship [{"obj":"THE LAMP PARTS · 1/3 · FUEL · MOTOR · CABLE","errs":0,"last":"","state":"play","hp":100,"parts":0},true,{"tide":true,"kelllog":true,"fen":true,"mate":true,"cook":true,"cap":true}]
+wreck [{"obj":"THE LAMP PARTS · 2/3 · FUEL · MOTOR · CABLE","errs":0,"last":"","state":"play","hp":100,"parts":0},true,true]
+cape [{"obj":"THE LAMP ROOM · SEAT THE PARTS · 0/3","errs":0,"last":"","state":"play","hp":100,"parts":0},true,true,true]
+lamp [16,{"obj":"THE SEA IS CALM · THE BOAT, THE KEEPER, OR THE DEEP","errs":0,"last":"","state":"play","hp":100,"parts":3},true,1,"show"]
+end [true,"won","sail",["THE CROSSING","The Marlin starts on the second pull. Behind you the lamp turns on its rock, and the sea beneath it is flat and lit all the way down. A line of bubbles comes up far off the stern, then stops. The tape has every log and note they left. The fog takes the light at about the third mile. The camera is still running."]]
+ok /CLIMB UP · THE RIG/ | CLIMB TO THE RIG · FOLLOW THE LIGHTS
+ok /TALK TO KELL/ | START THE GENERATOR · THE GREY HOUSE, EAST SIDE OF THE DECK
+ok /TALK TO KELL/ | START THE GENERATOR · THE GREY HOUSE, EAST SIDE OF THE DECK
+ok /TALK TO KELL/ | START THE GENERATOR · THE GREY HOUSE, EAST SIDE OF THE DECK
+ok /TALK TO KELL/ | START THE GENERATOR · THE GREY HOUSE, EAST SIDE OF THE DECK
+ok /START THE GENERATOR/ | OPEN THE AIR VALVE · THE HOUSE AT THE NORTH-EAST CORNER
+ok /OPEN THE AIR VALVE/ | HABITAT ORCA-2 · THE SEABED NORTH OF THE RIG
+ok /TAKE THE FLARES/ | HABITAT ORCA-2 · THE SEABED NORTH OF THE RIG
+ok /READ THE TIDE BOARD/ | HABITAT ORCA-2 · THE SEABED NORTH OF THE RIG
+ok /READ THE RADIO LOG/ | HABITAT ORCA-2 · THE SEABED NORTH OF THE RIG
+ok /READ THE MESS BOARD/ | HABITAT ORCA-2 · THE SEABED NORTH OF THE RIG
+ok /TALK TO FEN/ | THE LAMP PARTS · 0/3 · FUEL · MOTOR · CABLE
+ok /TALK TO FEN/ | THE LAMP PARTS · 0/3 · FUEL · MOTOR · CABLE
+ok /TALK TO FEN/ | THE LAMP PARTS · 0/3 · FUEL · MOTOR · CABLE
+ok /TAKE THE JERRY CAN/ | THE LAMP PARTS · 0/3 · FUEL · MOTOR · CABLE
+ok /FILL THE JERRY CAN/ | THE LAMP PARTS · 1/3 · FUEL · MOTOR · CABLE
+ok /READ THE MATE'S LOG/ | THE LAMP PARTS · 1/3 · FUEL · MOTOR · CABLE
+ok /READ THE MESS NOTICE/ | THE LAMP PARTS · 1/3 · FUEL · MOTOR · CABLE
+ok /CLIMB UP · THE BRIDGE/ | THE LAMP PARTS · 1/3 · FUEL · MOTOR · CABLE
+ok /READ THE CAPTAIN'S LOG/ | THE LAMP PARTS · 1/3 · FUEL · MOTOR · CABLE
+ok /READ THE LAST RADIO LOG/ | THE LAMP PARTS · 1/3 · FUEL · MOTOR · CABLE
+ok /TURN DIAL 1/ | THE LAMP PARTS · 1/3 · FUEL · MOTOR · CABLE
+ok /TURN DIAL 1/ | THE LAMP PARTS · 1/3 · FUEL · MOTOR · CABLE
+ok /TURN DIAL 1/ | THE LAMP PARTS · 1/3 · FUEL · MOTOR · CABLE
+ok /TURN DIAL 1/ | THE LAMP PARTS · 1/3 · FUEL · MOTOR · CABLE
+ok /TURN DIAL 2/ | THE LAMP PARTS · 1/3 · FUEL · MOTOR · CABLE
+ok /TURN DIAL 2/ | THE LAMP PARTS · 1/3 · FUEL · MOTOR · CABLE
+ok /TURN DIAL 3/ | THE LAMP PARTS · 1/3 · FUEL · MOTOR · CABLE
+ok /TURN DIAL 3/ | THE LAMP PARTS · 1/3 · FUEL · MOTOR · CABLE
+ok /TURN DIAL 3/ | THE LAMP PARTS · 1/3 · FUEL · MOTOR · CABLE
+ok /TURN DIAL 3/ | THE LAMP PARTS · 1/3 · FUEL · MOTOR · CABLE
+ok /TURN DIAL 3/ | THE LAMP PARTS · 1/3 · FUEL · MOTOR · CABLE
+ok /TURN DIAL 3/ | THE LAMP PARTS · 1/3 · FUEL · MOTOR · CABLE
+ok /TURN DIAL 3/ | THE LAMP PARTS · 1/3 · FUEL · MOTOR · CABLE
+ok /TAKE THE LENS MOTOR/ | THE LAMP PARTS · 2/3 · FUEL · MOTOR · CABLE
+ok /TALK TO WREN/ | THE LAMP PARTS · 2/3 · FUEL · MOTOR · CABLE
+ok /TALK TO WREN/ | THE LAMP PARTS · 2/3 · FUEL · MOTOR · CABLE
+ok /TALK TO WREN/ | THE LAMP PARTS · 2/3 · FUEL · MOTOR · CABLE
+ok /TALK TO WREN/ | THE LAMP PARTS · 2/3 · FUEL · MOTOR · CABLE
+ok /TAKE THE CLAMP/ | THE LAMP PARTS · 2/3 · FUEL · MOTOR · CABLE
+ok /SPLICE THE CABLE/ | THE LAMP ROOM · SEAT THE PARTS · 0/3
+ok /CLIMB UP · THE LAMP ROOM/ | THE LAMP ROOM · SEAT THE PARTS · 0/3
+ok /POUR THE FUEL|SEAT THE LENS|CONNECT THE CABLE/ | THE LAMP ROOM · SEAT THE PARTS · 1/3
+ok /POUR THE FUEL|SEAT THE LENS|CONNECT THE CABLE/ | THE LAMP ROOM · SEAT THE PARTS · 2/3
+ok /POUR THE FUEL|SEAT THE LENS|CONNECT THE CABLE/ | THE LAMP ROOM · THE LADDER IN CAPE SORREL
+ok /LIGHT THE LAMP/ | THE SEA IS CALM · THE BOAT, THE KEEPER, OR THE DEEP
+ok /TALK TO KELL/ | THE SEA IS CALM · THE BOAT, THE KEEPER, OR THE DEEP
+ok /BOARD THE MARLIN/ | THE SEA IS CALM · THE BOAT, THE KEEPER, OR THE DEEP
+QA PASS downstream Level 7 Sail ending
+QA PAGE CLOSE

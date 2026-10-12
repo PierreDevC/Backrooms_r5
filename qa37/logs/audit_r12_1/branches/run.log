@@ -1,0 +1,25 @@
+warning: [.WebGL-0x11c000d6600]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+warning: [.WebGL-0x11c000d6600]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+warning: [.WebGL-0x11c000d6600]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+warning: [.WebGL-0x11c000d6600]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)
+QA load ms 1446
+QA PASS early pit recovery and late dialogue cannot regress objectives
+QA PASS panel accepts wing order hotel → hosp → tape
+QA PASS panel accepts wing order hotel → tape → hosp
+QA PASS panel accepts wing order hosp → hotel → tape
+QA PASS panel accepts wing order hosp → tape → hotel
+QA PASS panel accepts wing order tape → hotel → hosp
+QA PASS panel accepts wing order tape → hosp → hotel
+QA PASS hospital reverse chores stamp once and gate discharge
+QA PASS Staff remain hidden with night vision off
+QA PASS scene geometry and transforms are finite
+QA PASS flood surface covers the full Well and pit pickups survive batching
+QA PASS booth has a live TV texture after furniture batching
+QA PASS optional Stay branch reaches its own ending
+QA PAGE CLOSE
+page.waitForFunction: Timeout 240000ms exceeded.
+    at module.exports (/Volumes/crucial/Downloads/Backrooms_claude/qa37/s37_branches.js:47:14)
+    at async /Volumes/crucial/Downloads/Backrooms_claude/qa18/run18.js:28:3 {
+  log: [],
+  name: 'TimeoutError'
+}

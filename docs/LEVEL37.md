@@ -1,5 +1,9 @@
 # Level 37 · Sublimity (r8, branch `agent/claude`)
 
+Current geometry follow-up: [r12.2 findings and 35 screenshots](LEVEL37_GEOMETRY.md), 2026-10-04. Submerged camera ceilings and the tower open-edge rail are repaired.
+
+Previous audit: [r12.1 progression/rendering findings](LEVEL37_AUDIT.md), 2026-10-04. Includes repaired flood exit, stopwatch retries, checkpoint timers/rebuild state and the current evidence limits.
+
 Level 18 win now chains to Level 37 (`goLevel37(carryFrom18())`). Files: `level37.js` (grid, rooms, arches, columns, water basins), `world37.js` (materials, props, doors, shaders), `hub37.js` (hub furniture), `wings37.js` (hotel/hospital/water park layout and furniture), `story37.js` + `storywings37.js` (objectives, NPC talk, items, flood, endings), `ai37.js` (Abara, Teague, Staff, Fish), `main37.js` (loop, swimming/diving physics, tower, drift, HUD), `audio37.js`, `textures37.js`.
 
 Level 18's ending card now has a CONTINUE · LEVEL 37 button (restartGame → goLevel37(carryFrom18())). Level 37 also appears in the level picker.
